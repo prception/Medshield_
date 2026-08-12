@@ -1,0 +1,925 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<title>MedShield - Maritime Medical Case Management for Crew Operators</title>
+<meta name="description" content="MedShield manages the whole crew medical case - from the first call at sea to the closed claim. Telemedicine, hospital coordination, claims and compliance for cruise lines, shipping companies and offshore operators. India, Singapore, UAE.">
+
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="MedShield">
+<meta property="og:title" content="MedShield - Maritime Medical Case Management for Crew Operators">
+<meta property="og:description" content="MedShield manages the whole crew medical case - from the first call at sea to the closed claim. Telemedicine, hospital coordination, claims and compliance for cruise lines, shipping companies and offshore operators. India, Singapore, UAE.">
+<meta property="og:image" content="assets/og-card.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="MedShield - we manage the whole medical case, from the first call at sea to the closed claim.">
+<meta property="og:locale" content="en">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="MedShield - Maritime Medical Case Management for Crew Operators">
+<meta name="twitter:description" content="MedShield manages the whole crew medical case - from the first call at sea to the closed claim. Telemedicine, hospital coordination, claims and compliance across India, Singapore and the UAE.">
+<meta name="twitter:image" content="assets/og-card.png">
+<meta name="theme-color" content="#0A2A43">
+
+<!-- The hero poster is the first paint. Preloading it ahead of the stylesheet
+     request means the hero is never an empty navy box, on any connection. -->
+<link rel="preload" as="image" href="assets/videos/hero-poster.jpg" fetchpriority="high">
+
+<link rel="icon" href="assets/favicon-32.png" sizes="32x32">
+<link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<a class="skip-link" href="#main">Skip to content</a>
+
+<!-- Transparent overlay bar. It sits ON the hero video at scroll top with no
+     background or border; past 80px the .is-stuck class fades in a navy blur
+     so links stay legible over the lighter sections below. -->
+<header class="site-header" id="site-header">
+  <div class="shell site-header__inner">
+    <a class="brand" href="#top" aria-label="MedShield - home">
+      <!-- Light variant: the bar is transparent over a dark-graded video at
+           rest, so the light mark is correct in both states. -->
+      <img class="brand__mark" src="assets/logo-mark-light.png" alt="" width="512" height="309" decoding="async">
+      <span class="brand__text">
+        <span class="brand__name">MedShield</span>
+        <span class="brand__eyebrow">Maritime Healthcare &amp; Claims Management</span>
+      </span>
+    </a>
+
+    <button class="nav-toggle" id="nav-toggle" type="button"
+            aria-expanded="false" aria-controls="site-nav" aria-label="Open menu">
+      <span class="nav-toggle__bars" aria-hidden="true"></span>
+    </button>
+
+    <nav class="site-nav" id="site-nav" aria-label="Primary">
+      <!-- Every target below is a real id on this page. Verified in the
+           Definition of Done check - a dead nav link is the specific failure
+           this rebuild exists to correct. -->
+      <a href="#services">Services</a>
+      <a href="#process">How it works</a>
+      <a href="#case-studies">Case studies</a>
+      <a href="#about">About</a>
+      <a class="btn btn--primary btn--sm site-nav__cta" href="#contact">Request a proposal</a>
+    </nav>
+  </div>
+</header>
+<div class="nav-scrim" id="nav-scrim" hidden></div>
+
+<main id="main">
+
+  <!-- 01 - Hero ................................................. -->
+  <section class="hero" id="top">
+
+    <!-- Media layer.
+         Mobile (<=859px) must never fetch the video: the <source> carries
+         media="(min-width: 860px)", so the browser skips it outright and the
+         poster alone paints. preload="metadata" keeps the initial cost to the
+         moov atom rather than the full 2.6MB. The poster is a real frame
+         pulled from this exact encode, so first paint is never empty.
+         hero.js additionally withholds playback under prefers-reduced-motion. -->
+    <div class="hero__media" aria-hidden="true">
+      <video class="hero__video" id="hero-video"
+             poster="assets/videos/hero-poster.jpg"
+             muted loop playsinline autoplay preload="metadata"
+             tabindex="-1" disablepictureinpicture>
+        <!-- data-src, not src: nothing is fetched until hero.js decides.
+             The media query alone would still let a reduced-motion desktop
+             user pull 2.6MB before script could cancel it, so the decision
+             is made once, up front, and only then is the source attached. -->
+        <source data-src="assets/videos/hero.mp4" type="video/mp4" media="(min-width: 860px)">
+      </video>
+      <noscript>
+        <style>.hero__video { background: url(assets/videos/hero-poster.jpg) center/cover no-repeat; }</style>
+      </noscript>
+      <div class="hero__scrim"></div>
+    </div>
+
+    <div class="shell hero__inner">
+
+      <!-- Top-right: intro + primary CTA -->
+      <div class="hero__intro">
+        <p class="eyebrow eyebrow--onDark">Maritime healthcare &amp; claims management</p>
+        <p class="hero__sub">
+          For cruise lines, shipping companies, offshore operators and maritime employers.
+          Telemedicine, hospital coordination, claims and compliance - under one roof,
+          across India, Singapore and the UAE.
+        </p>
+        <div class="hero__actions">
+          <a class="btn btn--primary" href="#contact">Request a proposal</a>
+          <a class="btn btn--ghost" href="#process">See how a case runs</a>
+        </div>
+      </div>
+
+      <!-- Bottom-left: dominant headline.
+           The H1 is ONE uncut sentence. The spans only set the visual break
+           and relative size - remove every span and the sentence still reads
+           exactly as CONTENT.md 01 specifies. -->
+      <div class="hero__headline">
+        <h1 class="hero__title">
+          <span class="hero__title-lead">We manage the whole medical case</span><span class="hero__title-rest"> - from the first call at sea to the closed claim</span>
+        </h1>
+
+        <p class="hero__pill">ISO 45001 certified - first and only in India</p>
+      </div>
+
+      <!-- Bottom rail: stat, rule, service labels.
+           The chips are LABELS, not links: #services is a real id but these
+           three name sub-services that have no anchor of their own yet.
+           A span that looks like a link and does nothing is the failure mode
+           this build is correcting - they become <a> when those ids exist. -->
+      <div class="hero__rail">
+        <p class="hero__stat">1,800+ partner hospitals, clinics &amp; labs</p>
+        <span class="hero__rail-rule" aria-hidden="true"></span>
+        <ul class="hero__chips">
+          <li>Claims Management</li>
+          <li>Telemedicine</li>
+          <li>Medical Welfare Budgeting</li>
+        </ul>
+      </div>
+
+      <p class="hero__offices">
+        <span>Chennai, India - HQ</span>
+        <span>Singapore</span>
+        <span>Dubai, UAE</span>
+      </p>
+    </div>
+  </section>
+
+  <!-- 02 - Proof strip .......................................... -->
+  <section class="proof" id="proof" aria-labelledby="proof-h">
+    <div class="shell">
+      <h2 class="visually-hidden" id="proof-h">MedShield by the numbers</h2>
+
+      <ul class="proof__grid">
+        <li class="proof__item">
+          <span class="proof__figure">45<span class="proof__plus">+</span></span>
+          <span class="proof__label">Locations across India</span>
+        </li>
+        <li class="proof__item">
+          <span class="proof__figure">130<span class="proof__plus">+</span></span>
+          <span class="proof__label">Subject matter experts</span>
+        </li>
+        <li class="proof__item">
+          <span class="proof__figure">1,800<span class="proof__plus">+</span></span>
+          <span class="proof__label">Partner hospitals, clinics, labs &amp; pharmacies</span>
+        </li>
+        <li class="proof__item">
+          <span class="proof__figure proof__figure--text">ISO 45001</span>
+          <span class="proof__label">Certified - first and only in India</span>
+        </li>
+        <li class="proof__item">
+          <span class="proof__figure">3</span>
+          <span class="proof__label">Countries - India, Singapore, UAE</span>
+        </li>
+        <li class="proof__item">
+          <span class="proof__figure">~10</span>
+          <span class="proof__label">Years serving the maritime industry</span>
+        </li>
+      </ul>
+
+      <p class="proof__note">
+        80% medical professionals - specialists and super-specialists - and 20%
+        cross-functional experts.
+      </p>
+    </div>
+  </section>
+
+  <!-- 03 - Positioning band ..................................... -->
+  <section class="positioning" aria-labelledby="positioning-h">
+    <div class="shell">
+      <h2 class="visually-hidden" id="positioning-h">Our position</h2>
+      <ul class="positioning__grid">
+        <li class="claim">
+          <h3 class="claim__title">Global-standards healthcare. Affordable coverage. Unrivalled access.</h3>
+          <p class="claim__body">
+            Accredited providers delivering compassionate care at pre-negotiated
+            rates, through India's largest maritime healthcare network.
+          </p>
+        </li>
+        <li class="claim">
+          <h3 class="claim__title">India's first. Trusted across Asia.</h3>
+          <p class="claim__body">
+            The country's first and only company uniting this range of maritime
+            healthcare expertise under one roof, with offices in Singapore and the UAE.
+          </p>
+        </li>
+        <li class="claim">
+          <h3 class="claim__title">Trust, transparency and lasting loyalty.</h3>
+          <p class="claim__body">
+            Rigorous, unbiased audits. Proactive medical welfare budgeting. Legal
+            support in employee welfare disputes.
+          </p>
+        </li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- 04 - The problem: six doubts .............................. -->
+  <section class="doubts" aria-labelledby="doubts-h">
+    <div class="shell">
+      <header class="section-head">
+        <p class="eyebrow">The problem</p>
+        <h2 class="section-title" id="doubts-h">
+          The six questions that start every medical case at sea
+        </h2>
+      </header>
+
+      <!-- Static 3x2 grid on desktop, single column on mobile. No pinned rail. -->
+      <ol class="doubts__grid">
+        <li class="doubt">
+          <p class="doubt__num">01</p>
+          <h3 class="doubt__title">Who do we call?</h3>
+          <p class="doubt__body">
+            It is 03:00 and the nearest coast station is out of VHF range. No one
+            on board knows which number reaches a doctor.
+          </p>
+        </li>
+        <li class="doubt">
+          <p class="doubt__num">02</p>
+          <h3 class="doubt__title">Is it serious?</h3>
+          <p class="doubt__body">
+            Chest pain, or indigestion after a long watch? Nobody aboard is
+            qualified to tell the difference - and guessing wrong costs hours
+            that matter.
+          </p>
+        </li>
+        <li class="doubt">
+          <p class="doubt__num">03</p>
+          <h3 class="doubt__title">Do we divert?</h3>
+          <p class="doubt__body">
+            A diversion burns fuel, breaks the charter and costs days. Not
+            diverting could cost a life. That call sits with the master, alone,
+            at sea.
+          </p>
+        </li>
+        <li class="doubt">
+          <p class="doubt__num">04</p>
+          <h3 class="doubt__title">Which port?</h3>
+          <p class="doubt__body">
+            The closest harbour is not always the one with a cardiac unit, a
+            surgeon on duty, or clearance to take a foreign crew member ashore.
+          </p>
+        </li>
+        <li class="doubt">
+          <p class="doubt__num">05</p>
+          <h3 class="doubt__title">Are we being overcharged?</h3>
+          <p class="doubt__body">
+            Once a hospital learns an employer is paying, prices move. We have
+            seen consultation fees at three times the market rate and surgery
+            quoted at nearly four.
+          </p>
+        </li>
+        <li class="doubt">
+          <p class="doubt__num">06</p>
+          <h3 class="doubt__title">Who chose this hospital?</h3>
+          <p class="doubt__body">
+            If the referral came from a vendor with a financial relationship
+            rather than a clinical one, recovery takes longer and costs more -
+            and nobody ashore finds out until the invoice arrives.
+          </p>
+        </li>
+      </ol>
+    </div>
+  </section>
+
+  <!-- 05 - Four services ........................................ -->
+  <section class="services" id="services" aria-labelledby="services-h">
+    <div class="shell">
+      <header class="section-head">
+        <p class="eyebrow">Services</p>
+        <h2 class="section-title" id="services-h">What we do</h2>
+      </header>
+
+      <!-- Order is deliberate: claims first. Leading with telemedicine would
+           confirm the visitor's assumption that this is a remote-doctor service. -->
+      <ol class="services__grid">
+        <li class="service" id="claims">
+          <p class="service__num">01</p>
+          <h3 class="service__title">Claims management</h3>
+          <p class="service__get">
+            <span class="service__getLabel">You get:</span>
+            a claim documented from the first hour, so it settles instead of being disputed.
+          </p>
+          <p class="service__body">
+            End-to-end handling from incident documentation and evidence collection
+            through employer negotiation to final settlement. Covers crew injury,
+            illness, and lifestyle and mental health conditions - each handled
+            against maritime law and international compliance standards.
+          </p>
+        </li>
+
+        <li class="service" id="advisory">
+          <p class="service__num">02</p>
+          <h3 class="service__title">Claims advisory &amp; legal</h3>
+          <p class="service__get">
+            <span class="service__getLabel">You get:</span>
+            a defensible position before a case becomes a liability.
+          </p>
+          <p class="service__body">
+            Advisory across medical, disability and life claims. Structured review
+            of the employer's obligations, medical records and documentation;
+            collaborative resolution between crew, employer and agents; and
+            alignment with MLC and ILO standards. Our medico-legal team mediates
+            disputes to fair resolution rather than litigating them.
+          </p>
+        </li>
+
+        <li class="service" id="budgeting">
+          <p class="service__num">03</p>
+          <h3 class="service__title">Medical welfare budgeting</h3>
+          <p class="service__get">
+            <span class="service__getLabel">You get:</span>
+            a crew medical spend you can forecast at budget time and defend at year end.
+          </p>
+          <p class="service__body">
+            Needs assessment across your fleet, a budget designed around preventive
+            care, evacuation contingency and telemedicine costs, then data-driven
+            forecasting to remove financial surprise. Built to satisfy global
+            maritime health regulation.
+          </p>
+        </li>
+
+        <li class="service" id="telemedicine">
+          <p class="service__num">04</p>
+          <h3 class="service__title">Telemedicine</h3>
+          <p class="service__get">
+            <span class="service__getLabel">You get:</span>
+            a doctor on the line before the master has to make a diversion call alone.
+          </p>
+          <p class="service__body">
+            24/7 access to licensed doctors and specialists, supported by video
+            consultation and wearable diagnostics, so vessels avoid unnecessary
+            evacuations and port diversions - the single most expensive outcome
+            of an unmanaged case.
+          </p>
+        </li>
+      </ol>
+
+      <p class="services__also">
+        Also: <strong>Occupational Health &amp; Safety</strong> - maritime safety
+        audits, PEME and vessel-specific audits - and
+        <strong>Medico-Legal Services</strong> for injury claims and regulatory
+        compliance.
+      </p>
+    </div>
+  </section>
+
+  <!-- 06 - How a case runs ...................................... -->
+  <section class="process" id="process" aria-labelledby="process-h">
+    <div class="shell">
+      <header class="section-head">
+        <p class="eyebrow eyebrow--onDark">How a case runs</p>
+        <h2 class="section-title section-title--onDark" id="process-h">
+          One case, eight steps, one point of contact
+        </h2>
+      </header>
+
+      <!-- Alternating stacked layout. No pinned scrub, no horizontal hijack.
+           Images are the previous build's artwork (correct); captions are the
+           corrected ones from CONTENT.md. -->
+      <ol class="process__list">
+        <li class="step">
+          <div class="step__media">
+            <img src="assets/process/1.webp" alt="A seafarer in coveralls sits on deck holding an injured shoulder, beside a first-aid kit." width="900" height="720" loading="lazy" decoding="async">
+          </div>
+          <div class="step__text">
+            <p class="step__num">01</p>
+            <h3 class="step__title">The case opens</h3>
+            <p class="step__body">A seafarer needs medical support. One number, answered at any hour.</p>
+          </div>
+        </li>
+
+        <li class="step">
+          <div class="step__media">
+            <img src="assets/process/2.webp" alt="A case management specialist at a desk, coordinating a case by phone and computer." width="900" height="720" loading="lazy" decoding="async">
+          </div>
+          <div class="step__text">
+            <p class="step__num">02</p>
+            <h3 class="step__title">A dedicated CMS is assigned</h3>
+            <p class="step__body">One named Case Management Specialist becomes the single liaison between cruise line, agent, hospital and patient.</p>
+          </div>
+        </li>
+
+        <li class="step">
+          <div class="step__media">
+            <img src="assets/process/3.webp" alt="Medical specialists reviewing a case together." width="900" height="720" loading="lazy" decoding="async">
+          </div>
+          <div class="step__text">
+            <p class="step__num">03</p>
+            <h3 class="step__title">Our SME panel reviews</h3>
+            <p class="step__body">Specialists assess urgency, complexity and treatment options - so decisions are backed by expertise, not guesswork.</p>
+          </div>
+        </li>
+
+        <li class="step">
+          <div class="step__media">
+            <img src="assets/process/4.webp" alt="A coordinator comparing hospital locations on a world map, with a vessel's route and hospital markers." width="900" height="720" loading="lazy" decoding="async">
+          </div>
+          <div class="step__text">
+            <p class="step__num">04</p>
+            <h3 class="step__title">Hospital selection, scored</h3>
+            <p class="step__body">A multi-parameter index ranks facilities on expertise, success rate, cost, accessibility and NABH / NABL / ISO accreditation.</p>
+          </div>
+        </li>
+
+        <li class="step">
+          <div class="step__media">
+            <img src="assets/process/5.webp" alt="A treatment plan and cost estimate being reviewed and approved." width="900" height="720" loading="lazy" decoding="async">
+          </div>
+          <div class="step__text">
+            <p class="step__num">05</p>
+            <h3 class="step__title">Treatment plan approved</h3>
+            <p class="step__body">Plan, expected outcome and financial estimate agreed with the employer <em>before</em> treatment begins.</p>
+          </div>
+        </li>
+
+        <li class="step">
+          <div class="step__media">
+            <img src="assets/process/6.webp" alt="An international payment being settled directly with the hospital." width="900" height="720" loading="lazy" decoding="async">
+          </div>
+          <div class="step__text">
+            <p class="step__num">06</p>
+            <h3 class="step__title">International payment handled</h3>
+            <p class="step__body">The hospital is paid directly, documented and compliant - no crew member out of pocket, no port agent float.</p>
+          </div>
+        </li>
+
+        <li class="step">
+          <div class="step__media">
+            <img src="assets/process/7.webp" alt="A recovering seafarer in rehabilitation, monitored by a clinician." width="900" height="720" loading="lazy" decoding="async">
+          </div>
+          <div class="step__text">
+            <p class="step__num">07</p>
+            <h3 class="step__title">Recovery monitored</h3>
+            <p class="step__body">Oversight continues through rehabilitation and follow-up, with the employer updated throughout.</p>
+          </div>
+        </li>
+
+        <li class="step">
+          <div class="step__media">
+            <img src="assets/process/8.webp" alt="A fitness-to-work report and case dashboard showing records, approvals and transactions." width="900" height="720" loading="lazy" decoding="async">
+          </div>
+          <div class="step__text">
+            <p class="step__num">08</p>
+            <h3 class="step__title">Fitness report &amp; dashboard</h3>
+            <p class="step__body">A treating doctor's fitness-to-work report, and every record, approval and transaction on one secure dashboard.</p>
+          </div>
+        </li>
+      </ol>
+
+      <p class="process__close">
+        The dashboard means you are never asking us for an update - approvals,
+        payments and reports are already there.
+      </p>
+    </div>
+  </section>
+
+  <!-- 07 - Case studies ......................................... -->
+  <section class="cases" id="case-studies" aria-labelledby="cases-h">
+    <div class="shell">
+      <header class="section-head">
+        <p class="eyebrow">Case studies</p>
+        <h2 class="section-title" id="cases-h">What it looks like in practice</h2>
+        <!-- Both cases are anonymised (no vessel, company or individual named).
+             Written sign-off is still required before publishing - see README. -->
+        <p class="cases__confirm">
+          <span class="confirm">[CONFIRM: client sign-off]</span>
+          Both cases are anonymised, but written clearance and confirmation of the
+          savings figures are required before this section goes live.
+        </p>
+      </header>
+
+      <div class="cases__grid">
+        <article class="case">
+          <h3 class="case__title">A hospital tripled its prices. We brought them back.</h3>
+          <dl class="case__body">
+            <dt>The problem</dt>
+            <dd>Once the hospital learned an employer was covering costs, consultation
+              fees were billed at 3× market rate, pre-habilitation at 2.5×, and
+              surgery quoted at 3.8×.</dd>
+            <dt>What we did</dt>
+            <dd>Negotiated rates back to market using our provider network, moved
+              rehabilitation to independent specialists outside the hospital's
+              margin, and monitored every line to settlement.</dd>
+            <dt>Result</dt>
+            <dd>Surgery reduced from <strong>INR 7.75 lakh to INR 2.55 lakh</strong>.
+              Consultation fees down 65%, rehabilitation down 60%, and the total
+              claim reduced by <strong>over 66%</strong>.</dd>
+          </dl>
+          <p class="case__figure"><span class="case__figureNum">66%</span> total claim reduction</p>
+        </article>
+
+        <article class="case">
+          <h3 class="case__title">The wrong hospital cost 40% more recovery time.</h3>
+          <dl class="case__body">
+            <dt>The problem</dt>
+            <dd>With no provider arrangement in India, an employer relied on a PEME
+              vendor who referred the seafarer to a facility based on a financial
+              relationship rather than clinical fit. Recovery ran 40% longer than
+              expected.</dd>
+            <dt>What we did</dt>
+            <dd>Re-shortlisted providers on our scored index, had our specialists
+              formally review the original treatment records, secured an immediate
+              appointment through a Case Management Specialist, and reported the
+              deficiencies to the employer.</dd>
+            <dt>Result</dt>
+            <dd>Approximately <strong>INR 3.5 lakh saved</strong>, recovery back on
+              track, and the seafarer spared further complications.</dd>
+          </dl>
+          <p class="case__figure"><span class="case__figureNum">₹3.5L</span> saved on one case</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- 08 - Why MedShield ........................................ -->
+  <section class="why" aria-labelledby="why-h">
+    <div class="shell">
+      <header class="section-head">
+        <p class="eyebrow">Why MedShield</p>
+        <h2 class="section-title" id="why-h">What changes when one partner owns the case</h2>
+      </header>
+
+      <ul class="why__list">
+        <li class="why__item">
+          <h3 class="why__title">Lower medical spend</h3>
+          <p>Treatment costed and approved against pre-negotiated rates before delivery.</p>
+        </li>
+        <li class="why__item">
+          <h3 class="why__title">Fewer disputed claims</h3>
+          <p>The file is complete from hour one, not reconstructed at settlement.</p>
+        </li>
+        <li class="why__item">
+          <h3 class="why__title">Faster decisions</h3>
+          <p>A doctor and a case manager on the same call.</p>
+        </li>
+        <li class="why__item">
+          <h3 class="why__title">Regulatory confidence</h3>
+          <p>MLC and ILO obligations documented as the case runs.</p>
+        </li>
+        <li class="why__item">
+          <h3 class="why__title">One record per seafarer</h3>
+          <p>Across vessels, ports and years.</p>
+        </li>
+        <li class="why__item">
+          <h3 class="why__title">Unbiased provider choice</h3>
+          <p>Hospitals scored on merit, never on referral relationships.</p>
+        </li>
+      </ul>
+
+      <!-- Deliberately a distinct block: this paragraph tells a superintendent he
+           does not have to displace an incumbent vendor to hire MedShield - the
+           most common procurement objection in this category. -->
+      <aside class="notus">
+        <h3 class="notus__title">What we are not.</h3>
+        <p class="notus__body">
+          Not a hospital, a clinic, a pharmacy or an insurer. Not a cruise booking
+          company, a medical tourism agency or a crew recruiter. We are the
+          operations partner that manages the case between all of them.
+        </p>
+      </aside>
+    </div>
+  </section>
+
+  <!-- 09 - The people ........................................... -->
+  <section class="people" id="about" aria-labelledby="people-h">
+    <div class="shell">
+      <header class="section-head">
+        <p class="eyebrow">The people</p>
+        <h2 class="section-title" id="people-h">Who handles your case</h2>
+      </header>
+
+      <div class="people__grid">
+        <article class="founder">
+          <p class="founder__role">Founder</p>
+          <h3 class="founder__name">Dr. Desikan Setlur</h3>
+          <p class="founder__cred">PhD in Maritime Occupational Health &amp; Safety, Swansea University</p>
+          <p class="founder__body">
+            Two decades in maritime healthcare, with deep operational experience in
+            medical evacuation and port operations across India and Asia, and
+            long-standing work alongside global insurers, TPAs and maritime agents.
+          </p>
+        </article>
+
+        <!-- Nine teams, not nine individuals. The ten individual doctor bios in the
+             client folder belong on an inner team page: on the homepage they cost
+             scroll and date quickly as people move. -->
+        <div class="panel">
+          <h3 class="panel__title">The SME panel</h3>
+          <p class="panel__sub">130+ experts, nine disciplines</p>
+          <ul class="panel__list">
+            <li>Maritime medical specialists and super-specialists</li>
+            <li>Telemedicine</li>
+            <li>Healthcare and claims</li>
+            <li>Clinical findings correlation</li>
+            <li>Treatment plan analysis</li>
+            <li>Global pharmacology</li>
+            <li>Occupational preventive health</li>
+            <li>Medico-legal and arbitration</li>
+            <li>Technology, 24/7</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 10 - Closing CTA band ..................................... -->
+  <section class="cta-band" aria-labelledby="cta-h">
+    <div class="shell cta-band__inner">
+      <div>
+        <h2 class="cta-band__title" id="cta-h">Your next medical case is already at sea</h2>
+        <p class="cta-band__sub">
+          Send us your fleet profile and we will come back with a coverage proposal
+          and an indicative annual medical welfare budget.
+        </p>
+      </div>
+      <div class="cta-band__actions">
+        <a class="btn btn--primary" href="#contact">Request a proposal</a>
+        <a class="btn btn--ghost" href="#contact">Talk to a case manager</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- 11 - Contact + form ....................................... -->
+  <section class="contact" id="contact" aria-labelledby="contact-h">
+    <div class="shell contact__inner">
+
+      <div class="contact__intro">
+        <p class="eyebrow">Request a proposal</p>
+        <h2 class="contact__title" id="contact-h">Your next medical case is already at sea</h2>
+        <p class="contact__lede">
+          Send us your fleet profile and we will come back with a coverage proposal
+          and an indicative annual medical welfare budget.
+        </p>
+
+        <aside class="emergency" aria-labelledby="emergency-h">
+          <h3 class="emergency__title" id="emergency-h">Medical emergency at sea right now?</h3>
+          <p class="emergency__body">
+            Do not use this form. Call
+            <strong class="confirm">[CONFIRM: 24/7 number]</strong>
+            - answered by a coordinator, any hour.
+          </p>
+          <p class="emergency__note">
+            This number is not yet published. It must ring a monitored line before launch.
+          </p>
+        </aside>
+      </div>
+
+      <div class="contact__formwrap">
+
+        <form class="form" id="proposal-form" novalidate>
+          <p class="form__intro">
+            Seven fields. A case manager replies within one business day.
+          </p>
+
+          <div class="field">
+            <label for="f-name">Name</label>
+            <input type="text" id="f-name" name="name" autocomplete="name" required
+                   aria-describedby="e-name">
+            <p class="field__error" id="e-name" hidden></p>
+          </div>
+
+          <div class="field">
+            <label for="f-company">Company</label>
+            <input type="text" id="f-company" name="company" autocomplete="organization" required
+                   aria-describedby="e-company">
+            <p class="field__error" id="e-company" hidden></p>
+          </div>
+
+          <div class="field">
+            <label for="f-email">Work email</label>
+            <input type="email" id="f-email" name="email" autocomplete="email" required
+                   aria-describedby="e-email">
+            <p class="field__error" id="e-email" hidden></p>
+          </div>
+
+          <div class="field-row">
+            <div class="field">
+              <label for="f-fleet">Fleet size</label>
+              <select id="f-fleet" name="fleet" required aria-describedby="e-fleet">
+                <option value="">Select…</option>
+                <option>1–5</option>
+                <option>6–20</option>
+                <option>21–50</option>
+                <option>50+</option>
+              </select>
+              <p class="field__error" id="e-fleet" hidden></p>
+            </div>
+
+            <div class="field">
+              <label for="f-vessel">Vessel type</label>
+              <select id="f-vessel" name="vessel" required aria-describedby="e-vessel">
+                <option value="">Select…</option>
+                <option>Cruise</option>
+                <option>Cargo</option>
+                <option>Offshore</option>
+                <option>Yacht</option>
+                <option>Mixed</option>
+              </select>
+              <p class="field__error" id="e-vessel" hidden></p>
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="f-current">Current arrangement <span class="field__opt">(optional)</span></label>
+            <select id="f-current" name="current">
+              <option value="">Select…</option>
+              <option>In-house</option>
+              <option>Another provider</option>
+              <option>None yet</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="f-message">Message <span class="field__opt">(optional)</span></label>
+            <textarea id="f-message" name="message" rows="4"></textarea>
+          </div>
+
+          <!-- Honeypot: not a CAPTCHA. Hidden from users and assistive tech. -->
+          <div class="hp" aria-hidden="true">
+            <label for="f-role">Do not fill this in</label>
+            <input type="text" id="f-role" name="role" tabindex="-1" autocomplete="off">
+          </div>
+
+          <button class="btn btn--primary btn--block" type="submit">Request a proposal</button>
+
+          <p class="form__foot">
+            We use these details to prepare your proposal. No newsletter, no list.
+          </p>
+        </form>
+
+        <!-- Success state replaces the form in place. No redirect. -->
+        <div class="success" id="form-success" hidden tabindex="-1" role="status">
+          <p class="success__mark" aria-hidden="true">✓</p>
+          <h3 class="success__title">Received.</h3>
+          <p class="success__body">A case manager will reply within one business day.</p>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="site-footer">
+  <div class="shell">
+
+    <div class="site-footer__top">
+      <div class="site-footer__brand">
+        <p class="site-footer__name">MEDSHIELD</p>
+        <p class="site-footer__eyebrow">Maritime Healthcare &amp; Claims Management</p>
+        <p class="site-footer__offices">
+          <strong>Chennai, India</strong> - HQ &middot; <strong>Singapore</strong> &middot; <strong>Dubai, UAE</strong>
+        </p>
+      </div>
+
+      <nav class="site-footer__nav" aria-label="Footer">
+        <!-- Every target is a real id on this page. Careers has no page yet and
+             is deliberately omitted rather than linked to nothing. -->
+        <div class="site-footer__col">
+          <h2 class="site-footer__h">Page</h2>
+          <ul>
+            <li><a href="#top">Home</a></li>
+            <li><a href="#about">About</a></li>
+            <li><a href="#services">Services</a></li>
+            <li><a href="#case-studies">Case studies</a></li>
+            <li><a href="#process">How it works</a></li>
+          </ul>
+        </div>
+        <div class="site-footer__col">
+          <h2 class="site-footer__h">Services</h2>
+          <ul>
+            <li><a href="#claims">Claims management</a></li>
+            <li><a href="#advisory">Claims advisory &amp; legal</a></li>
+            <li><a href="#budgeting">Medical welfare budgeting</a></li>
+            <li><a href="#telemedicine">Telemedicine</a></li>
+          </ul>
+        </div>
+        <div class="site-footer__col">
+          <h2 class="site-footer__h">Get in touch</h2>
+          <ul>
+            <li><a href="#contact">Request a proposal</a></li>
+            <li><span class="confirm">[CONFIRM: email]</span></li>
+            <li><span class="confirm">[CONFIRM: phone]</span></li>
+          </ul>
+        </div>
+      </nav>
+    </div>
+
+    <div class="site-footer__legal">
+      <p>© 2026 Medshield. All rights reserved.</p>
+      <p class="site-footer__pending">
+        Privacy Policy and Terms of Service pending - not linked until the pages exist.
+      </p>
+    </div>
+
+  </div>
+</footer>
+
+<script>
+(function () {
+  'use strict';
+
+  var form    = document.getElementById('proposal-form');
+  var success = document.getElementById('form-success');
+  if (!form || !success) return;
+
+  // Messages name the fix, never "invalid input".
+  var MESSAGES = {
+    name:    'Enter your name',
+    company: 'Enter your company name',
+    email:   'Enter a work email address',
+    fleet:   'Choose a fleet size',
+    vessel:  'Choose a vessel type'
+  };
+
+  function errorNode(field) {
+    return document.getElementById('e-' + field);
+  }
+
+  function showError(input, message) {
+    var node = errorNode(input.name);
+    input.setAttribute('aria-invalid', 'true');
+    if (node) {
+      node.textContent = message;
+      node.hidden = false;
+    }
+  }
+
+  function clearError(input) {
+    var node = errorNode(input.name);
+    input.removeAttribute('aria-invalid');
+    if (node) {
+      node.textContent = '';
+      node.hidden = true;
+    }
+  }
+
+  function validate(input) {
+    var value = (input.value || '').trim();
+    if (!value) return MESSAGES[input.name] || 'This field is required';
+    if (input.name === 'email' && !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(value)) {
+      return MESSAGES.email;
+    }
+    return null;
+  }
+
+  var required = Array.prototype.slice.call(
+    form.querySelectorAll('[required]')
+  );
+
+  // Re-validate on blur only once a field has been touched, so the form never
+  // shouts at someone who is still typing.
+  required.forEach(function (input) {
+    input.addEventListener('blur', function () {
+      var message = validate(input);
+      if (message) { showError(input, message); } else { clearError(input); }
+    });
+    input.addEventListener('input',  function () { clearError(input); });
+    input.addEventListener('change', function () { clearError(input); });
+  });
+
+  form.addEventListener('submit', function (event) {
+    event.preventDefault();
+
+    var firstBad = null;
+
+    required.forEach(function (input) {
+      var message = validate(input);
+      if (message) {
+        showError(input, message);
+        if (!firstBad) firstBad = input;
+      } else {
+        clearError(input);
+      }
+    });
+
+    if (firstBad) {
+      firstBad.focus();
+      return;
+    }
+
+    // Honeypot: silently accept, never submit. A bot gets the success state
+    // and no signal that it was caught.
+    var trap = form.querySelector('[name="role"]');
+    var isBot = trap && trap.value !== '';
+
+    if (!isBot) {
+      // TODO: wire to endpoint - POST new FormData(form) to the MedShield
+      // inbox / CRM. Until then nothing leaves the browser.
+    }
+
+    form.hidden = true;
+    success.hidden = false;
+    success.focus();
+  });
+})();
+</script>
+
+<script src="js/hero.js" defer></script>
+
+</body>
+</html>
