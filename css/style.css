@@ -398,20 +398,20 @@ textarea:focus-visible,
 .hero {
   position: relative;
   isolation: isolate;
-  /* Sizes to content — never locked to 100vh, so nothing is ever cut off on
-     a short or landscape phone. min-height is a floor, not a cage: if the
-     content is taller the section simply grows.
-     The floor tracks the viewport rather than a fixed 900px: on a 500px-tall
-     landscape phone a tall floor would push the H1 below the fold, which is
-     the headline's whole job. svh (with a vh fallback for older engines)
-     avoids the mobile URL-bar resize jump. */
-  min-height: 34rem;
-  min-height: min(94vh, 900px);
-  min-height: min(94svh, 900px);
+  /* Full viewport, as the reference layout does. Still min-height and not a
+     locked height: if content ever exceeds the viewport (long copy, large
+     text zoom, a short landscape phone) the section grows rather than
+     clipping. svh avoids the mobile URL-bar resize jump; vh is the fallback
+     for engines without it. */
+  min-height: 100vh;
+  min-height: 100svh;
   display: flex;
   align-items: stretch;
   /* Clears the fixed transparent header. */
-  padding-block: calc(4.5rem + var(--s-6)) clamp(2rem, 1rem + 3vw, 3.25rem);
+  /* Bottom padding is deliberately small: the headline and rail are anchored
+     to the bottom edge, and a generous gutter there reads as the content
+     floating rather than sitting on the frame. */
+  padding-block: calc(4.5rem + var(--s-6)) var(--s-5);
   overflow: hidden;
   color: var(--ink-onDark);
 
@@ -449,12 +449,15 @@ textarea:focus-visible,
 
    Worst-case measured ratios (brightest pixel per region, all 192 frames,
    scrim composited in paint order):
-     intro copy  #C6D4E0 on #3D4E5C  ->  5.68:1  (AA body  needs 4.5)
-     headline    #FFFFFF on #1C4B59  ->  9.59:1  (AA large needs 3.0)
-     trust pill  #FFFFFF on #073742  -> 12.81:1
-     rail        #C6D4E0 on #09303C  ->  9.28:1
-     offices     #C6D4E0 on #072834  -> 10.18:1
-     nav links   #C6D4E0 on #243948  ->  7.89:1
+     eyebrow 11px  #4FD5CE  ->  6.93:1   (AA body  needs 4.5)
+     intro   15px  #C6D4E0  ->  6.07:1
+     headline 58px #FFFFFF  ->  8.41:1   (AA large needs 3.0)
+     h1 rest 21px  #C6D4E0  ->  6.71:1
+     pill    13px  #FFFFFF  ->  6.03:1
+     stat    13px  #FFFFFF  -> 13.26:1
+     chip    12px  #FFFFFF  ->  8.02:1
+     offices 14px  #C6D4E0  -> 10.29:1
+     nav     14px  #C6D4E0  -> 10.16:1
    Re-run the measurement if the video is ever replaced. Do not assume. */
 .hero__scrim {
   position: absolute;
@@ -472,32 +475,51 @@ textarea:focus-visible,
 
 /* --- Hero layout --------------------------------------------------------- */
 
-/* Edge-anchored on desktop: intro top-right, headline bottom-left, rail
-   along the bottom. A single column on mobile — see the query below. */
-.hero__inner {
+/* Edge-anchored on desktop: intro hard to the top-right, headline hard to
+   the bottom-left, rail along the bottom.
+
+   The hero deliberately opts OUT of .shell's 1200px centred container: at
+   1440px that container leaves ~120px of dead margin either side, which
+   pulls content away from the frame edge and breaks the reference layout.
+   Here the grid spans the full viewport and only a modest gutter holds text
+   off the very edge. */
+.hero .hero__inner {
   width: 100%;
+  max-width: none;
+  padding-inline: clamp(1.15rem, 0.6rem + 2.4vw, 3.25rem);
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 26rem);
-  grid-template-rows: auto 1fr auto auto auto;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 30rem);
+  /* The 1fr slack row sits directly under the intro, so ALL leftover height
+     collects there and the headline is driven down until it rests just above
+     the rail — the reference's bottom-left anchoring. Putting the slack
+     anywhere below the headline would instead leave a gap under it. */
+  grid-template-rows: auto 1fr auto auto;
   grid-template-areas:
     ".        intro"
     ".        ."
-    "headline headline"
-    "rail     rail"
-    "offices  offices";
-  gap: var(--s-6) var(--s-6);
+    "headline ."
+    "rail     rail";
+  /* The 1fr spacer row absorbs all slack, which drives the headline and rail
+     down to the bottom edge together. Row gap stays tight so the headline
+     block sits directly on top of the rail rather than floating above it. */
+  row-gap: var(--s-3);
+  column-gap: var(--s-6);
   align-items: start;
 }
 
-.hero__intro   { grid-area: intro; }
+.hero__intro   { grid-area: intro; justify-self: end; }
 .hero__headline{ grid-area: headline; align-self: end; }
 .hero__rail    { grid-area: rail; }
-.hero__offices { grid-area: offices; }
 
+/* Hero type runs a notch tighter than the global scale. The reference keeps
+   the headline dominant but sets everything around it small and quiet, so
+   these are local overrides — the site-wide --t-* tokens are unchanged,
+   since sections 02-10 are tuned against them. */
 .hero__title {
-  font-size: var(--t-hero);
+  font-size: clamp(2rem, 1.15rem + 3.1vw, 3.6rem);
   font-weight: 700;
-  letter-spacing: -0.015em;
+  line-height: 1.04;
+  letter-spacing: -0.02em;
   text-wrap: balance;
   margin-bottom: var(--s-5);
   max-width: 20ch;
@@ -506,67 +528,115 @@ textarea:focus-visible,
 /* The two spans are a visual split only. The H1 sentence is uncut in the DOM;
    the lead clause simply sets larger than the trailing one. */
 .hero__title-lead { display: block; }
+/* The trailing clause is inline-block so the trust pill can sit alongside it
+   on the same visual line, the way the reference pairs headline and pill.
+   The H1 sentence itself is still uncut in the DOM. */
 .hero__title-rest {
-  display: block;
-  font-size: 0.44em;
-  font-weight: 600;
+  display: inline-block;
+  font-size: 0.36em;
+  font-weight: 500;
   letter-spacing: 0.005em;
-  line-height: 1.35;
+  line-height: 1.4;
   color: var(--ink-onDark-soft);
-  max-width: 34ch;
-  margin-top: var(--s-4);
+  max-width: 26ch;
+  margin-top: var(--s-3);
+  vertical-align: middle;
 }
 
+/* Headline block: title, then pill and offices beneath it. */
+.hero__headline {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--s-3);
+}
+
+/* Desktop pairs the pill with the trailing headline clause on one line, as
+   the reference does. The H1's last span is inline-block, so making the
+/* Desktop: the trailing clause and the trust pill share one line, as the
+   reference pairs them. .hero__headline-row is a plain flex row — the clause
+   sets its own width above it, and the pill simply sits alongside on the
+   line beneath, wrapping only if the copy genuinely outgrows the column. */
+@media (min-width: 1100px) {
+  .hero__headline-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--s-3) var(--s-5);
+  }
+  .hero__offices { margin-left: var(--s-2); }
+}
+
+/* Intro copy: small and calm, as in the reference's top-right block. */
 .hero__sub {
-  font-size: var(--t-lede);
-  line-height: 1.55;
+  font-size: clamp(0.875rem, 0.83rem + 0.16vw, 0.95rem);
+  line-height: 1.6;
   color: var(--ink-onDark-soft);
-  margin-bottom: var(--s-6);
+  margin-bottom: var(--s-5);
 }
 
+/* Compact CTAs — the reference's button is a small pill, not a slab.
+   Still 44px min-height: a thumb target on a moving vessel is a hard floor,
+   and shrinking below it would fail WCAG 2.5.5 regardless of the reference. */
 .hero__actions {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--s-4);
+  gap: var(--s-3);
+}
+.hero__actions .btn {
+  font-size: 0.875rem;
+  padding: 0.7rem 1.25rem;
+  min-height: 44px;
+  border-radius: 999px;
+}
+
+/* The eyebrow sits above the intro block, smaller and wider-tracked. */
+.hero__intro .eyebrow {
+  font-size: 0.6875rem;
+  letter-spacing: 0.18em;
+  margin-bottom: var(--s-3);
 }
 
 /* Trust pill. Text only — no avatars, no client faces or logos: the brief is
    explicit that we hold no permission for them. */
 .hero__pill {
   display: inline-block;
-  font-size: var(--t-small);
+  font-size: 0.8125rem;
   font-weight: 600;
   letter-spacing: 0.01em;
   color: #fff;
-  background: rgba(255, 255, 255, 0.12);
-  border: 1px solid rgba(255, 255, 255, 0.28);
+  /* A translucent WHITE fill lightens the ground under it — measured at
+     4.35:1 over the video's bright wake, i.e. failing. The fill is navy so
+     it darkens instead, and the ratio holds wherever the pill lands. */
+  background: rgba(8, 28, 44, 0.62);
+  border: 1px solid rgba(255, 255, 255, 0.3);
   border-radius: 999px;
-  padding: 0.5rem 1.05rem;
+  padding: 0.45rem 0.95rem;
 }
 @supports (backdrop-filter: blur(6px)) {
   .hero__pill { backdrop-filter: blur(6px); }
 }
 
-/* Bottom rail: stat / rule / service labels. */
+/* Bottom rail: stat at the left edge, service labels at the right.
+   space-between holds the two ends apart now that the connecting rule is
+   gone; they stack only if the row genuinely runs out of width. */
 .hero__rail {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: var(--s-4);
   flex-wrap: wrap;
   padding-top: var(--s-5);
 }
 
 .hero__stat {
-  font-size: var(--t-small);
+  font-size: 0.8125rem;
   font-weight: 600;
+  line-height: 1.35;
   color: #fff;
-}
-
-.hero__rail-rule {
-  flex: 1 1 3rem;
-  height: 1px;
-  min-width: 2rem;
-  background: rgba(255, 255, 255, 0.28);
+  /* Two lines at most — a three-line stat reads as a paragraph, not a figure. */
+  max-width: 24ch;
+  flex: 0 0 auto;
 }
 
 .hero__chips {
@@ -581,23 +651,25 @@ textarea:focus-visible,
   font-size: var(--t-micro);
   font-weight: 600;
   letter-spacing: 0.04em;
-  color: var(--ink-onDark-soft);
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  /* White, not the softened ink: at 12px over the wake the soft tone
+     measured 3.95:1. Navy fill + white label puts this well clear. */
+  color: #fff;
+  background: rgba(8, 28, 44, 0.62);
+  border: 1px solid rgba(255, 255, 255, 0.22);
   border-radius: 999px;
   padding: 0.4rem 0.85rem;
   white-space: nowrap;
 }
 
+/* Small and low-contrast, tucked under the headline. No top rule: it sits
+   inside the headline block now, not as a full-width footer strip. */
 .hero__offices {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--s-2) var(--s-5);
-  font-size: var(--t-small);
-  letter-spacing: 0.03em;
+  gap: var(--s-2) var(--s-4);
+  font-size: 0.75rem;
+  letter-spacing: 0.04em;
   color: var(--ink-onDark-soft);
-  padding-top: var(--s-5);
-  border-top: 1px solid rgba(255, 255, 255, 0.16);
 }
 .hero__offices span { position: relative; }
 .hero__offices span + span::before {
@@ -617,23 +689,28 @@ textarea:focus-visible,
    order is untouched. */
 @media (max-width: 859px) {
   .hero {
-    min-height: 0;
-    padding-block: calc(4.5rem + var(--s-5)) var(--s-7);
+    /* Full viewport here too. Content that outgrows it still pushes the
+       section taller rather than being cut. */
+    min-height: 100vh;
+    min-height: 100svh;
+    padding-block: calc(4.5rem + var(--s-4)) var(--s-5);
   }
 
-  .hero__inner {
+  .hero .hero__inner {
     display: flex;
     flex-direction: column;
     align-items: flex-start;
-    gap: var(--s-6);
+    /* Fills the now-full-height hero instead of bunching at the top. */
+    justify-content: center;
+    gap: var(--s-4);
   }
 
-  /* Brief order: headline, intro, CTA, trust pill. The pill lives inside
-     .hero__headline in the DOM, so on mobile that block becomes its own
-     flex column and the pill is pushed to the end of the hero with a large
-     order value — markup unchanged, reading order correct. */
-  .hero__headline {
-    order: 1;
+  /* Brief order: headline, intro, CTA, trust pill. The pill and offices are
+     nested inside .hero__headline > .hero__headline-row in the DOM, so both
+     wrappers dissolve with display:contents and every item orders directly
+     against the hero column. Markup unchanged, reading order correct. */
+  .hero__headline,
+  .hero__headline-row {
     display: contents;
   }
   .hero__title   { order: 1; }
@@ -662,24 +739,29 @@ textarea:focus-visible,
 /* Short and wide — landscape phones, small laptops. The headline is the
    point of the hero, so on a shallow viewport the spacing gives way before
    the H1 does: the floor is dropped and the vertical rhythm compressed so
-   the headline stays in view rather than being pushed under the fold. */
-@media (min-width: 860px) and (max-height: 820px) {
+   the headline stays in view rather than being pushed under the fold.
+
+   560px, not 820px: this side-by-side fallback abandons the bottom-anchored
+   reference layout, so it must fire only for genuinely shallow viewports
+   (landscape phones), never for an ordinary laptop or a scaled display at
+   ~600px CSS height — those keep the full bottom-left anchoring. */
+@media (min-width: 860px) and (max-height: 560px) {
   .hero {
-    min-height: 0;
-    padding-block: calc(4.5rem + var(--s-4)) var(--s-5);
+    /* Just clears the 4.5rem header — no decorative breathing room to spare
+       when the whole viewport is 500px tall. */
+    padding-block: 5rem var(--s-4);
   }
-  .hero__inner {
+  .hero .hero__inner {
     /* Stacking intro above headline costs the intro's full height (~340px)
        before the H1 even starts — on a shallow viewport that alone buries
        it. So the two share one row here: headline left, intro right,
        bottom-aligned. Same DOM, same reading order, no vertical stacking
        tax. */
-    grid-template-rows: auto auto auto;
+    grid-template-rows: auto auto;
     grid-template-areas:
       "headline intro"
-      "rail     rail"
-      "offices  offices";
-    row-gap: var(--s-4);
+      "rail     rail";
+    row-gap: var(--s-3);
     column-gap: var(--s-7);
     align-items: end;
   }
@@ -687,12 +769,33 @@ textarea:focus-visible,
   .hero__intro    { align-self: end; }
   .hero__intro .hero__sub { margin-bottom: var(--s-4); }
   .hero__title { margin-bottom: var(--s-3); }
+
+  /* No room to pair pill with the headline on a shallow screen — stack it. */
+  .hero__headline {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--s-3);
+  }
+  .hero__pill { align-self: flex-start; }
+}
+
+/* Between ~560px and ~760px tall (scaled laptops) the bottom-anchored layout
+   still applies, but the generous top padding would push it past the fold.
+   Trim the gutters rather than abandoning the layout. */
+@media (min-width: 860px) and (min-height: 561px) and (max-height: 760px) {
+  .hero {
+    padding-block: calc(4.5rem + var(--s-2)) var(--s-3);
+  }
+  .hero .hero__inner { row-gap: var(--s-2); }
+  .hero__intro .hero__sub { margin-bottom: var(--s-3); }
+  .hero__intro .eyebrow { margin-bottom: var(--s-2); }
+  .hero__title { margin-bottom: var(--s-2); }
 }
 
 /* Shallower still: drop the rail before the headline gives way. */
-@media (min-width: 860px) and (max-height: 620px) {
+@media (min-width: 860px) and (max-height: 480px) {
   .hero__rail { display: none; }
-  .hero__inner { row-gap: var(--s-3); }
+  .hero .hero__inner { row-gap: var(--s-3); }
 }
 
 /* --- 02 Proof strip ----------------------------------------------------- */

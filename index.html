@@ -122,7 +122,18 @@
           <span class="hero__title-lead">We manage the whole medical case</span><span class="hero__title-rest"> - from the first call at sea to the closed claim</span>
         </h1>
 
-        <p class="hero__pill">ISO 45001 certified - first and only in India</p>
+        <!-- The pill sits beside the headline's trailing clause on desktop,
+             as the reference places its trust pill. The H1 above is still one
+             uncut sentence; this row only pairs the pill with it visually. -->
+        <div class="hero__headline-row">
+          <p class="hero__pill">ISO 45001 certified - first and only in India</p>
+
+          <p class="hero__offices">
+            <span>Chennai, India - HQ</span>
+            <span>Singapore</span>
+            <span>Dubai, UAE</span>
+          </p>
+        </div>
       </div>
 
       <!-- Bottom rail: stat, rule, service labels.
@@ -132,19 +143,12 @@
            this build is correcting - they become <a> when those ids exist. -->
       <div class="hero__rail">
         <p class="hero__stat">1,800+ partner hospitals, clinics &amp; labs</p>
-        <span class="hero__rail-rule" aria-hidden="true"></span>
         <ul class="hero__chips">
           <li>Claims Management</li>
           <li>Telemedicine</li>
           <li>Medical Welfare Budgeting</li>
         </ul>
       </div>
-
-      <p class="hero__offices">
-        <span>Chennai, India - HQ</span>
-        <span>Singapore</span>
-        <span>Dubai, UAE</span>
-      </p>
     </div>
   </section>
 

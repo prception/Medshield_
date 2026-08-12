@@ -6,6 +6,39 @@ not here** — see the `[CONFIRM]` rules in `BRIEF.md`.
 
 ---
 
+## Claims discipline — read before editing any section
+
+This category is contested. Several established operators offer overlapping
+services, some at far greater scale. That fact sets three hard rules for this
+page:
+
+**1. No absolute superlatives. Ever.**
+Never write "no company in the world has this", "the only", "unrivalled",
+"unmatched" or any equivalent. An absolute claim is trivially disprovable, and
+one disproved claim discredits every other statement on the page — including
+the true ones. This rule has no exceptions and is not a matter of voice.
+
+**2. Size comparisons are a losing frame.**
+Competitors publish provider counts an order of magnitude above ours. Do not
+invite the comparison: network size is infrastructure, not the differentiator.
+Lead with independent clinical decision-making, which is defensible.
+
+**3. Specific and checkable beats big and vague.**
+"ISO 45001 certified — first and only in India" is a good claim: narrow,
+sourced, verifiable. "India's largest maritime healthcare network" is a bad
+one: broad, contested, unsourced. Prefer the first shape.
+
+**The defensible positioning line**, to be used in place of any superlative:
+
+> An India-first model where an independent specialist medical team sits above
+> a verified treatment network — standardising clinical decisions, provider
+> selection, treatment monitoring and cost control for seafarers.
+
+*Note: competitor names are recorded in the internal analysis only. **Do not
+put any competitor name on the page**, in copy, comments or markup.*
+
+---
+
 ## Metadata
 
 ```
@@ -42,65 +75,128 @@ one roof, across India, Singapore and the UAE.
 Six figures, one horizontal strip, directly under the fold. Static text — no
 counting animations.
 
+**Order is deliberate and must not be re-sorted by size.** Certification and
+the specialist panel lead; network size is demoted to fourth. We do not win a
+network-size comparison in this market and should not invite one — we win on
+independent expertise, which is what the first two figures assert.
+
 | Figure | Label |
 |---|---|
-| **45+** | Locations across India |
-| **130+** | Subject matter experts |
-| **1,800+** | Partner hospitals, clinics, labs & pharmacies |
 | **ISO 45001** | Certified — first and only in India |
-| **3 countries** | India, Singapore, UAE |
+| **130+** | Specialists and super-specialists on our medical panel |
 | **~10 years** | Serving the maritime industry |
+| **1,800+** | Partner hospitals, clinics, labs & pharmacies |
+| **45+** | Locations across India |
+| **3 countries** | India, Singapore, UAE |
 
 Supporting line: *80% medical professionals — specialists and
 super-specialists — and 20% cross-functional experts.*
 
+⚠ `[CONFIRM]` — **network size figure conflicts across client sources.** The
+client PDF says **1,800+ partner hospitals**; a later client note says
+**3,500+ treatment providers across India**. These cannot both be published.
+Until the client resolves it in writing, **ship the lower figure (1,800+)** —
+an understated number that survives scrutiny costs less than an inflated one
+that does not. Do not average them, and do not publish both.
+
 > *Source: About Us — "MedShield's Unmatched Advantages". Every figure is the
-> client's own. "1,800+ partners" and "ISO 45001, first in India" are the two
-> strongest trust signals the company owns.*
+> client's own. ISO 45001 and the 130+ specialist panel are the two trust
+> signals that are both defensible and differentiating; network size is
+> neither, so it no longer leads.*
 
 ---
 
 ## 03 — Positioning band
 
-Three claims, near-verbatim from the client's own ticker copy.
+> **The two-layer model — the organising idea for this whole page.**
+> This is the spine. Sections 03, 05 and 09 each express one face of it, and
+> nothing on the page should contradict it.
+>
+> **Layer 1 — a verified treatment network across India.**
+> Accredited providers, pre-negotiated rates, checked before they are used.
+>
+> **Layer 2 — an independent central medical team** of specialists and
+> super-specialists who decide what should actually happen: assessing
+> treatment proposals, selecting the provider, setting the protocol and
+> monitoring the case.
+>
+> The pitch is **expert medical decision-making + independent network +
+> coordination**. It is *not* "we have a big network" — that is a comparison
+> we lose, and Layer 1 alone is a commodity. Layer 2 is the product.
 
-**Global-standards healthcare. Affordable coverage. Unrivalled access.**
+Three claims. The first two are rewritten to carry the two-layer model and to
+remove unverifiable superlatives; the third is near-verbatim client ticker copy.
+
+**An independent medical team above a verified network.**
+An India-first model where an independent specialist medical team sits above a
+verified treatment network — standardising clinical decisions, provider
+selection, treatment monitoring and cost control for seafarers.
+
+**Global-standards healthcare. Affordable coverage.**
 Accredited providers delivering compassionate care at pre-negotiated rates,
-through India's largest maritime healthcare network.
-
-**India's first. Trusted across Asia.**
-The country's first and only company uniting this range of maritime healthcare
-expertise under one roof, with offices in Singapore and the UAE.
+through an established maritime healthcare network across India, with offices
+in Singapore and the UAE.
 
 **Trust, transparency and lasting loyalty.**
 Rigorous, unbiased audits. Proactive medical welfare budgeting. Legal support
 in employee welfare disputes.
 
-> *Source: Website Ticker.docx — already written as public-facing copy.*
+⚠ `[CONFIRM]` — **"India's largest maritime healthcare network"** has been
+removed from this band pending verification. It is likely to be disputed by
+competitors and we hold no evidence for it. Do not reinstate without a source
+the client can defend publicly. "An established maritime healthcare network
+across India" is the interim wording.
+
+⚠ `[CONFIRM]` — **"ISO 45001 — first and only in India"** is specific and
+externally checkable, unlike the claim above. Keep it, but verify the
+certification and the "first and only" status before launch.
+
+> *Source: Website Ticker.docx, amended. The removed phrases — "Unrivalled
+> access", "India's largest maritime healthcare network", "the country's first
+> and only company uniting this range of expertise" — were absolute claims we
+> cannot substantiate. See the claims-discipline note at the foot of this
+> document.*
 
 ---
 
 ## 04 — The problem: six doubts
 
-**Section heading:** The six questions that start every medical case at sea
+**Section heading:** The seafarer is ashore and needs treatment. Now what?
 
 Static 3×2 grid on desktop, single column on mobile. **No pinned scroll rail.**
 
-**1. Who do we call?**
-It is 03:00 and the nearest coast station is out of VHF range. No one on board
-knows which number reaches a doctor.
+> **Framing note — read before editing this section.** MedShield has stated
+> explicitly: *"the problem we are trying to solve is not a medical emergency
+> or emergency handling."* A genuine emergency goes to MedVac and is somebody
+> else's job. **Our problem begins after that** — once the seafarer is ashore
+> and needs treatment. Every doubt below must sit on the shoreside-treatment
+> side of that line. Do not reintroduce diversion, VHF range, or "is it
+> serious" triage copy: it describes a service MedShield does not sell and
+> puts us in a category we lose.
 
-**2. Is it serious?**
-Chest pain, or indigestion after a long watch? Nobody aboard is qualified to
-tell the difference — and guessing wrong costs hours that matter.
+**Optional lead line above the grid:**
+The emergency is handled. The seafarer is ashore, in a country your office does
+not operate in, and the treatment decisions start now.
 
-**3. Do we divert?**
-A diversion burns fuel, breaks the charter and costs days. Not diverting could
-cost a life. That call sits with the master, alone, at sea.
+**1. Who decides what treatment actually happens?**
+There is no structured SOP for building a treatment plan. The plan gets made by
+whoever is closest to the case that day, and no two cases are handled the same
+way twice.
 
-**4. Which port?**
-The closest harbour is not always the one with a cardiac unit, a surgeon on
-duty, or clearance to take a foreign crew member ashore.
+**2. Why is this resting on one unqualified entity?**
+In practice the whole process depends on a single party — usually the PEME
+clinic or the manning agent. Neither is qualified to make clinical treatment
+decisions, and neither was hired to.
+
+**3. Is this the right provider, or just the nearest one?**
+Proximity is not clinical fit. Without someone guiding the case to the right
+facility for that specific condition, the seafarer gets whoever is closest to
+the port — which is a coin toss on outcome.
+
+**4. What is this going to cost, and why?**
+Pricing and procedure are non-transparent. The employer sees a number at the
+end, with no visibility into what was done, what it should have cost, or what
+alternatives existed.
 
 **5. Are we being overcharged?**
 Once a hospital learns an employer is paying, prices move. We have seen
@@ -112,9 +208,18 @@ If the referral came from a vendor with a financial relationship rather than a
 clinical one, recovery takes longer and costs more — and nobody ashore finds
 out until the invoice arrives.
 
-> *Doubts 1–4 carried over from the previous build. 5 and 6 are new, drawn from
-> Case Study 1 and 2, so the problem section sets up proof delivered in
-> section 07.*
+**Two further gaps, as a supporting line under the grid:**
+The provider network available to most employers is limited and unverified —
+and the records are siloed across the PEME clinic, the ship and the treating
+hospital, so nobody holds the whole picture.
+
+> *Doubts 5 and 6 are retained unchanged from the previous build: they are
+> already in the correct shoreside register and are the two the case studies
+> in section 07 directly prove. Doubts 1–4 were rewritten from the old
+> "emergency at sea" framing (who do we call / is it serious / do we divert /
+> which port), which described the wrong problem — see the framing note above.
+> Sources: Case Study 1 and 2 for doubts 5–6; client positioning note for the
+> reframe.*
 
 ---
 
@@ -122,6 +227,11 @@ out until the invoice arrives.
 
 **Section heading:** What we do
 **Section id:** `#services`
+
+**Intro line under the heading:**
+Every service below runs on the same two layers: a verified provider network,
+and an independent medical team that decides how the network gets used. The
+network is the infrastructure; the decisions are the service.
 
 Order is deliberate: claims first. Leading with telemedicine confirms the
 visitor's assumption that MedShield is another remote-doctor service.
@@ -277,6 +387,9 @@ the seafarer spared further complications.
 - **One record per seafarer** — across vessels, ports and years.
 - **Unbiased provider choice** — hospitals scored on merit, never on referral
   relationships.
+- **No commercial interest in the outcome** — we are not the hospital, the PEME
+  clinic, the manning agent or the insurer, so we have no commercial interest
+  in where your seafarer is treated.
 
 **Directly beneath, in a distinct block:**
 
@@ -287,6 +400,12 @@ the operations partner that manages the case between all of them.
 > *That last paragraph does real conversion work: it tells a superintendent he
 > does not have to displace an incumbent vendor to hire MedShield — the most
 > common procurement objection in this category. Keep it.*
+>
+> *The independence bullet is the commercial argument for Layer 2 of the
+> two-layer model, and it is the one claim on this page with a proof point
+> attached: Case Study 2 in section 07, where a conflicted PEME referral added
+> 40% to recovery time. If the case studies are ever cut, this bullet stays —
+> but it should sit near enough to section 07 that the reader connects them.*
 
 ---
 
@@ -306,7 +425,15 @@ global insurers, TPAs and maritime agents.
 > *A doctorate specifically in maritime occupational health is a rare and
 > persuasive credential for this audience. It was invisible on the old site.*
 
-### The SME panel — 130+ experts, nine disciplines
+### The independent medical team — 130+ specialists across nine disciplines
+
+**Lead paragraph — this panel is the product, not a credentials list:**
+This is Layer 2 of how we work. Before a treatment plan is approved, an
+independent team of specialists and super-specialists reviews it: assessing the
+proposal on clinical merit, selecting the provider, setting the protocol and
+monitoring the case to discharge. They are not attached to the hospital
+treating your seafarer, and they have nothing to gain from the choice they
+make. That review is the difference between a network and a decision.
 
 Maritime medical specialists and super-specialists · Telemedicine · Healthcare
 and claims · Clinical findings correlation · Treatment plan analysis · Global
@@ -317,6 +444,11 @@ Technology, 24/7.
 holds ten individual doctor bios — those belong on an inner team page. On the
 homepage they cost scroll and date quickly as people move.
 
+> *Reframed from a credentials list to the decision layer. "130+ subject matter
+> experts" reads as an org chart; "130+ specialists who review the treatment
+> plan before it is approved" is the thing being bought. Same figure, same
+> source — different job on the page.*
+>
 > *Source: Desikan Setlur.docx, TEAM - SME PANEL_.docx, About Us.*
 
 ---

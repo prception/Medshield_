@@ -158,7 +158,7 @@ source of truth; treat the raw .docx files as reference only.
 
 ## 7. What is still missing from the business
 
-Four things. Mark them `[CONFIRM]` in the markup and leave them visibly
+Five things. Mark them `[CONFIRM]` in the markup and leave them visibly
 incomplete rather than inventing values:
 
 1. **The real 24/7 emergency number and monitored inbox.** The old site
@@ -168,5 +168,12 @@ incomplete rather than inventing values:
 3. **Commercial model** — retainer per vessel, per crew member, or per case.
 4. **Written clearance** to publish the two case studies (already anonymised,
    but the savings figures need sign-off before going live).
+5. **The network size figure.** Client sources contradict each other: the PDF
+   says **1,800+ partner hospitals**, a later note says **3,500+ treatment
+   providers across India**. Until the client resolves this in writing, ship
+   the lower figure (1,800+). Also needs verification: **"ISO 45001 — first and
+   only in India"** (keep, but confirm) and **"India's largest maritime
+   healthcare network"** (removed from the page pending evidence — likely
+   disputed).
 
 Everything else needed is already in `CONTENT.md`.
