@@ -7,47 +7,217 @@
    later are expensive — extend rather than rename.
    ========================================================================== */
 
+/* --- Fonts -------------------------------------------------------------- */
+
+/* Rubik, self-hosted, variable weight 300-900 in one file. Already in the
+   repo under an SIL OFL licence (assets/fonts/OFL.txt), so no CDN request and
+   no licence question. It is the reference's body face, and its slightly
+   softened terminals and tall x-height are what give the giant hero headline
+   its editorial rather than corporate character — the previous system-stack
+   Helvetica/Segoe fallback is exactly why the old H1 read as SaaS.
+   swap, not block: the poster paints immediately either way. */
+/* Archivo — the hero display face. Self-hosted, variable 100-900 in one 34KB
+   file, SIL OFL (assets/fonts/OFL-Archivo.txt).
+
+   Chosen as the closest legitimately-licensable match to the reference's
+   "Blauer Nue", which is a commercial Zetafonts release we hold no licence
+   for and therefore cannot ship. The match is on letterform evidence, not
+   vibes:
+     - Blauer Nue is a NEO-GROTESQUE: flat-cut horizontal terminals, straight
+       -legged R, square tittles. Archivo shares all three; Rubik (the
+       previous choice) has softened corners and rounded terminals, which is
+       the single most visible difference against the reference.
+     - The reference's own metric tokens give secondary-trim-top .41em and
+       secondary-trim-bottom .38em — identical to its Rubik tokens — so cap
+       height and baseline sit in the same place. Archivo matches within a
+       hair, so the vertical rhythm needs no compensation.
+     - Its declared fallback is Verdana, i.e. a wide, tall-x-height grotesque.
+       Archivo was drawn for exactly that brief (highway and signage lineage). */
+@font-face {
+  font-family: "Archivo";
+  src: url("../assets/fonts/archivo-latin-var.woff2") format("woff2-variations"),
+       url("../assets/fonts/archivo-latin-var.woff2") format("woff2");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Rubik stays declared: it is the reference's BODY face and remains available
+   should the hero ever want it back. Nothing currently consumes it. */
+@font-face {
+  font-family: "Rubik";
+  src: url("../assets/fonts/rubik-latin-var.woff2") format("woff2-variations"),
+       url("../assets/fonts/rubik-latin-var.woff2") format("woff2");
+  font-weight: 300 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Fraunces — used ONLY for .proof__figure (the stat numerals).
+   The reference sets its stat figures in PP Fragment Serif, a commercial
+   Pangram Pangram release we hold no licence for and cannot ship, same
+   reasoning as the Archivo/Blauer Nue substitution above. Fraunces is the
+   closest legitimately-licensable match: a high-contrast display serif with
+   the same wide, generous, slightly quirky numeral forms and dramatic
+   thick/thin stroke contrast that PP Fragment Serif is known for — not a
+   generic system serif standing in for "any serif". Self-hosted, SIL OFL
+   (assets/fonts/OFL-Fraunces.txt), variable weight in one 66KB file. */
+@font-face {
+  font-family: "Fraunces";
+  src: url("../assets/fonts/fraunces-latin-var.woff2") format("woff2-variations"),
+       url("../assets/fonts/fraunces-latin-var.woff2") format("woff2");
+  font-weight: 300 700;
+  font-style: normal;
+  font-display: swap;
+}
+
 /* --- Tokens ------------------------------------------------------------- */
 
 :root {
-  /* Brand. Navy and teal are sampled from the MedShield logo, so the palette
-     is the client's own rather than an invented one. Teal is the single
-     accent: CTAs and figures, never decoration. */
-  --navy-900: #0A2A43;   /* deepest ground — hero, footer */
-  --navy-800: #0E3557;
-  --navy-700: #12559C;   /* logo blue */
-  --navy-600: #1C6BB8;
-  --teal-600: #0E8C87;   /* accent — CTA fills, links on white */
-  --teal-500: #17A9A3;   /* logo teal — large/decorative use on dark only */
-  --teal-050: #EAF6F5;
 
-  /* Small-text variants of the accent. 12px bold needs 4.5:1, which neither
-     logo teal reaches — measured, not assumed. These two are the only accent
-     values permitted on eyebrows, labels and other sub-16px text. */
-  --teal-ink:    #0A6D69;  /* on --paper / --paper-alt  → 5.6:1 */
-  --teal-onDark: #4FD5CE;  /* on hero/footer navy       → 7.4:1 */
-  --teal-cta:    #08635F;  /* CTA fill, white label     → 5.3:1 */
+  /* ======================================================================
+     COLOUR SYSTEM
+     ======================================================================
+     Two brand colours, measured from assets/Medshield Logo Normal.png:
 
-  /* Ground + ink */
-  --paper:     #FCFCFA;  /* very slightly warm off-white */
-  --paper-alt: #F4F5F3;
-  --rule:      #E2E5E4;
-  --ink-900:   #14181C;
-  --ink-700:   #3A444C;
-  --ink-500:   #5E6A73;  /* 4.6:1 on --paper */
-  --ink-onDark:      #FFFFFF;
-  --ink-onDark-soft: #C6D4E0;
+       BRAND BLUE  #0050A0  H210 S100% L31%  — "Med" wordmark, left heart
+       BRAND TEAL  #20B0A8  H177 S 69% L41%  — "Shield" wordmark, right heart
 
-  --warn-bg:     #FFF6E8;
-  --warn-border: #E8A33D;
-  --warn-ink:    #7A4A05;
-  --error:       #B3261E;
+     Verified against the source file: the two dominant saturated hue
+     families are 210deg (34% of brand pixels) and 177deg (51%). The
+     in-between values in the logo (#0080A8, #0090A8) are gradient
+     interpolation between these two, NOT palette entries — the logo's
+     blue→teal ramp is reproduced only by --grad-brand below, and used once.
 
-  /* Type. System stacks only — no CDN, no webfont payload, no FOIT.
+     Every token here derives from one of those two hues, or from a neutral
+     tuned toward the blue. No third brand hue exists. Semantic colours
+     (success/warning/error) are the deliberate exception: they must NOT be
+     brand-coloured or they stop reading as status.
+
+     Naming is by ROLE, not by value. Consume --text-primary, never a hex.
+     Every ratio below is measured, not estimated — see the report in the
+     project notes. Single theme; there is no dark-mode toggle.
+     ====================================================================== */
+
+  /* --- GROUNDS ---------------------------------------------------------
+     Light grounds carry a faint cool bias from the blue hue (H210) rather
+     than being neutral grey or pure white — it reads as "clinical" and ties
+     the page to the mark. */
+  --surface-page:    #FAFBFC;  /* derived: H210 L98.4% — default page ground */
+  --surface-raised:  #FEFEFF;  /* derived: one step lighter — cards, form    */
+  --surface-sunken:  #F3F5F8;  /* derived: H216 L96.3% — alt bands, inputs   */
+
+  /* Deep ground: brand blue with lightness cut and saturation raised, so it
+     stays in the logo's family instead of drifting to a generic navy.
+     H210 S100% L11.6% — hero overlay, footer, dark bands. */
+  --surface-deep:     #001D3B;
+  --surface-deep-alt: #00284F;  /* derived: raised band inside a dark section */
+  --surface-deep-hi:  #033465;  /* derived: hover/highlight on deep ground    */
+
+  /* --- TEXT ------------------------------------------------------------
+     Derived from the navy hue, never pure black or neutral grey, so type
+     sits in the same family as the ground it prints on. */
+  --text-primary:    #142231;  /* 15.6:1 on page — body, headings           */
+  --text-secondary:  #3B4E60;  /*  8.3:1 on page — supporting copy          */
+  --text-muted:      #5E7185;  /*  4.6:1 on sunken — captions, meta, labels  */
+
+  /* The same three tiers on the deep ground. */
+  --text-on-deep:            #FAFBFD;  /* 16.4:1 on deep */
+  --text-on-deep-secondary:  #CCD7E3;  /* 11.6:1 on deep */
+  --text-on-deep-muted:      #A5B6C8;  /*  8.2:1 on deep */
+
+  /* --- ACCENT / ACTION -------------------------------------------------
+     Primary action is the brand blue itself on light grounds. */
+  --accent:         #0050A0;  /* brand blue, verbatim — button fill, 7.9:1 w/ white */
+  --accent-hover:   #004284;
+  --accent-active:  #003870;
+  --link:           #004C99;  /* 8.1:1 on page — inline links               */
+  --link-hover:     #003973;
+
+  /* On the deep navy, #0050A0 falls to 1.6:1 and is unusable. These are a
+     LIGHTER TINT OF THE SAME HUE (H210), not the teal — substituting teal
+     would break the blue=action / teal=emphasis distinction the page relies
+     on. Label on this fill is --surface-deep, giving 6.2:1. */
+  --accent-on-deep:        #4CA1F6;
+  --accent-on-deep-hover:  #73B6F9;
+
+  /* --- SECONDARY ACCENT (teal) ----------------------------------------
+     Emphasis only: proof-strip figures, step numbers, rules, chips. Used
+     sparingly so it keeps meaning. NEVER a button fill — action is blue.
+
+     Raw brand teal measures 2.59:1 on the page ground, so it is DECORATION
+     ONLY and must never carry text at any size. The two tuned variants
+     below are the only teals permitted on type. */
+  --accent-2:          #20B0A8;  /* brand teal, verbatim — rules, marks, fills */
+  --accent-2-ink:      #077E77;  /* 4.8:1 on page — teal as TEXT (figures)     */
+  --accent-2-on-deep:  #5CE0D9;  /* 10.6:1 on deep — teal as text on navy      */
+
+  /* --- SEMANTIC --------------------------------------------------------
+     Deliberately outside the brand hues. A validation error in brand blue
+     or teal does not read as an error. Saturation and lightness are tuned
+     to sit with the palette rather than shout against it. */
+  --success:        #157F4A;  /* H150 — 4.9:1 on page */
+  --success-bg:     #EDFAF4;
+  --warning:        #99660C;  /* H38  — 4.8:1 on page */
+  --warning-bg:     #FDF4E5;
+  --error:          #CA2C21;  /* H4   — 5.2:1 on page */
+  --error-bg:       #FDEEED;
+  --error-on-deep:  #F4837B;  /* 6.8:1 on deep */
+
+  /* --- SUPPORT ---------------------------------------------------------
+     Hairlines are decorative separators, not meaning-bearing UI, so they sit
+     below 3:1 by design; anything that must be perceived uses --border-strong
+     or a text token instead. */
+  --border:          #DBE2E8;
+  --border-strong:   #BCC7D2;
+  --border-on-deep:  #364C63;
+
+  /* Focus ring: one value that clears 3:1 on every ground it can land on —
+     page 3.2, raised 3.3, sunken 3.0, deep 5.1, deep-alt 4.5. On the blue
+     button fill it alone reaches only 2.4:1, so the ring is always paired
+     with --focus-halo, which gives 7.9:1 there. Both are always applied. */
+  --focus:       #1C8EFF;
+  --focus-halo:  #FFFFFF;
+
+  /* --- SCRIM -----------------------------------------------------------
+     Hero video overlay, built from --surface-deep. Alphas are measured
+     against the brightest pixel of all 192 frames of hero.mp4, not an
+     average frame. See .hero__scrim for the layer stack and the per-region
+     ratios it produces. */
+  --scrim-deep:  0, 29, 59;   /* --surface-deep as RGB channels for rgba() */
+
+  /* RGB channel triplets, for the places that genuinely need an alpha —
+     translucent chips over video, hairlines on the deep ground, the header
+     blur. Kept as channels so every alpha in the sheet still resolves back
+     to a palette colour rather than an invented one. */
+  --rgb-on-deep:  250, 251, 253;  /* --text-on-deep  */
+  --rgb-deep:     0, 29, 59;      /* --surface-deep  */
+  --rgb-deep-alt: 0, 40, 79;      /* --surface-deep-alt */
+  --rgb-accent-2: 32, 176, 168;   /* --accent-2      */
+
+  /* Fixed translucent roles, so no rule invents its own alpha. */
+  --veil-on-deep-weak:   rgba(var(--rgb-on-deep), 0.10);  /* chip fill      */
+  --veil-on-deep:        rgba(var(--rgb-on-deep), 0.14);  /* pill fill      */
+  --hairline-on-deep:    rgba(var(--rgb-on-deep), 0.16);  /* rule on navy   */
+  --hairline-on-deep-hi: rgba(var(--rgb-on-deep), 0.30);  /* border on navy */
+  --header-veil:         rgba(var(--rgb-deep), 0.94);     /* stuck header   */
+  --nav-scrim:           rgba(var(--rgb-deep), 0.62);     /* drawer scrim   */
+
+  /* The logo's blue→teal ramp. ONE restrained use on the page (the hero
+     rule); it is the mark's signature and repeating it as a background
+     treatment dates the design badly. Do not add a second use. */
+  --grad-brand: linear-gradient(90deg, #0050A0 0%, #0080A8 50%, #20B0A8 100%);
+
+  /* Type. System stacks for the page body — no CDN, no FOIT.
      Display face is the grotesque end of the stack; body is humanist. */
   --font-display: "Helvetica Neue", "Segoe UI", Inter, Roboto, Arial, sans-serif;
   --font-body: "Segoe UI", -apple-system, BlinkMacSystemFont, "Helvetica Neue",
                Roboto, "Noto Sans", Arial, sans-serif;
+  /* Editorial face, HERO ONLY. Deliberately a separate token rather than a
+     change to --font-display: sections 02-10 are typeset and spaced against
+     the system stack, and swapping the face under them would silently reflow
+     the whole page. The hero opts in; nothing else does. */
+  --font-editorial: "Archivo", "Helvetica Neue", "Segoe UI", Arial, sans-serif;
 
   /* Fluid scale, 390px → 1440px. clamp() keeps mobile a real edit. */
   --t-hero:  clamp(2.15rem, 1.30rem + 3.60vw, 4.30rem);
@@ -71,7 +241,11 @@
   --radius:    4px;    /* clinical, not startup-rounded */
   --radius-lg: 8px;
 
-  --focus: var(--teal-600);
+  /* Full-bleed gutter for the hero and its header. Matches the reference's
+     site margin: 1rem at 320px ramping to 3.75rem (60px) at 1440px, so at
+     1440 the headline starts 60px from the frame — not the ~120px of dead
+     margin a 1200px centred container would leave. */
+  --site-margin: clamp(1rem, 0.36rem + 2.5vw, 3.75rem);
 }
 
 /* --- Reset -------------------------------------------------------------- */
@@ -80,15 +254,26 @@
 
 html {
   -webkit-text-size-adjust: 100%;
-  scroll-behavior: smooth;
+  /* NOT scroll-behavior: smooth. hero.js runs its own wheel-driven smooth
+     scroll, and the native one fights it: every window.scrollTo() from the
+     engine gets re-animated by the browser, so the position eases toward a
+     stale value and the page crawls back to where it started.
+
+     The engine is only attached when it is wanted (pointer devices, no
+     reduced-motion); .js-smooth below restores the native behaviour for
+     anchor jumps when it is NOT attached, so in-page links still glide. */
   /* Anchored sections clear the sticky header. */
   scroll-padding-top: 5.5rem;
 }
 
+/* Native smooth scrolling for anchor links, only when the custom engine is
+   not running (touch devices, reduced-motion, no JS). */
+html:not(.has-smooth-scroll) { scroll-behavior: smooth; }
+
 body {
   margin: 0;
-  background: var(--paper);
-  color: var(--ink-900);
+  background: var(--surface-page);
+  color: var(--text-primary);
   font-family: var(--font-body);
   font-size: var(--t-body);
   line-height: 1.6;
@@ -113,7 +298,7 @@ ul { margin: 0; padding: 0; list-style: none; }
 [hidden] { display: none !important; }
 img { max-width: 100%; height: auto; display: block; }
 
-a { color: var(--teal-ink); text-decoration-thickness: 1px; text-underline-offset: 2px; }
+a { color: var(--accent-2-ink); text-decoration-thickness: 1px; text-underline-offset: 2px; }
 
 /* Visible focus on every interactive element. The teal ring alone reaches
    only 2.4:1 against the hero navy, so a white halo rides outside it — the
@@ -126,14 +311,14 @@ textarea:focus-visible,
 [tabindex]:focus-visible {
   outline: 3px solid var(--focus);
   outline-offset: 2px;
-  box-shadow: 0 0 0 6px rgba(255, 255, 255, 0.92);
+  box-shadow: 0 0 0 6px var(--focus-halo);
   border-radius: 2px;
 }
 
 /* On light grounds the white halo would be invisible; use navy there. */
 .proof :focus-visible,
 .contact :focus-visible {
-  box-shadow: 0 0 0 6px rgba(10, 42, 67, 0.18);
+  box-shadow: 0 0 0 6px rgba(var(--rgb-deep), 0.18);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -162,7 +347,7 @@ textarea:focus-visible,
 .skip-link {
   position: absolute; left: var(--s-4); top: -100%;
   z-index: 100;
-  background: var(--navy-900); color: var(--ink-onDark);
+  background: var(--surface-deep); color: var(--text-on-deep);
   padding: var(--s-3) var(--s-5);
   border-radius: 0 0 var(--radius) var(--radius);
   font-weight: 600; text-decoration: none;
@@ -174,10 +359,10 @@ textarea:focus-visible,
   font-weight: 700;
   letter-spacing: 0.16em;
   text-transform: uppercase;
-  color: var(--teal-ink);
+  color: var(--accent-2-ink);
   margin-bottom: var(--s-4);
 }
-.eyebrow--onDark { color: var(--teal-onDark); }
+.eyebrow--onDark { color: var(--accent-2-on-deep); }
 
 /* [CONFIRM] markers stay visibly incomplete. Never fill with a guess. */
 .confirm {
@@ -186,9 +371,9 @@ textarea:focus-visible,
   font-size: 0.9em;
   font-weight: 700;
   letter-spacing: 0.01em;
-  color: var(--warn-ink);
-  background: var(--warn-bg);
-  border: 1px dashed var(--warn-border);
+  color: var(--warning);
+  background: var(--warning-bg);
+  border: 1px dashed var(--warning);
   border-radius: var(--radius);
   padding: 0.1em 0.5em;
 }
@@ -214,59 +399,117 @@ textarea:focus-visible,
   min-height: 48px;
 }
 
-/* Fill is darker than --teal-600 so white label text clears 4.5:1 even at
-   the small header size (measured: 5.3:1). */
+/* Action is the brand blue, never the teal — teal is emphasis only.
+   White label on --accent measures 7.9:1, so it holds at the small header
+   size as well as at body size. */
 .btn--primary {
-  background: var(--teal-cta);
-  border-color: var(--teal-cta);
-  color: #fff;
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--text-on-deep);
 }
-.btn--primary:hover { background: #06514E; border-color: #06514E; }
+.btn--primary:hover  { background: var(--accent-hover);  border-color: var(--accent-hover); }
+.btn--primary:active { background: var(--accent-active); border-color: var(--accent-active); }
+
+/* On the deep navy the brand blue drops to 1.6:1 against the ground and the
+   button stops reading as a button. This variant is a lighter tint of the
+   SAME hue with a deep-navy label — 6.2:1 both for the label on the fill and
+   for the fill against the ground.
+   Used for the primary CTA inside the hero and the closing dark band. */
+.btn--onDeep {
+  background: var(--accent-on-deep);
+  border-color: var(--accent-on-deep);
+  color: var(--surface-deep);
+}
+.btn--onDeep:hover {
+  background: var(--accent-on-deep-hover);
+  border-color: var(--accent-on-deep-hover);
+}
 
 .btn--ghost {
   background: transparent;
-  border-color: rgba(255, 255, 255, 0.55);
-  color: var(--ink-onDark);
+  border-color: rgba(var(--rgb-on-deep), 0.55);
+  color: var(--text-on-deep);
 }
-.btn--ghost:hover { background: rgba(255, 255, 255, 0.1); border-color: #fff; }
+.btn--ghost:hover { background: var(--veil-on-deep-weak); border-color: var(--text-on-deep); }
 
 .btn--sm { padding: 0.6rem 1.1rem; font-size: var(--t-small); min-height: 40px; }
 .btn--block { width: 100%; }
 
 /* --- Header ------------------------------------------------------------- */
 
-/* Fixed, and transparent while it sits over the hero video. .is-stuck is
-   added past 80px of scroll (hero.js) to fade in the navy ground so links
-   stay legible once lighter sections pass underneath. Transparent state
-   carries a soft top-down shade: the video is dark-graded there, but the
-   shade guarantees the bar never depends on a particular video frame. */
+/* Fixed and ALWAYS transparent — no ground at any scroll position.
+
+   The bar is brand-left, menu-right, floating directly on whatever is behind
+   it. It never fills with navy: the .is-stuck background that used to fade in
+   past 80px has been removed entirely, because a filled bar reads as a
+   conventional site header and breaks the "type floating on the media" effect
+   the composition depends on.
+
+   LEGIBILITY over light sections: the bar still hides the moment the user
+   scrolls DOWN (see .is-hidden and the direction logic in hero.js), so it is
+   simply not on screen while the pale sections below the hero pass underneath.
+   It only reappears on scroll UP, where the same gesture that reveals it also
+   means the user wants it. */
 .site-header {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
-  z-index: 50;
+  /* Above the overlay menu (z 60), not below it: the bar carries the toggle,
+     which is also the CLOSE control. At z 50 the open overlay painted over
+     it and the only way out was the Escape key. */
+  z-index: 62;
   background: transparent;
-  border-bottom: 1px solid transparent;
-  background-image: linear-gradient(to bottom, rgba(4, 18, 30, 0.55), rgba(4, 18, 30, 0));
-  transition: background-color 0.25s ease, border-color 0.25s ease;
+  border-bottom: 0;
+  /* Hide/show on scroll direction. 0.5s power1.out matches the reference's
+     navbar tween; power1.out ~= cubic-bezier(0.25, 0.46, 0.45, 0.94). */
+  transform: translateY(0);
+  transition: transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
 
-.site-header.is-stuck {
-  background-image: none;
-  background-color: rgba(10, 42, 67, 0.96);
-  border-bottom-color: rgba(255, 255, 255, 0.1);
-}
-@supports (backdrop-filter: blur(8px)) {
-  .site-header.is-stuck { backdrop-filter: blur(8px); }
-}
+/* Hidden state — set by hero.js when the user scrolls DOWN past the top. */
+.site-header.is-hidden { transform: translateY(-100%); }
 
-.site-header__inner {
+/* Ink inversion over light sections.
+
+   The bar carries NO background at any scroll position, so once the pale
+   sections below the hero pass under it the white wordmark and white
+   hamburger were rendering white-on-white — invisible, and overlapping the
+   text behind them. Rather than reintroduce a filled bar, the bar's INK
+   flips to the dark on-page ink instead. hero.js adds .is-on-light when the
+   element behind the bar is a light section.
+
+   Only colour transitions; no background ever appears. */
+.site-header.is-on-light .brand,
+.site-header.is-on-light .brand__name {
+  color: var(--text-primary);
+}
+.site-header.is-on-light .nav-toggle { color: var(--text-primary); }
+.site-header.is-on-light .nav-toggle__line { background: var(--text-primary); }
+
+.brand,
+.brand__name,
+.nav-toggle { transition: color 0.3s ease; }
+.nav-toggle__line { transition: transform 0.5s cubic-bezier(0.7, 0, 0.3, 1), background-color 0.3s ease; }
+
+/* The mark is never recoloured. assets/logo-mark.png IS the logo, and it is a
+   blue→teal gradient rather than a monochrome shape, so any brightness or
+   saturate pass shifts it off-brand. It renders at its own pixel colours in
+   every header state — do not add a filter here. */
+
+/* The header opts out of .shell's centred 1200px box and uses the same site
+   margin as the hero, so the logo sits on the identical left edge as the
+   headline below it and the nav on the identical right edge. That shared
+   edge is most of what makes the bar read as part of the composition. */
+.site-header .site-header__inner {
+  width: 100%;
+  max-width: none;
+  padding-inline: var(--site-margin);
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: var(--s-4);
-  min-height: 4.5rem;
+  min-height: 5.25rem;
 }
 
 .brand {
@@ -274,7 +517,7 @@ textarea:focus-visible,
   align-items: center;
   gap: var(--s-3);
   text-decoration: none;
-  color: var(--ink-onDark);
+  color: var(--text-on-deep);
 }
 .brand__mark { width: auto; height: 2.1rem; }
 .brand__text { display: flex; flex-direction: column; }
@@ -289,103 +532,253 @@ textarea:focus-visible,
   font-size: 0.62rem;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: var(--ink-onDark-soft);
+  color: var(--text-on-deep-secondary);
   line-height: 1.3;
 }
 
-.site-nav {
-  display: flex;
-  align-items: center;
-  gap: clamp(0.75rem, 0.2rem + 1.6vw, 2rem);
-}
-.site-nav a {
-  color: var(--ink-onDark-soft);
-  text-decoration: none;
-  font-size: var(--t-small);
-  font-weight: 600;
-}
-.site-nav a:hover { color: #fff; }
-.site-nav .btn--primary { color: #fff; }
+/* --- Menu control -------------------------------------------------------- */
 
-/* Burger — hidden on desktop, shown with the drawer below 860px. */
+/* The ONLY control in the bar at any breakpoint. Deliberately bare: no
+   border, no pill, no background, no radius. The reference's bar carries a
+   brand and a menu affordance and nothing else, and every box we drew around
+   this control was weight competing with the headline. */
 .nav-toggle {
-  display: none;
+  display: inline-flex;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-end;
   position: relative;
-  z-index: 51;   /* above the open drawer, so close is always reachable */
-  width: 44px; height: 44px;
+  z-index: 61;   /* above the open overlay, so close is always reachable */
+  /* 44px target in both axes without a visible box — the lines are only
+     26x18, so the padding carries the rest of the hit area. */
+  min-width: 44px;
+  min-height: 44px;
   padding: 0;
   background: transparent;
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  border-radius: var(--radius);
+  border: 0;
+  border-radius: 0;
   cursor: pointer;
+  color: var(--text-on-deep);
+  font-family: var(--font-editorial);
 }
-.nav-toggle__bars,
-.nav-toggle__bars::before,
-.nav-toggle__bars::after {
+
+/* Three lines in a clipping box, reproducing the reference's hamburger.
+
+   THE RESTING STATE IS A STAIRCASE, not three equal bars. The reference sets
+   scaleX 1 / .75 / .5 top to bottom, so the lines step shorter as they
+   descend; on hover all three extend to full width. The motion is therefore
+   an EXPANSION outward, not a squeeze inward.
+
+   transform-origin is the left edge so the scaling anchors there and the
+   lines grow rightward, which is what produces the staircase read.
+
+   The middle line does NOT fade on open — it translates -150% and is clipped
+   away by the button's overflow, which is why the reference's X feels like a
+   mechanism rather than a cross-fade. rotate(0.001deg) is carried through
+   from the reference too: it forces a GPU layer and stops the rotated lines
+   from snapping between antialiasing modes mid-transition. */
+.nav-toggle__bars {
+  position: relative;
   display: block;
-  width: 20px; height: 2px;
-  background: #fff;
-  border-radius: 2px;
-  transition: transform 0.2s ease, opacity 0.2s ease;
+  width: 26px;
+  height: 18px;
+  overflow: hidden;   /* clips the middle line as it slides out */
 }
-.nav-toggle__bars { position: relative; }
-.nav-toggle__bars::before,
-.nav-toggle__bars::after { content: ""; position: absolute; left: 0; }
-.nav-toggle__bars::before { top: -6px; }
-.nav-toggle__bars::after  { top: 6px; }
 
-.nav-toggle[aria-expanded="true"] .nav-toggle__bars { background: transparent; }
-.nav-toggle[aria-expanded="true"] .nav-toggle__bars::before { transform: translateY(6px) rotate(45deg); }
-.nav-toggle[aria-expanded="true"] .nav-toggle__bars::after  { transform: translateY(-6px) rotate(-45deg); }
+.nav-toggle__line {
+  position: absolute;
+  left: 0;
+  top: 50%;
+  width: 26px;
+  height: 1.5px;
+  margin-top: -0.75px;
+  background: var(--text-on-deep);
+  transform-origin: left center;
+  /* 0.5s cubic-bezier(.7, 0, .3, 1) — the reference's exact line easing. */
+  transition: transform 0.5s cubic-bezier(0.7, 0, 0.3, 1);
+}
 
+/* Resting staircase: full, three-quarters, half. */
+.nav-toggle__line:nth-child(1) { transform: translate(0, -7px) scale(1,    1) rotate(0.001deg); }
+.nav-toggle__line:nth-child(2) { transform: translate(0,  0)   scale(0.75, 1) rotate(0.001deg); }
+.nav-toggle__line:nth-child(3) { transform: translate(0,  7px) scale(0.5,  1) rotate(0.001deg); }
+
+/* Hover: every line extends to full width. */
+@media (hover: hover) {
+  .nav-toggle:not([aria-expanded="true"]):hover .nav-toggle__line:nth-child(1) { transform: translate(0, -7px) scale(1, 1) rotate(0.001deg); }
+  .nav-toggle:not([aria-expanded="true"]):hover .nav-toggle__line:nth-child(2) { transform: translate(0,  0)   scale(1, 1) rotate(0.001deg); }
+  .nav-toggle:not([aria-expanded="true"]):hover .nav-toggle__line:nth-child(3) { transform: translate(0,  7px) scale(1, 1) rotate(0.001deg); }
+}
+
+/* Open: outer two rotate into an X, middle slides out and is clipped.
+   transform-origin returns to the centre so the X is symmetrical — rotating
+   about the left edge turns it into a "<". */
+.nav-toggle[aria-expanded="true"] .nav-toggle__line { transform-origin: center center; }
+.nav-toggle[aria-expanded="true"] .nav-toggle__line:nth-child(1) { transform: translate(0, 0) rotate(45deg) scale(1, 1); }
+.nav-toggle[aria-expanded="true"] .nav-toggle__line:nth-child(2) { transform: translate(-150%, 0) rotate(0.001deg) scale(1, 1); }
+.nav-toggle[aria-expanded="true"] .nav-toggle__line:nth-child(3) { transform: translate(0, 0) rotate(-45deg) scale(1, 1); }
+
+/* Hover while open: the X contracts to 70%, as the reference does. */
+@media (hover: hover) {
+  .nav-toggle[aria-expanded="true"]:hover .nav-toggle__line:nth-child(1) { transform: translate(0, 0) rotate(45deg) scale(0.7, 1); }
+  .nav-toggle[aria-expanded="true"]:hover .nav-toggle__line:nth-child(2) { transform: translate(-150%, 0) scale(0.7, 1); }
+  .nav-toggle[aria-expanded="true"]:hover .nav-toggle__line:nth-child(3) { transform: translate(0, 0) rotate(-45deg) scale(0.7, 1); }
+}
+
+/* --- Overlay menu -------------------------------------------------------- */
+
+/* Full-screen, deep navy, holding every link that used to sit in the bar.
+   [hidden] is toggled by hero.js in addition to the class: it keeps the menu
+   out of the tab order and the accessibility tree when closed, which
+   transform alone does not do. */
+/* The panel wipes open with clip-path, it does NOT fade.
+
+   This is the reference's mechanism verbatim: a polygon collapsed to a zero
+   height line at the top, expanding to the full rect over 1s on
+   cubic-bezier(.9, 0, .1, 1) — a very slow-in/slow-out curve that gives the
+   panel its weight. An opacity fade in its place reads as a lightbox; the
+   wipe reads as a surface arriving. */
+.site-menu {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  background: var(--surface-deep);
+  clip-path: polygon(0% 0%, 100% 0%, 100% 0%, 0% 0%);
+  transition: clip-path 1s cubic-bezier(0.9, 0, 0.1, 1);
+}
+.site-menu[hidden] { display: none; }
+.site-menu.is-open {
+  clip-path: polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%);
+}
+
+.site-menu__inner {
+  width: 100%;
+  max-width: none;
+  /* Same gutter as the hero and the header, so the menu's left edge lines up
+     with the brand and the headline behind it. */
+  padding-inline: var(--site-margin);
+  padding-block: calc(5.25rem + var(--s-6)) var(--site-margin);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 100svh;
+}
+
+.site-menu__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  flex: 1;
+  gap: clamp(0.15rem, 0.05rem + 0.4vw, 0.6rem);
+}
+
+/* Each row clips its own link so the rise reads as a reveal from below. */
+.site-menu__list li {
+  overflow: hidden;
+  /* Sibling dimming on hover — see the :has rule below. */
+  transition: opacity 0.75s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Menu links are display type in their own right — the overlay is a
+   composition, not a dropdown list.
+
+   Resting state is BELOW the row, rotated 5deg. Opening lifts it to 0 with a
+   0.001deg rotation (the reference's GPU-layer nudge). The closing curve and
+   the opening curve are deliberately different, exactly as the reference
+   sets them — that asymmetry is most of why the menu feels considered. */
+.site-menu__list a {
+  display: inline-flex;
+  align-items: baseline;
+  font-family: var(--font-editorial);
+  font-size: clamp(1.75rem, 0.9rem + 3.6vw, 4rem);
+  font-weight: 500;
+  line-height: 1.14;
+  letter-spacing: -0.02em;
+  text-transform: uppercase;
+  color: var(--text-on-deep);
+  text-decoration: none;
+  transform: translateY(100%) rotate(5deg);
+  /* CLOSING: 0.75s cubic-bezier(.7, 0, .3, 1) */
+  transition: transform 0.75s cubic-bezier(0.7, 0, 0.3, 1), color 0.25s ease;
+}
+/* Closing stagger runs in REVERSE order (last row leaves first). */
+.site-menu__list li:nth-child(1) a { transition-delay: 0.20s; }
+.site-menu__list li:nth-child(2) a { transition-delay: 0.15s; }
+.site-menu__list li:nth-child(3) a { transition-delay: 0.10s; }
+.site-menu__list li:nth-child(4) a { transition-delay: 0.05s; }
+.site-menu__list li:nth-child(5) a { transition-delay: 0s; }
+
+/* OPENING: a longer, sharper curve and a forward stagger. */
+.site-menu.is-open .site-menu__list a {
+  transform: translateY(0%) rotate(0.001deg);
+  transition: transform 1s cubic-bezier(0.381, 0, 0.03, 1.003), color 0.25s ease;
+}
+.site-menu.is-open .site-menu__list li:nth-child(1) a { transition-delay: 0.25s; }
+.site-menu.is-open .site-menu__list li:nth-child(2) a { transition-delay: 0.30s; }
+.site-menu.is-open .site-menu__list li:nth-child(3) a { transition-delay: 0.35s; }
+.site-menu.is-open .site-menu__list li:nth-child(4) a { transition-delay: 0.40s; }
+.site-menu.is-open .site-menu__list li:nth-child(5) a { transition-delay: 0.45s; }
+
+/* Hovering one row dims every OTHER row to 0.15 — the reference's
+   focus effect. :has does the work; no JS involved. */
+@media (min-width: 768px) and (hover: hover) {
+  .site-menu__list:has(li:hover) li { opacity: 0.15; }
+  .site-menu__list:has(li:hover) li:hover { opacity: 1; }
+}
+.site-menu__list a:hover { color: var(--accent-2-on-deep); }
+
+.site-menu__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem clamp(0.9rem, 0.6rem + 0.8vw, 1.4rem);
+  margin: 0;
+  font-family: var(--font-editorial);
+  font-size: 0.6875rem;
+  font-weight: 400;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--text-on-deep-muted);
+}
+.site-menu__meta span { position: relative; }
+.site-menu__meta span + span::before {
+  content: "";
+  position: absolute;
+  left: calc(clamp(0.9rem, 0.6rem + 0.8vw, 1.4rem) / -2);
+  top: 50%;
+  width: 1px;
+  height: 0.7em;
+  margin-top: -0.35em;
+  background: var(--hairline-on-deep-hi);
+}
+
+/* The overlay is opaque, so the scrim only ever shows during the fade. */
 .nav-scrim {
   position: fixed;
   inset: 0;
   z-index: 48;
-  background: rgba(4, 18, 30, 0.6);
+  background: var(--nav-scrim);
 }
 
-/* Below 860px the nav becomes a drawer. Focus is trapped inside it and
-   Escape closes it — see hero.js. */
 @media (max-width: 859px) {
-  .nav-toggle { display: inline-flex; }
   .brand__eyebrow { display: none; }
-
-  .site-nav {
-    position: fixed;
-    top: 0; right: 0; bottom: 0;
-    z-index: 49;
-    width: min(320px, 84vw);
-    flex-direction: column;
-    align-items: stretch;
-    justify-content: flex-start;
-    gap: var(--s-2);
-    padding: calc(4.5rem + var(--s-5)) var(--s-5) var(--s-5);
-    background: var(--navy-900);
-    border-left: 1px solid rgba(255, 255, 255, 0.12);
-    overflow-y: auto;
-    transform: translateX(100%);
-    transition: transform 0.24s ease;
-  }
-  .site-nav.is-open { transform: translateX(0); }
-
-  .site-nav a {
-    padding: var(--s-3) 0;
-    font-size: var(--t-body);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-  }
-  .site-nav .site-nav__cta {
-    margin-top: var(--s-4);
-    border-bottom: 0;
-    justify-content: center;
-  }
 }
 
-/* The drawer slides; honour a reduced-motion preference by cutting it. */
+/* The overlay fades and the menu rows slide; honour reduced-motion by cutting
+   all of it rather than shortening it. */
 @media (prefers-reduced-motion: reduce) {
-  .site-nav { transition: none; }
+  .site-menu,
+  .site-menu__list a,
+  .nav-toggle__bars,
+  .nav-toggle__bars::before,
+  .nav-toggle__bars::after {
+    transition: none;
+  }
+  .site-menu { transform: none; }
+  .site-menu__list a:hover { transform: none; }
 }
 
 @media (max-width: 380px) {
@@ -398,28 +791,29 @@ textarea:focus-visible,
 .hero {
   position: relative;
   isolation: isolate;
-  /* Full viewport, as the reference layout does. Still min-height and not a
-     locked height: if content ever exceeds the viewport (long copy, large
-     text zoom, a short landscape phone) the section grows rather than
-     clipping. svh avoids the mobile URL-bar resize jump; vh is the fallback
-     for engines without it. */
-  min-height: 100vh;
-  min-height: 100svh;
+  /* Locked to exactly one viewport — 100vh, not min-height, as requested.
+
+     TRADE-OFF worth knowing: with a hard height the section can no longer
+     grow, so if the content ever exceeds the viewport (very large text zoom,
+     a short landscape phone) it would be clipped rather than pushing the
+     section taller. The composition is measured to fit at every breakpoint
+     below, and the short-viewport media queries at the end of this block trim
+     spacing before anything can collide. */
+  height: 100vh;
   display: flex;
   align-items: stretch;
-  /* Clears the fixed transparent header. */
-  /* Bottom padding is deliberately small: the headline and rail are anchored
-     to the bottom edge, and a generous gutter there reads as the content
-     floating rather than sitting on the frame. */
-  padding-block: calc(4.5rem + var(--s-6)) var(--s-5);
+  /* Clears the fixed header at the top; the floor gutter equals the site
+     margin so the composition sits ON the frame, evenly inset. */
+  padding-block: calc(5.25rem + var(--s-5)) var(--site-margin);
   overflow: hidden;
-  color: var(--ink-onDark);
+  color: var(--text-on-deep);
+  font-family: var(--font-editorial);
 
   /* Painted ground under the video: the poster and video both fade in over
      this, so there is never a white flash and never an untinted frame. */
   background:
-    radial-gradient(100% 80% at 8% 95%, rgba(18, 85, 156, 0.38) 0%, rgba(18, 85, 156, 0) 60%),
-    linear-gradient(168deg, #0C3253 0%, var(--navy-900) 55%, #071D2F 100%);
+    radial-gradient(100% 80% at 8% 95%, rgba(var(--rgb-deep-alt), 0.55) 0%, rgba(var(--rgb-deep-alt), 0) 60%),
+    linear-gradient(168deg, var(--surface-deep-hi) 0%, var(--surface-deep) 55%, var(--surface-deep) 100%);
 }
 
 /* --- Hero media ---------------------------------------------------------- */
@@ -428,444 +822,1167 @@ textarea:focus-visible,
   position: absolute;
   inset: 0;
   z-index: -1;
+  /* The media layer is the parallax target: hero.js translates it a short
+     distance as the hero exits (the reference moves its own 0 -> 50 over the
+     same range). Extra height at the bottom so the translate never exposes
+     the ground beneath. will-change is on the transformed element only. */
+  height: 112%;
+  will-change: transform;
 }
 
 .hero__video {
+  position: absolute;
+  inset: 0;
   width: 100%;
   height: 100%;
   object-fit: cover;
-  object-position: center;
+  /* Cinematic crop. The ship sits low-left in this encode; pulling the frame
+     up keeps the hull and horizon visible in the open upper area rather than
+     directly behind the headline, which occupies the lower band. */
+  object-position: center 38%;
   display: block;
+  /* Both copies are stacked in the same box; hero.js toggles .is-active on
+     each right at the loop point, and this transition turns that toggle into
+     a dissolve rather than a snap, masking the seam regardless of how the
+     source's first and last frames actually line up. */
+  opacity: 0;
+  transition: opacity 0.6s linear;
 }
 
-/* The grade. Four stacked layers, measured against every frame of hero.mp4
-   rather than eyeballed — the alphas below are the numbers that made the
-   measurement pass, not round guesses.
+.hero__video.is-active {
+  opacity: 1;
+}
 
-   The source is a bright daylit sea: its top strip reaches near-white
-   (#FDFFFF) and the top-right sky sits behind the intro block. A single
-   even wash could not hold both, so layer 2 is a dedicated top-right ramp
-   and layer 4 a top band under the transparent header.
+@media (prefers-reduced-motion: reduce) {
+  .hero__video { transition: none; }
+}
 
-   Worst-case measured ratios (brightest pixel per region, all 192 frames,
-   scrim composited in paint order):
-     eyebrow 11px  #4FD5CE  ->  6.93:1   (AA body  needs 4.5)
-     intro   15px  #C6D4E0  ->  6.07:1
-     headline 58px #FFFFFF  ->  8.41:1   (AA large needs 3.0)
-     h1 rest 21px  #C6D4E0  ->  6.71:1
-     pill    13px  #FFFFFF  ->  6.03:1
-     stat    13px  #FFFFFF  -> 13.26:1
-     chip    12px  #FFFFFF  ->  8.02:1
-     offices 14px  #C6D4E0  -> 10.29:1
-     nav     14px  #C6D4E0  -> 10.16:1
-   Re-run the measurement if the video is ever replaced. Do not assume. */
+/* The grade. Four stacked layers, re-measured for THIS composition against
+   every frame of hero-scrub.mp4 — the alphas below are the numbers that made
+   the measurement pass, not round guesses.
+
+   These are deliberately LIGHTER than the previous grade (flat tint 0.46 ->
+   0.30). The brief is explicit that the ship and ocean must stay visible and
+   that the result should read as cinematic footage under editorial type, not
+   as a flat navy panel. The old alphas were carrying text regions that no
+   longer exist (a top-right intro block, a chip rail) and were burying the
+   vessel to do it.
+
+   Worst-case measured ratios against the brand navy (--surface-deep #001D3B):
+   brightest pixel per region across all 96 frames, scrim composited in paint
+   order, object-fit: cover at object-position center 38% — not an average
+   frame, not an eyeballed swatch.
+     label     --text-on-deep  on #156679  ->  6.28:1  (11px, needs 4.5)
+     note      --text-on-deep  on #446378  ->  6.09:1  (small, needs 4.5)
+     headline  --text-on-deep  on #186175  ->  6.67:1  (large, needs 3.0)
+     cta       --text-on-deep  on #183652  -> 11.92:1
+     meta      --text-on-deep-muted on #19344F -> 6.13:1 (11px, needs 4.5)
+     nav       --text-on-deep-secondary on #29445D -> 6.89:1
+
+   NOTE: .hero__label is --text-on-deep, NOT the secondary tone. At 11px over
+   the video's brightest wake the secondary tone measured 4.25:1 and failed.
+   Re-run the measurement if the video, the navy, or the crop changes. */
 .hero__scrim {
   position: absolute;
   inset: 0;
   background:
-    /* 1. bottom-up ramp, carries the headline and rail */
-    linear-gradient(to top, rgba(6, 24, 38, 0.92) 0%, rgba(6, 24, 38, 0.55) 38%, rgba(6, 24, 38, 0.12) 70%),
-    /* 2. top-right ramp, carries the intro block over the bright sky */
-    linear-gradient(to bottom left, rgba(7, 29, 47, 0.88) 0%, rgba(7, 29, 47, 0.62) 30%, rgba(7, 29, 47, 0.12) 62%, rgba(7, 29, 47, 0) 78%),
+    /* 1. bottom-up ramp, carries the headline and the floor rail */
+    linear-gradient(to top, rgba(var(--scrim-deep), 0.88) 0%, rgba(var(--scrim-deep), 0.55) 38%, rgba(var(--scrim-deep), 0.14) 70%),
+    /* 2. top-right ramp, carries the supporting note over the bright sky */
+    linear-gradient(to bottom left, rgba(var(--scrim-deep), 0.72) 0%, rgba(var(--scrim-deep), 0.42) 30%, rgba(var(--scrim-deep), 0.06) 62%, rgba(var(--scrim-deep), 0) 78%),
     /* 3. top band, keeps the transparent header legible over near-white sky */
-    linear-gradient(to bottom, rgba(5, 20, 33, 0.72) 0%, rgba(5, 20, 33, 0.34) 12%, rgba(5, 20, 33, 0) 22%),
+    linear-gradient(to bottom, rgba(var(--scrim-deep), 0.60) 0%, rgba(var(--scrim-deep), 0.28) 12%, rgba(var(--scrim-deep), 0) 22%),
     /* 4. flat tint, kills the source's tropical cyan cast */
-    rgba(9, 32, 51, 0.46);
+    rgba(var(--scrim-deep), 0.30);
 }
 
 /* --- Hero layout --------------------------------------------------------- */
 
-/* Edge-anchored on desktop: intro hard to the top-right, headline hard to
-   the bottom-left, rail along the bottom.
+/* The composition, bottom-anchored.
 
-   The hero deliberately opts OUT of .shell's 1200px centred container: at
-   1440px that container leaves ~120px of dead margin either side, which
-   pulls content away from the frame edge and breaks the reference layout.
-   Here the grid spans the full viewport and only a modest gutter holds text
-   off the very edge. */
-.hero .hero__inner {
+   This is the load-bearing rule of the whole hero. The layout is a single
+   column whose FIRST row is an empty 1fr spacer, so every pixel of leftover
+   viewport height collects ABOVE the content and the three bands are pressed
+   to the floor together. That is the reference's `justify-content: end` on a
+   `min-height: 100svh` flex column, and it is what produces the large field
+   of intentional empty space in the upper two thirds.
+
+   Putting the slack anywhere else — between the bands, or splitting it — is
+   the difference between an editorial composition and a centred hero. Do not
+   change the `1fr` to `auto`. */
+.hero__inner {
   width: 100%;
   max-width: none;
-  padding-inline: clamp(1.15rem, 0.6rem + 2.4vw, 3.25rem);
+  padding-inline: var(--site-margin);
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 30rem);
-  /* The 1fr slack row sits directly under the intro, so ALL leftover height
-     collects there and the headline is driven down until it rests just above
-     the rail — the reference's bottom-left anchoring. Putting the slack
-     anywhere below the headline would instead leave a gap under it. */
+  /* Matching the reference's vertical distribution, which is NOT a single
+     bottom-anchored stack:
+       row 1  annotations, sitting HIGH just under the navbar
+       row 2  1fr of empty space  <- the large void that defines the layout
+       row 3  the headline block
+       row 4  the floor rail
+     The reference places its small type near the top of the frame and its
+     heading in the lower-middle, with real air beneath. Collecting all the
+     slack above the annotations (the previous model) pushed the small type
+     down into the headline and closed that void. */
   grid-template-rows: auto 1fr auto auto;
-  grid-template-areas:
-    ".        intro"
-    ".        ."
-    "headline ."
-    "rail     rail";
-  /* The 1fr spacer row absorbs all slack, which drives the headline and rail
-     down to the bottom edge together. Row gap stays tight so the headline
-     block sits directly on top of the rail rather than floating above it. */
-  row-gap: var(--s-3);
-  column-gap: var(--s-6);
+  row-gap: clamp(1.25rem, 0.7rem + 1.6vw, 2.25rem);
+}
+
+/* Band 1 — the annotations.
+   A 12-column grid with the two blocks at opposite ends and nothing between
+   them. The empty span (columns 4-7) is deliberate: it is the visual gutter
+   that makes the pair read as placed rather than as a paragraph and a label
+   that happen to be adjacent. Mirrors the reference's span-3 / span-5-start-8. */
+.hero__annotations {
+  grid-row: 1;
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  column-gap: var(--s-5);
+  row-gap: var(--s-4);
+  /* Top-aligned: both blocks hang from the same line under the navbar, as
+     the reference hangs RETAIL/INDUSTRIAL/OFFICE and its right paragraph. */
   align-items: start;
 }
 
-.hero__intro   { grid-area: intro; justify-self: end; }
-.hero__headline{ grid-area: headline; align-self: end; }
-.hero__rail    { grid-area: rail; }
-
-/* Hero type runs a notch tighter than the global scale. The reference keeps
-   the headline dominant but sets everything around it small and quiet, so
-   these are local overrides — the site-wide --t-* tokens are unchanged,
-   since sections 02-10 are tuned against them. */
-.hero__title {
-  font-size: clamp(2rem, 1.15rem + 3.1vw, 3.6rem);
-  font-weight: 700;
-  line-height: 1.04;
-  letter-spacing: -0.02em;
-  text-wrap: balance;
-  margin-bottom: var(--s-5);
-  max-width: 20ch;
-}
-
-/* The two spans are a visual split only. The H1 sentence is uncut in the DOM;
-   the lead clause simply sets larger than the trailing one. */
-.hero__title-lead { display: block; }
-/* The trailing clause is inline-block so the trust pill can sit alongside it
-   on the same visual line, the way the reference pairs headline and pill.
-   The H1 sentence itself is still uncut in the DOM. */
-.hero__title-rest {
-  display: inline-block;
-  font-size: 0.36em;
+/* Small category label, hard left. Not an eyebrow above a headline — it is a
+   corner annotation, which is why it sits in its own grid cell rather than
+   stacking with the H1. */
+.hero__label {
+  /* Wide enough to hold "MARITIME HEALTHCARE & CLAIMS MANAGEMENT" on two
+     lines at this tracking. At span 4 it broke to three, which turned a
+     corner annotation into a paragraph. */
+  grid-column: 1 / span 4;
+  font-size: 0.8125rem;
   font-weight: 500;
-  letter-spacing: 0.005em;
-  line-height: 1.4;
-  color: var(--ink-onDark-soft);
-  max-width: 26ch;
-  margin-top: var(--s-3);
-  vertical-align: middle;
+  letter-spacing: 0.055em;
+  text-transform: uppercase;
+  line-height: 1.62;
+  /* Full white, not the secondary tone: at 11px over the video's brightest
+     wake the secondary tone measures 4.25:1 and fails AA. See .hero__scrim
+     for the full measurement table. */
+  color: var(--text-on-deep);
+  margin: 0;
+  max-width: 30ch;
 }
 
-/* Headline block: title, then pill and offices beneath it. */
-.hero__headline {
+/* The single supporting sentence, right side. It is NOT under the headline:
+   it is a contextual annotation across the gutter from the label, exactly as
+   the reference places its "we broker, value and track..." line. */
+.hero__note {
+  /* Starts at column 8, as the reference sets its right paragraph across the
+     right half with a wide empty gutter from the left block. */
+  grid-column: 8 / span 5;
+  /* Same small uppercase treatment as the left label — in the reference both
+     annotations are the same size and case. A larger sentence-case line here
+     read as a subtitle rather than as the matching half of a pair. */
+  font-size: 0.8125rem;
+  font-weight: 500;
+  line-height: 1.45;
+  letter-spacing: 0.055em;
+  text-transform: uppercase;
+  color: var(--text-on-deep);
+  margin: 0;
+  max-width: 40ch;
+}
+
+/* Band 2 — the display headline.
+
+   font-size is viewport-relative and UNCAPPED, matching the reference's
+   8.5vw. A clamp with a rem ceiling is precisely what made the previous H1
+   read as an ordinary website heading: at 1440px a 4.3rem cap is ~69px, i.e.
+   the headline stopped growing exactly where the composition needed it to
+   keep going. At 8.4vw the two lines span ~78% of the content width at 1440,
+   which is the measured proportion of the reference.
+
+   line-height below 1 (the reference uses .966) is what closes the gap
+   between the two rows so they lock into one visual object. */
+.hero__display {
+  grid-row: 3;   /* below the 1fr void */
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
-  gap: var(--s-3);
+  margin: 0;
+  font-family: var(--font-editorial);
+  /* Viewport-tied, never a fixed px size.
+
+     The reference's heading computes to 122px at a ~1907px viewport
+     (122/1907 = 6.4vw) with line-height 118px (118/122 = 0.967). Its rows are
+     long strings ("PROPERTY KNOWS", "CAPE TOWN") that fill the frame at that
+     size; MedShield's rows are shorter, so a literal 6.4vw left the block at
+     only 47% of the content width and it stopped reading as the dominant
+     object. 8.2vw reproduces the reference's PROPORTIONS — how much of the
+     frame the block occupies — which is what the eye actually reads, rather
+     than copying a number that assumes different word lengths.
+
+     Set to fill the frame the way the reference does: its longest row runs
+     essentially edge to edge, which is what makes the block read as the
+     structure of the page rather than as a heading placed on it. With the
+     new copy the longest row is "THE HORIZON ... OF" (a split row spanning
+     the full width) and "MARITIME CARE". Measured at every breakpoint below;
+     nothing clips. */
+  font-size: 6.5vw;
+  /* 500, not 600. Rubik at 600 uppercase reads heavier and more geometric
+     than the reference's display face at the same nominal weight; 500 is the
+     closest match to its letterform colour on screen. */
+  font-weight: 500;
+  line-height: 0.967;   /* 118px / 122px, from the reference */
+  letter-spacing: -0.03em;
+  text-transform: uppercase;
+  color: var(--text-on-deep);
 }
 
-/* Desktop pairs the pill with the trailing headline clause on one line, as
-   the reference does. The H1's last span is inline-block, so making the
-/* Desktop: the trailing clause and the trust pill share one line, as the
-   reference pairs them. .hero__headline-row is a plain flex row — the clause
-   sets its own width above it, and the pill simply sits alongside on the
-   line beneath, wrapping only if the copy genuinely outgrows the column. */
-@media (min-width: 1100px) {
-  .hero__headline-row {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: var(--s-3) var(--s-5);
-  }
-  .hero__offices { margin-left: var(--s-2); }
+/* Each row is its own full-width block, so its alignment is independent of
+   the others. That independence is the whole point: it is what produces the
+   left/right tension across the viewport rather than a centred text block. */
+.hero__row {
+  display: block;
+  width: 100%;
+  white-space: nowrap;
+  /* NO overflow clip here. The per-character masks handle the entrance wipe,
+     and the horizontal exit needs the rows to travel freely past the edge of
+     their own box — clipping here would cut the exit dead. The hero section
+     itself has overflow: hidden, which is what keeps the flying rows from
+     creating a horizontal scrollbar. */
 }
 
-/* Intro copy: small and calm, as in the reference's top-right block. */
-.hero__sub {
-  font-size: clamp(0.875rem, 0.83rem + 0.16vw, 0.95rem);
-  line-height: 1.6;
-  color: var(--ink-onDark-soft);
-  margin-bottom: var(--s-5);
+/* Row 3 pushes hard to the right edge. Rows 1 and 2 stay left, which gives
+   the composition the reference's rhythm:
+     WE MANAGE
+     THE WHOLE
+                 MEDICAL CASE  */
+.hero__row--end {
+  text-align: right;
 }
 
-/* Compact CTAs — the reference's button is a small pill, not a slab.
-   Still 44px min-height: a thumb target on a moving vessel is a hard floor,
-   and shrinking below it would fail WCAG 2.5.5 regardless of the reference. */
+/* Row 2 holds two words pushed hard to opposite edges — the reference's
+   "PROPERTY ......... KNOWS". space-between does the work; the row is already
+   full width, so the gap between them is whatever the frame leaves over. */
+.hero__row--split {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+/* The trailing word sits on the right edge and is measured from it. */
+.hero__row-t--far { text-align: right; }
+
+/* The inner text node. It is the element the SCROLL moves: the whole row
+   translates horizontally as the hero exits, exactly as the reference
+   translates each of its heading rows. hero.js writes --row-x. */
+.hero__row-t {
+  display: inline-block;
+  --row-x: 0%;
+  transform: translateX(var(--row-x));
+  will-change: transform;
+}
+
+/* Per-character MASK. The reference splits with mask:"chars", which gives
+   every character its own overflow-hidden wrapper — that clip is what turns
+   the horizontal slide into a wipe rather than letters visibly sliding over
+   their neighbours. Without this the entrance reads completely differently.
+
+   vertical-align: bottom stops the inline-block boxes from sitting on the
+   text baseline and adding descender gaps between rows. */
+.hero__cmask {
+  display: inline-block;
+  overflow: hidden;
+  vertical-align: bottom;
+  /* Spaces between words are masks too; preserve their width. */
+  white-space: pre;
+}
+
+/* Annotation masks. Same principle at paragraph scale: the <p> clips, the
+   inner span slides. clip-path rather than overflow so the exit can travel
+   outside the box while the entrance still reveals from nothing — overflow
+   would clip both directions and kill the fly-out. */
+/* NO overflow/clip on these wrappers. `overflow: clip` here flattened the
+   inner span's transform entirely (a hardcoded translateX(-125px) on the
+   child still computed to the identity matrix), which silently killed both
+   the entrance slide and the scroll fly-out. The hero section's own
+   overflow: hidden is what contains the movement. */
+/* ONE transform declaration for both the entrance and the scroll exit, so
+   the two never overwrite each other: --a-x/--a-s carry the load-time reveal,
+   --x-x carries the scroll-driven horizontal fly-out. */
+.hero__label-t,
+.hero__note-t {
+  display: inline-block;
+  will-change: transform;
+  /* Defaults declared HERE, on the base rule, not only inside the
+     .hero-anim/.hero-ready states: an undefined custom property inside a
+     transform makes the whole declaration invalid at computed-value time, so
+     the element silently stops transforming altogether. */
+  /* The transform on these two is written by hero.js as an inline style.
+
+     It is NOT done in CSS because the value has to combine the load-time
+     reveal offset with the scroll-driven fly-out offset, and every CSS form
+     of that combination resolved to an invalid transform in Chromium — a
+     custom property holding an unresolved calc() (`calc(0.5 * -125%)`)
+     cannot be nested inside another calc() or chained with a second
+     translateX. Driving it from script is unambiguous and costs one style
+     write per frame on an element that is already composited. */
+}
+
+/* The character itself, inside its mask. Enters from the RIGHT
+   (translateX(100%)) as the reference does — not from below. */
+.hero__char {
+  display: inline-block;
+  white-space: pre;
+  transform: translate3d(var(--c-x, 0), 0, 0);
+  will-change: transform;
+}
+
+/* Entrance start state: every char parked one full width to the right, i.e.
+   completely hidden inside its own mask. */
+html.hero-anim .hero__char { --c-x: 100%; }
+
+/* Entrance run state. 1.5s expo.out is the reference's exact duration and
+   easing; the cubic-bezier below is the standard expo.out approximation.
+   Per-character delay is written inline by hero.js (stagger .125 / n). */
+html.hero-ready .hero__char {
+  --c-x: 0%;
+  transition: transform 1.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+
+/* Band 3 — the quiet floor rail: action left, metadata right. */
+.hero__foot {
+  grid-row: 4;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--s-5);
+  flex-wrap: wrap;
+  /* NO divider rule. A full-width horizontal line under the headline is the
+     single strongest "corporate landing page" signal in the composition — the
+     reference separates its floor band with space alone. */
+  padding-top: clamp(1.1rem, 0.7rem + 1.1vw, 1.9rem);
+}
+
 .hero__actions {
   display: flex;
-  flex-wrap: wrap;
-  gap: var(--s-3);
-}
-.hero__actions .btn {
-  font-size: 0.875rem;
-  padding: 0.7rem 1.25rem;
-  min-height: 44px;
-  border-radius: 999px;
-}
-
-/* The eyebrow sits above the intro block, smaller and wider-tracked. */
-.hero__intro .eyebrow {
-  font-size: 0.6875rem;
-  letter-spacing: 0.18em;
-  margin-bottom: var(--s-3);
-}
-
-/* Trust pill. Text only — no avatars, no client faces or logos: the brief is
-   explicit that we hold no permission for them. */
-.hero__pill {
-  display: inline-block;
-  font-size: 0.8125rem;
-  font-weight: 600;
-  letter-spacing: 0.01em;
-  color: #fff;
-  /* A translucent WHITE fill lightens the ground under it — measured at
-     4.35:1 over the video's bright wake, i.e. failing. The fill is navy so
-     it darkens instead, and the ratio holds wherever the pill lands. */
-  background: rgba(8, 28, 44, 0.62);
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  border-radius: 999px;
-  padding: 0.45rem 0.95rem;
-}
-@supports (backdrop-filter: blur(6px)) {
-  .hero__pill { backdrop-filter: blur(6px); }
-}
-
-/* Bottom rail: stat at the left edge, service labels at the right.
-   space-between holds the two ends apart now that the connecting rule is
-   gone; they stack only if the row genuinely runs out of width. */
-.hero__rail {
-  display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: var(--s-4);
+  gap: clamp(1rem, 0.5rem + 1.4vw, 2rem);
   flex-wrap: wrap;
-  padding-top: var(--s-5);
 }
 
-.hero__stat {
-  font-size: 0.8125rem;
-  font-weight: 600;
-  line-height: 1.35;
-  color: #fff;
-  /* Two lines at most — a three-line stat reads as a paragraph, not a figure. */
-  max-width: 24ch;
-  flex: 0 0 auto;
-}
-
-.hero__chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--s-2);
-  list-style: none;
-  margin: 0;
-  padding: 0;
-}
-.hero__chips li {
-  font-size: var(--t-micro);
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  /* White, not the softened ink: at 12px over the wake the soft tone
-     measured 3.95:1. Navy fill + white label puts this well clear. */
-  color: #fff;
-  background: rgba(8, 28, 44, 0.62);
-  border: 1px solid rgba(255, 255, 255, 0.22);
-  border-radius: 999px;
-  padding: 0.4rem 0.85rem;
-  white-space: nowrap;
-}
-
-/* Small and low-contrast, tucked under the headline. No top rule: it sits
-   inside the headline block now, not as a full-width footer strip. */
-.hero__offices {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--s-2) var(--s-4);
+/* Compact, not a slab. Still 44px min-height: a thumb target on a moving
+   vessel is a hard accessibility floor (WCAG 2.5.5) regardless of the
+   reference's smaller buttons. */
+/* Editorial, not a SaaS pill. Square-ish (the project's 4px clinical radius,
+   not 999px), compact, and set in the same small tracked type as the rest of
+   the floor band. It still reads as the primary action through its accent
+   fill — it simply stops shouting. 44px min-height is retained: a thumb
+   target on a moving vessel is a hard WCAG 2.5.5 floor. */
+.hero__cta {
+  font-family: var(--font-editorial);
   font-size: 0.75rem;
-  letter-spacing: 0.04em;
-  color: var(--ink-onDark-soft);
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 0.7rem 1.35rem;
+  min-height: 44px;
+  border-radius: var(--radius);
 }
-.hero__offices span { position: relative; }
-.hero__offices span + span::before {
+
+/* Secondary action recedes to a text link with an animated rule — visually
+   subordinate to the filled CTA, never a second button of equal weight. */
+.hero__cta-alt {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  min-height: 44px;
+  font-size: 0.75rem;
+  font-weight: 400;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-on-deep-secondary);
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+.hero__cta-alt::after {
   content: "";
   position: absolute;
-  left: calc(var(--s-5) / -2);
+  left: 0;
+  bottom: 0.7rem;
+  width: 100%;
+  height: 1px;
+  background: currentColor;
+  opacity: 0.45;
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.hero__cta-alt:hover { color: var(--text-on-deep); }
+.hero__cta-alt:hover::after { transform: scaleX(1); }
+.hero__cta-alt span { transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1); }
+.hero__cta-alt:hover span { transform: translateX(4px); }
+
+/* Geographic metadata. The quietest element on the screen by design — small,
+   muted, wide-tracked, sitting in the corner. Not a badge, not a chip: no
+   fill, no border, no pill. */
+.hero__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem clamp(0.9rem, 0.6rem + 0.8vw, 1.4rem);
+  margin: 0;
+  font-size: 0.6875rem;
+  font-weight: 400;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--text-on-deep-muted);
+}
+/* Hairline separators between the three names, drawn rather than typed so
+   they never end up in the accessible name or a copy-paste. */
+.hero__meta span { position: relative; }
+.hero__meta span + span::before {
+  content: "";
+  position: absolute;
+  left: calc(clamp(0.9rem, 0.6rem + 0.8vw, 1.4rem) / -2);
   top: 50%;
-  width: 3px; height: 3px;
-  margin-top: -1.5px;
-  border-radius: 50%;
-  background: var(--teal-500);
+  width: 1px;
+  height: 0.7em;
+  margin-top: -0.35em;
+  background: var(--hairline-on-deep-hi);
 }
 
-/* Mobile: the edge-anchored grid collapses to one readable column, in the
-   order the brief specifies — headline, intro, CTA, then the trust pill.
-   The pill moves out of .hero__headline visually via grid order; the DOM
-   order is untouched. */
-@media (max-width: 859px) {
+/* --- Hero entrance ------------------------------------------------------- */
+
+/* Load reveal. Restrained: a short rise with a fade, staggered nav -> label ->
+   headline -> note -> rail. The headline reveals under a clip rather than
+   just fading, which is the one flourish borrowed from the reference — but
+   it is a straight upward wipe, no rotation, no letter splitting, no scale.
+
+   .hero-ready is set by hero.js on <html> after the font settles, so the
+   reveal never plays against a fallback face and then reflow. If JS never
+   runs, the :not() below leaves everything at its final state — the hero is
+   fully visible with no script at all. */
+.hero__label,
+.hero__note,
+.hero__foot {
+  opacity: 1;
+  transform: none;
+}
+
+/* Supporting copy enters the way the reference's two hero paragraphs do:
+   from the RIGHT with a scale-up (xPercent:100, scale:.5), 1.75s expo.out —
+   not a vertical fade. The label and note are clipped by their own masks so
+   the slide reads as a reveal. */
+html.hero-anim .hero__foot {
+  opacity: 0;
+}
+
+/* Entrance transition, scoped to the .is-entering flag that hero.js removes
+   once the reveal has finished.
+
+   It MUST be removed: a transition on `transform` that is still live will
+   hold the element at its animated value and override even an !important
+   inline transform, which silently froze the scroll-driven fly-out. The
+   scroll exit needs to write transform every frame with nothing interpolating
+   behind it. */
+html.hero-ready .hero__label-t.is-entering,
+html.hero-ready .hero__note-t.is-entering {
+  /* 1.75s expo.out — the reference's paragraph duration exactly. */
+  transition: transform 1.75s cubic-bezier(0.16, 1, 0.3, 1);
+}
+html.hero-ready .hero__foot {
+  opacity: 1;
+  transition: opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Timeline offsets, mirroring the reference's relative positions:
+   headline chars start first, the paragraphs come in at "<.75" (0.75s later),
+   and the floor rail follows the paragraphs. The per-character delays inside
+   each row are written inline by hero.js. */
+html.hero-ready .hero__label-t { transition-delay: 0.75s; }
+html.hero-ready .hero__note-t  { transition-delay: 0.75s; }
+html.hero-ready .hero__foot    { transition-delay: 1.15s; }
+
+/* --- Hero scroll state --------------------------------------------------- */
+
+/* Exit motion. hero.js writes --hero-progress (0 at rest, 1 when the hero has
+   fully left) and these consume it. Everything is transform/opacity only, so
+   the whole exit is composited and never triggers layout.
+
+   The headline moves LESS than the media, not more: it stays readable through
+   the entire exit, which is the reference's restraint. No rotation, no scale
+   beyond a hair, no parallax race between the two lines. */
+/* THE EXIT IS HORIZONTAL.
+
+   This is the single most distinctive thing the reference does and it is
+   worth being explicit about: as the hero scrolls away, the heading rows fly
+   APART SIDEWAYS in opposite directions. Left-aligned rows exit left,
+   right-aligned rows exit right. There is NO vertical translate on the text,
+   NO opacity fade on it, and NO scale.
+
+   The reference's exact values (heading rows -175 / -125 / +150 / +125,
+   paragraphs -125 / +300, all xPercent) are mapped onto MedShield's three
+   rows below. Percentages are of each row's OWN width, so the distance scales
+   with the type and holds at every viewport.
+
+   Only the overlay fades (opacity -> 0), matching the reference. */
+@media (min-width: 860px) {
+  /* Row 1 and 2 are left-aligned, so they exit LEFT.
+     Row 3 is right-aligned, so it exits RIGHT. The opposition is the effect. */
+  /* Explicit modifier classes, NOT :nth-child — hero.js inserts a
+     .visually-hidden copy of the sentence as the H1's first child for
+     assistive tech, which shifts every positional index by one. */
+  .hero__row--a .hero__row-t { --row-x: calc(var(--hero-progress, 0) * -175%); }
+  .hero__row--b .hero__row-t { --row-x: calc(var(--hero-progress, 0) * -125%); }
+  /* The right-hand half of the split row exits RIGHT, not left — the two
+     words separate as the hero leaves, which is the reference's
+     "PROPERTY <- -> KNOWS" behaviour. */
+  .hero__row--b .hero__row-t--far { --row-x: calc(var(--hero-progress, 0) * 150%); }
+  .hero__row--c .hero__row-t { --row-x: calc(var(--hero-progress, 0) *  150%); }
+
+  /* The two annotations split the same way — left one exits left, right one
+     exits far right (+300%, as the reference throws its right paragraph). */
+  /* html-prefixed to out-rank `html.hero-ready .hero__label-t`, which also
+     writes to this element. Without the prefix the entrance rule's cascade
+     position wins and --x-x never takes effect. */
+  /* label/note horizontal exit is applied inline by hero.js — see above. */
+
+  /* The floor rail is not part of the reference's hero timeline; it gets the
+     same horizontal logic at a much smaller amplitude so it leaves with the
+     composition instead of sitting still while everything else flies apart. */
+  .hero__actions { transform: translate3d(calc(var(--hero-progress, 0) * -60%), 0, 0); }
+  .hero__meta    { transform: translate3d(calc(var(--hero-progress, 0) *  60%), 0, 0); }
+
+  /* Only the overlay fades, exactly as the reference does it. */
+  .hero__scrim {
+    opacity: calc(1 - var(--hero-progress, 0));
+  }
+}
+
+/* --- Hero responsive ----------------------------------------------------- */
+
+/* Tablet / small laptop. The composition holds — the headline simply grows in
+   vw terms to keep occupying the frame as the viewport narrows, matching the
+   reference's step up to 12vw. */
+@media (max-width: 1100px) {
+  /* Steps UP as the viewport narrows, matching the reference's 8.5 -> 12vw
+     progression. These must never fall below the base size above, which is
+     what happened when the base was raised and these were left at their old
+     values - the headline shrank at 1024 instead of growing. */
+  .hero__display { font-size: 7.3vw; }
+  .hero__label { grid-column: 1 / span 5; }
+  .hero__note  { grid-column: 7 / span 6; }
+}
+
+@media (max-width: 860px) {
+  .hero__display { font-size: 8.3vw; }
+}
+
+/* Mobile — recomposed, not scaled down.
+
+   The two annotation blocks stop being a left/right pair (there is no width
+   for a gutter) and stack, but the composition stays bottom-anchored with the
+   headline dominant and the rail on the floor. The headline breaks to three
+   lines here because "WHOLE MEDICAL CASE" cannot hold on one line at 390px
+   without dropping to a size that stops being the dominant element. */
+/* Below ~820px the split row runs out of width: the two halves close to
+   nothing and "THE HORIZON" and "OF" collide. The row stops being a split
+   and becomes a plain left-aligned line, which keeps the words legible; the
+   third row's right alignment still carries the asymmetry. */
+@media (max-width: 820px) {
+  .hero__row--split {
+    display: block;
+  }
+  .hero__row--split .hero__row-t--far {
+    /* Trails the first half on the same line rather than jumping the gap. */
+    text-align: left;
+  }
+  /* A real gap between the two halves. A ::before space does not render on
+     an inline-block, which ran "HORIZON" and "OF" together into one word. */
+  .hero__row--split .hero__row-t + .hero__row-t {
+    margin-left: 0.28em;
+  }
+}
+
+@media (max-width: 700px) {
   .hero {
-    /* Full viewport here too. Content that outgrows it still pushes the
-       section taller rather than being cut. */
-    min-height: 100vh;
-    min-height: 100svh;
-    padding-block: calc(4.5rem + var(--s-4)) var(--s-5);
+    padding-block: calc(5.25rem + var(--s-4)) var(--site-margin);
   }
 
-  .hero .hero__inner {
+  .hero__inner {
+    row-gap: var(--s-5);
+  }
+
+  .hero__annotations {
     display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    /* Fills the now-full-height hero instead of bunching at the top. */
-    justify-content: center;
-    gap: var(--s-4);
-  }
-
-  /* Brief order: headline, intro, CTA, trust pill. The pill and offices are
-     nested inside .hero__headline > .hero__headline-row in the DOM, so both
-     wrappers dissolve with display:contents and every item orders directly
-     against the hero column. Markup unchanged, reading order correct. */
-  .hero__headline,
-  .hero__headline-row {
-    display: contents;
-  }
-  .hero__title   { order: 1; }
-  .hero__intro   { order: 2; }
-  .hero__pill    { order: 3; }
-  .hero__rail    { order: 4; }
-  .hero__offices { order: 5; }
-
-  /* The eyebrow already sits above the headline visually once the intro
-     follows it, so it would read twice. Keep one. */
-  .hero__intro .eyebrow { display: none; }
-
-  .hero__title { margin-bottom: 0; max-width: 100%; }
-  .hero__title-rest { font-size: 0.5em; max-width: 100%; }
-
-  /* Chips and the stat are secondary — they go rather than crowd a phone. */
-  .hero__rail { display: none; }
-}
-
-@media (max-width: 480px) {
-  /* Full-width buttons on a phone: a thumb target, not a pair of chips. */
-  .hero__actions { flex-direction: column; align-items: stretch; }
-  .hero__actions .btn { width: 100%; }
-}
-
-/* Short and wide — landscape phones, small laptops. The headline is the
-   point of the hero, so on a shallow viewport the spacing gives way before
-   the H1 does: the floor is dropped and the vertical rhythm compressed so
-   the headline stays in view rather than being pushed under the fold.
-
-   560px, not 820px: this side-by-side fallback abandons the bottom-anchored
-   reference layout, so it must fire only for genuinely shallow viewports
-   (landscape phones), never for an ordinary laptop or a scaled display at
-   ~600px CSS height — those keep the full bottom-left anchoring. */
-@media (min-width: 860px) and (max-height: 560px) {
-  .hero {
-    /* Just clears the 4.5rem header — no decorative breathing room to spare
-       when the whole viewport is 500px tall. */
-    padding-block: 5rem var(--s-4);
-  }
-  .hero .hero__inner {
-    /* Stacking intro above headline costs the intro's full height (~340px)
-       before the H1 even starts — on a shallow viewport that alone buries
-       it. So the two share one row here: headline left, intro right,
-       bottom-aligned. Same DOM, same reading order, no vertical stacking
-       tax. */
-    grid-template-rows: auto auto;
-    grid-template-areas:
-      "headline intro"
-      "rail     rail";
-    row-gap: var(--s-3);
-    column-gap: var(--s-7);
-    align-items: end;
-  }
-  .hero__headline { align-self: end; }
-  .hero__intro    { align-self: end; }
-  .hero__intro .hero__sub { margin-bottom: var(--s-4); }
-  .hero__title { margin-bottom: var(--s-3); }
-
-  /* No room to pair pill with the headline on a shallow screen — stack it. */
-  .hero__headline {
     flex-direction: column;
     align-items: flex-start;
     gap: var(--s-3);
   }
-  .hero__pill { align-self: flex-start; }
-}
+  .hero__label, .hero__note { max-width: 100%; }
+  .hero__note { font-size: 1rem; }
 
-/* Between ~560px and ~760px tall (scaled laptops) the bottom-anchored layout
-   still applies, but the generous top padding would push it past the fold.
-   Trim the gutters rather than abandoning the layout. */
-@media (min-width: 860px) and (min-height: 561px) and (max-height: 760px) {
-  .hero {
-    padding-block: calc(4.5rem + var(--s-2)) var(--s-3);
+  .hero__display {
+    /* 11.6vw, not the reference's 16vw: MedShield's headline is 31 characters
+       against RIO's 9-character "Rio". At 14vw it ran to four lines and the
+       composition stopped reading as two deliberate rows. This keeps the
+       brief's structure — "WE MANAGE THE" over "WHOLE MEDICAL CASE" — with
+       the second row wrapping to two lines at most on the narrowest phones. */
+    /* "MEDICAL CASE" is the longest of the three rows and sets the ceiling.
+       Verified against 390px and 360px in the breakpoint pass. */
+    /* The split row collapses to one line here, so this row carries
+       "THE HORIZON OF" in full — the longest string in the composition and
+       what sets the ceiling. 10.4vw keeps it clear of the right margin. */
+    font-size: 7.7vw;
+    letter-spacing: -0.022em;
+    line-height: 0.98;
   }
-  .hero .hero__inner { row-gap: var(--s-2); }
-  .hero__intro .hero__sub { margin-bottom: var(--s-3); }
-  .hero__intro .eyebrow { margin-bottom: var(--s-2); }
-  .hero__title { margin-bottom: var(--s-2); }
+  /* The three-row split pays off here: "MEDICAL CASE" is short enough to hold
+     one line at 390px, so the right-aligned third row survives on mobile and
+     the composition keeps its asymmetry instead of collapsing to a left
+     stack. Rows stay nowrap — the sizing below guarantees they fit. */
+  .hero__row--end {
+    text-align: right;
+  }
+
+  .hero__foot {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--s-4);
+  }
+  .hero__actions { gap: var(--s-4); }
+  .hero__meta { font-size: 0.625rem; }
 }
 
-/* Shallower still: drop the rail before the headline gives way. */
-@media (min-width: 860px) and (max-height: 480px) {
-  .hero__rail { display: none; }
-  .hero .hero__inner { row-gap: var(--s-3); }
+@media (max-width: 420px) {
+  /* Slightly smaller again so "MEDICAL" is not forced onto its own line at
+     360px. Deliberately BELOW the 700px rule's 11.6vw, not above it. */
+  .hero__display { font-size: 7.4vw; }
+  .hero__actions { align-items: stretch; }
+  .hero__cta { justify-content: center; text-align: center; }
+}
+
+/* Short and wide — landscape phones, scaled laptops. The headline is the
+   point of the hero, so spacing gives way before the H1 does. */
+@media (min-width: 860px) and (max-height: 620px) {
+  .hero {
+    padding-block: calc(5.25rem + var(--s-2)) var(--s-4);
+  }
+  .hero__inner { row-gap: var(--s-3); }
+  .hero__display { font-size: 7.4vw; }
+  .hero__note { font-size: 0.95rem; }
+}
+
+/* Very shallow viewports — landscape phones.
+
+   NO min-width guard here: the previous rule required min-width 860px, so an
+   812x375 landscape phone never matched it and its content overflowed the
+   now-locked 100vh height. Height is the only thing that matters at this
+   point, so height is the only thing tested.
+
+   The annotations go rather than let the headline or the CTA be clipped. */
+@media (max-height: 500px) {
+  .hero {
+    padding-block: calc(4.25rem + var(--s-2)) var(--s-3);
+  }
+  .hero__annotations { display: none; }
+  .hero__display { font-size: 5.6vw; }
+  .hero__inner { row-gap: var(--s-2); }
+  .hero__foot { padding-top: var(--s-3); }
+}
+
+/* Landscape phones are narrow AND short: 5.6vw of an 812px viewport is only
+   45px, too small to carry the composition. Scale against height instead. */
+@media (max-width: 900px) and (max-height: 500px) {
+  .hero__display { font-size: 7.4vh; }
+}
+
+/* Reduced motion: no entrance, no horizontal fly-out, nothing moving. The
+   hero is simply present and complete. The video scrub is separately disabled
+   in hero.js, and the header's hide-on-scroll is cut too. */
+@media (prefers-reduced-motion: reduce) {
+  html.hero-anim .hero__label-t,
+  html.hero-anim .hero__note-t,
+  html.hero-ready .hero__label-t,
+  html.hero-ready .hero__note-t,
+  html.hero-anim .hero__foot,
+  html.hero-ready .hero__foot {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+  /* Characters stay exactly where they are laid out — no slide, no mask
+     animation, no per-character delay. */
+  html.hero-anim .hero__char,
+  html.hero-ready .hero__char {
+    --c-x: 0%;
+    transform: none;
+    transition: none;
+    transition-delay: 0s !important;
+  }
+
+  /* Kill the scroll-driven horizontal exit entirely. */
+  .hero__row-t,
+  .hero__label-t,
+  .hero__note-t,
+  .hero__actions,
+  .hero__meta,
+  .hero__media {
+    transform: none !important;
+  }
+  .hero__scrim { opacity: 1 !important; }
+
+  .site-header { transition: none; }
+  .site-header.is-hidden { transform: none; }
+
+  .hero__cta-alt::after,
+  .hero__cta-alt span {
+    transition: none;
+  }
+}
+
+/* --- 01b About ---------------------------------------------------------- */
+
+/* Scroll-reveal primitives, ported from the reference's own theme bundle
+   (wp-content/themes/tresmares/js/app.min.js — its setTitles and
+   setDescriptions methods). Their values are reproduced exactly; only the
+   engine differs (GSAP + ScrollTrigger there, native CSS + rAF here).
+
+   THE TITLE MOTION IS A SCRUB, NOT A ONE-SHOT. Their setTitles is:
+
+     SplitText -> chars, then
+     gsap.fromTo(chars,
+       { opacity: .05, color: "inherit", willChange: "color" },
+       { opacity: 1, ease: "none", stagger: .02, duration: .2,
+         scrollTrigger: { start: "top 90%", end: "bottom 60%", scrub: true } })
+
+   So each character sits at 5% opacity and is brightened to full as the block
+   travels from 90% to 60% of the viewport — tied to scroll POSITION, running
+   forwards and backwards with the scrollbar. A one-shot fade cannot reproduce
+   this; hero.js drives --t (0..1) per character instead.
+
+   The .reveal-on class is added to <html> by hero.js ONLY when script runs and
+   motion is allowed, so every start state below is scoped under it: a no-JS
+   page, a JS error, or prefers-reduced-motion all render final. Same
+   fail-visible contract as the hero (.hero-anim / .hero-ready). */
+
+/* --- Title chars: opacity .05 -> 1, scrubbed ---------------------------- */
+
+.reveal-on [data-scrub-char] {
+  /* Their exact floor. Not 0: the text stays faintly present ahead of the
+     scrub, which is what makes the block read as one greyed mass that
+     brightens rather than as text appearing out of nothing. */
+  opacity: 0.05;
+  will-change: color, opacity;
+}
+.reveal-on [data-scrub-char].is-lit {
+  opacity: 1;
+}
+
+/* --- Description words: clip-path wipe + rise, once --------------------- */
+
+/* Their setDescriptions:
+     set(words,  { y: "100%", clipPath: "inset(0% 0% 100% 0%)" })
+     to (words,  { y: "0%",   clipPath: "inset(0% 0% 0% 0%)",
+                   ease: "expo.out", duration: 1, stagger: .01 })   once: true
+
+   The clip-path is what distinguishes it from a plain slide — each word is
+   wiped in from its own baseline as it rises, with no overflow container. */
+.reveal-on [data-word] {
+  display: inline-block;
+  transform: translateY(100%);
+  clip-path: inset(0% 0% 100% 0%);
+  /* expo.out, their easing, as its cubic-bezier equivalent. */
+  transition: transform 1s cubic-bezier(0.16, 1, 0.3, 1),
+              clip-path 1s cubic-bezier(0.16, 1, 0.3, 1);
+  transition-delay: var(--reveal-delay, 0s);
+}
+.reveal-on [data-word].is-in {
+  transform: translateY(0%);
+  clip-path: inset(0% 0% 0% 0%);
+}
+
+/* Non-text blocks (the boxed figure) keep a plain fade-up: the reference has
+   no character split on these either. */
+.reveal-on [data-reveal] {
+  opacity: 0;
+  transform: translateY(1.5rem);
+  transition: opacity 1s cubic-bezier(0.16, 1, 0.3, 1),
+              transform 1s cubic-bezier(0.16, 1, 0.3, 1);
+  transition-delay: var(--reveal-delay, 0s);
+}
+.reveal-on [data-reveal].is-in {
+  opacity: 1;
+  transform: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal-on [data-reveal],
+  .reveal-on [data-word],
+  .reveal-on [data-scrub-char] {
+    opacity: 1;
+    transform: none;
+    clip-path: none;
+    transition: none;
+  }
+}
+
+/* Their .component--textblocklarge { padding: 10vw 0 13.333vw } — deliberately
+   asymmetric, more air below the statement than above it, which is what sets
+   the statement apart from the stats block that follows. Clamped to our scale
+   rather than left as raw vw, so it cannot run away on an ultrawide monitor. */
+.about {
+  background: var(--surface-page);
+  padding-top: clamp(4.5rem, 2.5rem + 7vw, 9rem);
+  padding-bottom: clamp(5.5rem, 3rem + 9.5vw, 12rem);
+}
+
+/* Centred, quiet, uppercase — the reference's section marker. */
+.about__eyebrow {
+  text-align: center;
+  font-size: var(--t-small);
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin: 0 0 clamp(2.5rem, 1.5rem + 3.5vw, 5rem);
+}
+
+/* The display statement. Centred and optically large, but capped so the line
+   count stays at three on desktop — the composition depends on three rows.
+
+   Their .display.--large is 5vw / line-height .95 / letter-spacing -.04em.
+   The near-1 line-height and tight tracking are what make the block read as a
+   single mass of type rather than three separate sentences, and that mass is
+   what the character scrub then brightens. Our face is not theirs, so the
+   size is our own fluid step; the leading and tracking are theirs. */
+.about__display {
+  position: relative;
+  margin: 0;
+  text-align: center;
+  font-family: var(--font-display);
+  font-size: clamp(1.9rem, 0.9rem + 4.1vw, 4.2rem);
+  font-weight: 500;
+  line-height: 0.98;
+  letter-spacing: -0.04em;
+  color: var(--surface-deep);
+  text-wrap: balance;
+}
+
+.about__lines {
+  display: block;
+}
+
+.about__line {
+  display: block;
+}
+
+/* The split leaves one span per character. inline-block would break normal
+   line-breaking between them, so they stay inline and only opacity is
+   animated — which is all the reference's title motion touches. */
+.reveal__char {
+  display: inline;
+}
+
+/* The reference's accent dot, set in brand teal rather than its red. Placed
+   with the flow on small screens (where a floated mark collides with the
+   text) and pulled out to the left of the first line past 860px. */
+.about__dot {
+  display: block;
+  width: 0.42rem;
+  height: 0.42rem;
+  margin: 0 auto clamp(1rem, 0.7rem + 1vw, 1.6rem);
+  border-radius: 50%;
+  background: var(--accent-2);
+}
+/* Past 860px the mark leaves the flow and sits out in the left margin, clear
+   of the first line's opening letter — the reference's placement. Anchored to
+   the section's left edge rather than to the (centred, variable-width) text,
+   so it never collides with a re-wrapped headline. */
+@media (min-width: 860px) {
+  .about__dot {
+    position: absolute;
+    top: 0.42em;
+    left: 0;
+    width: 0.5rem;
+    height: 0.5rem;
+    margin: 0;
+  }
 }
 
 /* --- 02 Proof strip ----------------------------------------------------- */
 
+/* Same ground as .about — the reference runs About and the stats section on
+   one continuous page background, not a distinct tinted band. */
 .proof {
-  background: var(--paper-alt);
-  border-bottom: 1px solid var(--rule);
+  position: relative;
+  background: var(--surface-page);
+  border-bottom: 1px solid var(--border);
   padding-block: clamp(2.5rem, 1.6rem + 3.4vw, 4rem);
 }
 
-.proof__grid {
-  display: grid;
-  /* Mobile 2-up → tablet 3-up → desktop 6-across, per FIRST-STEP.md. */
-  grid-template-columns: repeat(2, 1fr);
-  gap: var(--s-6) var(--s-5);
-}
-@media (min-width: 620px)  { .proof__grid { grid-template-columns: repeat(3, 1fr); } }
-@media (min-width: 1020px) { .proof__grid { grid-template-columns: repeat(6, 1fr); } }
+/* Their .columns: a narrow text column beside the stat run.
 
-/* Rows share a baseline: the figure cell is a fixed track, so labels start at
-   the same y whether the figure is "3" or a two-line "ISO 45001". */
-.proof__item {
+     .item:first-child  width: 20vw   (their .container.--xsmall is 70vw, so
+     .item:last-child   width: 40vw    the two columns leave a 10vw channel)
+
+   Ratio 20:40 = 1fr:2fr, with the channel between them. Single column below
+   1020px, where a parallax against a narrow text block reads as a rendering
+   fault rather than an effect. */
+.proof__shell {
   display: grid;
-  grid-template-rows: auto auto;
-  align-content: start;
-  gap: var(--s-2);
-  padding-left: var(--s-4);
-  border-left: 2px solid var(--teal-500);
+  gap: clamp(2.5rem, 1.5rem + 4vw, 5rem);
 }
 @media (min-width: 1020px) {
-  .proof__grid { align-items: start; }
-  .proof__item { grid-template-rows: 3.6rem auto; }
-  .proof__figure { align-self: end; }
+  .proof__shell {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
+    align-items: start;
+    /* Their 10vw channel, capped so it does not run away on ultrawide. */
+    column-gap: clamp(2rem, 0.5rem + 6vw, 7rem);
+  }
 }
 
+.proof__intro {
+  display: grid;
+  gap: var(--s-5);
+  align-content: start;
+  max-width: var(--measure);
+}
+@media (min-width: 1020px) {
+  /* Their .text-block-left { position: sticky; top: 11.667vw }. The text holds
+     against the top while the stat run travels past it — the contrast that
+     makes the parallax legible. Their 11.667vw is measured from the viewport
+     top; ours must also clear the sticky header. */
+  .proof__intro {
+    position: sticky;
+    top: clamp(6rem, 4rem + 6vw, 9rem);
+  }
+
+  /* Headroom for the drift. .content-1 rises to close its gap, so the section
+     needs slack for the travel; without it the boxes lift out of the section
+     and over the one above. */
+  .proof { padding-top: clamp(5rem, 2rem + 7vw, 9rem); }
+}
+
+/* Their .text-block-left uses .wysiwyg.text.--xlarge: 1.25vw, line-height
+   1.4 — plain body copy, not a display statement. It reads small and quiet
+   beside the stat figures, which is what makes the numbers the loudest thing
+   on screen. */
+.proof__lede {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: clamp(0.95rem, 0.85rem + 0.5vw, 1.15rem);
+  font-weight: 400;
+  line-height: 1.5;
+  letter-spacing: 0;
+  color: var(--surface-deep);
+}
+
+/* The stat grid. Verified against the rendered page: .item:last-child is a
+   flex ROW (justify-content:center) holding .content-0 and .content-1 SIDE BY
+   SIDE, each itself a vertical stack (flex-direction:column) of its own
+   boxes. Two columns, not one — the second sits lower and is what the
+   parallax drives upward.
+
+   The two COLUMNS sit with NO gap at all — verified against the reference
+   screenshot, where col-0's right edge and col-1's left edge are
+   immediately adjacent. Their CSS declares no gap property on
+   .item:last-child, and the rendered result is the two columns touching. */
+.proof__cols {
+  display: flex;
+  justify-content: center;
+  gap: 0;
+}
+@media (max-width: 1019px) {
+  /* Their own stylesheet collapses this to a single vertical run below
+     1100px; a two-column layout at phone width has no room to breathe. */
+  .proof__cols {
+    flex-direction: column;
+    gap: 0;
+  }
+}
+
+.proof__col {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  /* NOT flex: 1 1 0 — that stretches each column to share the row equally,
+     which pushes them apart from their fixed-width .proof__item children and
+     opens exactly the gap this is meant to close. Size to content instead, so
+     the two columns sit exactly as wide as their boxes and touch directly. */
+  flex: 0 0 auto;
+}
+
+/* Their .content-1 { margin-top: 10vw } — the head start the parallax closes.
+   Desktop only: below 1020px the columns stack and an offset there would just
+   look like a spacing bug. */
+@media (min-width: 1020px) {
+  .proof__col--1 {
+    margin-top: clamp(4rem, 1rem + 10vw, 10rem);
+    /* Parallax offset, written by hero.js. Declared here so the property is
+       always defined and the element never jumps on first paint. */
+    --parallax-y: 0px;
+    transform: translate3d(0, var(--parallax-y), 0);
+    will-change: transform;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .proof__col--1 { transform: none; }
+}
+
+/* Their .group: a tall box, figure at the top and label pinned to the floor
+   (justify-content: space-between), with vertical neighbours WITHIN a column
+   sharing one hairline.
+
+     width: 20vw; height: 25vw; padding: 1.667vw;
+     border-top on :not(:last-child), border-top + border-bottom on :last-child
+
+   The shared border only ever runs top-to-bottom, inside one column — the
+   two columns themselves are never joined this way. */
+.proof__item {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: var(--s-6);
+  padding: clamp(1.25rem, 0.8rem + 1.8vw, 2.25rem);
+  border-inline: 1px solid var(--border);
+  border-top: 1px solid var(--border);
+  background: var(--surface-raised);
+  position: relative;
+  min-height: clamp(10rem, 4rem + 18vw, 17rem);
+}
+/* When the second column's travel carries it past the first at full scrub —
+   their travel is 2x the resting gap, so this happens on the reference too —
+   it must occlude cleanly, not blend two figures together. z-index sits on
+   the COLUMN, not the boxes: .proof__col--1 carries a transform, which makes
+   it a stacking context, so a z-index on children can only order them against
+   each other, never against the sibling column. */
+.proof__col--1 { position: relative; z-index: 2; }
+/* Only the final box in each column closes the run at the bottom. */
+.proof__col .proof__item:last-child {
+  border-bottom: 1px solid var(--border);
+}
+
+@media (min-width: 1020px) {
+  /* Their height: 25vw, width: 20vw — clamped so neither can run away on an
+     ultrawide monitor or collapse on a short laptop screen. */
+  .proof__item {
+    min-height: clamp(12rem, 6rem + 14vw, 21rem);
+    width: clamp(11rem, 4rem + 16vw, 20rem);
+  }
+  /* With zero gap between columns, col-0's right border and col-1's left
+     border would otherwise double up to a visible 2px seam. Pulling the
+     second column left by one pixel collapses the two into a single shared
+     hairline — their .content-1 .group carries the equivalent margin-left:-1px. */
+  .proof__col--1 { margin-left: -1px; }
+}
+@media (max-width: 1019px) {
+  /* Same collapse on the vertical axis once the columns stack. */
+  .proof__col--1 { margin-top: -1px; }
+}
+
+/* --- Magnet reveal ------------------------------------------------------
+
+   The reference's setItems, ported exactly:
+
+     gsap.set(el, { y: 60px, scale: .96, opacity: .0001 })
+     ScrollTrigger { start: "top bottom", end: "bottom top", once: true }
+     onEnter -> gsap.to(el, { y: 0, scale: 1, opacity: 1,
+                  ease: "expo.out", duration: 1.2,
+                  delay: .00025 * el.getBoundingClientRect().left })
+
+   The delay is derived from the card's horizontal position, so the cards
+   ripple left-to-right across the viewport rather than in DOM order — the
+   two rows interleave, which a DOM-order stagger cannot reproduce. hero.js
+   measures each card and writes --reveal-delay. */
+.reveal-on [data-magnet] {
+  opacity: 0;
+  /* Their `y` is appStore.px(60), and px(t) = t/2400 * innerWidth — i.e. 60
+     units on their 2400px design width, which is 2.5vw, NOT a fixed 60px.
+     Their sibling setMagnet() writes the same distance out literally as
+     y:"2.5vw", which confirms the reading. Fixed px would under-travel on a
+     wide screen and over-travel on a narrow one. */
+  transform: translateY(2.5vw) scale(0.96);
+  /* expo.out, duration: 1.2 — the values from the setItems in the class that
+     actually runs on the homepage (the one that also calls eval_initWebg and
+     owns the hero->gridnumbers WebGL trigger). NOTE: the bundle contains a
+     second setItems for a different page template that uses duration: 2 and
+     no scale. Do not "correct" 1.2 to 2 from that one. */
+  transition: opacity 1.2s cubic-bezier(0.16, 1, 0.3, 1),
+              transform 1.2s cubic-bezier(0.16, 1, 0.3, 1);
+  transition-delay: var(--reveal-delay, 0s);
+}
+.reveal-on [data-magnet].is-in {
+  opacity: 1;
+  transform: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .reveal-on [data-magnet] {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+}
+
+/* Their figure is set in PP Fragment Serif — a commercial Pangram Pangram
+   release we hold no licence for. Fraunces is the closest legitimately-
+   licensable match (see the @font-face above): a high-contrast display
+   serif with the same generous, slightly quirky numeral forms. Weight is
+   600, not the earlier 300 — on Fraunces specifically, a lighter weight
+   thins the serifs down to hairlines that disappear at these sizes; 600
+   is what actually reads as a confident, editorial serif numeral rather
+   than a faint one. */
 .proof__figure {
-  font-family: var(--font-display);
-  font-size: var(--t-fig);
-  font-weight: 700;
+  font-family: "Fraunces", var(--font-display);
+  font-size: clamp(2.6rem, 1.6rem + 4.6vw, 4.6rem);
+  font-weight: 600;
   line-height: 1;
-  letter-spacing: -0.03em;
-  color: var(--navy-900);
+  letter-spacing: -0.01em;
+  /* --accent-2-ink, not the raw --accent-2: the raw brand teal is only
+     2.59:1 against our page ground — well under the 3:1 floor for large
+     text — so it fails outright at this weight/size. --accent-2-ink is the
+     only teal in the palette that clears WCAG AA here (4.76:1) while still
+     reading as a clearly lighter, teal figure next to the surrounding navy
+     copy. */
+  color: var(--accent-2-ink);
   /* Tabular figures: the numbers are the argument, so they align. */
   font-variant-numeric: tabular-nums lining-nums;
   font-feature-settings: "tnum" 1, "lnum" 1;
 }
-/* "ISO 45001" is a designation, not a quantity — it sets smaller so the
-   six items still read as one row rather than one shouting cell. */
+/* "ISO 45001" is a designation, not a quantity, and at nine characters it is
+   the longest string in the grid — same size as the numerals would overflow
+   the box at narrow widths. Rather than shrink it (which broke consistency:
+   every other figure reads at one size, this one read at another), it wraps
+   onto its own two lines instead, staying at the exact same font-size and
+   weight as the rest of the grid. */
 .proof__figure--text {
-  font-size: clamp(1.5rem, 1.05rem + 1.7vw, 2.2rem);
-  letter-spacing: -0.01em;
+  white-space: normal;
+  line-height: 1.02;
 }
-.proof__plus { color: var(--teal-600); }
+.proof__plus { color: var(--accent-2-ink); }
 
+/* Their label (.wysiwyg.text.--large.--bold) sets larger than this in their
+   own CSS, but against our much lighter, larger figure the balance that
+   actually reads right is a smaller, quieter caption — otherwise the label
+   competes with the number instead of sitting under it. Sentence case, not
+   tracked uppercase: that would turn it back into a data-table cell. */
 .proof__label {
-  font-size: var(--t-small);
-  line-height: 1.4;
-  font-weight: 600;
-  letter-spacing: 0.055em;
-  text-transform: uppercase;
-  color: var(--ink-500);
+  font-size: clamp(0.8rem, 0.74rem + 0.3vw, 0.95rem);
+  line-height: 1.35;
+  font-weight: 500;
+  letter-spacing: -0.005em;
+  color: var(--text-muted);
+  text-wrap: balance;
 }
 
-.proof__note {
-  margin-top: var(--s-6);
-  padding-top: var(--s-5);
-  border-top: 1px solid var(--rule);
+/* Their .actions > .link — an underlined text link under the lede, not a
+   button. "Conoce nuestra historia" in the reference. */
+.proof__link {
+  display: inline-block;
+  margin-top: var(--s-2);
   font-size: var(--t-small);
-  color: var(--ink-700);
-  max-width: var(--measure);
+  font-weight: 600;
+  color: var(--accent-2-ink);
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }
 
 /* --- 11 Contact --------------------------------------------------------- */
@@ -889,7 +2006,7 @@ textarea:focus-visible,
 }
 .contact__lede {
   font-size: var(--t-lede);
-  color: var(--ink-700);
+  color: var(--text-secondary);
   max-width: 46ch;
   margin-bottom: var(--s-7);
 }
@@ -897,8 +2014,8 @@ textarea:focus-visible,
 /* Emergency block — visually distinct from the form on purpose. Someone
    with a live casualty must not read this as another marketing panel. */
 .emergency {
-  background: var(--warn-bg);
-  border: 1px solid var(--warn-border);
+  background: var(--warning-bg);
+  border: 1px solid var(--warning);
   border-left-width: 5px;
   border-radius: var(--radius);
   padding: var(--s-5);
@@ -906,22 +2023,22 @@ textarea:focus-visible,
 .emergency__title {
   font-size: var(--t-h3);
   font-weight: 700;
-  color: var(--warn-ink);
+  color: var(--warning);
   margin-bottom: var(--s-3);
 }
-.emergency__body { color: var(--ink-900); margin-bottom: var(--s-3); }
+.emergency__body { color: var(--text-primary); margin-bottom: var(--s-3); }
 .emergency__note {
   font-size: var(--t-small);
-  color: var(--ink-700);
-  border-top: 1px solid rgba(232, 163, 61, 0.5);
+  color: var(--text-secondary);
+  border-top: 1px solid var(--warning);
   padding-top: var(--s-3);
 }
 
 /* --- Form --------------------------------------------------------------- */
 
 .contact__formwrap {
-  background: #fff;
-  border: 1px solid var(--rule);
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   padding: clamp(1.4rem, 0.9rem + 2vw, 2.5rem);
 }
@@ -930,9 +2047,9 @@ textarea:focus-visible,
 
 .form__intro {
   font-size: var(--t-small);
-  color: var(--ink-500);
+  color: var(--text-muted);
   padding-bottom: var(--s-4);
-  border-bottom: 1px solid var(--rule);
+  border-bottom: 1px solid var(--border);
 }
 
 .field { display: flex; flex-direction: column; gap: var(--s-2); }
@@ -942,10 +2059,10 @@ textarea:focus-visible,
 .field label {
   font-size: var(--t-small);
   font-weight: 650;
-  color: var(--ink-900);
+  color: var(--text-primary);
   letter-spacing: 0.01em;
 }
-.field__opt { font-weight: 400; color: var(--ink-500); }
+.field__opt { font-weight: 400; color: var(--text-muted); }
 
 .field input,
 .field select,
@@ -954,9 +2071,9 @@ textarea:focus-visible,
   /* 16px floor stops iOS Safari zooming the page on focus — a real cause of
      horizontal scroll on phones. */
   font-size: max(1rem, var(--t-body));
-  color: var(--ink-900);
-  background: #fff;
-  border: 1px solid #B9C0C4;
+  color: var(--text-primary);
+  background: var(--surface-raised);
+  border: 1px solid var(--border-strong);
   border-radius: var(--radius);
   padding: 0.75rem 0.85rem;
   min-height: 48px;
@@ -968,8 +2085,8 @@ textarea:focus-visible,
 .field select {
   appearance: none;
   background-image:
-    linear-gradient(45deg, transparent 50%, var(--ink-700) 50%),
-    linear-gradient(135deg, var(--ink-700) 50%, transparent 50%);
+    linear-gradient(45deg, transparent 50%, var(--text-secondary) 50%),
+    linear-gradient(135deg, var(--text-secondary) 50%, transparent 50%);
   background-position: calc(100% - 19px) calc(50% + 1px), calc(100% - 14px) calc(50% + 1px);
   background-size: 5px 5px, 5px 5px;
   background-repeat: no-repeat;
@@ -978,11 +2095,11 @@ textarea:focus-visible,
 
 .field input:hover,
 .field select:hover,
-.field textarea:hover { border-color: var(--ink-500); }
+.field textarea:hover { border-color: var(--text-muted); }
 
 .field input:focus,
 .field select:focus,
-.field textarea:focus { border-color: var(--teal-600); }
+.field textarea:focus { border-color: var(--accent-2-ink); }
 
 .field [aria-invalid="true"] {
   border-color: var(--error);
@@ -1008,7 +2125,7 @@ textarea:focus-visible,
   overflow: hidden;
 }
 
-.form__foot { font-size: var(--t-micro); color: var(--ink-500); }
+.form__foot { font-size: var(--t-micro); color: var(--text-muted); }
 
 /* Success state — replaces the form in place. No redirect, no alert. */
 .success {
@@ -1020,8 +2137,8 @@ textarea:focus-visible,
   margin: 0 auto var(--s-5);
   display: grid; place-items: center;
   border-radius: 50%;
-  background: var(--teal-050);
-  color: var(--teal-600);
+  background: var(--success-bg);
+  color: var(--accent-2-ink);
   font-size: 1.5rem; font-weight: 700;
 }
 .success__title {
@@ -1029,13 +2146,13 @@ textarea:focus-visible,
   font-weight: 700;
   margin-bottom: var(--s-3);
 }
-.success__body { color: var(--ink-700); max-width: 34ch; margin-inline: auto; }
+.success__body { color: var(--text-secondary); max-width: 34ch; margin-inline: auto; }
 
 /* --- Footer ------------------------------------------------------------- */
 
 .site-footer {
-  background: var(--navy-900);
-  color: var(--ink-onDark-soft);
+  background: var(--surface-deep);
+  color: var(--text-on-deep-secondary);
   padding-block: var(--s-8) var(--s-6);
 }
 
@@ -1043,7 +2160,7 @@ textarea:focus-visible,
   display: grid;
   gap: var(--s-7);
   padding-bottom: var(--s-7);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.14);
+  border-bottom: 1px solid var(--hairline-on-deep);
 }
 @media (min-width: 760px) {
   .site-footer__top { grid-template-columns: 1.3fr 1fr; }
@@ -1054,13 +2171,13 @@ textarea:focus-visible,
   font-size: 1.4rem;
   font-weight: 700;
   letter-spacing: 0.12em;
-  color: #fff;
+  color: var(--text-on-deep);
 }
 .site-footer__eyebrow {
   font-size: var(--t-micro);
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: var(--teal-onDark);
+  color: var(--accent-2-on-deep);
   margin-top: var(--s-2);
 }
 .site-footer__offices {
@@ -1068,7 +2185,7 @@ textarea:focus-visible,
   font-size: var(--t-small);
   max-width: 40ch;
 }
-.site-footer__offices strong { color: #fff; font-weight: 650; }
+.site-footer__offices strong { color: var(--text-on-deep); font-weight: 650; }
 
 .site-footer__nav {
   display: grid;
@@ -1082,16 +2199,16 @@ textarea:focus-visible,
   font-weight: 700;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: #fff;
+  color: var(--text-on-deep);
   margin-bottom: var(--s-4);
 }
 .site-footer__col li + li { margin-top: var(--s-3); }
 .site-footer__col a {
-  color: var(--ink-onDark-soft);
+  color: var(--text-on-deep-secondary);
   text-decoration: none;
   font-size: var(--t-small);
 }
-.site-footer__col a:hover { color: #fff; text-decoration: underline; }
+.site-footer__col a:hover { color: var(--text-on-deep); text-decoration: underline; }
 .site-footer__col .confirm { font-size: var(--t-micro); }
 
 .site-footer__legal {
@@ -1101,7 +2218,7 @@ textarea:focus-visible,
   gap: var(--s-2) var(--s-5);
   justify-content: space-between;
   font-size: var(--t-micro);
-  color: #93A7B8;
+  color: var(--text-on-deep-muted);
 }
 .site-footer__pending { font-style: italic; }
 
@@ -1120,13 +2237,13 @@ textarea:focus-visible,
   font-weight: 700;
   max-width: 24ch;
 }
-.section-title--onDark { color: var(--ink-onDark); }
+.section-title--onDark { color: var(--text-on-deep); }
 
 /* --- 03 Positioning band ------------------------------------------------ */
 
 .positioning {
-  background: var(--navy-900);
-  color: var(--ink-onDark-soft);
+  background: var(--surface-deep);
+  color: var(--text-on-deep-secondary);
   padding-block: var(--section-y);
 }
 
@@ -1138,18 +2255,18 @@ textarea:focus-visible,
   .positioning__grid { grid-template-columns: repeat(3, 1fr); gap: var(--s-7); }
 }
 
-.claim { padding-top: var(--s-5); border-top: 2px solid var(--teal-onDark); }
+.claim { padding-top: var(--s-5); border-top: 2px solid var(--accent-2-on-deep); }
 .claim__title {
   font-size: var(--t-h3);
   font-weight: 700;
-  color: var(--ink-onDark);
+  color: var(--text-on-deep);
   margin-bottom: var(--s-3);
 }
 .claim__body { max-width: 42ch; }
 
 /* --- 04 The problem: six doubts ----------------------------------------- */
 
-.doubts { padding-block: var(--section-y); background: var(--paper); }
+.doubts { padding-block: var(--section-y); background: var(--surface-page); }
 
 .doubts__grid {
   display: grid;
@@ -1160,8 +2277,8 @@ textarea:focus-visible,
 
 .doubt {
   padding: var(--s-5);
-  background: #fff;
-  border: 1px solid var(--rule);
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
   border-radius: var(--radius);
 }
 .doubt__num {
@@ -1169,7 +2286,7 @@ textarea:focus-visible,
   font-size: var(--t-small);
   font-weight: 700;
   letter-spacing: 0.1em;
-  color: var(--teal-ink);
+  color: var(--accent-2-ink);
   margin-bottom: var(--s-3);
 }
 .doubt__title {
@@ -1177,14 +2294,14 @@ textarea:focus-visible,
   font-weight: 700;
   margin-bottom: var(--s-3);
 }
-.doubt__body { color: var(--ink-700); max-width: 46ch; }
+.doubt__body { color: var(--text-secondary); max-width: 46ch; }
 
 /* --- 05 Four services --------------------------------------------------- */
 
 .services {
   padding-block: var(--section-y);
-  background: var(--paper-alt);
-  border-block: 1px solid var(--rule);
+  background: var(--surface-sunken);
+  border-block: 1px solid var(--border);
 }
 
 .services__grid { display: grid; gap: var(--s-6); }
@@ -1194,9 +2311,9 @@ textarea:focus-visible,
   display: flex;
   flex-direction: column;
   padding: var(--s-6);
-  background: #fff;
-  border: 1px solid var(--rule);
-  border-top: 3px solid var(--teal-600);
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  border-top: 3px solid var(--accent-2-ink);
   border-radius: var(--radius);
 }
 .service__num {
@@ -1204,7 +2321,7 @@ textarea:focus-visible,
   font-size: var(--t-small);
   font-weight: 700;
   letter-spacing: 0.1em;
-  color: var(--ink-500);
+  color: var(--text-muted);
   margin-bottom: var(--s-3);
 }
 .service__title {
@@ -1216,32 +2333,32 @@ textarea:focus-visible,
 .service__get {
   font-size: var(--t-body);
   font-weight: 600;
-  color: var(--ink-900);
-  background: var(--teal-050);
-  border-left: 3px solid var(--teal-600);
+  color: var(--text-primary);
+  background: var(--success-bg);
+  border-left: 3px solid var(--accent-2-ink);
   padding: var(--s-3) var(--s-4);
   border-radius: 0 var(--radius) var(--radius) 0;
   margin-bottom: var(--s-4);
 }
-.service__getLabel { color: var(--teal-ink); }
-.service__body { color: var(--ink-700); max-width: 52ch; }
+.service__getLabel { color: var(--accent-2-ink); }
+.service__body { color: var(--text-secondary); max-width: 52ch; }
 
 .services__also {
   margin-top: var(--s-6);
   padding-top: var(--s-5);
-  border-top: 1px solid var(--rule);
-  color: var(--ink-700);
+  border-top: 1px solid var(--border);
+  color: var(--text-secondary);
   max-width: var(--measure);
 }
-.services__also strong { color: var(--ink-900); }
+.services__also strong { color: var(--text-primary); }
 
 /* --- 06 How a case runs ------------------------------------------------- */
 
 .process {
   padding-block: var(--section-y);
   background:
-    linear-gradient(168deg, #0C3253 0%, var(--navy-900) 60%, #071D2F 100%);
-  color: var(--ink-onDark-soft);
+    linear-gradient(168deg, var(--surface-deep-hi) 0%, var(--surface-deep) 60%, var(--surface-deep) 100%);
+  color: var(--text-on-deep-secondary);
 }
 
 .process__list { display: grid; gap: var(--s-6); }
@@ -1251,7 +2368,7 @@ textarea:focus-visible,
   gap: var(--s-4);
   align-items: center;
   padding-bottom: var(--s-6);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.14);
+  border-bottom: 1px solid var(--hairline-on-deep);
 }
 .step:last-child { border-bottom: 0; padding-bottom: 0; }
 
@@ -1262,8 +2379,8 @@ textarea:focus-visible,
 }
 
 .step__media {
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: var(--veil-on-deep-weak);
+  border: 1px solid var(--hairline-on-deep);
   border-radius: var(--radius-lg);
   padding: var(--s-4);
 }
@@ -1284,14 +2401,14 @@ textarea:focus-visible,
   font-size: clamp(2rem, 1.4rem + 2.2vw, 3rem);
   font-weight: 700;
   line-height: 1;
-  color: var(--teal-onDark);
+  color: var(--accent-2-on-deep);
   font-variant-numeric: tabular-nums;
   margin-bottom: var(--s-3);
 }
 .step__title {
   font-size: var(--t-h3);
   font-weight: 700;
-  color: var(--ink-onDark);
+  color: var(--text-on-deep);
   margin-bottom: var(--s-3);
 }
 .step__body { max-width: 46ch; }
@@ -1299,20 +2416,20 @@ textarea:focus-visible,
 .process__close {
   margin-top: var(--s-7);
   padding-top: var(--s-5);
-  border-top: 1px solid rgba(255, 255, 255, 0.14);
+  border-top: 1px solid var(--hairline-on-deep);
   font-size: var(--t-lede);
-  color: var(--ink-onDark);
+  color: var(--text-on-deep);
   max-width: 56ch;
 }
 
 /* --- 07 Case studies ---------------------------------------------------- */
 
-.cases { padding-block: var(--section-y); background: var(--paper); }
+.cases { padding-block: var(--section-y); background: var(--surface-page); }
 
 .cases__confirm {
   margin-top: var(--s-4);
   font-size: var(--t-small);
-  color: var(--ink-700);
+  color: var(--text-secondary);
   max-width: var(--measure);
 }
 
@@ -1323,8 +2440,8 @@ textarea:focus-visible,
   display: flex;
   flex-direction: column;
   padding: var(--s-6);
-  background: #fff;
-  border: 1px solid var(--rule);
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
   border-radius: var(--radius);
 }
 .case__title {
@@ -1339,26 +2456,26 @@ textarea:focus-visible,
   font-weight: 700;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: var(--teal-ink);
+  color: var(--accent-2-ink);
   margin-bottom: var(--s-2);
 }
 .case__body dd {
   margin: 0 0 var(--s-4);
-  color: var(--ink-700);
+  color: var(--text-secondary);
   max-width: 50ch;
 }
 .case__body dd:last-child { margin-bottom: 0; }
-.case__body strong { color: var(--ink-900); }
+.case__body strong { color: var(--text-primary); }
 
 .case__figure {
   margin-top: auto;
   padding-top: var(--s-5);
-  border-top: 1px solid var(--rule);
+  border-top: 1px solid var(--border);
   font-size: var(--t-small);
   font-weight: 600;
   letter-spacing: 0.05em;
   text-transform: uppercase;
-  color: var(--ink-500);
+  color: var(--text-muted);
   display: flex;
   align-items: baseline;
   gap: var(--s-3);
@@ -1369,7 +2486,7 @@ textarea:focus-visible,
   font-weight: 700;
   line-height: 1;
   letter-spacing: -0.03em;
-  color: var(--navy-900);
+  color: var(--surface-deep);
   font-variant-numeric: tabular-nums lining-nums;
   text-transform: none;
 }
@@ -1378,50 +2495,50 @@ textarea:focus-visible,
 
 .why {
   padding-block: var(--section-y);
-  background: var(--paper-alt);
-  border-block: 1px solid var(--rule);
+  background: var(--surface-sunken);
+  border-block: 1px solid var(--border);
 }
 
 .why__list { display: grid; gap: var(--s-5); }
 @media (min-width: 620px)  { .why__list { grid-template-columns: repeat(2, 1fr); } }
 @media (min-width: 1000px) { .why__list { grid-template-columns: repeat(3, 1fr); } }
 
-.why__item { padding-left: var(--s-4); border-left: 2px solid var(--teal-600); }
+.why__item { padding-left: var(--s-4); border-left: 2px solid var(--accent-2-ink); }
 .why__title {
   font-size: var(--t-h3);
   font-weight: 700;
   margin-bottom: var(--s-2);
 }
-.why__item p { color: var(--ink-700); max-width: 40ch; }
+.why__item p { color: var(--text-secondary); max-width: 40ch; }
 
 /* Distinct block by design: this is the procurement-objection answer. */
 .notus {
   margin-top: var(--s-7);
   padding: var(--s-6);
-  background: var(--navy-900);
-  color: var(--ink-onDark-soft);
+  background: var(--surface-deep);
+  color: var(--text-on-deep-secondary);
   border-radius: var(--radius-lg);
 }
 .notus__title {
   font-size: var(--t-h3);
   font-weight: 700;
-  color: var(--ink-onDark);
+  color: var(--text-on-deep);
   margin-bottom: var(--s-3);
 }
 .notus__body { max-width: 62ch; }
 
 /* --- 09 The people ------------------------------------------------------ */
 
-.people { padding-block: var(--section-y); background: var(--paper); }
+.people { padding-block: var(--section-y); background: var(--surface-page); }
 
 .people__grid { display: grid; gap: var(--s-6); }
 @media (min-width: 860px) { .people__grid { grid-template-columns: 1fr 1fr; gap: var(--s-7); } }
 
 .founder {
   padding: var(--s-6);
-  background: #fff;
-  border: 1px solid var(--rule);
-  border-top: 3px solid var(--teal-600);
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  border-top: 3px solid var(--accent-2-ink);
   border-radius: var(--radius);
 }
 .founder__role {
@@ -1429,7 +2546,7 @@ textarea:focus-visible,
   font-weight: 700;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: var(--teal-ink);
+  color: var(--accent-2-ink);
   margin-bottom: var(--s-3);
 }
 .founder__name {
@@ -1442,12 +2559,12 @@ textarea:focus-visible,
 .founder__cred {
   font-size: var(--t-body);
   font-weight: 600;
-  color: var(--ink-900);
+  color: var(--text-primary);
   padding-bottom: var(--s-4);
   margin-bottom: var(--s-4);
-  border-bottom: 1px solid var(--rule);
+  border-bottom: 1px solid var(--border);
 }
-.founder__body { color: var(--ink-700); max-width: 50ch; }
+.founder__body { color: var(--text-secondary); max-width: 50ch; }
 
 .panel { padding-top: var(--s-2); }
 .panel__title { font-size: var(--t-h3); font-weight: 700; margin-bottom: var(--s-2); }
@@ -1456,17 +2573,17 @@ textarea:focus-visible,
   font-weight: 600;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: var(--ink-500);
+  color: var(--text-muted);
   margin-bottom: var(--s-5);
 }
 .panel__list {
   display: grid;
-  border-top: 1px solid var(--rule);
+  border-top: 1px solid var(--border);
 }
 .panel__list li {
   padding-block: var(--s-3);
-  border-bottom: 1px solid var(--rule);
-  color: var(--ink-700);
+  border-bottom: 1px solid var(--border);
+  color: var(--text-secondary);
 }
 
 /* --- 10 Closing CTA band ------------------------------------------------ */
@@ -1474,9 +2591,9 @@ textarea:focus-visible,
 .cta-band {
   padding-block: var(--section-y);
   background:
-    radial-gradient(90% 120% at 85% 10%, rgba(23, 169, 163, 0.20) 0%, rgba(23, 169, 163, 0) 60%),
-    linear-gradient(160deg, #0C3253 0%, var(--navy-900) 100%);
-  color: var(--ink-onDark-soft);
+    radial-gradient(90% 120% at 85% 10%, rgba(var(--rgb-accent-2), 0.16) 0%, rgba(var(--rgb-accent-2), 0) 60%),
+    linear-gradient(160deg, var(--surface-deep-hi) 0%, var(--surface-deep) 100%);
+  color: var(--text-on-deep-secondary);
 }
 
 .cta-band__inner {
@@ -1491,7 +2608,7 @@ textarea:focus-visible,
 .cta-band__title {
   font-size: var(--t-h2);
   font-weight: 700;
-  color: var(--ink-onDark);
+  color: var(--text-on-deep);
   margin-bottom: var(--s-4);
   max-width: 20ch;
 }

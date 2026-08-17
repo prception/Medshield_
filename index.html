@@ -14,7 +14,7 @@
 <meta property="og:image" content="assets/og-card.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
-<meta property="og:image:alt" content="MedShield - we manage the whole medical case, from the first call at sea to the closed claim.">
+<meta property="og:image:alt" content="MedShield - expanding the horizon of maritime care, from the first call at sea to the closed claim.">
 <meta property="og:locale" content="en">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="MedShield - Maritime Medical Case Management for Crew Operators">
@@ -26,6 +26,11 @@
      request means the hero is never an empty navy box, on any connection. -->
 <link rel="preload" as="image" href="assets/videos/hero-poster.jpg" fetchpriority="high">
 
+<!-- The hero headline is set in Archivo at ~5.4vw. A swap after first paint at
+     that scale is a very visible reflow, so the face is preloaded alongside
+     the poster rather than being discovered inside the stylesheet. -->
+<link rel="preload" as="font" type="font/woff2" href="assets/fonts/archivo-latin-var.woff2" crossorigin>
+
 <link rel="icon" href="assets/favicon-32.png" sizes="32x32">
 <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
 <link rel="stylesheet" href="css/style.css">
@@ -34,38 +39,65 @@
 
 <a class="skip-link" href="#main">Skip to content</a>
 
-<!-- Transparent overlay bar. It sits ON the hero video at scroll top with no
-     background or border; past 80px the .is-stuck class fades in a navy blur
-     so links stay legible over the lighter sections below. -->
+<!-- Transparent overlay bar sitting ON the hero video: brand left, a bare
+     hamburger right, and NOTHING else at any breakpoint. The navigation links
+     are not removed - they live in the overlay menu below, which is now the
+     single route to them on desktop as well as mobile. Past 80px the
+     .is-stuck class fades in a navy blur so the bar stays legible over the
+     lighter sections beneath. -->
 <header class="site-header" id="site-header">
-  <div class="shell site-header__inner">
+  <div class="site-header__inner">
     <a class="brand" href="#top" aria-label="MedShield - home">
-      <!-- Light variant: the bar is transparent over a dark-graded video at
-           rest, so the light mark is correct in both states. -->
-      <img class="brand__mark" src="assets/logo-mark-light.png" alt="" width="512" height="309" decoding="async">
+      <!-- The logo, shown at its own pixel colours in every header state.
+           No filter, no variant swap: this file is the mark. -->
+      <img class="brand__mark" src="assets/logo-mark.png" alt="" width="512" height="309" decoding="async">
       <span class="brand__text">
         <span class="brand__name">MedShield</span>
-        <span class="brand__eyebrow">Maritime Healthcare &amp; Claims Management</span>
       </span>
     </a>
 
+    <!-- Two bare rules, no border, no pill, no background. The word "Menu"
+         sits beside them on desktop only - it is the affordance that stops a
+         naked icon from being ambiguous, and it disappears on mobile where
+         the hamburger is a universally understood control. -->
     <button class="nav-toggle" id="nav-toggle" type="button"
             aria-expanded="false" aria-controls="site-nav" aria-label="Open menu">
-      <span class="nav-toggle__bars" aria-hidden="true"></span>
+      <!-- Three bare lines and nothing else — no text label, matching the
+           reference exactly. The middle line slides OUT sideways when open
+           (the reference's translate(-150%)) rather than fading, so each line
+           needs its own node inside a clipping box. -->
+      <span class="nav-toggle__bars" aria-hidden="true">
+        <span class="nav-toggle__line"></span>
+        <span class="nav-toggle__line"></span>
+        <span class="nav-toggle__line"></span>
+      </span>
     </button>
-
-    <nav class="site-nav" id="site-nav" aria-label="Primary">
-      <!-- Every target below is a real id on this page. Verified in the
-           Definition of Done check - a dead nav link is the specific failure
-           this rebuild exists to correct. -->
-      <a href="#services">Services</a>
-      <a href="#process">How it works</a>
-      <a href="#case-studies">Case studies</a>
-      <a href="#about">About</a>
-      <a class="btn btn--primary btn--sm site-nav__cta" href="#contact">Request a proposal</a>
-    </nav>
   </div>
 </header>
+
+<!-- Full-screen overlay menu. Holds every link that used to sit in the bar,
+     so nothing became unreachable when the desktop nav was removed.
+     [hidden] until opened: keeps it out of the tab order and the a11y tree
+     entirely rather than relying on transform alone to hide it. -->
+<nav class="site-menu" id="site-nav" aria-label="Primary" hidden>
+  <div class="site-menu__inner">
+    <ul class="site-menu__list">
+      <!-- Every target below is a real id on this page. A dead nav link is
+           the specific failure this rebuild exists to correct. -->
+      <li><a href="#services">Services</a></li>
+      <li><a href="#process">How it works</a></li>
+      <li><a href="#case-studies">Case studies</a></li>
+      <li><a href="#about">About</a></li>
+      <li><a href="#contact">Request a proposal</a></li>
+    </ul>
+
+    <p class="site-menu__meta">
+      <span>India</span>
+      <span>Singapore</span>
+      <span>UAE</span>
+    </p>
+  </div>
+</nav>
 <div class="nav-scrim" id="nav-scrim" hidden></div>
 
 <main id="main">
@@ -80,16 +112,28 @@
          moov atom rather than the full 2.6MB. The poster is a real frame
          pulled from this exact encode, so first paint is never empty.
          hero.js additionally withholds playback under prefers-reduced-motion. -->
+    <!-- The media autoplays and loops continuously. It is NOT scrubbed by
+         scroll any more: playback runs on its own clock so the ocean keeps
+         moving whether or not the user scrolls.
+         muted is required for autoplay to be allowed at all (this encode
+         carries an audio track); loop keeps it seamless. -->
     <div class="hero__media" aria-hidden="true">
-      <video class="hero__video" id="hero-video"
+      <!-- Two stacked copies of the same clip. Native loop cuts hard on
+           whatever frame the source ends on; hero.js instead crossfades B in
+           UNDER A a moment before A's loop point and hands playback off, so
+           the restart is masked by a dissolve rather than seen as a cut.
+           Both start with the source attached (see enableVideo in hero.js) —
+           only one is ever visible at a time via .is-active. -->
+      <video class="hero__video hero__video--a is-active" id="hero-video"
              poster="assets/videos/hero-poster.jpg"
-             muted loop playsinline autoplay preload="metadata"
+             muted playsinline autoplay preload="auto"
              tabindex="-1" disablepictureinpicture>
-        <!-- data-src, not src: nothing is fetched until hero.js decides.
-             The media query alone would still let a reduced-motion desktop
-             user pull 2.6MB before script could cancel it, so the decision
-             is made once, up front, and only then is the source attached. -->
-        <source data-src="assets/videos/hero.mp4" type="video/mp4" media="(min-width: 860px)">
+        <source data-src="assets/videos/1.mp4" type="video/mp4" media="(min-width: 860px)">
+      </video>
+      <video class="hero__video hero__video--b" id="hero-video-b"
+             muted playsinline preload="auto"
+             tabindex="-1" disablepictureinpicture>
+        <source data-src="assets/videos/1.mp4" type="video/mp4" media="(min-width: 860px)">
       </video>
       <noscript>
         <style>.hero__video { background: url(assets/videos/hero-poster.jpg) center/cover no-repeat; }</style>
@@ -97,97 +141,201 @@
       <div class="hero__scrim"></div>
     </div>
 
-    <div class="shell hero__inner">
+    <!-- Editorial composition, bottom-anchored in one viewport.
+         Deliberately NOT .shell: the reference runs its hero edge-to-edge on a
+         full-bleed container with only a site margin, and a 1200px centred
+         box would pull the headline off the frame edge and kill the layout.
 
-      <!-- Top-right: intro + primary CTA -->
-      <div class="hero__intro">
-        <p class="eyebrow eyebrow--onDark">Maritime healthcare &amp; claims management</p>
-        <p class="hero__sub">
-          For cruise lines, shipping companies, offshore operators and maritime employers.
-          Telemedicine, hospital coordination, claims and compliance - under one roof,
-          across India, Singapore and the UAE.
-        </p>
+         Two bands, both pushed to the floor by the layout's leading slack:
+           1. .hero__annotations - small type, 12-col grid, wide empty gutter
+           2. .hero__display     - the giant headline rows
+         Everything above them is intentional empty space. -->
+    <div class="hero__inner">
+
+      <!-- Band 1. Two small blocks at opposite ends of a 12-column grid, as
+           the reference sets its two hero paragraphs (span 3 left, span 5
+           starting at column 8). The gap between them is the composition. -->
+      <!-- Each annotation wraps its text in a mask span: the text slides in
+           from the right inside the clip, as the reference reveals its two
+           hero paragraphs, and slides back out horizontally on exit. -->
+      <div class="hero__annotations">
+        <!-- Stacked on its own lines, as the reference sets RETAIL /
+             INDUSTRIAL / OFFICE. The <br>s are the composition, not wrapping:
+             the reference breaks these deliberately rather than letting the
+             column width decide. -->
+        <p class="hero__label"><span class="hero__label-t">Maritime healthcare<br>&amp; claims<br>management</span></p>
+
+        <p class="hero__note"><span class="hero__note-t">From the first call at sea<br>to the closed claim.</span></p>
+      </div>
+
+      <!-- Band 2. The display headline - THREE rows, each with its own
+           alignment, so the block stretches across the viewport with real
+           left/right tension instead of reading as a centred H1:
+
+             WE MANAGE              (left)
+             THE WHOLE              (left)
+                       MEDICAL CASE (right)
+
+           The H1 still contains the exact approved sentence, uncut and in
+           order; the spans are line wrappers only. hero.js splits the text
+           inside .hero__row-t into per-character spans at runtime for the
+           scroll animation - it is NOT split in the markup, so the sentence
+           a screen reader or a crawler sees stays whole. -->
+      <h1 class="hero__display">
+        <span class="hero__row hero__row--a"><span class="hero__row-t">Expanding</span></span>
+        <!-- Row 2 carries TWO elements pushed to opposite edges, exactly as
+             the reference sets "PROPERTY … KNOWS". That single split is what
+             stretches the block across the full frame; a one-element row here
+             collapses the composition back to a left-aligned stack. -->
+        <span class="hero__row hero__row--b hero__row--split">
+          <span class="hero__row-t">the horizon</span> <span class="hero__row-t hero__row-t--far">of</span>
+        </span>
+        <span class="hero__row hero__row--c hero__row--end"><span class="hero__row-t">maritime care</span></span>
+      </h1>
+
+      <!-- Band 3. The quiet footer rail: CTA at the left, metadata at the
+           right. Secondary action is a text link, not a second button. -->
+      <div class="hero__foot">
         <div class="hero__actions">
-          <a class="btn btn--primary" href="#contact">Request a proposal</a>
-          <a class="btn btn--ghost" href="#process">See how a case runs</a>
+          <a class="btn btn--primary btn--onDeep hero__cta" href="#contact">Request a proposal</a>
+          <a class="hero__cta-alt" href="#process">See how a case runs <span aria-hidden="true">&rarr;</span></a>
         </div>
-      </div>
 
-      <!-- Bottom-left: dominant headline.
-           The H1 is ONE uncut sentence. The spans only set the visual break
-           and relative size - remove every span and the sentence still reads
-           exactly as CONTENT.md 01 specifies. -->
-      <div class="hero__headline">
-        <h1 class="hero__title">
-          <span class="hero__title-lead">We manage the whole medical case</span><span class="hero__title-rest"> - from the first call at sea to the closed claim</span>
-        </h1>
-
-        <!-- The pill sits beside the headline's trailing clause on desktop,
-             as the reference places its trust pill. The H1 above is still one
-             uncut sentence; this row only pairs the pill with it visually. -->
-        <div class="hero__headline-row">
-          <p class="hero__pill">ISO 45001 certified - first and only in India</p>
-
-          <p class="hero__offices">
-            <span>Chennai, India - HQ</span>
-            <span>Singapore</span>
-            <span>Dubai, UAE</span>
-          </p>
-        </div>
-      </div>
-
-      <!-- Bottom rail: stat, rule, service labels.
-           The chips are LABELS, not links: #services is a real id but these
-           three name sub-services that have no anchor of their own yet.
-           A span that looks like a link and does nothing is the failure mode
-           this build is correcting - they become <a> when those ids exist. -->
-      <div class="hero__rail">
-        <p class="hero__stat">1,800+ partner hospitals, clinics &amp; labs</p>
-        <ul class="hero__chips">
-          <li>Claims Management</li>
-          <li>Telemedicine</li>
-          <li>Medical Welfare Budgeting</li>
-        </ul>
+        <p class="hero__meta">
+          <span>India</span>
+          <span>Singapore</span>
+          <span>UAE</span>
+        </p>
       </div>
     </div>
   </section>
 
-  <!-- 02 - Proof strip .......................................... -->
-  <section class="proof" id="proof" aria-labelledby="proof-h">
+  <!-- 01b - About ................................................ -->
+
+  <!-- Composition mirrors the reference's "About" section EXACTLY as it
+       actually renders: a small centred eyebrow, then a large centred display
+       statement, and NOTHING else. Their .component--textblocklarge has no
+       lower band, no prose, no boxed figure — the statement is the whole
+       section. That content (prose, the tenure figure) belongs in the stats
+       section below, in its left column, which is where the reference itself
+       places it.
+
+       Motion: every [data-reveal] element here is animated by the shared
+       observer in hero.js (section 5). Nothing is hidden in the markup, so a
+       no-JS or JS-error page renders this section fully visible and final —
+       the animation is added on top of a working page, never required by it.
+
+       The statement is split into rows in the markup for the composition
+       only; the <h2> still reads as one uncut sentence. hero.js masks and
+       reveals each row on scroll, the same mask+slide used by the hero. -->
+  <section class="about" id="about-intro" aria-labelledby="about-intro-h">
     <div class="shell">
+
+      <p class="about__eyebrow" data-reveal>About MedShield</p>
+
+      <!-- data-scrub-title is the reference's `.title.--fill`: hero.js splits
+           it to characters and brightens them from 5% to full opacity as the
+           block scrolls from 90% to 60% of the viewport. Scroll-position
+           driven, so it runs backwards too. The rows are wrappers for the
+           composition only — the split spans every row as one continuous
+           character run, exactly as their SplitText does. -->
+      <h2 class="about__display" id="about-intro-h">
+        <!-- The accent mark is the reference's red dot, in our teal. Purely
+             decorative, so it is aria-hidden and carries no text. -->
+        <span class="about__dot" aria-hidden="true"></span>
+        <span class="about__lines" data-scrub-title>
+          <span class="about__line">One independent medical team</span>
+          <span class="about__line">decides your seafarer's care -</span>
+          <span class="about__line">above a verified India-first network</span>
+        </span>
+      </h2>
+    </div>
+  </section>
+
+  <!-- 02 - Proof strip .......................................... -->
+
+  <!-- Their `gridnumbers.vertical` component, structurally verified against
+       the rendered page (not just the stylesheet): a narrow sticky text
+       column on the left (.item:first-child > .text-block-left), and on the
+       right TWO COLUMNS SIDE BY SIDE (.item:last-child is a flex row,
+       justify-content:center, containing .content-0 and .content-1 as flex
+       children — each .content is itself flex-direction:column, i.e. its own
+       vertical stack of boxes). .content-1 sits lower via margin-top.
+
+         .item:last-child          display:flex; justify-content:center
+         .content-0 / .content-1   display:flex; flex-direction:column
+         .content-1                margin-top: 10vw
+
+       So: column 1 (content-0) is a short vertical stack; column 2
+       (content-1) is a second vertical stack, offset downward, sitting
+       BESIDE the first — this is what the reference screenshot shows: two
+       columns, second one lower.
+
+       THE SECOND COLUMN PARALLAXES. Their Os.setParallax, verbatim:
+
+         timeline({ paused: true, defaults: { ease: "none" },
+           scrollTrigger: { trigger: .content-0,
+                      start: "top bottom", end: "bottom top", scrub: true } })
+           .to(.content-1, { y: px(-480), ease: "none", duration: 1 }, 0)
+
+       Trigger is .content-0 (column 1); target is .content-1 (column 2) — it
+       closes its 10vw head start as column 1 crosses the viewport. Linear,
+       scrubbed, reverses on scroll-up. Desktop only, exactly as their
+       set() gates it (this.$text && isDesktop && setParallax()).
+
+       Each box: .group { width:20vw; height:25vw; justify-content:space-
+       between } — figure at the top, label pinned to the floor, hairline
+       border shared with its vertical neighbour. Order follows CONTENT.md:
+       certification and the specialist panel lead. -->
+  <section class="proof" id="proof" aria-labelledby="proof-h">
+    <div class="shell proof__shell">
       <h2 class="visually-hidden" id="proof-h">MedShield by the numbers</h2>
 
-      <ul class="proof__grid">
-        <li class="proof__item">
-          <span class="proof__figure">45<span class="proof__plus">+</span></span>
-          <span class="proof__label">Locations across India</span>
-        </li>
-        <li class="proof__item">
-          <span class="proof__figure">130<span class="proof__plus">+</span></span>
-          <span class="proof__label">Subject matter experts</span>
-        </li>
-        <li class="proof__item">
-          <span class="proof__figure">1,800<span class="proof__plus">+</span></span>
-          <span class="proof__label">Partner hospitals, clinics, labs &amp; pharmacies</span>
-        </li>
-        <li class="proof__item">
-          <span class="proof__figure proof__figure--text">ISO 45001</span>
-          <span class="proof__label">Certified - first and only in India</span>
-        </li>
-        <li class="proof__item">
-          <span class="proof__figure">3</span>
-          <span class="proof__label">Countries - India, Singapore, UAE</span>
-        </li>
-        <li class="proof__item">
-          <span class="proof__figure">~10</span>
-          <span class="proof__label">Years serving the maritime industry</span>
-        </li>
-      </ul>
+      <!-- Their .item:first-child — the sticky text column. Holds the prose
+           that in the reference lives HERE, not in the About section above
+           (their About / textblocklarge has no lower band at all). -->
+      <div class="proof__intro">
+        <p class="proof__lede" data-word-reveal>
+          Founded to close a decade-old gap: an independent clinical team that
+          sits above the provider network, with offices in India, Singapore
+          and the UAE.
+        </p>
+        <a class="proof__link" href="#about">Learn our story</a>
+      </div>
 
-      <p class="proof__note">
-        80% medical professionals - specialists and super-specialists - and 20%
-        cross-functional experts.
-      </p>
+      <!-- The two side-by-side columns: .content-0 and .content-1. -->
+      <div class="proof__cols">
+        <ul class="proof__col proof__col--0" data-parallax-trigger>
+          <li class="proof__item" data-magnet>
+            <span class="proof__figure proof__figure--text">ISO 45001</span>
+            <span class="proof__label">Certified - first and only in India</span>
+          </li>
+          <li class="proof__item" data-magnet>
+            <span class="proof__figure">130<span class="proof__plus">+</span></span>
+            <span class="proof__label">Subject matter experts</span>
+          </li>
+          <li class="proof__item" data-magnet>
+            <span class="proof__figure">~10</span>
+            <span class="proof__label">Years serving the maritime industry</span>
+          </li>
+        </ul>
+
+        <!-- Their .content-1 — the column that the parallax translates. -->
+        <ul class="proof__col proof__col--1" data-parallax>
+          <li class="proof__item" data-magnet>
+            <span class="proof__figure">1,800<span class="proof__plus">+</span></span>
+            <span class="proof__label">Partner hospitals, clinics, labs &amp; pharmacies</span>
+          </li>
+          <li class="proof__item" data-magnet>
+            <span class="proof__figure">45<span class="proof__plus">+</span></span>
+            <span class="proof__label">Locations across India</span>
+          </li>
+          <li class="proof__item" data-magnet>
+            <span class="proof__figure">3</span>
+            <span class="proof__label">Countries - India, Singapore, UAE</span>
+          </li>
+        </ul>
+      </div>
     </div>
   </section>
 
@@ -641,7 +789,7 @@
         </p>
       </div>
       <div class="cta-band__actions">
-        <a class="btn btn--primary" href="#contact">Request a proposal</a>
+        <a class="btn btn--primary btn--onDeep" href="#contact">Request a proposal</a>
         <a class="btn btn--ghost" href="#contact">Talk to a case manager</a>
       </div>
     </div>
