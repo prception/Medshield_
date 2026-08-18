@@ -91,11 +91,7 @@
      other made the two definitions circular. Fixing the travel here breaks
      that loop and leaves one honest reading: the cards step aside by this
      much, and the picture may claim exactly what they gave up. */
-  /* TEMPORARY: the central picture is switched off while the card
-     choreography is being settled. Flip to true to bring it back — the
-     expansion code it gates is complete and still tuned to these timings,
-     nothing else has to change. */
-  var SHOW_MEDIA = false;
+  var SHOW_MEDIA = true;
 
   var PUSH_ALLOWANCE = 150;
 
@@ -168,16 +164,25 @@
   function effectivePush() {
     gsap.set(cards, { clearProps: 'transform' });
     var fr = frame.getBoundingClientRect();
-    var cx = fr.left + frame.clientWidth / 2;
-    var reach = 0;
+    // The SAME axis the picture opens about (cardsCentre), not the frame's
+    // midpoint — a card's side is decided by which half of the seam it is on,
+    // and measuring that against a different line mis-sorts the middle cards.
+    var cx = fr.left + fr.width / 2 + cardsCentre().x;
+    /* Room is measured PER SIDE against the frame's real edges. The axis the
+       cards part about is the seam, which is not the frame's midpoint, so the
+       two sides have different amounts of space — taking the frame's half
+       width for both would let the tighter side push its cards past the edge.
+       The push is the smaller of the two, so the composition stays symmetric
+       about the seam. */
+    var room = Infinity;
     cards.forEach(function (c) {
       var r = c.getBoundingClientRect();
       var dx = (r.left + r.width / 2) - cx;
       if (Math.abs(dx) < r.width * 0.5) return; // straddles the centre
-      reach = Math.max(reach, Math.abs(dx) + r.width / 2);
+      room = Math.min(room, dx < 0 ? (r.left - fr.left) : (fr.right - r.right));
     });
-    var room = Math.max(0, (frame.clientWidth / 2) - reach);
-    return Math.min(PUSH_ALLOWANCE, room);
+    if (room === Infinity) room = 0;
+    return Math.min(PUSH_ALLOWANCE, Math.max(0, room));
   }
 
   /* The card block's own centre, as an offset from the media's containing
@@ -191,22 +196,85 @@
   function cardsCentre() {
     gsap.set(cards, { clearProps: 'transform' });
     var fr = frame.getBoundingClientRect();
+
+    /* The horizontal anchor is the one vertical line that is a GAP IN EVERY
+       ROW — the channel the picture opens along.
+
+       The rows are raked (top row in columns 2-4, bottom row in 1-3), so they
+       do not share all their joins: the top row's joins fall between cards
+       1|2 and 2|3, the bottom row's between 4|5 and 5|6. Most of those lines
+       run through a card in the other row. Exactly one does not — the join
+       shared by both rows — and that is the only place the picture can grow
+       without covering something.
+
+       It is FOUND, not assumed. Taking the bounding box's midpoint happens to
+       land on the right line for the current arrangement, but only because
+       the rake is symmetric; a change to the column assignments would move the
+       real channel while the bounding-box centre stayed put, and the picture
+       would silently start opening over a card again. Searching the joins
+       keeps the anchor tied to the geometry that actually matters.
+
+       Measured off real boxes rather than computed from the frame, because the
+       frame carries the shell's padding and its middle is not the block's. */
+    var rects = cards.map(function (c) { return c.getBoundingClientRect(); });
+
     var L = Infinity, R = -Infinity, T = Infinity, B = -Infinity;
-    cards.forEach(function (c) {
-      var r = c.getBoundingClientRect();
-      L = Math.min(L, r.left);  R = Math.max(R, r.right);
-      T = Math.min(T, r.top);   B = Math.max(B, r.bottom);
+    rects.forEach(function (r) {
+      L = Math.min(L, r.left); R = Math.max(R, r.right);
+      T = Math.min(T, r.top);  B = Math.max(B, r.bottom);
     });
     if (L === Infinity) return { x: 0, y: 0 };
+
+    // Group into rows by vertical position.
+    var rows = [];
+    rects.forEach(function (r) {
+      var row = null;
+      for (var i = 0; i < rows.length; i++) {
+        if (Math.abs(rows[i].top - r.top) < r.height * 0.5) { row = rows[i]; break; }
+      }
+      if (row) row.items.push(r);
+      else rows.push({ top: r.top, items: [r] });
+    });
+
+    /* Candidate channels: every join in every row. A candidate survives only
+       if it clears every card in every OTHER row too. */
+    var candidates = [];
+    rows.forEach(function (row) {
+      var a = row.items.slice().sort(function (x, y) { return x.left - y.left; });
+      for (var i = 1; i < a.length; i++) {
+        candidates.push((a[i - 1].right + a[i].left) / 2);
+      }
+    });
+
+    var blockMid = (L + R) / 2;
+    var cx = null, best = Infinity;
+    candidates.forEach(function (c) {
+      // Clear of every card? (a hair of tolerance for sub-pixel layout)
+      var clear = rects.every(function (r) {
+        return c <= r.left + 0.5 || c >= r.right - 0.5;
+      });
+      if (!clear) return;
+      // Of the valid channels, the one nearest the block's middle.
+      var d = Math.abs(c - blockMid);
+      if (d < best) { best = d; cx = c; }
+    });
+
+    // No channel clears every row (e.g. a single-column layout) — fall back to
+    // the block's own middle rather than picking a line through a card.
+    if (cx === null) cx = blockMid;
+
     return {
-      x: ((L + R) / 2) - (fr.left + fr.width / 2),
-      y: ((T + B) / 2) - (fr.top  + fr.height / 2)
+      x: cx - (fr.left + fr.width / 2),
+      y: ((T + B) / 2) - (fr.top + fr.height / 2)
     };
   }
 
   function centreSeam() {
     gsap.set(cards, { clearProps: 'transform' });
-    var mid = frame.getBoundingClientRect().left + frame.clientWidth / 2;
+    // Measured about the seam axis, the same line cardsCentre() returns, so
+    // the width the picture opens into is the gap at the place it opens.
+    var fr = frame.getBoundingClientRect();
+    var mid = fr.left + fr.width / 2 + cardsCentre().x;
     var leftEdge = -Infinity, rightEdge = Infinity;
     cards.forEach(function (c) {
       var r = c.getBoundingClientRect();
@@ -220,40 +288,51 @@
     return Math.max(0, rightEdge - leftEdge);
   }
 
+  /* The card block's full height, top of the highest card to bottom of the
+     lowest — the height the picture panel takes, so its top and bottom edges
+     land exactly level with the block's. Measured off the resting layout, with
+     transforms cleared, so a rebuild never reads a block that is mid-push. */
+  function cardsBlockHeight() {
+    gsap.set(cards, { clearProps: 'transform' });
+    var T = Infinity, B = -Infinity;
+    cards.forEach(function (c) {
+      var r = c.getBoundingClientRect();
+      T = Math.min(T, r.top); B = Math.max(B, r.bottom);
+    });
+    return (T === Infinity) ? 0 : (B - T);
+  }
+
   function measure() {
     var fw = frame.clientWidth  || 1;
     var vh = window.innerHeight || 1;
     var wide = window.matchMedia('(min-width: 1000px)').matches;
 
-    /* On the compact layout the picture has a row of its own between the two
-       card blocks, so it can take most of the width — it is the centre those
-       blocks open away from, and at 0.42 it read as a stamp floating in a
-       gap rather than as the section's anchor. */
-    var fullW = wide ? Math.min(fw * 0.42, 620) : Math.min(fw * 0.86, 460);
+    /* The picture is a PANEL THE HEIGHT OF THE CARD BLOCK, seated on the
+       block's centre line — not a full-viewport bleed.
 
-    /* On the wide layout the cards close up across the centre — the grid
-       reserves nothing — so the space the picture ends up in is exactly the
-       space the cards VACATE, which is PUSH_ALLOWANCE on each side plus the
-       column gap they already had between them. That makes the expansion a
-       genuine displacement rather than the filling-in of a hole that was
-       waiting all along. */
-    if (wide) {
-      /* The opening the cards create: the resting seam plus their outward
-         travel on each side. Sized to exactly that, the picture's edges meet
-         the cards' edges precisely — so GAP_INSET pulls it back a little on
-         both sides, leaving a visible margin of ground instead of the two
-         touching. Without it the picture appeared to overlap the cards even
-         though the arithmetic was correct. */
-      var opening = centreSeam() + effectivePush() * 2;
-      fullW = Math.min(fullW, opening - GAP_INSET * 2);
-    }
+       This is what the reference actually shows: the image spans both card
+       rows exactly, top edge level with the top row's top and bottom edge
+       level with the bottom row's bottom, and the cards butt straight against
+       its sides with no gutter between them. Widening it therefore pushes the
+       cards apart the way stretching a picture would, because the picture's
+       edges and the cards' edges are in continuous contact.
 
-    /* Height follows the SOURCE aspect (hero-poster.jpg is 1280x720), capped
-       against the viewport. Deriving it rather than picking a ratio is what
-       keeps the expanded picture the same photograph it started as — an
-       independent height made the frame squarer than the image and the crop
-       drifted as it grew. */
-    var fullH = Math.min(vh * 0.52, fullW * (720 / 1280));
+       A 100vh full-bleed (which this was) breaks that reading twice over: the
+       panel is taller than the composition so the cards no longer bracket it,
+       and it ends by covering them rather than displacing them. Height is
+       measured off the real cards so the panel and the block stay the same
+       height whatever the copy does to them. */
+    var blockH = cardsBlockHeight();
+    var fullH = blockH || vh * 0.52;
+
+    /* Width is what the cards vacate: the resting seam plus their outward
+       travel on each side. No GAP_INSET is subtracted — the reference has the
+       cards touching the picture's edges, and a margin there is precisely what
+       made this read as a small panel floating in a slot rather than as the
+       cards being forced apart BY the picture. */
+    var fullW = wide
+      ? centreSeam() + effectivePush() * 2
+      : Math.min(fw * 0.86, 460);
 
     /* On the compact layout the picture must not outgrow the empty grid row
        reserved for it, or it grows back over the cards the row exists to keep
@@ -313,46 +392,104 @@
          frame's edge where that is tighter. */
       push:    PUSH_ALLOWANCE,
 
-      /* The expansion targets, in VIEWPORT UNITS — the reference's model.
-         Expressing them this way rather than in pixels is what keeps the
-         growth correct when the window changes without re-deriving anything,
-         and it is what lets the picture head for a genuine full-bleed.
+      /* The expansion targets, in PIXELS, because both are now measured off
+         the card block rather than the viewport: the panel's height IS the
+         block's height and its width IS the opening the cards make. Viewport
+         units would express a proportion of the wrong box.
 
-         Not the reference's literal 100vw/100vh: theirs takes over the whole
-         section at the end, whereas this picture has to leave the six cards
-         readable around it. The SHAPE is identical — both axes driven in vh
-         and vw with a compensating negative `top` — only the destination is
-         scaled to what this composition can give up. */
-      fullVW:  wide ? Math.min(fullW / window.innerWidth * 100, 92) : 86,
-      fullVH:  wide ? Math.min(fullH / vh * 100, 58) : 26,
-      narrowVH: Math.min(62, (Math.min(vh * 0.62, 520) / vh) * 100)
+         Re-measured on every resize (build() calls measure()), so this stays
+         correct at any window size without the units doing that job.
+
+         There is no `narrowVH` any more: the height never animates, so there
+         is no intermediate height to name. */
+      fullVW:  fullW,
+      fullVH:  fullH
     };
 
-    // The <img> is a plain object-fit: cover child now (see style.css), so it
-    // needs no width of its own — the frame crops it at whatever size it is.
+    /* Pin the <img> to the frame's FINAL size, so the frame is a window that
+       opens onto a picture already at full scale rather than a box that scales
+       the picture with it. This is what makes the growth read as a reveal —
+       see the .doubts__media img block in style.css.
+
+       Sized to the TAKEOVER, not to stage 1. The reveal ends with the panel
+       filling the section, so that is the photograph's real final size; had it
+       been pinned to the stage-1 panel it would have been correct while the
+       cards were being pushed apart and then stretched as the panel grew past
+       them. Held at this size throughout, the window uncovers more of it in
+       stage 1 and simply catches up with it in stage 2. */
+    var overW = stage.clientWidth  || window.innerWidth;
+    var overH = stage.clientHeight || vh;
+    media.style.setProperty('--doubts-img-w', overW + 'px');
+    media.style.setProperty('--doubts-img-h', overH + 'px');
     media.style.removeProperty('--doubts-media-full');
 
-    /* Anchor the picture on the CARD BLOCK's centre rather than the frame's.
-       The frame carries the shell's padding, so its middle sits about 20px to
-       the right of where the six cards actually balance — small, but the
-       expansion runs symmetrically about this point, so the drift is visible
-       as the picture growing off the composition's axis. */
+    /* Anchor the picture on the measured CHANNEL rather than the frame's
+       middle, correcting for wherever the stylesheet's own centring parks it.
+
+       The frame's middle and the card channel are not the same point — the
+       shell's padding puts them ~20px apart — and the window opens
+       symmetrically about whatever point it is anchored on. Anchored on the
+       frame, its right edge reached cards 02 and 06 while its left edge sat
+       clear of 01 and 05, which is the lopsided overlap that showed up on
+       screen.
+
+       The resting position is MEASURED rather than derived from padding
+       values: it is whatever `left: 50%` plus the -50% self-centring actually
+       resolves to, and an arithmetic guess at that is the kind of thing that
+       goes stale the moment the shell's measure changes. */
     var cc = cardsCentre();
-    media.style.setProperty('--doubts-media-cx', cc.x + 'px');
-    if (wide) media.style.setProperty('--doubts-media-cy', cc.y + 'px');
-    else      media.style.removeProperty('--doubts-media-cy');
+
+    // Where does the stylesheet's centring put it on its own? Zero our offset,
+    // read the result, then restore. One reflow, at build/resize time only.
+    var prevCx = media.style.getPropertyValue('--doubts-media-cx');
+    media.style.setProperty('--doubts-media-cx', '0px');
+    var fr = frame.getBoundingClientRect();
+    var mr = media.getBoundingClientRect();
+    var autoCentre = (mr.left + mr.width / 2) - (fr.left + fr.width / 2);
+    if (prevCx) media.style.setProperty('--doubts-media-cx', prevCx);
+
+    media.style.setProperty('--doubts-media-cx', (cc.x - autoCentre) + 'px');
+
+    /* Vertically the panel must sit level with the card block: its top edge on
+       the block's top edge, its bottom on the block's bottom. Measured the same
+       way as the horizontal offset — where does the box land with no nudge,
+       and how far is that from where it belongs — because `top` is resolved
+       against the frame's padding box and the block is centred in the frame's
+       content box, which are not the same origin. Assuming they were left the
+       panel ~39px low, hanging below the bottom row. */
+    if (wide) {
+      var prevCy = media.style.getPropertyValue('--doubts-media-cy');
+      media.style.setProperty('--doubts-media-cy', '0px');
+      var restT = media.getBoundingClientRect().top;
+      if (prevCy) media.style.setProperty('--doubts-media-cy', prevCy);
+
+      var blockTop = Infinity;
+      cards.forEach(function (c) {
+        blockTop = Math.min(blockTop, c.getBoundingClientRect().top);
+      });
+      media.style.setProperty('--doubts-media-cy', (blockTop - restT) + 'px');
+    } else {
+      media.style.removeProperty('--doubts-media-cy');
+    }
   }
 
-  /* Each card's vector from the frame's centre, measured from the resting
-     (final) layout. Used both to collapse the cards toward the centre for
-     state 2 and to push them outward in state 3. Measured with all transforms
-     cleared, so a re-measure never compounds the previous frame's offsets. */
+  /* Each card's vector from the SEAM, measured from the resting (final)
+     layout. Used both to collapse the cards toward the centre for state 2 and
+     to push them outward in state 3. Measured with all transforms cleared, so
+     a re-measure never compounds the previous frame's offsets.
+
+     Measured against the seam rather than the frame's middle: the frame
+     carries the shell's padding, so its centre sits to one side of where the
+     cards actually meet, and a card just inside the seam on that side would
+     be handed the wrong sign — it would push INTO the opening picture rather
+     than away from it. */
   function cardVectors() {
     gsap.set(cards, { clearProps: 'transform' });
 
     var fr = frame.getBoundingClientRect();
-    var cx = fr.left + fr.width  / 2;
-    var cy = fr.top  + fr.height / 2;
+    var cc = cardsCentre();
+    var cx = fr.left + fr.width  / 2 + cc.x;
+    var cy = fr.top  + fr.height / 2 + cc.y;
 
     return cards.map(function (card) {
       var r = card.getBoundingClientRect();
@@ -376,9 +513,17 @@
            OUTER columns  the image's edge advances toward them, so they move
                           HORIZONTALLY, by however far that edge travels.
 
-         `mid` is decided by measured position, not by slot name, so it stays
-         correct when the grid collapses to two columns or one. */
-      var isMid = Math.abs(dx) < r.width * 0.5;
+         `mid` means the channel RUNS THROUGH this card — tested against the
+         card's own edges, not against how near its centre is to the line. The
+         centre test was wrong for the raked grid: cards 02 and 06 begin 6px
+         to the right of the channel, entirely clear of it, yet their centres
+         are within half a width of it, so they were classified as middle
+         cards, dodged vertically instead of moving aside, and the expanding
+         picture ran straight into their left edge.
+
+         Decided by measured position, not by slot name, so it stays correct
+         when the grid collapses to two columns or one. */
+      var isMid = cx > r.left + 0.5 && cx < r.right - 0.5;
 
       return {
         dx: dx, dy: dy,
@@ -450,7 +595,9 @@
        than something that was always sitting there. */
     gsap.set(media, {
       width: 0,
-      height: geo.narrowVH + 'vh',
+      // Full height from the outset: only the width ever animates. A pixel
+      // value now — fullVH is measured off the card block, not the viewport.
+      height: geo.fullVH,
       top: 0,
       autoAlpha: 0,
       // While disabled it stays out of the layout entirely rather than
@@ -561,36 +708,25 @@
        0 -> narrow here, narrow -> full in state 3 — which is what gives the
        section its "the centre keeps opening" reading, and it guarantees the
        strip is established well before the main expansion begins. */
-    /* Opens to the intermediate width and then HOLDS. The gap between this
-       tween ending (~0.48) and the expansion starting (0.60) is deliberate
-       dead time in the scrub: the composition sits complete and still for a
-       stretch of scroll, so state 2 registers as a state the reader arrives
-       at rather than a frame passed through on the way to state 3. Without
-       that pause the two growths ran together and read as one long stretch. */
-    /* Strictly AFTER every card has settled, with a beat of stillness in
-       between. The last card starts at 0.12 + 5 x 0.022 = 0.23 and runs for
-       0.30, so the composition is complete at 0.53; the picture waits until
-       0.56. Nothing overlaps.
+    /* The picture waits until the six cards have finished arriving, then
+       opens IN THE SAME BEAT as the cards parting — the reference's model.
+
+       Theirs is two tweens placed at the same position:
+
+         .to(secondList, { x: ±itemWidth / 2 })      // the columns part
+         .from(secondVisualOuter, { width: 0 }, '<') // the picture opens
+
+       The `'<'` is the whole point. The gap and the thing filling it are one
+       event, so the picture is never a shape that appears in a hole that was
+       already waiting — it is what forces the hole open. Running the two in
+       sequence (which is what this did before) read as two animations that
+       happened to follow each other.
 
        CARDS_SETTLED is derived from the card timings above rather than typed
        as a constant, so the two cannot drift apart if the stagger or the
-       duration is retuned.
-
-       Nothing of the picture shows before this: it holds at zero width AND
-       zero opacity from the start, so the cards arrive around an empty centre
-       and the image is something the finished composition then produces. */
+       duration is retuned. */
     var CARDS_SETTLED = 0.12 + (cards.length - 1) * 0.022 + 0.30;
-    var mediaIn = CARDS_SETTLED + 0.03;
-
-    /* TEMPORARILY DISABLED — the central picture.
-       Set SHOW_MEDIA back to true to restore it. Everything else is
-       untouched: the cards still arrive on the same schedule and still push
-       outward at EXPAND_AT, so the timing this was tuned against is
-       preserved and re-enabling is a one-word change. */
-    if (SHOW_MEDIA) {
-      tl.to(media, { autoAlpha: 1, duration: 0.03 }, mediaIn)
-        .to(media, { width: geo.narrowW, duration: 0.10 }, mediaIn);
-    }
+    var PART_AT = CARDS_SETTLED + 0.03;
 
     /* ---- STATE 3: the centre pushes the layout apart --------------------
 
@@ -598,38 +734,113 @@
        both edges travel outward equally — no corner-anchored scaling), and
        every card is displaced outward by the distance the image's edge gains.
 
-       EXPAND_AT is anchored to the strip finishing rather than to a fixed
-       0.60: once the reveal was pushed back to follow the cards, a hard-coded
-       start would have had the expansion begin while the strip was still
-       opening, collapsing states 2 and 3 into one move. Deriving it keeps the
-       three beats strictly in order however the earlier timings are retuned,
-       and the small gap after the strip lands is the pause that lets state 2
-       register as a state rather than a frame passed through. */
-    var EXPAND_AT = mediaIn + 0.10 + 0.04;
+       EXPAND_AT is PART_AT: the cards' outward move and the picture's opening
+       are the same event, placed at the same position on the timeline — the
+       reference's `'<'`. */
+    var EXPAND_AT = PART_AT;
 
-    /* The reference's expansion, property for property.
+    /* WIDTH ONLY — the reference's actual expansion.
 
-       Width and height are driven in VIEWPORT UNITS toward a full-bleed
-       target, and `top` runs negative in step with the height so the box stays
-       centred on its original middle once it is taller than the row it
-       occupies. Their numbers at 1440x900 were width 0 -> 59.8vw -> 100vw,
-       height 100% -> 82.9vh -> 100vh, top 0 -> -77 -> -154; ours are the same
-       shape, scaled to how much of the section this picture is meant to own.
+       Theirs sets the visual wrapper `top: 0; bottom: 0`, so the box is at its
+       full height before any scroll and the timeline animates nothing but the
+       width (`.from(secondVisualOuter, { width: 0 })`). The height tween in
+       their final `.fromTo` is what carries the box on to a 100vh full-bleed
+       AFTER it has opened, not part of the opening itself.
 
-       `top` is exactly half the height the box gains, negated — that identity
-       is what keeps the growth symmetric about the centre line, and it is the
-       part a width/height-only tween silently gets wrong (the picture grows
-       downward and drifts off its own centre). */
-    var growH = geo.fullVH - geo.narrowVH;   // vh gained
-    var topPx = -(window.innerHeight * growH / 100) / 2;
+       Animating our height alongside the width was what stopped the growth
+       reading as a reveal: the window's top and bottom edges were travelling
+       too, so the picture behind them slid vertically as it was uncovered
+       instead of sitting still. With the height fixed the frame opens purely
+       sideways, like curtains, and the photograph behind it never moves.
 
+       The `top` compensation goes with it. It existed to keep a GROWING box
+       centred on its own middle; a box whose height never changes is already
+       centred and needs no per-frame correction. */
+
+    /* The reveal runs in THREE beats, strictly in order — none of them
+       overlaps the next:
+
+         STAGE 1  the panel opens between the cards to exactly the width they
+                  vacate, staying the height of the card block. The cards are
+                  displaced, never covered — this is the "stretching" beat.
+
+         CLEAR    the cards and the watermark fade out, while the panel HOLDS
+                  at its stage-1 size and does not move.
+
+         STAGE 2  the panel grows to fill the whole section, over ground that
+                  is already empty.
+
+       The clear-out is its own beat rather than something running underneath
+       stage 2. When the fade and the growth overlapped, the panel was visibly
+       sweeping over cards that were still on screen at half opacity — six
+       boxes ghosting through the photograph as it passed. Separating them
+       means the picture never expands across anything: by the time it starts
+       growing there is nothing left to cover.
+
+       The 0.12 left at the end is dead scroll holding the finished frame. */
+    var TOTAL_DUR  = (1 - EXPAND_AT) - 0.12;
+    var STAGE1_DUR = TOTAL_DUR * 0.50;
+    var CLEAR_AT   = EXPAND_AT + STAGE1_DUR;
+    var CLEAR_DUR  = TOTAL_DUR * 0.18;
+    var STAGE2_AT  = CLEAR_AT + CLEAR_DUR;
+    var STAGE2_DUR = TOTAL_DUR - STAGE1_DUR - CLEAR_DUR;
+
+    // Kept for the card push below, which runs against stage 1 only.
+    var EXPAND_DUR = STAGE1_DUR;
+
+    /* The picture is on screen from the instant it starts opening. At zero
+       width there is nothing to see, so it needs no fade of its own — fading
+       it in separately is what made it read as a layer appearing rather than
+       an edge parting. */
     if (SHOW_MEDIA) {
+      /* Stage 1: height fixed at the card block's, width opens to the gap.
+         The box is at its full stage-1 height before anything moves, exactly
+         as the reference's `top: 0; bottom: 0` wrapper is. */
+      tl.set(media, {
+          autoAlpha: 1,
+          height: geo.fullVH,
+          top: 0
+        }, EXPAND_AT)
+        .fromTo(media,
+          { width: 0 },
+          { width: geo.fullVW, duration: STAGE1_DUR },
+          EXPAND_AT);
+
+      /* The CLEAR beat: the cards and the watermark go while the panel holds
+         still at its stage-1 size. Nothing is moving here except the opacity,
+         so the composition empties out around a picture that has already
+         stopped — and stage 2 then grows over bare ground. */
+      tl.to(cards, { autoAlpha: 0, duration: CLEAR_DUR }, CLEAR_AT)
+        .to(stmt,  { autoAlpha: 0, duration: CLEAR_DUR }, CLEAR_AT);
+
+      /* Stage 2: the takeover. Width and height both run to the section's full
+         size, and `top` with them so the panel finishes flush with the stage
+         rather than dropping downward out of the block it started in. */
+      var overW = stage.clientWidth;
+      var overH = stage.clientHeight;
+
+      /* The `top` the panel must end on is MEASURED, not assumed to be half
+         the height it gains. That identity only holds if the panel starts
+         centred in the stage, and it does not: the card block it is seated on
+         sits below the stage's middle, so a symmetric growth landed the panel
+         8px above the stage's top edge and left a sliver of ground showing.
+
+         What is wanted is the delta between where the panel's top edge is now
+         (level with the card block) and where it has to finish (level with the
+         stage), which is exactly that difference. */
+      var stageTop = stage.getBoundingClientRect().top;
+      var blockTop = Infinity;
+      cards.forEach(function (c) {
+        blockTop = Math.min(blockTop, c.getBoundingClientRect().top);
+      });
+      var topPx = (blockTop === Infinity) ? 0 : (stageTop - blockTop);
+
       tl.to(media, {
-        width:  geo.fullVW + 'vw',
-        height: geo.fullVH + 'vh',
-        top:    topPx,
-        duration: 1 - EXPAND_AT
-      }, EXPAND_AT);
+          width:  overW,
+          height: overH,
+          top:    topPx,
+          duration: STAGE2_DUR
+        }, STAGE2_AT);
     }
 
     /* The SAME distance the picture was sized against — one function, called
@@ -651,31 +862,31 @@
          horizontal push here would only shove the two columns off screen,
          since they already span the full width. */
       if (!geo.wide) {
-        tl.to(card, { y: v.sy * 10, duration: 1 - EXPAND_AT }, EXPAND_AT);
+        tl.to(card, { y: v.sy * 10, duration: EXPAND_DUR }, EXPAND_AT);
         return;
       }
 
-      if (v.mid) {
-        /* Clear the image vertically. The distance is the overlap that
-           actually exists — how far the grown image's edge reaches past the
-           card's inner edge — so the card moves exactly as much as it must,
-           and not at all if the image never reaches it.
+      /* Cards move HORIZONTALLY away from the channel — the reference's
+         `x: ±itemWidth / 2` on its two lists, one sign per side. That is the
+         motion the reveal is made of: the cards pull apart and the picture
+         occupies exactly the gap they open.
 
-           Bounded by the room left inside the pinned viewport: a middle card
-           that pushed by its full overlap ran off the bottom edge on every
-           viewport shorter than the grid, which is most of them. Clamping
-           here rather than letting `overflow: clip` cut it keeps the card
-           READABLE, which is the actual requirement. */
+         The rows are raked, so a card can sit on the channel in its own row
+         (the top row's card 3 and the bottom row's card 4 are each outboard of
+         the shared join). Such a card has nowhere sideways to go that helps —
+         the picture is not growing toward it — so it steps aside VERTICALLY
+         instead, and only as far as the picture's edge actually reaches it. */
+      if (v.mid) {
         var overlap = (geo.fullH / 2) - (Math.abs(v.dy) - v.halfH);
         var vRoom = Math.max(0, (stage.clientHeight / 2) - (Math.abs(v.dy) + v.halfH));
         tl.to(card, {
           y: v.sy * Math.min(Math.max(0, overlap + 14), vRoom),
-          duration: 1 - EXPAND_AT
+          duration: EXPAND_DUR
         }, EXPAND_AT);
       } else {
         tl.to(card, {
           x: v.sx * pushX,
-          duration: 1 - EXPAND_AT
+          duration: EXPAND_DUR
         }, EXPAND_AT);
       }
     });

@@ -134,12 +134,13 @@
   --link:           #004C99;  /* 8.1:1 on page — inline links               */
   --link-hover:     #003973;
 
-  /* On the deep navy, #0050A0 falls to 1.6:1 and is unusable. These are a
-     LIGHTER TINT OF THE SAME HUE (H210), not the teal — substituting teal
-     would break the blue=action / teal=emphasis distinction the page relies
-     on. Label on this fill is --surface-deep, giving 6.2:1. */
-  --accent-on-deep:        #4CA1F6;
-  --accent-on-deep-hover:  #73B6F9;
+  /* The doubts panel's gradient blue, verbatim, so the CTA on deep grounds
+     reads as the same brand blue that panel is built from. Note the tradeoff
+     this was chosen with eyes open: #0050A0 measures only 1.6:1 against
+     --surface-deep, so the button's EDGE is faint on the navy ground. The
+     label carries the affordance instead — white on this fill is 7.9:1. */
+  --accent-on-deep:        #0050A0;
+  --accent-on-deep-hover:  #0060C0;
 
   /* --- SECONDARY ACCENT (teal) ----------------------------------------
      Emphasis only: proof-strip figures, step numbers, rules, chips. Used
@@ -410,15 +411,14 @@ textarea:focus-visible,
 .btn--primary:hover  { background: var(--accent-hover);  border-color: var(--accent-hover); }
 .btn--primary:active { background: var(--accent-active); border-color: var(--accent-active); }
 
-/* On the deep navy the brand blue drops to 1.6:1 against the ground and the
-   button stops reading as a button. This variant is a lighter tint of the
-   SAME hue with a deep-navy label — 6.2:1 both for the label on the fill and
-   for the fill against the ground.
-   Used for the primary CTA inside the hero and the closing dark band. */
+/* The primary CTA inside the hero and the closing dark band, filled with the
+   doubts panel's gradient blue so the two read as one brand colour. The label
+   is white, not --surface-deep: on this darker fill a navy label would measure
+   1.6:1, where white measures 7.9:1 and carries the button on its own. */
 .btn--onDeep {
   background: var(--accent-on-deep);
   border-color: var(--accent-on-deep);
-  color: var(--surface-deep);
+  color: var(--text-on-deep);
 }
 .btn--onDeep:hover {
   background: var(--accent-on-deep-hover);
@@ -540,7 +540,7 @@ textarea:focus-visible,
 }
 /* The wordmark carries the name, so it runs taller than the old bare mark did
    and there is no text node beside it to align to. */
-.brand__mark { width: auto; height: 2.6rem; }
+.brand__mark { width: auto; height: 3.2rem; }
 
 /* --- Menu control -------------------------------------------------------- */
 
@@ -1691,31 +1691,6 @@ html.hero-ready .hero__foot    { transition-delay: 1.15s; }
   display: inline;
 }
 
-/* The reference's accent dot, set in brand teal rather than its red. Placed
-   with the flow on small screens (where a floated mark collides with the
-   text) and pulled out to the left of the first line past 860px. */
-.about__dot {
-  display: block;
-  width: 0.42rem;
-  height: 0.42rem;
-  margin: 0 auto clamp(1rem, 0.7rem + 1vw, 1.6rem);
-  border-radius: 50%;
-  background: var(--accent-2);
-}
-/* Past 860px the mark leaves the flow and sits out in the left margin, clear
-   of the first line's opening letter — the reference's placement. Anchored to
-   the section's left edge rather than to the (centred, variable-width) text,
-   so it never collides with a re-wrapped headline. */
-@media (min-width: 860px) {
-  .about__dot {
-    position: absolute;
-    top: 0.42em;
-    left: 0;
-    width: 0.5rem;
-    height: 0.5rem;
-    margin: 0;
-  }
-}
 
 /* --- 02 Proof strip ----------------------------------------------------- */
 
@@ -2833,33 +2808,54 @@ main {
   width: var(--doubts-media-w, 0);
   height: var(--doubts-media-h, 60vh);
   max-width: none;
-  /* `margin-inline: auto` centres the box on the FRAME, whose middle is offset
-     from the card block's by the shell's padding. js/doubts.js measures that
-     difference and writes it here, and `translate` applies it — a property of
-     its own, so it can never collide with anything GSAP puts on `transform`.
-     Without this the picture expands symmetrically about the wrong axis. */
-  translate: var(--doubts-media-cx, 0px) var(--doubts-media-cy, 0px);
+  /* `inset-inline: 0` + `margin-inline: auto` would centre the box on the
+     frame's PADDING box, which is ~20px off the card channel. Pinning the left
+     edge and doing the centring explicitly (below) puts the panel on the
+     channel the cards actually part along, so it opens symmetrically about the
+     line it is forcing apart. */
+  right: auto;
+  margin-inline: 0;
+  /* Left edge sits at the frame's centre (left: 50%), then the box is pulled
+     back by half its own width so it is centred on that point, and finally
+     nudged by --doubts-media-cx onto the measured card channel. Written on
+     `translate` rather than `transform` — a property of its own, so it can
+     never collide with anything GSAP puts on `transform`. */
+  left: 50%;
+  translate: calc(-50% + var(--doubts-media-cx, 0px)) var(--doubts-media-cy, 0px);
   /* No --shadow-* token exists in this system; this is the only elevation in
      the section, derived from --surface-deep (#001D3B) rather than black so
      it stays in the navy family like every other colour here. */
   box-shadow: 0 18px 40px rgba(0, 29, 59, 0.18);
 }
-/* Fills the frame and crops, exactly as the reference does it: their <img>
-   is a plain object-fit: cover child at 100% of the wrapper, with no width of
-   its own. That is what lets the frame animate freely — the picture simply
-   re-crops to whatever box it is given, so it is never stretched and never
-   needs a compensating width written per frame.
+/* A REVEAL, not a scale-up — the reference's actual mechanism.
 
-   This replaces an earlier version that fixed the <img> at the frame's widest
-   state and slid it under a clipping box. That worked, but it meant the crop
-   had to be computed from the final size before the animation could start;
-   cover needs no such bookkeeping. */
+   Their picture is rendered at its FINAL size for the whole animation and the
+   wrapper crops it: .experience-2_visual carries `overflow: hidden`, and the
+   <img> inside is `position:absolute; inset:0; width:100%; height:100%` of a
+   box that is already full height. Only the wrapper's WIDTH animates, so
+   widening it uncovers more of a picture that was always there at full size.
+
+   An earlier version here had the <img> at 100% of the ANIMATED frame with
+   object-fit: cover. That re-crops every frame, so the photograph itself grew
+   from tiny to large — the picture inflating rather than being revealed, which
+   is exactly the difference between the two readings.
+
+   So the image is pinned to the frame's final dimensions (written by
+   js/doubts.js as --doubts-img-w / --doubts-img-h) and centred on the frame's
+   middle with a translate. The frame's `overflow: hidden` is the window; the
+   picture behind it never moves and never resizes. */
+.doubts--live .doubts__media { overflow: hidden; }
+
 .doubts--live .doubts__media img {
   position: absolute;
-  inset: 0;
-  width: 100%;
+  /* Centred on the frame's own middle, so the window opens symmetrically onto
+     the middle of the photograph rather than onto its left edge. */
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: var(--doubts-img-w, 100%);
+  height: var(--doubts-img-h, 100%);
   max-width: none;
-  height: 100%;
   object-fit: cover;
 }
 
