@@ -49,11 +49,9 @@
   <div class="site-header__inner">
     <a class="brand" href="#top" aria-label="MedShield - home">
       <!-- The logo, shown at its own pixel colours in every header state.
-           No filter, no variant swap: this file is the mark. -->
-      <img class="brand__mark" src="assets/logo-mark.png" alt="" width="512" height="309" decoding="async">
-      <span class="brand__text">
-        <span class="brand__name">MedShield</span>
-      </span>
+           No filter, no variant swap: this file IS the brand, wordmark
+           included, so no separate text node sits beside it. -->
+      <img class="brand__mark" src="assets/M2.png" alt="" width="3682" height="930" decoding="async">
     </a>
 
     <!-- Two bare rules, no border, no pill, no background. The word "Menu"
@@ -103,7 +101,12 @@
 <main id="main">
 
   <!-- 01 - Hero ................................................. -->
-  <section class="hero" id="top">
+  <!-- data-bar-ink="light" marks every section whose ground is dark enough
+       that the transparent header needs WHITE ink over it. hero.js probes
+       these rects on scroll (isDeepUnderBar) and adds .is-on-light to the
+       bar only when none of them is under it. Add this attribute to any new
+       dark section, or the wordmark and hamburger will go navy-on-navy. -->
+  <section class="hero" id="top" data-bar-ink="light">
 
     <!-- Media layer.
          Mobile (<=859px) must never fetch the video: the <source> carries
@@ -228,7 +231,9 @@
        The statement is split into rows in the markup for the composition
        only; the <h2> still reads as one uncut sentence. hero.js masks and
        reveals each row on scroll, the same mask+slide used by the hero. -->
-  <section class="about" id="about-intro" aria-labelledby="about-intro-h">
+  <section class="about theme-transition" id="about-intro"
+           data-theme-ground="--surface-page" data-theme-tier="light"
+           aria-labelledby="about-intro-h">
     <div class="shell">
 
       <p class="about__eyebrow" data-reveal>About MedShield</p>
@@ -287,7 +292,9 @@
        between } — figure at the top, label pinned to the floor, hairline
        border shared with its vertical neighbour. Order follows CONTENT.md:
        certification and the specialist panel lead. -->
-  <section class="proof" id="proof" aria-labelledby="proof-h">
+  <section class="proof theme-transition" id="proof"
+           data-theme-ground="--surface-page" data-theme-tier="light"
+           aria-labelledby="proof-h">
     <div class="shell proof__shell">
       <h2 class="visually-hidden" id="proof-h">MedShield by the numbers</h2>
 
@@ -339,105 +346,132 @@
     </div>
   </section>
 
-  <!-- 03 - Positioning band ..................................... -->
-  <section class="positioning" aria-labelledby="positioning-h">
-    <div class="shell">
-      <h2 class="visually-hidden" id="positioning-h">Our position</h2>
-      <ul class="positioning__grid">
-        <li class="claim">
-          <h3 class="claim__title">Global-standards healthcare. Affordable coverage. Unrivalled access.</h3>
-          <p class="claim__body">
-            Accredited providers delivering compassionate care at pre-negotiated
-            rates, through India's largest maritime healthcare network.
-          </p>
-        </li>
-        <li class="claim">
-          <h3 class="claim__title">India's first. Trusted across Asia.</h3>
-          <p class="claim__body">
-            The country's first and only company uniting this range of maritime
-            healthcare expertise under one roof, with offices in Singapore and the UAE.
-          </p>
-        </li>
-        <li class="claim">
-          <h3 class="claim__title">Trust, transparency and lasting loyalty.</h3>
-          <p class="claim__body">
-            Rigorous, unbiased audits. Proactive medical welfare budgeting. Legal
-            support in employee welfare disputes.
-          </p>
-        </li>
-      </ul>
+  <!-- 03 - The problem: six doubts .............................. -->
+  <!-- Scroll-driven three-state composition. The section is the SCROLL TRACK
+       (tall); .doubts__stage is the viewport-height frame that ScrollTrigger
+       pins inside it. The theme-ground attributes stay on the outer section
+       so the ground handoff still measures an unpinned, real layout box —
+       pinning the section itself would hand the observer a box that no longer
+       describes what is painted. See js/doubts.js for the choreography.
+
+       Without JS the stage is not pinned and every state layer is visible and
+       statically laid out, so the content reads as an ordinary section. -->
+  <section class="doubts"
+           data-theme-ground="--surface-page" data-theme-tier="light"
+           aria-labelledby="doubts-h">
+    <div class="doubts__stage">
+
+      <!-- STATE 1 — split screen: the intro on the page ground at left, and a
+           FILLED panel at right. On scroll the panel slides left and grows
+           until it fills the section, and the whole composition is built on
+           top of it.
+
+           The panel is a sibling of .doubts__frame, not a child of the shell,
+           because it must bleed to the viewport's edge while the intro beside
+           it stays on the shell's measure — the same relationship the
+           reference has. -->
+      <div class="doubts__panel" aria-hidden="true"></div>
+
+      <!-- The statement is a sibling of the panel rather than a child of it,
+           because it outlives state 1: it begins as the panel's headline and
+           ends as a large faint watermark across the MIDDLE of the finished
+           composition (the reference resolves its own statement to opacity
+           0.1 behind the card grid). Parented to the stage, it keeps a fixed
+           centre while the panel's own box animates underneath it. -->
+      <p class="doubts__statement" aria-hidden="true">
+        <span>Six</span><span>questions,</span><span>one</span><span>call.</span>
+      </p>
+
+      <div class="shell doubts__frame">
+
+        <div class="doubts__split">
+          <header class="section-head doubts__intro">
+            <p class="eyebrow">The problem</p>
+            <h2 class="section-title" id="doubts-h">
+              The six questions that start every medical case at sea
+            </h2>
+            <p class="doubts__lede">
+              Every crew medical case opens the same way: with doubt on the
+              bridge and no one ashore who owns the answer. These six questions
+              decide what the case costs — in hours, in money, and in outcome.
+            </p>
+          </header>
+        </div>
+
+        <!-- STATES 2 &amp; 3 — the six cards and the central image. The cards
+             keep their list semantics; the grid places them in their FINAL
+             (state 3) positions and GSAP transforms them back toward the
+             centre for state 2, so the resting layout is the CSS one. -->
+        <ol class="doubts__grid">
+          <li class="doubt" data-doubt-slot="tl">
+            <p class="doubt__num">01</p>
+            <h3 class="doubt__title">Who do we call?</h3>
+            <p class="doubt__body">
+              It is 03:00 and the nearest coast station is out of VHF range. No one
+              on board knows which number reaches a doctor.
+            </p>
+          </li>
+          <li class="doubt" data-doubt-slot="tm">
+            <p class="doubt__num">02</p>
+            <h3 class="doubt__title">Is it serious?</h3>
+            <p class="doubt__body">
+              Chest pain, or indigestion after a long watch? Nobody aboard is
+              qualified to tell the difference - and guessing wrong costs hours
+              that matter.
+            </p>
+          </li>
+          <li class="doubt" data-doubt-slot="tr">
+            <p class="doubt__num">03</p>
+            <h3 class="doubt__title">Do we divert?</h3>
+            <p class="doubt__body">
+              A diversion burns fuel, breaks the charter and costs days. Not
+              diverting could cost a life. That call sits with the master, alone,
+              at sea.
+            </p>
+          </li>
+          <li class="doubt" data-doubt-slot="bl">
+            <p class="doubt__num">04</p>
+            <h3 class="doubt__title">Which port?</h3>
+            <p class="doubt__body">
+              The closest harbour is not always the one with a cardiac unit, a
+              surgeon on duty, or clearance to take a foreign crew member ashore.
+            </p>
+          </li>
+          <li class="doubt" data-doubt-slot="bm">
+            <p class="doubt__num">05</p>
+            <h3 class="doubt__title">Are we being overcharged?</h3>
+            <p class="doubt__body">
+              Once a hospital learns an employer is paying, prices move. We have
+              seen consultation fees at three times the market rate and surgery
+              quoted at nearly four.
+            </p>
+          </li>
+          <li class="doubt" data-doubt-slot="br">
+            <p class="doubt__num">06</p>
+            <h3 class="doubt__title">Who chose this hospital?</h3>
+            <p class="doubt__body">
+              If the referral came from a vendor with a financial relationship
+              rather than a clinical one, recovery takes longer and costs more -
+              and nobody ashore finds out until the invoice arrives.
+            </p>
+          </li>
+        </ol>
+
+        <!-- The central image. Its FRAME is what animates (narrow strip ->
+             dominant), never the <img> itself: the picture is sized to the
+             frame's largest state and cropped by overflow, so widening the
+             frame reveals more of the same undistorted photograph rather than
+             stretching it. -->
+        <figure class="doubts__media" aria-hidden="true">
+          <img src="assets/videos/hero-poster.jpg" alt=""
+               width="1280" height="720" loading="lazy" decoding="async">
+        </figure>
+
+      </div>
     </div>
   </section>
 
-  <!-- 04 - The problem: six doubts .............................. -->
-  <section class="doubts" aria-labelledby="doubts-h">
-    <div class="shell">
-      <header class="section-head">
-        <p class="eyebrow">The problem</p>
-        <h2 class="section-title" id="doubts-h">
-          The six questions that start every medical case at sea
-        </h2>
-      </header>
-
-      <!-- Static 3x2 grid on desktop, single column on mobile. No pinned rail. -->
-      <ol class="doubts__grid">
-        <li class="doubt">
-          <p class="doubt__num">01</p>
-          <h3 class="doubt__title">Who do we call?</h3>
-          <p class="doubt__body">
-            It is 03:00 and the nearest coast station is out of VHF range. No one
-            on board knows which number reaches a doctor.
-          </p>
-        </li>
-        <li class="doubt">
-          <p class="doubt__num">02</p>
-          <h3 class="doubt__title">Is it serious?</h3>
-          <p class="doubt__body">
-            Chest pain, or indigestion after a long watch? Nobody aboard is
-            qualified to tell the difference - and guessing wrong costs hours
-            that matter.
-          </p>
-        </li>
-        <li class="doubt">
-          <p class="doubt__num">03</p>
-          <h3 class="doubt__title">Do we divert?</h3>
-          <p class="doubt__body">
-            A diversion burns fuel, breaks the charter and costs days. Not
-            diverting could cost a life. That call sits with the master, alone,
-            at sea.
-          </p>
-        </li>
-        <li class="doubt">
-          <p class="doubt__num">04</p>
-          <h3 class="doubt__title">Which port?</h3>
-          <p class="doubt__body">
-            The closest harbour is not always the one with a cardiac unit, a
-            surgeon on duty, or clearance to take a foreign crew member ashore.
-          </p>
-        </li>
-        <li class="doubt">
-          <p class="doubt__num">05</p>
-          <h3 class="doubt__title">Are we being overcharged?</h3>
-          <p class="doubt__body">
-            Once a hospital learns an employer is paying, prices move. We have
-            seen consultation fees at three times the market rate and surgery
-            quoted at nearly four.
-          </p>
-        </li>
-        <li class="doubt">
-          <p class="doubt__num">06</p>
-          <h3 class="doubt__title">Who chose this hospital?</h3>
-          <p class="doubt__body">
-            If the referral came from a vendor with a financial relationship
-            rather than a clinical one, recovery takes longer and costs more -
-            and nobody ashore finds out until the invoice arrives.
-          </p>
-        </li>
-      </ol>
-    </div>
-  </section>
-
-  <!-- 05 - Four services ........................................ -->
+  <!-- 04 - Four services ........................................ -->
   <section class="services" id="services" aria-labelledby="services-h">
     <div class="shell">
       <header class="section-head">
@@ -519,8 +553,8 @@
     </div>
   </section>
 
-  <!-- 06 - How a case runs ...................................... -->
-  <section class="process" id="process" aria-labelledby="process-h">
+  <!-- 05 - How a case runs ...................................... -->
+  <section class="process" id="process" aria-labelledby="process-h" data-bar-ink="light">
     <div class="shell">
       <header class="section-head">
         <p class="eyebrow eyebrow--onDark">How a case runs</p>
@@ -629,7 +663,7 @@
     </div>
   </section>
 
-  <!-- 07 - Case studies ......................................... -->
+  <!-- 06 - Case studies ......................................... -->
   <section class="cases" id="case-studies" aria-labelledby="cases-h">
     <div class="shell">
       <header class="section-head">
@@ -687,7 +721,7 @@
     </div>
   </section>
 
-  <!-- 08 - Why MedShield ........................................ -->
+  <!-- 07 - Why MedShield ........................................ -->
   <section class="why" aria-labelledby="why-h">
     <div class="shell">
       <header class="section-head">
@@ -736,7 +770,7 @@
     </div>
   </section>
 
-  <!-- 09 - The people ........................................... -->
+  <!-- 08 - The people ........................................... -->
   <section class="people" id="about" aria-labelledby="people-h">
     <div class="shell">
       <header class="section-head">
@@ -778,8 +812,8 @@
     </div>
   </section>
 
-  <!-- 10 - Closing CTA band ..................................... -->
-  <section class="cta-band" aria-labelledby="cta-h">
+  <!-- 09 - Closing CTA band ..................................... -->
+  <section class="cta-band" aria-labelledby="cta-h" data-bar-ink="light">
     <div class="shell cta-band__inner">
       <div>
         <h2 class="cta-band__title" id="cta-h">Your next medical case is already at sea</h2>
@@ -795,7 +829,7 @@
     </div>
   </section>
 
-  <!-- 11 - Contact + form ....................................... -->
+  <!-- 10 - Contact + form ....................................... -->
   <section class="contact" id="contact" aria-labelledby="contact-h">
     <div class="shell contact__inner">
 
@@ -916,7 +950,7 @@
 
 </main>
 
-<footer class="site-footer">
+<footer class="site-footer" data-bar-ink="light">
   <div class="shell">
 
     <div class="site-footer__top">
@@ -1072,6 +1106,13 @@
 </script>
 
 <script src="js/hero.js" defer></script>
+
+<!-- Section 03 only. Self-hosted like every other asset here — no CDN, in
+     keeping with the no-build-step, no-CDN rule the stylesheet states. Both
+     are plain scripts, so `defer` keeps them in order ahead of doubts.js. -->
+<script src="js/vendor/gsap.min.js" defer></script>
+<script src="js/vendor/ScrollTrigger.min.js" defer></script>
+<script src="js/doubts.js" defer></script>
 
 </body>
 </html>

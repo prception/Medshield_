@@ -445,11 +445,11 @@ textarea:focus-visible,
    conventional site header and breaks the "type floating on the media" effect
    the composition depends on.
 
-   LEGIBILITY over light sections: the bar still hides the moment the user
-   scrolls DOWN (see .is-hidden and the direction logic in hero.js), so it is
-   simply not on screen while the pale sections below the hero pass underneath.
-   It only reappears on scroll UP, where the same gesture that reveals it also
-   means the user wants it. */
+   LEGIBILITY over other sections is handled by INK INVERSION, not by hiding:
+   .is-on-light flips the wordmark and hamburger to dark ink whenever a pale
+   section is behind the bar (see isDeepUnderBar in hero.js). The bar itself
+   clears out of the way only while the user is actively scrolling, and
+   returns once the scroll goes idle — see .is-hidden and the idle timer. */
 .site-header {
   position: fixed;
   top: 0;
@@ -480,22 +480,42 @@ textarea:focus-visible,
    element behind the bar is a light section.
 
    Only colour transitions; no background ever appears. */
-.site-header.is-on-light .brand,
-.site-header.is-on-light .brand__name {
+.site-header.is-on-light .brand {
   color: var(--text-primary);
 }
 .site-header.is-on-light .nav-toggle { color: var(--text-primary); }
 .site-header.is-on-light .nav-toggle__line { background: var(--text-primary); }
 
+/* ...EXCEPT while the overlay menu is open.
+
+   The overlay is always --surface-deep navy, whatever is scrolled behind it.
+   If the menu was opened from a light section .is-on-light was still set, so
+   these rules painted the X in dark ink ON the navy panel and the close
+   control was invisible — the only way out was the Escape key.
+
+   Open state wins: the ground under the toggle is the overlay, not the page.
+   Placed after the .is-on-light rules and matched on the same element with an
+   extra attribute, so it outranks them on specificity as well as order. */
+.site-header.is-on-light .nav-toggle[aria-expanded="true"] {
+  color: var(--text-on-deep);
+}
+.site-header.is-on-light .nav-toggle[aria-expanded="true"] .nav-toggle__line {
+  background: var(--text-on-deep);
+}
+
+/* The brand sits on that same navy panel and had the identical problem. */
+.site-header.is-on-light:has(.nav-toggle[aria-expanded="true"]) .brand {
+  color: var(--text-on-deep);
+}
+
 .brand,
-.brand__name,
 .nav-toggle { transition: color 0.3s ease; }
 .nav-toggle__line { transition: transform 0.5s cubic-bezier(0.7, 0, 0.3, 1), background-color 0.3s ease; }
 
-/* The mark is never recoloured. assets/logo-mark.png IS the logo, and it is a
-   blue→teal gradient rather than a monochrome shape, so any brightness or
-   saturate pass shifts it off-brand. It renders at its own pixel colours in
-   every header state — do not add a filter here. */
+/* The mark is never recoloured. assets/M2.png IS the logo — mark and wordmark
+   in one file — and it is a blue→teal gradient rather than a monochrome shape,
+   so any brightness or saturate pass shifts it off-brand. It renders at its own
+   pixel colours in every header state — do not add a filter here. */
 
 /* The header opts out of .shell's centred 1200px box and uses the same site
    margin as the hero, so the logo sits on the identical left edge as the
@@ -515,26 +535,12 @@ textarea:focus-visible,
 .brand {
   display: inline-flex;
   align-items: center;
-  gap: var(--s-3);
   text-decoration: none;
   color: var(--text-on-deep);
 }
-.brand__mark { width: auto; height: 2.1rem; }
-.brand__text { display: flex; flex-direction: column; }
-.brand__name {
-  font-family: var(--font-display);
-  font-size: 1.16rem;
-  font-weight: 700;
-  letter-spacing: 0.005em;
-  line-height: 1.1;
-}
-.brand__eyebrow {
-  font-size: 0.62rem;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--text-on-deep-secondary);
-  line-height: 1.3;
-}
+/* The wordmark carries the name, so it runs taller than the old bare mark did
+   and there is no text node beside it to align to. */
+.brand__mark { width: auto; height: 2.6rem; }
 
 /* --- Menu control -------------------------------------------------------- */
 
@@ -593,8 +599,12 @@ textarea:focus-visible,
   margin-top: -0.75px;
   background: var(--text-on-deep);
   transform-origin: left center;
-  /* 0.5s cubic-bezier(.7, 0, .3, 1) — the reference's exact line easing. */
-  transition: transform 0.5s cubic-bezier(0.7, 0, 0.3, 1);
+  /* 0.5s cubic-bezier(.7, 0, .3, 1) — the reference's exact line easing.
+     background-color is carried here too: this rule sits AFTER the shorthand
+     up at the ink-inversion block, so listing only `transform` would drop the
+     colour transition and make the white/navy flip snap instead of fade. */
+  transition: transform 0.5s cubic-bezier(0.7, 0, 0.3, 1),
+              background-color 0.3s ease;
 }
 
 /* Resting staircase: full, three-quarters, half. */
@@ -763,10 +773,6 @@ textarea:focus-visible,
   background: var(--nav-scrim);
 }
 
-@media (max-width: 859px) {
-  .brand__eyebrow { display: none; }
-}
-
 /* The overlay fades and the menu rows slide; honour reduced-motion by cutting
    all of it rather than shortening it. */
 @media (prefers-reduced-motion: reduce) {
@@ -782,8 +788,7 @@ textarea:focus-visible,
 }
 
 @media (max-width: 380px) {
-  .brand__name { font-size: 1rem; }
-  .brand__mark { height: 1.8rem; }
+  .brand__mark { height: 2rem; }
 }
 
 /* --- 01 Hero ------------------------------------------------------------ */
@@ -1627,7 +1632,12 @@ html.hero-ready .hero__foot    { transition-delay: 1.15s; }
    the statement apart from the stats block that follows. Clamped to our scale
    rather than left as raw vw, so it cannot run away on an ultrawide monitor. */
 .about {
-  background: var(--surface-page);
+  /* Transparent, not --surface-page: .about declares its ground via
+     data-theme-ground and lets <main> paint it, like every other banded
+     section. Painting here would win on cascade order over
+     .theme-transition and block the ground it is supposed to be handing
+     over. */
+  background: transparent;
   padding-top: clamp(4.5rem, 2.5rem + 7vw, 9rem);
   padding-bottom: clamp(5.5rem, 3rem + 9.5vw, 12rem);
 }
@@ -1711,10 +1721,58 @@ html.hero-ready .hero__foot    { transition-delay: 1.15s; }
    one continuous page background, not a distinct tinted band. */
 .proof {
   position: relative;
-  background: var(--surface-page);
-  border-bottom: 1px solid var(--border);
   padding-block: clamp(2.5rem, 1.6rem + 3.4vw, 4rem);
 }
+
+/* --- The page-ground theme transition ------------------------------------
+
+   This is irinamoi.com's themeObserver.js, adopted directly after reading
+   their implementation. Their mechanism, verbatim:
+
+     - ONE element carries the background: <main>. Not the sections.
+     - Each section declares a flat colour: data-theme-observer="#001731".
+     - An IntersectionObserver with rootMargin "-70% 0% -30% 0%" — which
+       collapses the viewport to a SINGLE TRIGGER LINE 70% down the screen —
+       sets main.style.backgroundColor to that section's colour when the
+       section crosses the line.
+     - All the smoothness comes from one CSS rule:
+         main { transition: background-color .75s ease-in, color .75s ease-in }
+
+   The insight we got wrong twice before: because only ONE element is ever
+   painted, there is no boundary between two differently-coloured sections
+   at any moment — not while scrolling, not at rest. Our previous attempts
+   painted .proof and .positioning separately (first a step, then a
+   scroll-scrubbed gradient fill), and both necessarily produced a visible
+   seam between them plus a staged, two-part change: the stats section
+   arriving at its colour, and only then the band arriving at its own. One
+   painted element makes that class of problem structurally impossible, and
+   makes the whole thing far simpler than the machinery it replaces.
+
+   Our colours are our own: the brand end is --accent-on-deep, which is
+   literally the fill the hero's "Request a proposal" button renders (it
+   carries .btn--onDeep, which overrides .btn--primary's --accent), so the
+   ground reads as that button's own colour spread across the page. The
+   light end is --surface-page.
+
+   Timing is 0.45s ease-out, not the reference's 0.75s ease-in. Two changes,
+   both deliberate. Shorter, because at our trigger geometry the longer
+   duration left the ground visibly still resolving well after the band had
+   settled into place. ease-out rather than ease-in, because the change
+   should commit immediately and decelerate into its final colour — ease-in
+   starts slowly, which at a shorter duration reads as lag before anything
+   happens rather than as a smooth start. */
+main {
+  background-color: var(--surface-page);
+  transition: background-color 0.45s ease-out, color 0.45s ease-out;
+}
+@media (prefers-reduced-motion: reduce) {
+  main { transition: none; }
+}
+
+/* Sections that hand a colour to <main> paint nothing themselves — the
+   ground shows through. This is what keeps the change to exactly one
+   animating surface. */
+.theme-transition { background-color: transparent; }
 
 /* Their .columns: a narrow text column beside the stat run.
 
@@ -1843,8 +1901,8 @@ html.hero-ready .hero__foot    { transition-delay: 1.15s; }
   justify-content: space-between;
   gap: var(--s-6);
   padding: clamp(1.25rem, 0.8rem + 1.8vw, 2.25rem);
-  border-inline: 1px solid var(--border);
-  border-top: 1px solid var(--border);
+  border-inline: 1px solid var(--border-strong);
+  border-top: 1px solid var(--border-strong);
   background: var(--surface-raised);
   position: relative;
   min-height: clamp(10rem, 4rem + 18vw, 17rem);
@@ -1858,7 +1916,7 @@ html.hero-ready .hero__foot    { transition-delay: 1.15s; }
 .proof__col--1 { position: relative; z-index: 2; }
 /* Only the final box in each column closes the run at the bottom. */
 .proof__col .proof__item:last-child {
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid var(--border-strong);
 }
 
 @media (min-width: 1020px) {
@@ -1985,7 +2043,7 @@ html.hero-ready .hero__foot    { transition-delay: 1.15s; }
   text-underline-offset: 3px;
 }
 
-/* --- 11 Contact --------------------------------------------------------- */
+/* --- 10 Contact --------------------------------------------------------- */
 
 .contact { padding-block: var(--section-y); }
 
@@ -2239,38 +2297,119 @@ html.hero-ready .hero__foot    { transition-delay: 1.15s; }
 }
 .section-title--onDark { color: var(--text-on-deep); }
 
-/* --- 03 Positioning band ------------------------------------------------ */
+/* --- 03 The problem: six doubts ----------------------------------------- */
 
-.positioning {
-  background: var(--surface-deep);
-  color: var(--text-on-deep-secondary);
-  padding-block: var(--section-y);
-}
+/* Transparent, not --surface-page: like every other section in the theme
+   system, this one declares its ground via data-theme-ground and lets <main>
+   paint it (see the theme ground note above). Painting here as well would put
+   a second opaque surface over the one animating element. */
+.doubts { padding-block: var(--section-y); background: transparent; }
 
-.positioning__grid {
+/* ---- Scroll-driven three-state composition -----------------------------
+
+   The section is a three-act spatial transformation, scrubbed by scroll:
+
+     STATE 1  split screen — intro left, statement right
+     STATE 2  six cards around a NARROW vertical central image
+     STATE 3  the central image expands from its centre, cards move outward
+
+   Division of labour between this file and js/doubts.js:
+
+     CSS owns every RESTING layout — the split, the final 3x2 card grid, and
+     the image's final size. It is the state-3 composition, and it is what a
+     no-JS visitor gets, statically and readably.
+
+     JS owns only TRANSFORMS away from that resting layout (x/y/scale/opacity
+     plus the image frame's width/height). Nothing is positioned by GSAP, so
+     the layout survives a resize, a font swap, or the script failing to load.
+
+   `overflow: clip` (not hidden — clip does not create a scroll container, so
+   it cannot trap the page's scroll or be scrolled by a focused card) contains
+   the outward card motion of state 3 and guarantees no horizontal overflow. */
+
+.doubts__stage { position: relative; }
+
+.doubts__frame { position: relative; }
+
+/* --- State 1: the split ------------------------------------------------- */
+
+.doubts__split {
   display: grid;
-  gap: var(--s-6);
+  gap: var(--s-7);
+  align-items: center;
 }
-@media (min-width: 800px) {
-  .positioning__grid { grid-template-columns: repeat(3, 1fr); gap: var(--s-7); }
+@media (min-width: 1000px) {
+  .doubts__split {
+    /* The intro occupies the left column only; the right column is the space
+       the filled panel covers, so it is left empty here rather than holding
+       content that the panel would sit on top of. */
+    grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+    gap: var(--s-8);
+    min-height: 62vh;
+  }
 }
 
-.claim { padding-top: var(--s-5); border-top: 2px solid var(--accent-2-on-deep); }
-.claim__title {
-  font-size: var(--t-h3);
-  font-weight: 700;
+/* --- The filled panel (state 1, right half) -----------------------------
+
+   The one large brand-coloured field on the page, which is what makes the
+   split read as a composition rather than as two columns of type.
+
+   NOT --grad-brand itself. That ramp runs to the raw brand teal (#20B0A8),
+   where white type measures 2.59:1 — under the 3:1 floor for large text, so
+   the statement would have failed across the right-hand third of its own
+   panel. This is the same blue->teal journey moved into the INK range the
+   rest of the page already uses for brand colour carrying white type:
+   --surface-deep -> the brand blue -> --accent-2-ink. Measured white
+   contrast across the ramp: 16.4:1, 7.6:1, 4.8:1.
+
+   Static/no-JS: a normal full-width band under the intro, so the statement
+   still reads. The half-width bleed and the leftward wipe are both scoped to
+   .doubts--live. */
+.doubts__panel {
+  display: grid;
+  place-items: center;
+  padding: var(--s-8) var(--s-6);
+  background: linear-gradient(135deg, var(--surface-deep) 0%, #0050A0 58%, var(--accent-2-ink) 100%);
   color: var(--text-on-deep);
-  margin-bottom: var(--s-3);
 }
-.claim__body { max-width: 42ch; }
 
-/* --- 04 The problem: six doubts ----------------------------------------- */
+.doubts__intro { margin-bottom: 0; }
 
-.doubts { padding-block: var(--section-y); background: var(--surface-page); }
+.doubts__lede {
+  margin-top: var(--s-5);
+  color: var(--text-secondary);
+  max-width: 46ch;
+}
 
+/* The large statement, printed on the gradient panel. Clamped against the
+   VIEWPORT so it stays a statement rather than a headline at every width and
+   never forces horizontal overflow.
+
+   White throughout: it sits on the brand ramp, and --text-on-deep is the
+   token the rest of the page uses for type on a brand/deep ground. */
+.doubts__statement {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: clamp(2.2rem, 1.1rem + 5.4vw, 5rem);
+  line-height: 0.94;
+  letter-spacing: -0.02em;
+  color: var(--text-on-deep);
+  text-wrap: balance;
+  margin: 0;
+}
+.doubts__statement span { display: block; }
+
+/* --- States 2 & 3: the card grid --------------------------------------- */
+
+/* list-style: none — the <ol> is semantic (these are six numbered doubts and
+   each card prints its own 01-06), so the UA marker would double the
+   numbering. It was visible once the grid became the animated layer. */
 .doubts__grid {
   display: grid;
   gap: var(--s-6);
+  margin-top: var(--s-8);
+  list-style: none;
+  padding-left: 0;
 }
 @media (min-width: 620px)  { .doubts__grid { grid-template-columns: repeat(2, 1fr); } }
 @media (min-width: 1000px) { .doubts__grid { grid-template-columns: repeat(3, 1fr); } }
@@ -2296,7 +2435,499 @@ html.hero-ready .hero__foot    { transition-delay: 1.15s; }
 }
 .doubt__body { color: var(--text-secondary); max-width: 46ch; }
 
-/* --- 05 Four services --------------------------------------------------- */
+/* --- The central image -------------------------------------------------- */
+
+/* Resting (no-JS / state-3) presentation: a normal wide figure under the
+   grid. Everything that makes it the animated centrepiece is scoped to
+   .doubts--live below, so the static document is never left holding a
+   40px-wide strip of a photograph. */
+.doubts__media {
+  margin: var(--s-7) auto 0;
+  max-width: 720px;
+  overflow: clip;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface-sunken);
+}
+.doubts__media img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+/* --- JS-driven state (.doubts--live, set by js/doubts.js) ---------------
+
+   Only added once GSAP + ScrollTrigger have actually loaded and the pin is
+   built, so a failed/blocked script leaves the static layout above intact
+   rather than a half-applied absolute composition. */
+
+/* The section's own vertical padding is dropped in the live state. The pinned
+   stage must be exactly one viewport tall AND flush with the viewport's top
+   edge: with the padding still in place the pin started 104px down the page,
+   so the stage's centred composition was centred on a box hanging below the
+   fold and the bottom row was cut off at every viewport height. The rhythm
+   between this section and its neighbours is preserved by the pin spacer,
+   which is far taller than the padding it replaces. */
+.doubts--live { overflow: clip; padding-block: 0; }
+
+/* Exactly one viewport tall; the section's own height is the scroll distance,
+   set by ScrollTrigger's pin spacer. */
+.doubts--live .doubts__stage {
+  height: 100svh;
+  display: grid;
+  align-items: center;
+  overflow: clip;
+}
+
+.doubts--live .doubts__frame {
+  /* The three layers are stacked in ONE grid cell rather than absolutely
+     positioned, so each keeps a real, measurable box that re-solves itself on
+     resize — the transforms then run on top of a layout that is still
+     correct. */
+  display: grid;
+  align-items: center;
+  justify-items: center;
+}
+.doubts--live .doubts__split,
+.doubts--live .doubts__grid,
+.doubts--live .doubts__media {
+  grid-area: 1 / 1;
+  width: 100%;
+}
+
+.doubts--live .doubts__grid { margin-top: 0; }
+
+/* The panel in the live state: the right half of the viewport, full height,
+   bleeding to the right edge. It is positioned against .doubts__stage (the
+   pinned box) rather than the shell, which is how it reaches the edge while
+   the intro beside it keeps the shell's measure.
+
+   z-index 3 puts it above the cards and the image: during state 1 it is a
+   solid cover, and the wipe that takes it off-screen is what UNCOVERS the
+   composition behind it. That is the reference's mechanic — a second panel
+   sliding a full width across — rather than a cross-fade. */
+/* State 1's filled panel: the right HALF of the stage at rest, which then
+   slides left AND grows to cover the whole section (see js/doubts.js).
+
+   Sized with `left` + `width` rather than `left` + `right`, because the
+   animation drives `left` and `width` directly — leaving `right` anchored
+   would pin the far edge and the panel would only ever stretch, never travel.
+   `width` carries an overshoot past the right edge so that as the panel
+   moves left it never drags a widening strip of bare ground behind it;
+   `overflow: clip` on the section hides the overhang. */
+.doubts--live .doubts__panel {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: calc(50% + 8vw);
+  /* BELOW the cards and the image, not above them. The panel is the GROUND
+     this section composes on — the fill arrives and the six questions ride in
+     on top of it — so it must never cover them. It sits above only the intro
+     layer it sweeps across. An earlier version had this at z-index 3, which
+     made the panel a cover that had to be pulled away again before states 2
+     and 3 could be seen; that read as two separate events rather than one
+     surface bringing the composition in. */
+  z-index: 1;
+  padding: var(--s-7);
+  justify-items: start;
+  will-change: left, width;
+}
+
+/* Below the split breakpoint there is no room for a half-panel beside the
+   intro, so state 1 starts as a full-bleed statement field and the same
+   leftward growth simply has nowhere left to grow into. */
+@media (max-width: 999px) {
+  .doubts--live .doubts__panel {
+    left: 0;
+    width: calc(100% + 8vw);
+    place-items: center;
+    text-align: center;
+  }
+}
+
+/* The pinned frame is exactly one viewport tall, so the whole composition —
+   two card rows plus the vertical push of state 3 — has to live inside it.
+   The static grid is sized for a page that can scroll and is simply taller
+   than that, which cut the bottom row off at almost every viewport height.
+
+   Tightening the live state rather than the static one keeps the ordinary
+   document unchanged: same type scale, same tokens, just a denser box and a
+   shorter measure because the card now sits in a column beside a picture
+   instead of spanning a third of the page. */
+.doubts--live .doubts__grid { gap: var(--s-5); }
+
+/* The two rows are offset by a WHOLE COLUMN, not nudged by a percentage: on a
+   four-column track the top row occupies columns 2-4 and the bottom row
+   columns 1-3. That is the reference's arrangement, and the step it produces
+   is a real structural shift — a fractional margin only ever looked like a
+   grid that had slipped.
+
+   The empty cell at each end is what opens the diagonal channel through the
+   middle, which is the space the central image expands into. */
+/* Five columns, with the MIDDLE one reserved for the picture and never
+   occupied by a card. The offset then falls out of the arrangement: the top
+   row takes columns 2, 4, 5 and the bottom row 1, 2, 4 — three cards a side
+   of a clear central channel, stepped against each other.
+
+   The reserved column is the point. A four-column version put cards in the
+   middle two tracks, so the expanding image had nowhere to go and grew
+   straight over cards 02 and 05; here the channel is structural and the
+   picture opens into space that was always kept for it. */
+@media (min-width: 1000px) {
+  .doubts--live .doubts__grid {
+    /* The middle track is wider than the card tracks: it has to hold the
+       picture at a size that makes it the composition's anchor, and at an
+       even 1fr the picture came out barely wider than a single card. The
+       card columns stay equal to each other so the two rows still align. */
+    /* FOUR columns, not five: there is no reserved middle track any more. The
+       cards close up against each other across the centre line, so state 2 is
+       a solid block of six with no hole in it, and the picture then has to
+       force that block apart — which is the whole point of the expansion. A
+       reserved channel meant the space was already waiting and the "centre
+       pushes the layout outward" reading was lost.
+
+       The rake still comes from the rows stepping (see the column
+       assignments below), just without a gap down the middle. */
+    grid-template-columns: repeat(4, 1fr);
+    /* Narrow enough that the cards have somewhere to GO. The outward push is
+       clamped by the room left between the outermost card and the frame's
+       edge, so a grid that fills the frame leaves almost none and the
+       expansion has nothing to work with — at 1080px the cards could travel
+       only 60px and the picture came out barely wider than a postcard.
+       Pulling the block in buys that travel back on both sides. */
+    max-width: 820px;
+    margin-inline: auto;
+    column-gap: var(--s-3);
+  }
+  /* Column 3 — the exact middle of five — is the picture's channel and holds
+     no card in either row. Keeping that reserved track dead-centre is what
+     lets the image stay centred on the stage, the same centre the watermark
+     and the state-3 expansion both use, with no per-breakpoint offset.
+
+     The RAKE comes from the rows stepping against each other: the top row
+     hangs to the RIGHT (columns 2, 4, 5) and the bottom row to the LEFT
+     (columns 1, 2, 4). Each row keeps one card on the far side of the
+     channel, so neither block reads as a solid slab and the composition stays
+     open across the middle. */
+  /* Top row in columns 2-4, bottom row in 1-3: a one-column step between
+     them, and within each row the three cards are adjacent with only the
+     column gap between them. Nothing is held back for the picture. */
+  .doubts--live .doubt:nth-child(1) { grid-column: 2; grid-row: 1; }
+  .doubts--live .doubt:nth-child(2) { grid-column: 3; grid-row: 1; }
+  .doubts--live .doubt:nth-child(3) { grid-column: 4; grid-row: 1; }
+  .doubts--live .doubt:nth-child(4) { grid-column: 1; grid-row: 2; }
+  .doubts--live .doubt:nth-child(5) { grid-column: 2; grid-row: 2; }
+  .doubts--live .doubt:nth-child(6) { grid-column: 3; grid-row: 2; }
+
+  /* The two rows sit tight to the channel's vertical middle rather than
+     filling the stage's full height, so the picture reads as the thing they
+     are arranged around. */
+  .doubts--live .doubts__grid { align-content: center; }
+
+  /* Five columns make each card narrow, so the copy runs long. The body is
+     NOT clamped here: a clamp cut sentences mid-word behind an ellipsis, and
+     a truncated sentence is worse than a smaller one. The type steps down
+     instead, which keeps every card's text complete and readable. */
+  .doubts--live .doubt { font-size: 0.875rem; }
+  .doubts--live .doubt__body { line-height: 1.45; }
+}
+
+/* On the fill the cards are OUTLINES, not filled boxes: a hairline border and
+   white type directly on the brand field. Filled white cards read as six
+   objects sitting on a background; outlined ones read as regions OF it, which
+   is what keeps the fill the subject of the composition rather than a
+   backdrop behind a grid.
+
+   The border is white at low alpha rather than --border: --border is tuned
+   for dark ink on a pale ground and disappears entirely against the fill. */
+.doubts--live .doubt {
+  display: flex;
+  /* Body copy at the top, title anchored to the bottom edge — the order is
+     inverted from the static card, where the title leads. Reading order in
+     the DOM is unchanged (num, title, body); only the visual order flips, so
+     screen readers and the no-JS document still get title-then-body. */
+  flex-direction: column;
+  padding: var(--s-4);
+  background: transparent;
+  border: 1px solid rgba(250, 251, 253, 0.28);
+  border-radius: 0;
+  font-size: 0.95rem;
+  color: var(--text-on-deep);
+}
+.doubts--live .doubt__title {
+  order: 3;
+  font-size: 1.05rem;
+  /* `auto` pushes the title to the card's bottom edge whatever the body's
+     length, so the six titles sit on a common baseline across a row even
+     though the copy above them does not. The padding keeps a minimum gap on
+     the cards whose copy nearly fills the box. */
+  margin-top: auto;
+  padding-top: var(--s-5);
+  margin-bottom: 0;
+  color: var(--text-on-deep);
+}
+/* The 01-06 numerals: kept, but quietened to a label so the two lines of copy
+   and the title carry the card. --accent-2-ink is a dark-ground teal and goes
+   muddy here, so the numeral takes the same white at reduced alpha. */
+.doubts--live .doubt__num {
+  order: 1;
+  margin-bottom: var(--s-3);
+  color: rgba(250, 251, 253, 0.55);
+}
+.doubts--live .doubt__body {
+  order: 2;
+  max-width: none;
+  color: var(--text-on-deep);
+}
+
+/* Below the 3-column breakpoint the composition ADAPTS rather than shrinking
+   the desktop one: six single-column cards cannot fit one viewport at any
+   readable size, so the grid goes to two compact columns and the picture
+   stays the centre they open away from. Same three states, same centred
+   expansion — a denser composition.
+
+   The card body is dropped here, not merely truncated: at this size the
+   number and the question ARE the content, and each doubt's full text still
+   reads on the wider layouts. Keeping it would have meant type below the
+   section's minimum size. */
+@media (max-width: 999px) {
+  /* Two columns with an EMPTY middle row. The blank row is the picture's
+     centre: without it the image had no space of its own and sat behind the
+     cards, so the expansion — the whole point of the section — could not be
+     seen. The two card rows then genuinely open away from a picture that
+     occupies the gap between them, which is the desktop idea at this size.
+     `grid-template-areas` names the six slots explicitly so the empty band
+     cannot be back-filled by auto-placement. */
+  /* SYMMETRIC about the band: three cards above, the band, three cards below.
+     Equal blocks either side mean the grid's centre IS the band's centre, so
+     the frame-centred picture lands exactly in the gap and the compact layout
+     needs no positioning special case of its own — the same stacking, the
+     same centred expansion, just a denser arrangement.
+
+     Two columns cannot give equal blocks around a middle band with six cards,
+     which is why this drops to three columns and one row per side. The cards
+     are title-only here, so three fit the width. */
+  .doubts--live .doubts__grid {
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-areas:
+      "a b c"
+      ". . ."
+      "d e f";
+    gap: var(--s-2);
+  }
+  /* The empty band matches the compact image's height: 0.86 of the frame's
+     width at the source 16:9, plus a little breathing room. Kept in sync with
+     the `fullW` compact branch in js/doubts.js — if one moves, move both.
+     js/doubts.js measures this band rather than recomputing it, so the image
+     can only ever be as tall as the gap actually reserved here. */
+  .doubts--live .doubts__grid {
+    /* --doubts-band is the reserved row's height. js/doubts.js sets it to 0
+       while the picture is switched off, so the two card blocks close up
+       instead of leaving an empty gap where nothing is drawn; with the
+       picture on it resolves to the height below. */
+    grid-template-rows:
+      auto
+      var(--doubts-band, calc(0.86 * min(100%, 460px) * 9 / 16 + var(--s-7)))
+      auto;
+  }
+
+  .doubts--live .doubt:nth-child(1) { grid-area: a; }
+  .doubts--live .doubt:nth-child(2) { grid-area: b; }
+  .doubts--live .doubt:nth-child(3) { grid-area: c; }
+  .doubts--live .doubt:nth-child(4) { grid-area: d; }
+  .doubts--live .doubt:nth-child(5) { grid-area: e; }
+  .doubts--live .doubt:nth-child(6) { grid-area: f; }
+
+  /* Title-only cards in three narrow columns: the number and the question ARE
+     the content at this size, and each doubt's full text still reads on the
+     wider layouts. Dropping the body was preferred to shrinking it, which
+     would have put type below the section's minimum readable size. */
+  .doubts--live .doubt { padding: var(--s-3) var(--s-2); }
+  .doubts--live .doubt__title {
+    font-size: 0.8rem;
+    line-height: 1.25;
+    margin-bottom: 0;
+    text-wrap: balance;
+  }
+  .doubts--live .doubt__num { font-size: 0.7rem; margin-bottom: var(--s-1); }
+  .doubts--live .doubt__body { display: none; }
+
+  /* The picture is nudged onto the band's OWN centre line.
+
+     The grid is symmetric in card COUNT (three above, three below) but not in
+     card HEIGHT — the lower row wraps to more lines and runs taller — so the
+     frame's centre, which is what the wide layout centres the picture on,
+     sits above the empty band's centre. Left uncorrected the picture reached
+     up over the top row's titles, which is the exact overlap the reserved
+     band exists to prevent.
+
+     js/doubts.js measures the real gap and writes its midpoint here as
+     --doubts-band-mid (relative to .doubts__frame, the media's offset
+     parent). Consumed via `translate` — a property of its own — so it can
+     never collide with anything GSAP sets on `transform`. */
+  .doubts--live .doubts__media {
+    position: relative;
+    /* A DELTA from the grid stack's own centring, not an absolute offset —
+       hence the 0 default: with no value written the picture simply stays
+       where the stack put it. */
+    top: var(--doubts-band-mid, 0px);
+  }
+}
+
+/* Short viewports (laptops at 720p, and any browser with a lot of chrome)
+   need the same treatment for the opposite reason: width is fine, height is
+   not. */
+@media (min-width: 1000px) and (max-height: 800px) {
+  /* Same reasoning as the block above: shrink the type, never clamp it. A
+     clamp here cut the body mid-sentence behind an ellipsis on any laptop at
+     720p, which is a large share of real viewers. */
+  .doubts--live .doubt { padding: var(--s-3); font-size: 0.82rem; }
+  .doubts--live .doubt__body { line-height: 1.4; }
+  /* The body-above-title stack is taller than the old title-above-body one,
+     so the gap that separates them is the first thing to give on a short
+     viewport — before the copy itself gets clamped any further. */
+  .doubts--live .doubt__title { padding-top: var(--s-3); font-size: 1rem; }
+  .doubts--live .doubt__num { margin-bottom: var(--s-2); }
+  .doubts--live .doubts__grid { gap: var(--s-4); }
+}
+
+/* State 2 starts the image as a narrow vertical strip. The <img> is sized to
+   the frame's WIDEST state and centred, so the frame's width animation crops
+   rather than squeezes it — object-fit alone would not hold the crop steady,
+   the fixed pixel width and the centring translate are what keep the same
+   part of the picture in view at every width. */
+/* The reference's expansion model, reproduced.
+
+   Theirs animates four inline properties on an absolutely-positioned wrapper
+   whose left and right offsets stay symmetric, so the box grows equally from
+   its own centre:
+
+     width   0 -> 59.8vw -> 100vw
+     height  100% -> 82.9vh -> 100vh
+     top     0 -> -77px -> -154px
+     (left/right resolve symmetrically, 229px/229px -> -60px/-60px)
+
+   The two parts that matter and that a naive version misses:
+
+     1. VIEWPORT UNITS, not pixels. The picture is heading for a full-bleed
+        100vw x 100vh, so both axes are expressed against the viewport and the
+        growth stays correct at any window size without re-measuring.
+
+     2. A NEGATIVE `top` that grows with the height. Once the box is taller
+        than the row it sits in, centring it needs the box pulled upward by
+        half the excess — that is exactly what their -77px then -154px is.
+        Without it the picture grows downward out of its slot instead of
+        opening from its middle.
+
+   Absolute positioning with `inset-inline: 0` plus `margin-inline: auto` is
+   what makes left and right resolve symmetrically here, so the width tween
+   alone produces a centred expansion and no per-frame offset is needed. */
+.doubts--live .doubts__media {
+  position: absolute;
+  inset-inline: 0;
+  margin-inline: auto;
+  top: var(--doubts-media-top, 0px);
+  width: var(--doubts-media-w, 0);
+  height: var(--doubts-media-h, 60vh);
+  max-width: none;
+  /* `margin-inline: auto` centres the box on the FRAME, whose middle is offset
+     from the card block's by the shell's padding. js/doubts.js measures that
+     difference and writes it here, and `translate` applies it — a property of
+     its own, so it can never collide with anything GSAP puts on `transform`.
+     Without this the picture expands symmetrically about the wrong axis. */
+  translate: var(--doubts-media-cx, 0px) var(--doubts-media-cy, 0px);
+  /* No --shadow-* token exists in this system; this is the only elevation in
+     the section, derived from --surface-deep (#001D3B) rather than black so
+     it stays in the navy family like every other colour here. */
+  box-shadow: 0 18px 40px rgba(0, 29, 59, 0.18);
+}
+/* Fills the frame and crops, exactly as the reference does it: their <img>
+   is a plain object-fit: cover child at 100% of the wrapper, with no width of
+   its own. That is what lets the frame animate freely — the picture simply
+   re-crops to whatever box it is given, so it is never stretched and never
+   needs a compensating width written per frame.
+
+   This replaces an earlier version that fixed the <img> at the frame's widest
+   state and slid it under a clipping box. That worked, but it meant the crop
+   had to be computed from the final size before the animation could start;
+   cover needs no such bookkeeping. */
+.doubts--live .doubts__media img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  max-width: none;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Stacking order for the live section, bottom to top:
+
+     0  .doubts__split   the intro, which the arriving fill sweeps across
+     1  .doubts__panel   the fill — the GROUND the composition is built on
+     2  .doubts__media   the central image, riding in on the fill
+     3  .doubts__grid    the cards, always readable above the picture
+
+   The panel deliberately sits UNDER the cards and the image: those two ride
+   in on top of the colour field as it arrives, rather than being hidden
+   behind it and uncovered afterwards. */
+.doubts--live .doubts__split { position: relative; z-index: 0; }
+.doubts--live .doubts__media { z-index: 2; }
+.doubts--live .doubts__grid  { position: relative; z-index: 3; }
+
+/* The statement's second life: once the fill has arrived it stops being the
+   panel's headline and becomes a large, faint WATERMARK across the middle of
+   the composition, sitting behind the cards and the image. This is what the
+   reference does — its own statement resolves to opacity 0.1 behind the card
+   grid — and it is why the type does not simply disappear when state 1 ends.
+
+   Centred on the stage rather than the panel: by the time it reads as a
+   watermark the panel fills the section, so the two share a centre line, and
+   anchoring to the stage keeps it put when the panel's box animates.
+
+   z-index 1 puts it above the fill but under the image (2) and cards (3).
+   pointer-events: none so a decorative layer can never take a click, and
+   `white-space: nowrap` so it stays one wide line rather than re-wrapping to
+   the stacked four lines it uses inside the panel. */
+.doubts--live .doubts__statement {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  z-index: 1;
+  margin: 0;
+  pointer-events: none;
+  will-change: transform, opacity;
+}
+
+/* One wide line only where there is room for one. Below the split breakpoint
+   the statement keeps its stacked lines: forced onto a single line at 390px
+   it ran several times the viewport's width, and the clipped result was the
+   only thing state 1 showed. */
+@media (min-width: 1000px) {
+  .doubts--live .doubts__statement { white-space: nowrap; }
+  .doubts--live .doubts__statement span { display: inline; }
+  .doubts--live .doubts__statement span + span { margin-left: 0.28em; }
+}
+@media (max-width: 999px) {
+  .doubts--live .doubts__statement { width: min(88vw, 30ch); text-align: center; }
+}
+
+/* Reduced motion: no pin, no scrub — the static composition above is the
+   whole experience. js/doubts.js bails out before adding .doubts--live, so
+   this is only a belt-and-braces guard for a mid-session preference change. */
+@media (prefers-reduced-motion: reduce) {
+  .doubts--live .doubts__stage { min-height: 0; display: block; }
+  .doubts--live .doubts__frame { display: block; }
+  .doubts--live .doubts__split,
+  .doubts--live .doubts__grid,
+  .doubts--live .doubts__media { grid-area: auto; }
+  .doubts--live .doubts__media {
+    width: 100%; max-width: 720px; height: auto; margin: var(--s-7) auto 0;
+  }
+  .doubts--live .doubts__media img { position: static; transform: none; width: 100%; height: auto; }
+}
+
+/* --- 04 Four services --------------------------------------------------- */
 
 .services {
   padding-block: var(--section-y);
@@ -2352,7 +2983,7 @@ html.hero-ready .hero__foot    { transition-delay: 1.15s; }
 }
 .services__also strong { color: var(--text-primary); }
 
-/* --- 06 How a case runs ------------------------------------------------- */
+/* --- 05 How a case runs ------------------------------------------------- */
 
 .process {
   padding-block: var(--section-y);
@@ -2422,7 +3053,7 @@ html.hero-ready .hero__foot    { transition-delay: 1.15s; }
   max-width: 56ch;
 }
 
-/* --- 07 Case studies ---------------------------------------------------- */
+/* --- 06 Case studies ---------------------------------------------------- */
 
 .cases { padding-block: var(--section-y); background: var(--surface-page); }
 
@@ -2491,7 +3122,7 @@ html.hero-ready .hero__foot    { transition-delay: 1.15s; }
   text-transform: none;
 }
 
-/* --- 08 Why MedShield --------------------------------------------------- */
+/* --- 07 Why MedShield --------------------------------------------------- */
 
 .why {
   padding-block: var(--section-y);
@@ -2527,7 +3158,7 @@ html.hero-ready .hero__foot    { transition-delay: 1.15s; }
 }
 .notus__body { max-width: 62ch; }
 
-/* --- 09 The people ------------------------------------------------------ */
+/* --- 08 The people ------------------------------------------------------ */
 
 .people { padding-block: var(--section-y); background: var(--surface-page); }
 
@@ -2586,7 +3217,7 @@ html.hero-ready .hero__foot    { transition-delay: 1.15s; }
   color: var(--text-secondary);
 }
 
-/* --- 10 Closing CTA band ------------------------------------------------ */
+/* --- 09 Closing CTA band ------------------------------------------------ */
 
 .cta-band {
   padding-block: var(--section-y);

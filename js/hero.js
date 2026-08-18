@@ -21,17 +21,45 @@
     var ticking = false;
     var lastY = window.scrollY;
 
-    /* The bar hides and shows on scroll DIRECTION, not on scroll position —
-       this is what the reference does (yPercent -100 / 0, power1.out, 0.5s,
-       driven by ScrollTrigger's direction flag):
+    /* How long the scroll must be quiet before the bar returns. 260ms is
+       past the tail of a trackpad flick or a momentum fling, so the bar does
+       not flash back in during the coast, but is short enough that it feels
+       like a response to stopping rather than a delayed animation. */
+    var IDLE_MS = 260;
+    var idleTimer = 0;
 
-         scrolling DOWN -> hide   (translateY(-100%))
-         scrolling UP   -> show
+    /* The bar hides on scroll MOTION and returns when the scroll goes quiet:
 
-       At the very top it is always shown, so the hero is never revealed with
-       a missing brand. A small threshold stops sub-pixel scroll jitter and
-       trackpad momentum from flickering the bar. */
-    var DIRECTION_THRESHOLD = 6;
+         scrolling (either way) -> hide  (translateY(-100%))
+         scroll idle for 260ms  -> show
+
+       A small threshold stops sub-pixel scroll jitter and trackpad momentum
+       from flickering the bar. */
+    var MOTION_THRESHOLD = 6;
+
+    /* Which section is under the bar, and is it dark?
+
+       Dark sections are marked in the HTML with data-bar-ink="light" — one
+       source of truth, rather than a selector list here that silently rots
+       the next time a section is added or restyled.
+
+       The probe point is 28px down: half the bar's height, so the ink flips
+       as a section boundary crosses the vertical MIDDLE of the bar (level
+       with the logo) rather than its very top edge. Sampling is a walk over
+       the marked elements rather than elementFromPoint, because the bar
+       itself — and the open overlay — sit at that point and would be the hit.
+
+       Not cached: .doubts and the hero are scroll-scrubbed and change height
+       as they animate, so the rects have to be live. */
+    function isDeepUnderBar() {
+      var PROBE = 28;
+      var deep = document.querySelectorAll('[data-bar-ink="light"]');
+      for (var i = 0; i < deep.length; i++) {
+        var r = deep[i].getBoundingClientRect();
+        if (r.top <= PROBE && r.bottom > PROBE) return true;
+      }
+      return false;
+    }
 
     function syncHeader() {
       ticking = false;
@@ -41,38 +69,50 @@
       // position. STUCK_AT survives only as the "still at the top" threshold
       // that keeps the bar pinned open near y=0.
 
-      /* Ink inversion. The bar has no background, so over the pale sections
-         below the hero its white wordmark and white hamburger would be
-         white-on-white. Flip the INK instead of adding a fill: the hero is
-         the only dark section at the top of the page, so the test is simply
-         whether the hero still covers the bar. */
-      // Queried here rather than using the `heroEl` declared further down:
-      // that var is hoisted but not yet ASSIGNED when syncHeader runs for the
-      // first time, which would leave the bar in the wrong ink state on load.
-      var heroSection = document.querySelector('.hero');
-      if (heroSection) {
-        var heroBottom = heroSection.getBoundingClientRect().bottom;
-        // 28px ~= half the bar's height: the switch happens when the hero's
-        // edge passes the vertical middle of the bar, not its very top, so
-        // the change lands as the boundary crosses the logo.
-        header.classList.toggle('is-on-light', heroBottom < 28);
-      }
+      /* Ink inversion. The bar has no background, so its ink must match the
+         section actually behind it at this scroll position.
+
+         This used to test one thing — "has the hero scrolled past?" — and
+         assumed everything below the hero was pale. It is not: .process,
+         .cta-band and .site-footer are all deep navy, so past the hero the
+         bar flipped to dark ink and the wordmark and hamburger rendered
+         navy-on-navy. The test is now the REAL section under the bar. */
+      header.classList.toggle('is-on-light', !isDeepUnderBar());
 
       var delta = y - lastY;
-      if (Math.abs(delta) < DIRECTION_THRESHOLD) return;
+      if (Math.abs(delta) < MOTION_THRESHOLD) return;
+      lastY = y;
 
-      // Never hide at the top of the page, and never hide while the overlay
-      // menu is open — the bar carries the close control.
-      var menuOpen = document.getElementById('nav-toggle') &&
-                     document.getElementById('nav-toggle').getAttribute('aria-expanded') === 'true';
+      /* Hide WHILE scrolling, reappear once it STOPS.
 
-      if (y <= STUCK_AT || menuOpen) {
+         Not a direction test any more. The bar used to hide on scroll-down
+         and return on scroll-up, which meant that scrolling down the page
+         left the logo and the menu off screen for as long as the gesture
+         continued — the control was unreachable without reversing first.
+
+         Now any scroll motion in either direction clears the bar out of the
+         way, and IDLE_MS after the last movement it comes back. The user
+         gets unobstructed content while moving and a reachable menu the
+         moment they settle, which is when they might actually want it. */
+      if (isPinnedOpen()) {
         header.classList.remove('is-hidden');
       } else {
-        header.classList.toggle('is-hidden', delta > 0);
+        header.classList.add('is-hidden');
       }
 
-      lastY = y;
+      window.clearTimeout(idleTimer);
+      idleTimer = window.setTimeout(function () {
+        header.classList.remove('is-hidden');
+      }, IDLE_MS);
+    }
+
+    /* Two states where the bar must never hide, even mid-scroll: at the very
+       top of the page (the hero is never revealed with a missing brand), and
+       while the overlay menu is open (the bar carries the close control). */
+    function isPinnedOpen() {
+      var toggle = document.getElementById('nav-toggle');
+      var menuOpen = toggle && toggle.getAttribute('aria-expanded') === 'true';
+      return window.scrollY <= STUCK_AT || menuOpen;
     }
 
     // rAF-throttled: the listener itself does no layout work.
@@ -82,6 +122,15 @@
         window.requestAnimationFrame(syncHeader);
       }
     }, { passive: true });
+
+    /* Let the overlay menu (section 4) pin the bar open. The timer lives in
+       this closure, so cancelling it needs a handle exposed from here. */
+    window.__medshieldHeader = {
+      show: function () {
+        window.clearTimeout(idleTimer);
+        header.classList.remove('is-hidden');
+      }
+    };
 
     syncHeader(); // correct on a reload that restores scroll position
   }
@@ -579,6 +628,15 @@
       toggle.setAttribute('aria-expanded', 'true');
       toggle.setAttribute('aria-label', 'Close menu');
 
+      /* Force the bar visible and cancel any pending hide.
+
+         The menu can be opened while the bar is mid-hide from a scroll that
+         has not yet gone idle, and openNav sets body overflow:hidden — which
+         stops further scroll events, so the idle timer that would normally
+         bring the bar back never gets rearmed. Without this the overlay
+         opens with its own close control slid off screen. */
+      if (window.__medshieldHeader) window.__medshieldHeader.show();
+
       // hidden must come off BEFORE the class: a display:none element cannot
       // transition, and cannot take focus.
       nav.hidden = false;
@@ -1010,4 +1068,203 @@
       }
     }
   }
+})();
+
+/* ===========================================================================
+   6. Theme ground — one painted element, one trigger line
+   ===========================================================================
+
+   The page's background colour is carried by ONE element, <main>, and never
+   by the sections themselves. Each section that wants to own the ground
+   declares a palette token:
+
+     <section data-theme-ground="--accent-on-deep" data-theme-tier="brand">
+
+   An IntersectionObserver whose rootMargin collapses the viewport to a
+   single horizontal trigger line. A section only "intersects" while it
+   straddles that line, so exactly one section owns the ground at any moment
+   and the handoff happens at one precise scroll position. All of the
+   smoothness comes from a single CSS rule — see `main` in style.css — not
+   from a scroll-scrubbed value.
+
+   WHERE THE LINE SITS. The reference puts it at 70% down the screen. Ours
+   is at 92% (see TRIGGER_LINE below), which is near enough the bottom edge
+   that a section owns the ground only once it has almost entirely left the
+   viewport. That is what keeps the stats columns out of it: at 70% the
+   ground flipped to the band's colour while three rows of stat boxes were
+   still on screen, so the columns appeared to sit on the new ground. At 92%
+   the stats strip has scrolled away before .positioning claims the ground,
+   and the change happens against the gap between them.
+
+   This structure is the whole point, and it is what two earlier attempts
+   here got wrong. Painting the sections individually (first as a step, then
+   as a scroll-scrubbed gradient fill climbing the stats strip) always
+   leaves a real boundary between two differently coloured sections, and
+   always reads as two staged changes: the stats section arriving at its
+   colour, and only afterwards the positioning band arriving at its own.
+   With one painted element there is no boundary in existence to see, and no
+   second stage to sequence — the change is single and continuous by
+   construction. It is also a fraction of the machinery.
+
+   A consequence worth stating, because it was an explicit requirement: the
+   stat cards, their figures, labels and rules do NOT change colour as the
+   ground moves beneath them. Only <main> animates. The cards keep their own
+   --surface-raised ground and on-light text throughout.
+
+   Deliberately OUTSIDE the reduced-motion gate that wraps the reveal and
+   scrub systems above. Reduced motion should suppress movement, not colour:
+   if the ground never changed, .positioning's brand text tier would sit
+   over the light page ground and fail contrast outright. Under reduced
+   motion the ground still changes, the CSS transition is simply dropped
+   (see the prefers-reduced-motion block beside `main` in style.css), so it
+   cuts rather than eases. */
+(function () {
+  /* Position of the trigger line as a percentage down the viewport. The
+     rootMargin below is derived from it, so this is the single number to
+     move if the handoff should happen earlier or later. Raising it delays
+     the change (a section must scroll further before it owns the ground);
+     lowering it makes the change happen while more of the section is still
+     visible. */
+  var TRIGGER_LINE = 92;
+
+  var main = document.querySelector('main');
+  var targets = Array.prototype.slice.call(
+    document.querySelectorAll('[data-theme-ground]')
+  );
+  if (!main || !targets.length || !('IntersectionObserver' in window)) return;
+
+  /* Resolve each declared token to a real colour once, up front. The
+     attribute names a custom property rather than carrying a hex, so the
+     palette stays defined in one place — the stylesheet. A token that does
+     not resolve is left null and skipped at paint time, so a typo drops
+     that one section's handoff instead of painting the page an empty
+     string. */
+  var rootStyles = getComputedStyle(document.documentElement);
+  targets.forEach(function (el) {
+    var token = (el.getAttribute('data-theme-ground') || '').trim();
+    var value = token ? rootStyles.getPropertyValue(token).trim() : '';
+    el.__themeGround = value || null;
+    el.__themeTier = el.getAttribute('data-theme-tier') || 'light';
+  });
+
+
+  /* ---- Guarded handoff -------------------------------------------------
+
+     A section can name elements that must be clear of the screen before it
+     is allowed to take the ground:
+
+       <section data-theme-ground="..." data-theme-guard=".proof__item">
+
+     This exists because a trigger line alone is not sufficient here. The
+     line fires off the section's LAYOUT rect, but the stats strip's second
+     column carries a 10vw top margin that the parallax closes by
+     translating the column UPWARD — so the cards it contains are drawn well
+     outside where the section's box says they are, and one column sits
+     lower than the other by design. The result was the reported bug: the
+     ground turned brand blue while opaque white cards were still on screen,
+     leaving them floating as bright rectangles with a ragged, staggered
+     edge because the two columns are offset.
+
+     Measuring the guarded elements directly solves that at the source. It
+     reads their real painted position — transform included, since
+     getBoundingClientRect reflects it — so the boundary sits at whatever is
+     actually visible rather than at a box that no longer describes it.
+
+     SYMMETRY. The guard is not a veto on one section painting; it is the
+     position of the BOUNDARY itself, and both sections read it the same
+     way. A veto was the first thing tried here and it made the ground
+     change at two different scroll positions — late going down (waiting for
+     the cards to clear) but at the trigger line coming back up, because
+     nothing held the section above from reclaiming the ground early.
+     Mirroring the veto onto that section was worse still: .proof would then
+     be blocked by its own cards, so scrolling up through the stats strip
+     left the ground stuck on the brand colour for the whole section.
+
+     Instead: while any guarded element is on screen, the ground belongs to
+     the section ABOVE the boundary; once they are all clear of the top
+     edge, it belongs to the section BELOW. One predicate, evaluated the
+     same in both directions, so the switch lands on the same scroll
+     position whichever way you are going.
+
+     The stats cards therefore never change colour and are never seen on the
+     new ground; the change happens in the empty gap once the lowest card
+     has left the viewport. */
+  var GUARD_MARGIN = 8; // px of clearance below the lowest guarded element
+
+  /* True once every guarded element is clear of the viewport's top edge.
+     Document-scoped: the elements belong to the section above the boundary,
+     which is exactly the content that must not be caught mid-change. */
+  function guardsClear(sel) {
+    var guarded = document.querySelectorAll(sel);
+    for (var i = 0; i < guarded.length; i++) {
+      var r = guarded[i].getBoundingClientRect();
+      // Ignore anything with no box (hidden, or collapsed at this
+      // breakpoint) — it cannot be visibly caught by the change.
+      if (r.width === 0 && r.height === 0) continue;
+      if (r.bottom > -GUARD_MARGIN) return false;
+    }
+    return true;
+  }
+
+  /* Resolves which section should own the ground, given the one the trigger
+     line currently points at. If that section declares a guard and the
+     guard is not yet clear, the ground stays with the section above it —
+     the same answer the upward scroll produces at that position, which is
+     what makes the boundary a single place rather than two. */
+  function resolve(section) {
+    var sel = section.getAttribute('data-theme-guard');
+    if (!sel || guardsClear(sel)) return section;
+    var i = targets.indexOf(section);
+    return i > 0 ? targets[i - 1] : section;
+  }
+
+
+  function paint(section) {
+    if (!section || !section.__themeGround) return;
+    main.style.backgroundColor = section.__themeGround;
+    // Drives the text tiers in CSS (main[data-theme="..."]), so the tier
+    // and the ground are one change on one element.
+    main.setAttribute('data-theme', section.__themeTier);
+  }
+
+  /* The section the trigger line currently points at, held so a scroll that
+     clears the guards can re-resolve the boundary. The observer does not
+     fire again once a section has stopped crossing the line, so without
+     this the deferred half of the handoff would never land. */
+  var current = null;
+
+  function tryPaint(section) {
+    current = section;
+    paint(resolve(section));
+  }
+
+  var observer = new IntersectionObserver(
+    function (entries) {
+      entries.forEach(function (entry) {
+        if (entry.isIntersecting) tryPaint(entry.target);
+      });
+    },
+    // Top and bottom insets sum to 100%, which is what collapses the
+    // viewport to a zero-height band — the trigger line itself.
+    { rootMargin: '-' + TRIGGER_LINE + '% 0% -' + (100 - TRIGGER_LINE) + '% 0%' }
+  );
+
+  targets.forEach(function (el) { observer.observe(el); });
+
+  /* Re-resolve the boundary as the guarded elements move. The observer only
+     fires when a section crosses the trigger line, but a guarded boundary
+     also moves when the guards themselves scroll clear — that is the second
+     half of the handoff, and without this it would never land.
+
+     rAF-throttled on the same passive-listener pattern as the rest of the
+     file, and only does work while a guarded section is the current one. */
+  var queued = false;
+  window.addEventListener('scroll', function () {
+    if (!current || queued || !current.getAttribute('data-theme-guard')) return;
+    queued = true;
+    requestAnimationFrame(function () {
+      queued = false;
+      if (current) paint(resolve(current));
+    });
+  }, { passive: true });
 })();
