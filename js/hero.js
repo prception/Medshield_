@@ -325,9 +325,9 @@
     var source = video ? video.querySelector('source') : null;
     var sourceB = videoB ? videoB.querySelector('source') : null;
 
-    // Two independent reasons to stay on the poster:
+    // Two independent reasons to leave the hero on its painted ground:
     //   - narrow viewport: the video is desktop dressing, not content, and
-    //     mobile data should never pay 15MB for it
+    //     mobile data should never pay for it
     //   - reduced-motion: an explicit request for no movement, and an
     //     autoplaying loop is exactly the kind of motion that request means
     // The <source> carries data-src rather than src, so in either case the
@@ -385,16 +385,28 @@
       if (sourceB) sourceB.setAttribute('src', sourceB.getAttribute('data-src'));
       // Set muted on the element too, not just the attribute: some engines
       // refuse autoplay unless the property is known-true at play() time.
-      // This encode carries an audio track, so it genuinely matters here.
       video.muted = true;
       video.load();
-      if (videoB) { videoB.muted = true; videoB.load(); }
+
+      // Copy B carries preload="metadata" so it does not compete with copy A
+      // for bandwidth during first paint. It is only needed at the crossfade,
+      // one clip-length away, so its buffering is deferred until copy A can
+      // actually play — then given the rest of that window to fill.
+      if (videoB) {
+        videoB.muted = true;
+        var loadB = function () {
+          videoB.preload = 'auto';
+          videoB.load();
+        };
+        if (video.readyState >= 3) loadB();
+        else video.addEventListener('canplay', loadB, { once: true });
+      }
 
       var attempt = video.play();
       if (attempt && typeof attempt.catch === 'function') {
         // A rejected autoplay promise is not an error worth surfacing: the
-        // poster is a real frame of this video, so the fallback is the design.
-        attempt.catch(function () { /* poster stands in */ });
+        // hero's painted ground stands in and the composition still reads.
+        attempt.catch(function () { /* hero ground stands in */ });
       }
     }
 

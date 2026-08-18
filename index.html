@@ -22,9 +22,10 @@
 <meta name="twitter:image" content="assets/og-card.png">
 <meta name="theme-color" content="#0A2A43">
 
-<!-- The hero poster is the first paint. Preloading it ahead of the stylesheet
-     request means the hero is never an empty navy box, on any connection. -->
-<link rel="preload" as="image" href="assets/videos/hero-poster.jpg" fetchpriority="high">
+<!-- The hero runs with no poster: the video itself is the first paint, so the
+     hero ground shows through until enough of the clip has buffered to play.
+     Nothing is preloaded here — hero-poster.jpg still exists on disk, but only
+     as the doubts section's photograph, not as hero first paint. -->
 
 <!-- The hero headline is set in Archivo at ~5.4vw. A swap after first paint at
      that scale is a very visible reflow, so the face is preloaded alongside
@@ -111,15 +112,17 @@
     <!-- Media layer.
          Mobile (<=859px) must never fetch the video: the <source> carries
          media="(min-width: 860px)", so the browser skips it outright and the
-         poster alone paints. preload="metadata" keeps the initial cost to the
-         moov atom rather than the full 2.6MB. The poster is a real frame
-         pulled from this exact encode, so first paint is never empty.
+         hero ground alone paints.
+         There is deliberately NO poster: the video is the only image the hero
+         should ever show. Until it buffers, the hero ground shows through, so
+         the weight of the encode is what governs how long that lasts.
          hero.js additionally withholds playback under prefers-reduced-motion. -->
     <!-- The media autoplays and loops continuously. It is NOT scrubbed by
          scroll any more: playback runs on its own clock so the ocean keeps
          moving whether or not the user scrolls.
-         muted is required for autoplay to be allowed at all (this encode
-         carries an audio track); loop keeps it seamless. -->
+         muted is required for autoplay to be allowed at all; the encode also
+         carries no audio stream, so nothing is downloaded for a track that
+         would never be heard. -->
     <div class="hero__media" aria-hidden="true">
       <!-- Two stacked copies of the same clip. Native loop cuts hard on
            whatever frame the source ends on; hero.js instead crossfades B in
@@ -128,19 +131,24 @@
            Both start with the source attached (see enableVideo in hero.js) —
            only one is ever visible at a time via .is-active. -->
       <video class="hero__video hero__video--a is-active" id="hero-video"
-             poster="assets/videos/hero-poster.jpg"
              muted playsinline autoplay preload="auto"
              tabindex="-1" disablepictureinpicture>
-        <source data-src="assets/videos/1.mp4" type="video/mp4" media="(min-width: 860px)">
+        <source data-src="assets/videos/hero-loop.mp4" type="video/mp4" media="(min-width: 860px)">
       </video>
+      <!-- Copy B is only needed at the crossfade, ~9.4s in. preload="metadata"
+           keeps it from racing copy A for bandwidth during first paint —
+           with preload="auto" the page fetched the same clip twice up front,
+           doubling the time before anything could play. hero.js calls load()
+           on it once copy A is under way. -->
       <video class="hero__video hero__video--b" id="hero-video-b"
-             muted playsinline preload="auto"
+             muted playsinline preload="metadata"
              tabindex="-1" disablepictureinpicture>
-        <source data-src="assets/videos/1.mp4" type="video/mp4" media="(min-width: 860px)">
+        <source data-src="assets/videos/hero-loop.mp4" type="video/mp4" media="(min-width: 860px)">
       </video>
-      <noscript>
-        <style>.hero__video { background: url(assets/videos/hero-poster.jpg) center/cover no-repeat; }</style>
-      </noscript>
+      <!-- No <noscript> poster fallback either: it would paint a still image
+           in the hero, which is exactly what this hero must never show. With
+           scripting off the sources are never promoted from data-src, so the
+           hero simply stays on its own ground. -->
       <div class="hero__scrim"></div>
     </div>
 

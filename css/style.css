@@ -814,8 +814,10 @@ textarea:focus-visible,
   color: var(--text-on-deep);
   font-family: var(--font-editorial);
 
-  /* Painted ground under the video: the poster and video both fade in over
-     this, so there is never a white flash and never an untinted frame. */
+  /* Painted ground under the video. With no poster this is what the hero
+     shows until the clip buffers, so it must read as a finished frame on its
+     own — never a white flash, never an untinted box. The video fades in
+     over it. */
   background:
     radial-gradient(100% 80% at 8% 95%, rgba(var(--rgb-deep-alt), 0.55) 0%, rgba(var(--rgb-deep-alt), 0) 60%),
     linear-gradient(168deg, var(--surface-deep-hi) 0%, var(--surface-deep) 55%, var(--surface-deep) 100%);
