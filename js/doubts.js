@@ -626,7 +626,20 @@
        apart: the end width is simply "the whole stage, plus whatever
        overshoot the panel already carries". */
     var stageW = stage.clientWidth;
-    var overshoot = Math.max(0, panel.getBoundingClientRect().width - stageW / 2);
+
+    /* The panel's resting left edge, as a fraction of the stage. Read from the
+       stylesheet's --panel-start rather than assumed to be 0.5, so moving the
+       fill further left is a one-line CSS change and the overshoot and the
+       statement's offset below both follow it automatically. Falls back to the
+       half-and-half split if the property is missing. */
+    var panelStart = parseFloat(
+      getComputedStyle(panel).getPropertyValue('--panel-start')
+    );
+    if (!isFinite(panelStart)) panelStart = 0.5;
+
+    var overshoot = Math.max(
+      0, panel.getBoundingClientRect().width - stageW * (1 - panelStart)
+    );
 
     /* The statement's journey, in one continuous tween per property.
 
@@ -646,7 +659,12 @@
        and the statement is centred from the outset — offsetting it there
        pushed the type off the side of the screen, which was the whole of
        state 1 at 390px. */
-    var startX = geo.wide ? stageW * 0.25 : 0;
+    /* The distance from the stage's centre to the PANEL's centre. The panel
+       spans panelStart -> 1 of the stage, so its centre sits at
+       (panelStart + 1) / 2, and the offset is that minus the stage's own
+       centre. At the old half-and-half split this is exactly the quarter-width
+       it used to be hard-coded as. */
+    var startX = geo.wide ? stageW * ((panelStart + 1) / 2 - 0.5) : 0;
 
     gsap.set(stmt, { xPercent: -50, yPercent: -50, x: startX, scale: 0.62, opacity: 1 });
 

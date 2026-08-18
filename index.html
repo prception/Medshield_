@@ -375,7 +375,12 @@
            because it must bleed to the viewport's edge while the intro beside
            it stays on the shell's measure — the same relationship the
            reference has. -->
-      <div class="doubts__panel" aria-hidden="true"></div>
+      <!-- data-bar-ink="light" on the PANEL rather than on the section: the
+           section's own ground is pale, but this gradient fill is deep navy
+           and grows to cover the whole stage, so it — not the section — is
+           what decides the header's ink here. isDeepUnderBar tests the
+           panel's live left/right edges as it sweeps. -->
+      <div class="doubts__panel" aria-hidden="true" data-bar-ink="light"></div>
 
       <!-- The statement is a sibling of the panel rather than a child of it,
            because it outlives state 1: it begins as the panel's headline and

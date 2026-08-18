@@ -2320,7 +2320,10 @@ main {
     /* The intro occupies the left column only; the right column is the space
        the filled panel covers, so it is left empty here rather than holding
        content that the panel would sit on top of. */
-    grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+    /* Matches --panel-start (0.42): the intro's column ends where the fill
+       begins, so the type is never run over by the panel that covers the
+       right-hand side. */
+    grid-template-columns: minmax(0, 0.78fr) minmax(0, 1.22fr);
     gap: var(--s-8);
     min-height: 62vh;
   }
@@ -2350,12 +2353,23 @@ main {
   color: var(--text-on-deep);
 }
 
+/* padding-right, not a wider gap: the gap sits between the two GRID columns,
+   but the panel is absolutely positioned and its leading edge falls inside the
+   right column rather than at the column boundary. The type needs clearance
+   from that edge specifically, so the breathing room belongs on the intro. */
 .doubts__intro { margin-bottom: 0; }
+@media (min-width: 1000px) {
+  .doubts__intro { padding-right: var(--s-6); }
+}
 
+/* min(), not a bare 46ch: the measure is the cap, but the intro's grid column
+   is narrower than 46ch once the fill starts at --panel-start rather than at
+   the midpoint, and a fixed ch value would let the last words of each line run
+   under the panel's leading edge. */
 .doubts__lede {
   margin-top: var(--s-5);
   color: var(--text-secondary);
-  max-width: 46ch;
+  max-width: min(46ch, 100%);
 }
 
 /* The large statement, printed on the gradient panel. Clamped against the
@@ -2492,12 +2506,20 @@ main {
    `width` carries an overshoot past the right edge so that as the panel
    moves left it never drags a widening strip of bare ground behind it;
    `overflow: clip` on the section hides the overhang. */
+/* --panel-start is the panel's resting LEFT EDGE as a fraction of the stage,
+   declared once here and read back by js/doubts.js (which needs it for the
+   overshoot and for the statement's starting offset). Below 0.5 the fill
+   reaches further across the stage before any scroll, so state 1 lands as a
+   composition weighted toward the colour field rather than as two even halves;
+   the intro's column is narrowed to match in .doubts__split above. Change it
+   in this one place — nothing downstream carries a duplicated 50%. */
 .doubts--live .doubts__panel {
   position: absolute;
   top: 0;
   bottom: 0;
-  left: 50%;
-  width: calc(50% + 8vw);
+  --panel-start: 0.42;
+  left: calc(var(--panel-start) * 100%);
+  width: calc((1 - var(--panel-start)) * 100% + 8vw);
   /* BELOW the cards and the image, not above them. The panel is the GROUND
      this section composes on — the fill arrives and the six questions ride in
      on top of it — so it must never cover them. It sits above only the intro
@@ -2516,8 +2538,7 @@ main {
    leftward growth simply has nowhere left to grow into. */
 @media (max-width: 999px) {
   .doubts--live .doubts__panel {
-    left: 0;
-    width: calc(100% + 8vw);
+    --panel-start: 0;
     place-items: center;
     text-align: center;
   }

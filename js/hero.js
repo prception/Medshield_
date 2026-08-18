@@ -17,6 +17,10 @@
   var header = document.getElementById('site-header');
 
   if (header) {
+    /* Looked up here as well as in the overlay block below, because the ink
+       probe needs the toggle's box from the very first scroll event and the
+       overlay's own `toggle` is not assigned until much later in this file. */
+    var inkProbeEl = header.querySelector('.nav-toggle');
     var STUCK_AT = 80;
     var ticking = false;
     var lastY = window.scrollY;
@@ -49,14 +53,26 @@
        the marked elements rather than elementFromPoint, because the bar
        itself — and the open overlay — sit at that point and would be the hit.
 
+       HORIZONTAL bounds are tested too, not just top/bottom. Most marked
+       elements are full-bleed sections where the x test is always true, but
+       .doubts__panel — the problem section's gradient fill — starts at
+       left:50% and sweeps left as the section scrubs. A top/bottom-only test
+       reported it as "not under the bar" for the whole sweep, so the
+       hamburger stayed dark ink over the navy panel it was actually sitting
+       on. The x sampled is the TOGGLE's own centre, because the toggle is the
+       only ink in the bar that flips (the brand is a full-colour PNG), and it
+       sits at the right edge — the half that the panel covers first.
+
        Not cached: .doubts and the hero are scroll-scrubbed and change height
-       as they animate, so the rects have to be live. */
+       and width as they animate, so the rects have to be live. */
     function isDeepUnderBar() {
       var PROBE = 28;
+      var t = inkProbeEl && inkProbeEl.getBoundingClientRect();
+      var x = t ? t.left + t.width / 2 : window.innerWidth - 32;
       var deep = document.querySelectorAll('[data-bar-ink="light"]');
       for (var i = 0; i < deep.length; i++) {
         var r = deep[i].getBoundingClientRect();
-        if (r.top <= PROBE && r.bottom > PROBE) return true;
+        if (r.top <= PROBE && r.bottom > PROBE && r.left <= x && r.right > x) return true;
       }
       return false;
     }
