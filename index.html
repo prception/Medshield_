@@ -32,6 +32,12 @@
      the poster rather than being discovered inside the stylesheet. -->
 <link rel="preload" as="font" type="font/woff2" href="assets/fonts/archivo-latin-var.woff2" crossorigin>
 
+<!-- Fraunces was previously discovered inside the stylesheet, which was fine
+     while it set only the small stat numerals. It now also sets the outlined
+     "WHAT" in section 04 at ~21vh — by far the largest glyphs on the page —
+     where a font-display:swap late swap is a very visible reflow. -->
+<link rel="preload" as="font" type="font/woff2" href="assets/fonts/fraunces-latin-var.woff2" crossorigin>
+
 <link rel="icon" href="assets/favicon-32.png" sizes="32x32">
 <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
 <link rel="stylesheet" href="css/style.css">
@@ -110,9 +116,8 @@
   <section class="hero" id="top" data-bar-ink="light">
 
     <!-- Media layer.
-         Mobile (<=859px) must never fetch the video: the <source> carries
-         media="(min-width: 860px)", so the browser skips it outright and the
-         hero ground alone paints.
+         The video runs at every viewport width — phones fetch and play the
+         same clip as desktop, so the <source> carries no media attribute.
          There is deliberately NO poster: the video is the only image the hero
          should ever show. Until it buffers, the hero ground shows through, so
          the weight of the encode is what governs how long that lasts.
@@ -133,7 +138,7 @@
       <video class="hero__video hero__video--a is-active" id="hero-video"
              muted playsinline autoplay preload="auto"
              tabindex="-1" disablepictureinpicture>
-        <source data-src="assets/videos/hero-loop.mp4" type="video/mp4" media="(min-width: 860px)">
+        <source data-src="assets/videos/hero-loop.mp4" type="video/mp4">
       </video>
       <!-- Copy B is only needed at the crossfade, ~9.4s in. preload="metadata"
            keeps it from racing copy A for bandwidth during first paint —
@@ -143,7 +148,7 @@
       <video class="hero__video hero__video--b" id="hero-video-b"
              muted playsinline preload="metadata"
              tabindex="-1" disablepictureinpicture>
-        <source data-src="assets/videos/hero-loop.mp4" type="video/mp4" media="(min-width: 860px)">
+        <source data-src="assets/videos/hero-loop.mp4" type="video/mp4">
       </video>
       <!-- No <noscript> poster fallback either: it would paint a still image
            in the hero, which is exactly what this hero must never show. With
@@ -482,84 +487,121 @@
   </section>
 
   <!-- 04 - Four services ........................................ -->
+  <!-- Locked to exactly 100vh: the wordmark, the intro line and all four glass
+       cards live inside one viewport. Everything below is sized in vh/vmin or
+       clamp() against vh for that reason — a rem-based scale would overflow a
+       short laptop viewport. No data-bar-ink: the ground is pure white. -->
   <section class="services" id="services" aria-labelledby="services-h">
-    <div class="shell">
-      <header class="section-head">
-        <p class="eyebrow">Services</p>
-        <h2 class="section-title" id="services-h">What we do</h2>
-      </header>
 
-      <!-- Order is deliberate: claims first. Leading with telemedicine would
-           confirm the visitor's assumption that this is a remote-doctor service. -->
+    <!-- Two marks in the top-left corner, as in the reference. Decorative. -->
+    <span class="services__dot" aria-hidden="true"></span>
+    <span class="services__ring" aria-hidden="true"></span>
+
+    <div class="services__inner">
+
+      <!-- THE WORDMARK.
+           Three words, deliberately overlapping, each its own positioned
+           layer so they can interleave the way the reference does:
+             WHAT  outline-only serif, hanging off the left edge
+             WE    solid, heavy, sitting ON TOP of WHAT's right half
+             DO    solid, heavy, dropped down and right, overlapping WE
+           The h2 carries the accessible name; every word span is aria-hidden
+           and the real string is in .u-visually-hidden, so a screen reader
+           hears "What we do" once, not three fragmented words. -->
+      <h2 class="services__wordmark" id="services-h">
+        <span class="visually-hidden">What we do</span>
+
+        <span class="services__w services__w--what" aria-hidden="true">
+          <span class="services__wInner">WHAT</span>
+        </span>
+        <span class="services__w services__w--we" aria-hidden="true">
+          <span class="services__wInner">WE</span>
+        </span>
+        <span class="services__w services__w--do" aria-hidden="true">
+          <span class="services__wInner">DO</span>
+        </span>
+      </h2>
+
+      <!-- Top-right paragraph, same slot as the reference's. -->
+      <p class="services__lede">
+        We manage the whole crew medical case &mdash; from the first call at sea
+        to the closed claim.
+      </p>
+
+      <!-- The reference's four ruled columns become our four glass cards, in
+           the same slot and the same 4-across rhythm.
+
+           Order is deliberate: claims first. Leading with telemedicine would
+           confirm the visitor's assumption that this is a remote-doctor service.
+
+           Copy is TRIMMED against the full section elsewhere on the page: at
+           100vh a card can hold a promise and a scope line, not a paragraph.
+           The long-form descriptions are not deleted from the site — they are
+           what the detail sections carry. Cards must not scroll internally. -->
       <ol class="services__grid">
         <li class="service" id="claims">
+          <span class="service__sheen" aria-hidden="true"></span>
           <p class="service__num">01</p>
           <h3 class="service__title">Claims management</h3>
           <p class="service__get">
-            <span class="service__getLabel">You get:</span>
-            a claim documented from the first hour, so it settles instead of being disputed.
+            A claim documented from the first hour, so it settles instead of
+            being disputed.
           </p>
-          <p class="service__body">
-            End-to-end handling from incident documentation and evidence collection
-            through employer negotiation to final settlement. Covers crew injury,
-            illness, and lifestyle and mental health conditions - each handled
-            against maritime law and international compliance standards.
-          </p>
+          <ul class="service__list">
+            <li>Incident documentation</li>
+            <li>Evidence collection</li>
+            <li>Employer negotiation</li>
+            <li>Final settlement</li>
+          </ul>
         </li>
 
         <li class="service" id="advisory">
+          <span class="service__sheen" aria-hidden="true"></span>
           <p class="service__num">02</p>
           <h3 class="service__title">Claims advisory &amp; legal</h3>
           <p class="service__get">
-            <span class="service__getLabel">You get:</span>
-            a defensible position before a case becomes a liability.
+            A defensible position before a case becomes a liability.
           </p>
-          <p class="service__body">
-            Advisory across medical, disability and life claims. Structured review
-            of the employer's obligations, medical records and documentation;
-            collaborative resolution between crew, employer and agents; and
-            alignment with MLC and ILO standards. Our medico-legal team mediates
-            disputes to fair resolution rather than litigating them.
-          </p>
+          <ul class="service__list">
+            <li>Medical &amp; disability review</li>
+            <li>Obligation assessment</li>
+            <li>MLC &amp; ILO alignment</li>
+            <li>Medico-legal mediation</li>
+          </ul>
         </li>
 
         <li class="service" id="budgeting">
+          <span class="service__sheen" aria-hidden="true"></span>
           <p class="service__num">03</p>
           <h3 class="service__title">Medical welfare budgeting</h3>
           <p class="service__get">
-            <span class="service__getLabel">You get:</span>
-            a crew medical spend you can forecast at budget time and defend at year end.
+            A crew medical spend you can forecast at budget time and defend at
+            year end.
           </p>
-          <p class="service__body">
-            Needs assessment across your fleet, a budget designed around preventive
-            care, evacuation contingency and telemedicine costs, then data-driven
-            forecasting to remove financial surprise. Built to satisfy global
-            maritime health regulation.
-          </p>
+          <ul class="service__list">
+            <li>Fleet needs assessment</li>
+            <li>Preventive care budgeting</li>
+            <li>Evacuation contingency</li>
+            <li>Data-driven forecasting</li>
+          </ul>
         </li>
 
         <li class="service" id="telemedicine">
+          <span class="service__sheen" aria-hidden="true"></span>
           <p class="service__num">04</p>
           <h3 class="service__title">Telemedicine</h3>
           <p class="service__get">
-            <span class="service__getLabel">You get:</span>
-            a doctor on the line before the master has to make a diversion call alone.
+            A doctor on the line before the master has to make a diversion call
+            alone.
           </p>
-          <p class="service__body">
-            24/7 access to licensed doctors and specialists, supported by video
-            consultation and wearable diagnostics, so vessels avoid unnecessary
-            evacuations and port diversions - the single most expensive outcome
-            of an unmanaged case.
-          </p>
+          <ul class="service__list">
+            <li>24/7 licensed doctors</li>
+            <li>Video consultation</li>
+            <li>Wearable diagnostics</li>
+            <li>Diversion avoidance</li>
+          </ul>
         </li>
       </ol>
-
-      <p class="services__also">
-        Also: <strong>Occupational Health &amp; Safety</strong> - maritime safety
-        audits, PEME and vessel-specific audits - and
-        <strong>Medico-Legal Services</strong> for injury claims and regulatory
-        compliance.
-      </p>
     </div>
   </section>
 
@@ -841,59 +883,74 @@
 
   <!-- 10 - Contact + form ....................................... -->
   <section class="contact" id="contact" aria-labelledby="contact-h">
-    <div class="shell contact__inner">
+    <!-- The tinted ground is this panel, not the section, so hero.js can scrub
+         --cta-p as the section scrolls through and pull the side gutters open.
 
-      <div class="contact__intro">
-        <p class="eyebrow">Request a proposal</p>
-        <h2 class="contact__title" id="contact-h">Your next medical case is already at sea</h2>
-        <p class="contact__lede">
-          Send us your fleet profile and we will come back with a coverage proposal
-          and an indicative annual medical welfare budget.
-        </p>
+         Layout follows the reference's contact block: the statement sits in
+         the left column and the form occupies the right. Everything else —
+         colour, type, field copy — stays ours.
 
-        <aside class="emergency" aria-labelledby="emergency-h">
-          <h3 class="emergency__title" id="emergency-h">Medical emergency at sea right now?</h3>
-          <p class="emergency__body">
-            Do not use this form. Call
-            <strong class="confirm">[CONFIRM: 24/7 number]</strong>
-            - answered by a coordinator, any hour.
-          </p>
-          <p class="emergency__note">
-            This number is not yet published. It must ring a monitored line before launch.
-          </p>
-        </aside>
-      </div>
+         No data-bar-ink here: the panel is a LIGHT ground, so the header keeps
+         its dark ink over it. It carried the marker while the panel was navy. -->
+    <div class="contact__panel">
+      <div class="shell contact__inner">
 
-      <div class="contact__formwrap">
-
-        <form class="form" id="proposal-form" novalidate>
-          <p class="form__intro">
-            Seven fields. A case manager replies within one business day.
+        <div class="contact__intro">
+          <p class="eyebrow">Request a proposal</p>
+          <h2 class="contact__title" id="contact-h">Your next medical case is already at sea</h2>
+          <p class="contact__lede">
+            Send us your fleet profile and we will come back with a coverage proposal
+            and an indicative annual medical welfare budget.
           </p>
 
-          <div class="field">
-            <label for="f-name">Name</label>
-            <input type="text" id="f-name" name="name" autocomplete="name" required
-                   aria-describedby="e-name">
-            <p class="field__error" id="e-name" hidden></p>
-          </div>
+          <aside class="emergency" aria-labelledby="emergency-h">
+            <h3 class="emergency__title" id="emergency-h">Medical emergency at sea right now?</h3>
+            <p class="emergency__body">
+              Do not use this form. Call
+              <strong class="confirm">[CONFIRM: 24/7 number]</strong>
+              - answered by a coordinator, any hour.
+            </p>
+            <p class="emergency__note">
+              This number is not yet published. It must ring a monitored line before launch.
+            </p>
+          </aside>
+        </div>
 
-          <div class="field">
-            <label for="f-company">Company</label>
-            <input type="text" id="f-company" name="company" autocomplete="organization" required
-                   aria-describedby="e-company">
-            <p class="field__error" id="e-company" hidden></p>
-          </div>
+        <div class="contact__formwrap">
 
-          <div class="field">
-            <label for="f-email">Work email</label>
-            <input type="email" id="f-email" name="email" autocomplete="email" required
-                   aria-describedby="e-email">
-            <p class="field__error" id="e-email" hidden></p>
-          </div>
+          <!-- Underline fields, no boxes, matching the reference. The <label>
+               is kept on every control rather than being replaced by a
+               placeholder: the reference leans on placeholder-as-label, which
+               leaves a screen reader with an unnamed input and wipes the field
+               name the moment you type. Ours renders in the same position and
+               at the same weight, then rises out of the way on focus/fill, so
+               it reads identically and still names the field. -->
+          <form class="form" id="proposal-form" novalidate>
 
-          <div class="field-row">
             <div class="field">
+              <input type="text" id="f-name" name="name" autocomplete="name" required
+                     placeholder=" " aria-describedby="e-name">
+              <label for="f-name">Name</label>
+              <p class="field__error" id="e-name" hidden></p>
+            </div>
+
+            <div class="field">
+              <input type="text" id="f-company" name="company" autocomplete="organization" required
+                     placeholder=" " aria-describedby="e-company">
+              <label for="f-company">Company</label>
+              <p class="field__error" id="e-company" hidden></p>
+            </div>
+
+            <div class="field">
+              <input type="email" id="f-email" name="email" autocomplete="email" required
+                     placeholder=" " aria-describedby="e-email">
+              <label for="f-email">Work email</label>
+              <p class="field__error" id="e-email" hidden></p>
+            </div>
+
+            <!-- Selects carry a permanent label: there is no empty state to
+                 float back down into once a value is chosen. -->
+            <div class="field field--select">
               <label for="f-fleet">Fleet size</label>
               <select id="f-fleet" name="fleet" required aria-describedby="e-fleet">
                 <option value="">Select…</option>
@@ -905,7 +962,7 @@
               <p class="field__error" id="e-fleet" hidden></p>
             </div>
 
-            <div class="field">
+            <div class="field field--select">
               <label for="f-vessel">Vessel type</label>
               <select id="f-vessel" name="vessel" required aria-describedby="e-vessel">
                 <option value="">Select…</option>
@@ -917,43 +974,85 @@
               </select>
               <p class="field__error" id="e-vessel" hidden></p>
             </div>
+
+            <!-- Field 6 of the seven CONTENT.md specifies. Optional on
+                 purpose: it flags displacement (they already pay someone) vs.
+                 first purchase, which changes how the proposal is written,
+                 without making the visitor disclose a supplier to get a
+                 quote. -->
+            <div class="field field--select">
+              <label for="f-current">Current arrangement <span class="field__opt">(optional)</span></label>
+              <select id="f-current" name="current">
+                <option value="">Select…</option>
+                <option>In-house</option>
+                <option>Another provider</option>
+                <option>None yet</option>
+              </select>
+            </div>
+
+            <!-- The reference's inline "select all that apply" row, carrying
+                 our four actual revenue lines in the order section 05 uses.
+                 Claims leads deliberately: CONTENT.md notes that leading with
+                 telemedicine confirms the visitor's wrong assumption that
+                 MedShield is another remote-doctor service. Optional — it
+                 routes the enquiry, it does not qualify it. -->
+            <fieldset class="checks">
+              <legend class="checks__legend">Interested in (optional)</legend>
+              <div class="checks__row">
+                <!-- Visible labels are the short forms so the four sit on ONE
+                     line; the submitted value keeps the full service name. -->
+                <label class="check">
+                  <input type="checkbox" name="interest" value="Claims management">
+                  <span>Claims</span>
+                </label>
+                <label class="check">
+                  <input type="checkbox" name="interest" value="Claims advisory &amp; legal">
+                  <span>Advisory</span>
+                </label>
+                <label class="check">
+                  <input type="checkbox" name="interest" value="Medical welfare budgeting">
+                  <span>Budgeting</span>
+                </label>
+                <label class="check">
+                  <input type="checkbox" name="interest" value="Telemedicine">
+                  <span>Telemedicine</span>
+                </label>
+              </div>
+            </fieldset>
+
+            <div class="field">
+              <textarea id="f-message" name="message" rows="3" placeholder=" "></textarea>
+              <label for="f-message">Anything else to share? <span class="field__opt">(optional)</span></label>
+            </div>
+
+            <!-- Honeypot: not a CAPTCHA. Hidden from users and assistive tech. -->
+            <div class="hp" aria-hidden="true">
+              <label for="f-role">Do not fill this in</label>
+              <input type="text" id="f-role" name="role" tabindex="-1" autocomplete="off">
+            </div>
+
+            <!-- The reference ends on a bare right-aligned "SEND ↗" rather than
+                 a filled button. Kept as a real <button> so it stays keyboard
+                 and screen-reader operable. -->
+            <div class="form__send">
+              <button class="send" type="submit">
+                Send <span class="send__arrow" aria-hidden="true">&#8599;</span>
+              </button>
+            </div>
+
+            <p class="form__foot">
+              We use these details to prepare your proposal. No newsletter, no list.
+            </p>
+          </form>
+
+          <!-- Success state replaces the form in place. No redirect. -->
+          <div class="success" id="form-success" hidden tabindex="-1" role="status">
+            <p class="success__mark" aria-hidden="true">✓</p>
+            <h3 class="success__title">Received.</h3>
+            <p class="success__body">A case manager will reply within one business day.</p>
           </div>
 
-          <div class="field">
-            <label for="f-current">Current arrangement <span class="field__opt">(optional)</span></label>
-            <select id="f-current" name="current">
-              <option value="">Select…</option>
-              <option>In-house</option>
-              <option>Another provider</option>
-              <option>None yet</option>
-            </select>
-          </div>
-
-          <div class="field">
-            <label for="f-message">Message <span class="field__opt">(optional)</span></label>
-            <textarea id="f-message" name="message" rows="4"></textarea>
-          </div>
-
-          <!-- Honeypot: not a CAPTCHA. Hidden from users and assistive tech. -->
-          <div class="hp" aria-hidden="true">
-            <label for="f-role">Do not fill this in</label>
-            <input type="text" id="f-role" name="role" tabindex="-1" autocomplete="off">
-          </div>
-
-          <button class="btn btn--primary btn--block" type="submit">Request a proposal</button>
-
-          <p class="form__foot">
-            We use these details to prepare your proposal. No newsletter, no list.
-          </p>
-        </form>
-
-        <!-- Success state replaces the form in place. No redirect. -->
-        <div class="success" id="form-success" hidden tabindex="-1" role="status">
-          <p class="success__mark" aria-hidden="true">✓</p>
-          <h3 class="success__title">Received.</h3>
-          <p class="success__body">A case manager will reply within one business day.</p>
         </div>
-
       </div>
     </div>
   </section>
@@ -1117,12 +1216,14 @@
 
 <script src="js/hero.js" defer></script>
 
-<!-- Section 03 only. Self-hosted like every other asset here — no CDN, in
-     keeping with the no-build-step, no-CDN rule the stylesheet states. Both
-     are plain scripts, so `defer` keeps them in order ahead of doubts.js. -->
+<!-- Sections 03 and 04. Self-hosted like every other asset here — no CDN, in
+     keeping with the no-build-step, no-CDN rule the stylesheet states. All are
+     plain scripts, so `defer` keeps them in order ahead of the section files,
+     each of which guards on window.gsap and bails out cleanly. -->
 <script src="js/vendor/gsap.min.js" defer></script>
 <script src="js/vendor/ScrollTrigger.min.js" defer></script>
 <script src="js/doubts.js" defer></script>
+<script src="js/services.js" defer></script>
 
 </body>
 </html>

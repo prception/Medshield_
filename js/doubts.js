@@ -69,6 +69,13 @@
   var media  = section.querySelector('.doubts__media');
   var cards  = Array.prototype.slice.call(section.querySelectorAll('.doubt'));
 
+  /* The section that slides up over the finished picture. Taken as "whatever
+     follows this one" rather than named by class, so the overlap survives the
+     order of the page changing — and is simply skipped if this is the last
+     section on the page. */
+  var next = section.nextElementSibling;
+  if (next && next.tagName !== 'SECTION') next = null;
+
   if (!stage || !frame || !split || !grid || !media || !panel || !cards.length) return;
 
   /* --- Geometry ---------------------------------------------------------
@@ -94,6 +101,20 @@
   var SHOW_MEDIA = true;
 
   var PUSH_ALLOWANCE = 150;
+
+  /* The overlap tail, in viewports.
+
+     The doubts section ends with its picture filling the pinned stage. Rather
+     than releasing the pin there and scrolling the next section up in the
+     ordinary way — which reads as the composition being scrolled off — the
+     stage HOLDS that finished frame while the following section travels up
+     over it, covering it like a card dealt on top.
+
+     Expressed in viewports because that is exactly the distance the covering
+     section has to travel: from fully below the fold to flush with the top.
+     One viewport is a 1:1 relationship between scroll and cover, which is what
+     makes the move feel direct rather than parallaxed. */
+  var OVERLAP_VH = 1;
 
   /* Breathing room kept between the expanded picture and the cards it has
      pushed aside, per side. The picture is sized to the opening MINUS this,
@@ -559,9 +580,14 @@
       scrollTrigger: {
         trigger: section,
         start: 'top top',
-        // Scroll distance for the whole transformation. Generous on purpose:
-        // three states need room to read as three states.
-        end: '+=' + Math.round(window.innerHeight * 3.2),
+        /* Scroll distance for the whole transformation, PLUS one viewport of
+           tail. The tail is what the next section slides up through: the
+           doubts stage stays pinned and holding its finished full-bleed
+           picture while Services travels up over it (see the overlap block
+           after this timeline). Without the extra viewport the pin would
+           release the moment the picture finished, and the cover would have
+           nothing standing still to cover. */
+        end: '+=' + Math.round(window.innerHeight * (3.2 + OVERLAP_VH)),
         pin: stage,
         pinSpacing: true,
         // The site drives real window scroll (hero.js's wheel engine calls
@@ -908,6 +934,55 @@
         }, EXPAND_AT);
       }
     });
+
+    /* ---- THE OVERLAP: the next section slides up over the held picture ---
+
+       Everything above resolves at progress 1 of a ONE-unit timeline. The
+       trigger's range is now longer than that (see OVERLAP_VH on the `end`
+       above), so the tail is expressed as extra timeline duration rather than
+       as a separate ScrollTrigger: one scrub, one pin, one source of truth for
+       where in the section we are. The composition therefore still occupies
+       0 -> 1 and the cover occupies 1 -> 1 + OVERLAP_SPAN, and because the
+       trigger's distance was extended in the same proportion, the acts keep
+       the scroll distance they were tuned against.
+
+       OVERLAP_SPAN is that proportion: OVERLAP_VH viewports of the 3.2 the
+       composition uses. Derived from the same two numbers the `end` is built
+       from, so retuning either cannot put the two out of step. */
+    var OVERLAP_SPAN = OVERLAP_VH / 3.2;
+
+    /* The tail claims its scroll distance, and the cover is pulled up into it.
+
+       Two things together make the overlap, and neither works alone:
+
+       THE HOLD. The empty tween below is what keeps the pin alive for the
+       extra viewport. Without it the timeline would resolve the moment the
+       picture landed and the pin would release there, leaving nothing standing
+       still to be covered.
+
+       THE PULL. `pinSpacing` reserves the FULL pin distance as an empty spacer
+       under the section, and the next section sits after that spacer — which
+       is exactly why it stays below the fold for the whole pin however long
+       the pin is. Left alone, extending the pin would simply hold the picture
+       for a viewport and then scroll Services up afterwards, in sequence, with
+       no overlap at all.
+
+       Pulling the cover up by the tail's own height cancels precisely the
+       spacer the tail added. Its position in the document is then what it
+       would have been WITHOUT the tail — flush against the end of the
+       composition — so across the tail's viewport of scroll it rises from the
+       bottom of the fold to the top while the pinned stage below it does not
+       move. One pixel of cover per pixel of scroll, and the document's total
+       height is unchanged, so nothing downstream shifts.
+
+       A negative margin rather than a transform, deliberately: the sections
+       after this one must follow the cover up, and a transform would move the
+       cover alone and leave a viewport-tall hole beneath it. */
+    if (next) {
+      next.style.marginTop = (-Math.round(window.innerHeight * OVERLAP_VH)) + 'px';
+    }
+
+    tl.to({}, { duration: OVERLAP_SPAN }, 1);
   }
 
   function teardown() {
@@ -919,6 +994,15 @@
     // .doubts__split covers the intro inside it; only elements this file
     // actually tweens need clearing.
     gsap.set([cards, media, panel, stmt, split], { clearProps: 'all' });
+    /* The cover is a sibling, not part of the composition, so its own two
+       pieces are undone here. The margin especially: it is a negative pull
+       measured against the viewport height at build time, and leaving a stale
+       one in place across a resize would overlap the sections by the wrong
+       amount — build() writes a fresh one. */
+    if (next) {
+      next.style.marginTop = '';
+      gsap.set(next, { clearProps: 'transform' });
+    }
   }
 
   /* Rebuild on a real width change only. A vertical-only resize is almost
@@ -944,6 +1028,10 @@
   if (!SHOW_MEDIA) grid.style.setProperty('--doubts-band', '0px');
 
   section.classList.add('doubts--live');
+  // Marks the covering section as an opaque layer that paints above the pinned
+  // stage. Added here rather than in the markup so it only ever applies when
+  // the animation is actually running (see .doubts-cover in style.css).
+  if (next) next.classList.add('doubts-cover');
   build();
 
   // The pin's scroll distance depends on the section's measured height, which

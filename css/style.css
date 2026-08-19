@@ -29,7 +29,7 @@
        the single most visible difference against the reference.
      - The reference's own metric tokens give secondary-trim-top .41em and
        secondary-trim-bottom .38em — identical to its Rubik tokens — so cap
-       height and baseline sit in the same place. Archivo matches within a
+       height and baseline sit in the same place. Archisosovo matches within a
        hair, so the vertical rhythm needs no compensation.
      - Its declared fallback is Verdana, i.e. a wide, tall-x-height grotesque.
        Archivo was drawn for exactly that brief (highway and signage lineage). */
@@ -141,6 +141,11 @@
      label carries the affordance instead — white on this fill is 7.9:1. */
   --accent-on-deep:        #0050A0;
   --accent-on-deep-hover:  #0060C0;
+  /* The two above are BUTTON FILLS on the deep ground — they carry white ink
+     on top, so their own contrast against navy is not what matters. This one
+     is for accent TEXT sitting directly on navy, where it is: the fills come
+     in at 2.8:1 and fail AA outright. Same brand hue, lifted to 6.5:1. */
+  --accent-ink-on-deep:    #4DA3FF;
 
   /* --- SECONDARY ACCENT (teal) ----------------------------------------
      Emphasis only: proof-strip figures, step numbers, rules, chips. Used
@@ -161,9 +166,27 @@
   --success-bg:     #EDFAF4;
   --warning:        #99660C;  /* H38  — 4.8:1 on page */
   --warning-bg:     #FDF4E5;
-  --error:          #CA2C21;  /* H4   — 5.2:1 on page */
-  --error-bg:       #FDEEED;
-  --error-on-deep:  #F4837B;  /* 6.8:1 on deep */
+  --error:            #CA2C21;  /* H4   — 5.2:1 on page */
+  --error-bg:         #FDEEED;
+  --error-on-deep:    #F4837B;  /* 6.8:1 on deep */
+  /* Same H38 hue as --warning, lifted to carry on the deep ground — the page
+     value is far too dark to read on navy. Used by the emergency block once
+     it sits inside the contact panel. */
+  --warning-on-deep:  #E8A33D;  /* 8.0:1 on deep */
+
+  /* --- CHANNEL TRIPLETS ------------------------------------------------
+     The same two brand colours as bare "R G B" channels, for the places that
+     need them at partial alpha — rgb(var(--x-rgb) / 0.1). CSS cannot take an
+     alpha of a hex custom property without color-mix(), which is newer than
+     this stylesheet's floor, so the channels are declared once here rather
+     than being retyped as literals at each use.
+
+     These MUST track the two hex values above. They exist because section 04's
+     glass had rgb(0 29 59 / ...) and rgb(0 80 160 / ...) hardcoded — the same
+     numbers, typed by hand, which would silently drift the moment either brand
+     colour was retuned. */
+  --surface-deep-rgb: 0 29 59;    /* = --surface-deep #001D3B */
+  --accent-rgb:       0 80 160;   /* = --accent       #0050A0 */
 
   /* --- SUPPORT ---------------------------------------------------------
      Hairlines are decorative separators, not meaning-bearing UI, so they sit
@@ -317,9 +340,17 @@ textarea:focus-visible,
 }
 
 /* On light grounds the white halo would be invisible; use navy there. */
-.proof :focus-visible,
-.contact :focus-visible {
+.proof :focus-visible {
   box-shadow: 0 0 0 6px rgba(var(--rgb-deep), 0.18);
+}
+/* The contact panel is raw brand teal. --focus #1C8EFF measures 1.23:1 there
+   and white 2.68:1 — neither is a usable focus indicator. Navy is 6.33:1 and
+   is the only option on this ground that clears the 3:1 floor, so the ring
+   goes navy even though the type on this panel is white. A focus ring is a
+   non-text indicator, so it does not have to match the ink. */
+.contact :focus-visible {
+  outline-color: var(--surface-deep);
+  box-shadow: 0 0 0 6px rgba(var(--rgb-deep), 0.22);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -843,9 +874,13 @@ textarea:focus-visible,
   width: 100%;
   height: 100%;
   object-fit: cover;
-  /* Cinematic crop. The ship sits low-left in this encode; pulling the frame
-     up keeps the hull and horizon visible in the open upper area rather than
-     directly behind the headline, which occupies the lower band. */
+  /* Cinematic crop. Pulling the frame up keeps the hull and horizon visible
+     in the open upper area rather than directly behind the headline, which
+     occupies the lower band.
+     The vessel sits toward the RIGHT of this encode — centred is fine at
+     desktop width, but as the box narrows `cover` crops the sides and takes
+     the boat with them. See the horizontal overrides in the breakpoint block
+     at the end of the hero section. */
   object-position: center 38%;
   display: block;
   /* Both copies are stacked in the same box; hero.js toggles .is-active on
@@ -1374,6 +1409,15 @@ html.hero-ready .hero__foot    { transition-delay: 1.15s; }
   .hero__display { font-size: 7.3vw; }
   .hero__label { grid-column: 1 / span 5; }
   .hero__note  { grid-column: 7 / span 6; }
+
+  /* The vessel sits toward the RIGHT of the encode. `object-fit: cover` in a
+     narrowing box crops the sides hardest, and centred horizontally that is
+     the first thing to leave the frame — the hero played as open water with
+     no subject. Biasing the window right keeps the boat in view. Desktop is
+     left at `center` above: it is wide enough that the boat is already in
+     frame, and shifting it there would only push the vessel behind the
+     headline's lower band. */
+  .hero__video { object-position: 72% 38%; }
 }
 
 @media (max-width: 860px) {
@@ -1454,6 +1498,12 @@ html.hero-ready .hero__foot    { transition-delay: 1.15s; }
   }
   .hero__actions { gap: var(--s-4); }
   .hero__meta { font-size: 0.625rem; }
+
+  /* Portrait phones crop the sides hardest of all, so the window goes further
+     right again than the tablet value. Stopping short of 100% deliberately —
+     pinning the window to the very edge would put the boat half out of frame
+     on the right rather than sitting in it. */
+  .hero__video { object-position: 82% 38%; }
 }
 
 @media (max-width: 420px) {
@@ -2022,134 +2072,523 @@ main {
 
 /* --- 10 Contact --------------------------------------------------------- */
 
-.contact { padding-block: var(--section-y); }
+/* The "Request a proposal" section uses the same scroll-inset mechanic as the
+   closing CTA band (section 09, where the full rationale is written down):
+   the tinted ground is an inner PANEL, and as the section scrolls into view
+   its side gutters open from 0 to --cta-inset-max while the corners round, so
+   the colour reads as retreating from both edges at once.
 
+   --cta-p is the shared scrub variable, declared 1 here for the same reason —
+   no JS, a throw, or reduced motion all render the finished inset state.
+
+   The panel is the deep navy ground rather than the page colour, because a
+   panel painted the same colour as what it sits on has nothing to retreat
+   FROM — the inset would run and show nothing. */
+.contact {
+  --cta-p: 1;
+  /* Deliberately wider than --site-margin, unlike the other inset panels:
+     this one is meant to sit in from the page edge as a distinctly smaller
+     block, not to line up with the site gutter. */
+  --cta-inset-max: clamp(1.5rem, 0.5rem + 5vw, 7rem);
+  /* On a wide monitor the inset alone would leave the panel enormous, so the
+     settled panel is also capped. This is a WIDTH, not a max-width, because
+     the scrub has to be able to drive it — see .contact__panel. */
+  --cta-width-max: 1240px;
+  /* Deliberately tighter than --section-y. The panel is a coloured block
+     with its own generous internal padding, so the section padding is only
+     the gap to the neighbouring bands — doubling the full section rhythm on
+     top of the panel's own is what pushed this section past a laptop
+     viewport.
+
+     Expressed against viewport HEIGHT, not width: the whole point is that
+     the section fits in the viewport, and a vw-based clamp gives a short
+     wide laptop (1366x768) the same generous padding as a tall one. The
+     1.25rem floor is what clears a 720px screen; the max holds a sensible
+     rhythm on a large display. */
+  padding-block: clamp(1.25rem, 3.5vh, 3.25rem);
+  /* The ground the panel retreats to reveal. The panel is deep again, so a
+     light page ground gives the inset all the contrast it needs. */
+  background: var(--surface-page);
+}
+
+.contact__panel {
+  /* The scrub animates WIDTH, not margin-inline.
+     An earlier version animated margin-inline and capped the panel with
+     max-width. That silently killed the effect on any viewport wide enough
+     for the cap to bind: max-width won, the panel sat at a fixed 1240px, and
+     the animated margins had nothing left to give. The gutters never moved
+     even though --cta-p was scrubbing correctly the whole time.
+
+     Driving width instead keeps the two cooperating. The cap is interpolated
+     by --cta-p as well, running from the full section width at 0 to
+     --cta-width-max at 1. Capping with a flat min() instead would clamp the
+     panel to 1240px from the very first frame on a wide monitor, so it would
+     start already-inset and only the last part of the travel would show.
+
+     The inner min() matters: below the cap width, (100% - 1240px) is
+     NEGATIVE, and subtracting it made the panel grow wider than its section
+     as --cta-p rose. max-width then pinned it flat and the effect vanished
+     between roughly 900px and 1240px. Clamping the interpolated term at 0
+     keeps those viewports on the plain "full width minus inset" path.
+     margin-inline:auto centres whatever the width resolves to. */
+  width: calc(
+    (100% - var(--cta-p) * max(100% - var(--cta-width-max), 0px))
+    - var(--cta-p) * 2 * var(--cta-inset-max)
+  );
+  /* Never wider than the section, whatever the interpolation yields. */
+  max-width: 100%;
+  margin-inline: auto;
+  /* Height-aware for the same reason as the section padding above: the
+     constraint being solved is vertical fit, so the breathing room scales
+     with the viewport's height rather than its width. Tuned so the whole
+     section clears a 768px-tall laptop, which the previous 4.75rem cap did
+     not — the section came to 1043px and only fitted a 1080p screen. */
+  padding-block: clamp(1.5rem, 4vh, 3rem);
+  /* No padding-inline: the .shell inside supplies it. A second gutter here
+     would push the copy off the column the rest of the page aligns to. */
+  /* Square, like the reference — the panel reads as a field of colour, not
+     as a card. --cta-p still drives it so the corners stay honest if the
+     radius is ever reintroduced. */
+  border-radius: calc(var(--cta-p) * 0px);
+  /* The brand teal itself — the same --accent-2 the proof figures, service
+     rules and step numbers use, here as a full ground.
+
+     ⚠ ACCESSIBILITY EXCEPTION — WHITE ON RAW BRAND TEAL, BY REQUEST.
+     Pure white measures 2.68:1 on #20B0A8, against a 4.5:1 WCAG AA minimum
+     for body text and 3:1 for large text and UI boundaries. Nothing in this
+     panel meets AA. The colour system marks raw --accent-2 decoration-only
+     and forbids it under type for exactly this reason, and BRIEF.md targets
+     a 40-65 audience reading on phones and locked-down corporate screens.
+
+     This is a deliberate client decision, recorded here rather than hidden:
+     the panel colour was chosen first and the type follows it. Two ways to
+     reach AA if it is ever revisited — darken the ground to #04413E (white
+     11.1:1, full ink ramp legible), or keep this ground and use navy ink
+     (--surface-deep, 6.33:1).
+
+     Given the exception, everything is pushed to the maximum available
+     contrast: PURE white, not --text-on-deep (2.59:1), and no dimmer tiers
+     at all — --text-on-deep-secondary is 1.84:1 and -muted 1.29:1 here, so
+     a three-tier ink ramp would be illegible. Hierarchy is carried by weight
+     and size only. Rules are solid white rather than a veil for the same
+     reason: any alpha below 1.0 drops them under 2.5:1.
+
+     Everything inside paints with the --pnl-* variables below rather than
+     naming a ramp directly, so the section can be re-grounded from here. */
+  background: var(--accent-2);
+
+  /* --- Panel ink, resolved once ---------------------------------------
+     One tier only. See the exception note above for why the secondary and
+     muted ramps are not used on this ground. */
+  --pnl-ink:        #FFFFFF;
+  --pnl-ink-2:      #FFFFFF;
+  --pnl-ink-muted:  #FFFFFF;
+  --pnl-accent:     #FFFFFF;
+  /* Status colours are white too: --error-on-deep is 1.07:1 here and
+     --warning-on-deep 1.24:1, so both would be invisible. The error text
+     keeps its "↑" prefix and the emergency block its left rule, so neither
+     relies on hue alone to be recognised. */
+  --pnl-error:      #FFFFFF;
+  --pnl-warning:    #FFFFFF;
+  /* Transparent, not a white veil: a veil lightens the ground under the
+     emergency copy and drops white from 2.68:1 to 2.25:1 — worse where it
+     matters most. The block is separated by its border alone. */
+  --pnl-warning-bg: transparent;
+  --pnl-rule:       #FFFFFF;
+  --pnl-veil:       rgba(255, 255, 255, 0.22);
+  --pnl-autofill:   #20B0A8;
+
+  color: var(--pnl-ink-2);
+  will-change: width;
+}
+
+/* Below the tablet breakpoint the gutters are only a few pixels wide — too
+   small to read as movement, and holding them shifts the copy off the flush
+   left edge. Full-bleed instead, matching the closing band. */
+@media (max-width: 859px) {
+  .contact { --cta-inset-max: 0px; }
+  .contact__panel { border-radius: 0; will-change: auto; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .contact { --cta-p: 1 !important; }
+  .contact__panel { will-change: auto; }
+}
+
+/* Narrower than the page --shell. The panel is already inset from both
+   edges, so letting the content run to the full 1200px site measure would
+   put the copy hard against the panel's own edges and undo the smaller
+   block. Overrides the .shell max-width this element also carries. */
 .contact__inner {
   display: grid;
-  gap: clamp(2.5rem, 1rem + 5vw, 4.5rem);
+  gap: clamp(2rem, 1rem + 3.5vw, 3.5rem);
+  max-width: 1020px;
 }
 @media (min-width: 900px) {
-  /* Form gets the wider column; the emergency block sits beside it. */
-  .contact__inner { grid-template-columns: 1fr 1.05fr; align-items: start; }
+  /* Reference layout: statement left, form right, roughly even columns.
+     Centred rather than bottom-aligned: with the copy scaled down, end
+     alignment left a tall band of empty navy above the intro while the
+     form ran past it. Centring distributes that slack to both ends so the
+     panel reads as a filled block. */
+  .contact__inner {
+    grid-template-columns: 1fr 1.05fr;
+    align-items: center;
+  }
 }
 
+/* No eyebrow override here: the global .eyebrow is already --accent-2-ink,
+   which is exactly what --pnl-accent resolves to on this panel. The rule
+   that used to sit here restated the inherited value. */
+
+/* The global .eyebrow is --accent-2-ink, which is teal ON teal here and
+   measured 1.84:1 — a clear fail. On this panel it takes the panel ink and
+   keeps its identity through the uppercase/letterspaced treatment instead. */
+.contact__intro .eyebrow { color: var(--pnl-accent); }
+
+/* The reference runs this headline at 74px. Held well below that per the
+   brief — clinical, not a poster — while still being the largest thing in
+   the panel and clearly the statement the form answers to. */
 .contact__title {
-  font-size: var(--t-h2);
+  font-size: clamp(1.45rem, 1.05rem + 1.55vw, 2.35rem);
   font-weight: 700;
-  margin-bottom: var(--s-4);
-  max-width: 22ch;
+  line-height: 1.14;
+  letter-spacing: -0.015em;
+  color: var(--pnl-ink);
+  margin-bottom: var(--s-3);
+  max-width: 17ch;
 }
 .contact__lede {
-  font-size: var(--t-lede);
-  color: var(--text-secondary);
-  max-width: 46ch;
-  margin-bottom: var(--s-7);
+  font-size: var(--t-small);
+  color: var(--pnl-ink-2);
+  max-width: 42ch;
+  margin-bottom: var(--s-5);
 }
 
 /* Emergency block — visually distinct from the form on purpose. Someone
-   with a live casualty must not read this as another marketing panel. */
+   with a live casualty must not read this as another marketing panel.
+
+   On the teal panel the block sits on a white veil rather than the amber
+   --warning-bg: that pale amber against saturated teal is a muddy clash,
+   and the veil separates the block just as clearly. The warning identity is
+   carried by the dark-amber rule and title, which measure 4.7:1 on the teal
+   and 8.1:1 on the veil. */
 .emergency {
-  background: var(--warning-bg);
-  border: 1px solid var(--warning);
-  border-left-width: 5px;
+  background: var(--pnl-warning-bg);
+  border: 1px solid var(--pnl-warning);
+  border-left: 3px solid var(--pnl-warning);
   border-radius: var(--radius);
-  padding: var(--s-5);
+  padding: var(--s-4);
+  max-width: 42ch;
 }
 .emergency__title {
-  font-size: var(--t-h3);
-  font-weight: 700;
-  color: var(--warning);
-  margin-bottom: var(--s-3);
-}
-.emergency__body { color: var(--text-primary); margin-bottom: var(--s-3); }
-.emergency__note {
   font-size: var(--t-small);
-  color: var(--text-secondary);
-  border-top: 1px solid var(--warning);
-  padding-top: var(--s-3);
+  font-weight: 700;
+  color: var(--pnl-warning);
+  margin-bottom: var(--s-2);
+}
+.emergency__body {
+  color: var(--pnl-ink);
+  font-size: var(--t-micro);
+  margin-bottom: var(--s-2);
+}
+.emergency__note {
+  font-size: var(--t-micro);
+  color: var(--pnl-ink-muted);
+  border-top: 1px solid rgba(var(--rgb-deep), 0.25);
+  padding-top: var(--s-2);
 }
 
 /* --- Form --------------------------------------------------------------- */
 
-.contact__formwrap {
-  background: var(--surface-raised);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  padding: clamp(1.4rem, 0.9rem + 2vw, 2.5rem);
+/* The form is bare on the panel — no card, no border, no fill. On the
+   reference the fields are underlines floating directly on the colour
+   block, and a raised white card here would undo that entirely. */
+.contact__formwrap { min-width: 0; }
+
+/* --s-3 rather than --s-4: eight rows of fields multiply any row gap, and
+   this quarter-rem is what lets the whole section clear a short laptop
+   viewport. The underline fields already carry their own breathing room
+   through the label space above each input. */
+.form { display: flex; flex-direction: column; gap: var(--s-3); }
+
+/* --- Underline fields ---------------------------------------------------
+   Each .field is a positioning context so the label can sit ON the input
+   line and rise out of it. Input first in source order, label second: that
+   lets the label react to :focus and :placeholder-shown with a plain
+   sibling selector and no JS. The visual order is unchanged — the label is
+   absolutely positioned over the field either way. */
+.field {
+  position: relative;
+  display: flex;
+  flex-direction: column;
 }
 
-.form { display: flex; flex-direction: column; gap: var(--s-5); }
-
-.form__intro {
-  font-size: var(--t-small);
-  color: var(--text-muted);
-  padding-bottom: var(--s-4);
-  border-bottom: 1px solid var(--border);
-}
-
-.field { display: flex; flex-direction: column; gap: var(--s-2); }
-
-/* Labels above fields, always visible — a placeholder-only label vanishes
-   mid-typing on a phone. */
 .field label {
-  font-size: var(--t-small);
-  font-weight: 650;
-  color: var(--text-primary);
-  letter-spacing: 0.01em;
+  position: absolute;
+  left: 0;
+  top: 0.7rem;
+  font-size: var(--t-micro);
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--pnl-ink-muted);
+  pointer-events: none;  /* never intercept a click meant for the input */
+  transition: transform 0.18s ease, font-size 0.18s ease, color 0.18s ease;
+  transform-origin: left top;
 }
-.field__opt { font-weight: 400; color: var(--text-muted); }
+.field__opt { letter-spacing: 0; text-transform: none; }
+
+/* Rise out of the way once the field is focused or has content. Both halves
+   are needed: :placeholder-shown alone would drop the label back down over
+   the user's text while they are still typing in an empty-looking field.
+   Every such input carries placeholder=" " so this selector has something
+   to match on. */
+.field input:focus + label,
+.field input:not(:placeholder-shown) + label,
+.field textarea:focus + label,
+.field textarea:not(:placeholder-shown) + label {
+  transform: translateY(-0.8rem) scale(0.85);
+  color: var(--pnl-ink-muted);
+}
 
 .field input,
 .field select,
 .field textarea {
   font-family: inherit;
-  /* 16px floor stops iOS Safari zooming the page on focus — a real cause of
-     horizontal scroll on phones. */
+  /* Held at the 16px floor even though the rest of the panel stepped down:
+     anything smaller makes iOS Safari zoom the page on focus, which is a
+     real cause of horizontal scroll on phones. The surrounding labels and
+     copy carry the smaller scale instead. */
   font-size: max(1rem, var(--t-body));
-  color: var(--text-primary);
-  background: var(--surface-raised);
-  border: 1px solid var(--border-strong);
-  border-radius: var(--radius);
-  padding: 0.75rem 0.85rem;
-  min-height: 48px;
+  color: var(--pnl-ink);
+  background: transparent;
+  border: 0;
+  /* The underline is the ONLY thing marking where a field is, so it is a
+     meaningful UI boundary — see --pnl-rule for how it is resolved on the
+     current panel ground. */
+  border-bottom: 1px solid var(--pnl-rule);
+  border-radius: 0;
+  /* Top padding leaves the room the floated label rises into; the bottom is
+     trimmed to what the descenders need, since eight rows multiply it. */
+  padding: 0.85rem 0 0.35rem;
   width: 100%;
-  transition: border-color 0.16s ease, box-shadow 0.16s ease;
+  transition: border-color 0.16s ease;
 }
-.field textarea { min-height: 7rem; resize: vertical; line-height: 1.5; }
+.field textarea { min-height: 3.5rem; resize: vertical; line-height: 1.5; }
 
+/* Chrome's autofill repaints the field with its own opaque background,
+   which on a dark panel produces a white bar with unreadable ink. The inset
+   shadow trick is the only reliable way to keep our ground. */
+.field input:-webkit-autofill,
+.field input:-webkit-autofill:focus {
+  -webkit-text-fill-color: var(--pnl-ink);
+  -webkit-box-shadow: 0 0 0 100px var(--pnl-autofill) inset;
+  caret-color: var(--pnl-ink);
+}
+
+/* A select is the one control here that opens something, so it is the one
+   that should not look identical to a text field. It carries a faint tinted
+   well and a real chevron, where the text inputs are a bare underline.
+
+   The chevron is an inline SVG data URI rather than the two rotated
+   gradients this used to draw: at 5px those gradients render as a slightly
+   ragged pair of triangles, and they cannot be recoloured on hover without
+   restating both. Inlined, so nothing is fetched. */
 .field select {
   appearance: none;
-  background-image:
-    linear-gradient(45deg, transparent 50%, var(--text-secondary) 50%),
-    linear-gradient(135deg, var(--text-secondary) 50%, transparent 50%);
-  background-position: calc(100% - 19px) calc(50% + 1px), calc(100% - 14px) calc(50% + 1px);
-  background-size: 5px 5px, 5px 5px;
+  color: var(--pnl-ink);
+  /* A NAVY veil, not a white one. The obvious choice for a "well" on a
+     coloured panel is white at low alpha, but that lightens the ground under
+     white type and drops it from 2.68:1 to 2.43:1 — the wrong direction on a
+     panel already under AA. Navy darkens instead, so these three controls
+     become the only ones in the form that genuinely clear AA: 4.65:1 at
+     rest, 5.4:1 on hover. It also reads as a deeper well rather than a
+     lighter smudge, which is the more convincing affordance. */
+  background-color: rgba(var(--rgb-deep), 0.32);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8' fill='none' stroke='%23ffffff' stroke-width='1.75' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M1 1.5 6 6.5 11 1.5'/%3E%3C/svg%3E");
+  background-position: right 0.7rem center;
+  background-size: 11px 8px;
   background-repeat: no-repeat;
-  padding-right: 2.6rem;
+  padding-right: 2.2rem;
+  padding-left: 0.7rem;
+  /* Rounded only at the top: the underline stays the field's baseline, so
+     the well reads as sitting ON the rule rather than as a detached pill. */
+  border-radius: var(--radius) var(--radius) 0 0;
+  transition: background-color 0.16s ease, border-color 0.16s ease;
 }
+/* Deepen on interaction — same direction as the rest state, so the text gets
+   MORE contrast as you engage with the control, not less. */
+.field select:hover { background-color: rgba(var(--rgb-deep), 0.40); }
+.field select:focus { background-color: rgba(var(--rgb-deep), 0.46); }
+
+/* The open dropdown list is painted by the OS, not by the panel, so it does
+   not inherit any of the panel's colour — left alone it is the default white
+   popup, which lands as a bright rectangle in the middle of the teal.
+
+   Styling it deep navy instead ties it to the brand and to the page's other
+   dark surfaces. Navy rather than the panel's own teal: the list floats ON
+   the panel, so matching the ground exactly would leave it with no edge.
+
+   Support is genuinely partial — Chrome/Edge on Windows and Firefox honour
+   these, Safari and most mobile pickers ignore them and render the native
+   control. That is a safe degrade: the fallback is the OS picker, which is
+   always legible. The colours are set as a pair so no browser can take the
+   background without the matching ink. */
+.field select option {
+  color: var(--text-on-deep);
+  background-color: var(--surface-deep);
+}
+/* Chrome on Windows needs the checked pseudo-class to repaint the selected
+   row; without it that row keeps the UA highlight and can land navy-on-navy. */
+.field select option:checked,
+.field select option:hover {
+  color: var(--text-on-deep);
+  background-color: var(--surface-deep-hi);
+}
+
+/* The placeholder row reads as a prompt, not as a value. */
+.field select option[value=""] { color: var(--text-on-deep-muted); }
+
+/* A select always shows a value, so its label has no empty state to sit in.
+   It stays permanently in the risen position rather than overlapping the
+   chosen option. */
+.field--select label {
+  position: static;
+  transform: none;
+  font-size: var(--t-micro);
+  margin-bottom: 0.15rem;
+  /* Matches the select's own padding-left so the label lines up with the
+     value inside the well rather than with the panel's text column. */
+  padding-left: 0.7rem;
+}
+.field--select select { padding-top: 0.4rem; }
 
 .field input:hover,
 .field select:hover,
-.field textarea:hover { border-color: var(--text-muted); }
+.field textarea:hover { border-bottom-color: var(--pnl-ink-muted); }
 
+/* Focus takes the panel accent (teal), matching the checked boxes and the
+   send link, so every interactive state in this section speaks one colour.
+   The thickening below carries the state for anyone who cannot see it. */
 .field input:focus,
 .field select:focus,
-.field textarea:focus { border-color: var(--accent-2-ink); }
-
-.field [aria-invalid="true"] {
-  border-color: var(--error);
-  box-shadow: inset 0 0 0 1px var(--error);
+.field textarea:focus {
+  outline: none;
+  border-bottom-color: var(--pnl-accent);
 }
+/* The underline is the only affordance here, so focus has to be visible on
+   more than colour alone — it thickens as well. */
+.field input:focus-visible,
+.field select:focus-visible,
+.field textarea:focus-visible { border-bottom-width: 2px; padding-bottom: calc(0.35rem - 1px); }
+
+.field [aria-invalid="true"] { border-bottom-color: var(--pnl-error); }
 
 .field__error {
-  font-size: var(--t-small);
+  font-size: var(--t-micro);
   font-weight: 600;
-  color: var(--error);
+  color: var(--pnl-error);
+  margin-top: var(--s-2);
 }
 .field__error::before { content: "↑ "; }
 
-.field-row { display: grid; gap: var(--s-5); }
-@media (min-width: 560px) { .field-row { grid-template-columns: 1fr 1fr; } }
+/* --- Checkbox row (the reference's "select all that apply") -------------- */
+
+.checks { border: 0; padding: 0; margin: 0; min-width: 0; }
+.checks__legend {
+  font-size: var(--t-micro);
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--pnl-ink-muted);
+  margin-bottom: var(--s-2);
+  padding: 0;
+}
+.checks__row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-2) var(--s-4);
+}
+.check {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: var(--t-micro);
+  color: var(--pnl-ink-2);
+  cursor: pointer;
+}
+/* Custom mark: the native control cannot be recoloured reliably enough to
+   sit on a dark ground across browsers. accent-color gets close but leaves
+   the unchecked border at the UA default, which disappears on navy. */
+/* Held at 0.9rem and no smaller. The label text stepped down with the rest
+   of the panel, but the box is the actual hit target — shrinking it in
+   proportion would make it fiddly to hit on a phone. */
+.check input {
+  appearance: none;
+  width: 0.9rem;
+  height: 0.9rem;
+  flex: none;
+  /* Same 3:1 UI-boundary reasoning as the field underlines — an unchecked
+     box has nothing but this ring to show it exists. */
+  border: 1px solid var(--pnl-rule);
+  border-radius: 50%;
+  background: transparent;
+  display: grid;
+  place-items: center;
+  transition: border-color 0.14s ease, background-color 0.14s ease;
+}
+.check input::after {
+  content: "";
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  transform: scale(0);
+  background: var(--pnl-autofill);
+  transition: transform 0.14s ease;
+}
+/* Brand blue fill with the panel ground punched back out as a dot, so the
+   checked state carries a shape cue and not colour alone. */
+.check input:checked {
+  background: var(--pnl-accent);
+  border-color: var(--pnl-accent);
+}
+.check input:checked::after { transform: scale(1); }
+.check input:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+.check:hover input:not(:checked) { border-color: var(--pnl-ink-muted); }
+
+/* --- Send ---------------------------------------------------------------
+   The reference ends on a bare right-aligned text link, not a filled
+   button. Kept as a real <button> for keyboard and AT operability, with the
+   button chrome stripped rather than swapped for an <a>. */
+.form__send { display: flex; justify-content: flex-end; }
+
+.send {
+  appearance: none;
+  background: none;
+  border: 0;
+  padding: 0.3rem 0;
+  font-family: inherit;
+  font-size: var(--t-micro);
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--pnl-accent);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  transition: color 0.16s ease, gap 0.16s ease;
+}
+.send__arrow { transition: transform 0.16s ease; }
+.send:hover { color: var(--pnl-ink); gap: 0.7rem; }
+.send:hover .send__arrow { transform: translate(2px, -2px); }
+.send:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 3px;
+}
 
 /* Honeypot — off-screen rather than display:none, which some bots detect.
    aria-hidden + tabindex="-1" keep it away from real users entirely. */
@@ -2160,28 +2599,41 @@ main {
   overflow: hidden;
 }
 
-.form__foot { font-size: var(--t-micro); color: var(--text-muted); }
+.form__foot { font-size: var(--t-micro); color: var(--pnl-ink-muted); }
 
 /* Success state — replaces the form in place. No redirect, no alert. */
 .success {
   text-align: center;
   padding: var(--s-8) var(--s-4);
 }
+/* The panel veil, not --success-bg: on the saturated teal a pale green disc
+   reads as a smudge rather than a badge, and --success ink on it is barely
+   distinguishable from the ground. White veil with navy ink is 10.9:1. */
+/* Inverted: a SOLID white disc with the tick punched out in teal, rather
+   than a white tick on a translucent veil. On this ground that is the one
+   place the panel can reach full contrast — the disc is 2.68:1 against the
+   panel and the teal tick 2.68:1 against the disc, both better than any
+   white-on-veil combination available here. */
 .success__mark {
   width: 3rem; height: 3rem;
   margin: 0 auto var(--s-5);
   display: grid; place-items: center;
   border-radius: 50%;
-  background: var(--success-bg);
-  color: var(--accent-2-ink);
+  background: #FFFFFF;
+  color: var(--accent-2);
   font-size: 1.5rem; font-weight: 700;
 }
 .success__title {
-  font-size: var(--t-h2);
+  font-size: var(--t-h3);
   font-weight: 700;
+  color: var(--pnl-ink);
   margin-bottom: var(--s-3);
 }
-.success__body { color: var(--text-secondary); max-width: 34ch; margin-inline: auto; }
+.success__body {
+  color: var(--pnl-ink-2);
+  max-width: 34ch;
+  margin-inline: auto;
+}
 
 /* --- Footer ------------------------------------------------------------- */
 
@@ -2381,9 +2833,10 @@ main {
 .doubts__statement {
   font-family: var(--font-display);
   font-weight: 700;
-  font-size: clamp(2.2rem, 1.1rem + 5.4vw, 5rem);
-  line-height: 0.94;
-  letter-spacing: -0.02em;
+  font-size: clamp(2.4rem, 1.1rem + 6.2vw, 5.8rem);
+  line-height: 0.92;
+  letter-spacing: -0.03em;
+  text-transform: capitalize;
   color: var(--text-on-deep);
   text-wrap: balance;
   margin: 0;
@@ -2925,10 +3378,46 @@ main {
 @media (min-width: 1000px) {
   .doubts--live .doubts__statement { white-space: nowrap; }
   .doubts--live .doubts__statement span { display: inline; }
-  .doubts--live .doubts__statement span + span { margin-left: 0.28em; }
+  .doubts--live .doubts__statement span + span { margin-left: 0.24em; }
 }
 @media (max-width: 999px) {
   .doubts--live .doubts__statement { width: min(88vw, 30ch); text-align: center; }
+}
+
+/* --- The overlap: the next section covers the finished picture ----------
+
+   The doubts stage holds its full-bleed picture for a viewport of scroll
+   while the section below travels up over it (js/doubts.js, the OVERLAP
+   block). Two things have to be true for that to read as one surface being
+   dealt over another, and neither is true by default:
+
+   1. The cover must paint ABOVE the pinned stage. During the pin the stage is
+      `position: fixed`, which puts it in the same stacking context as the
+      cover but later in paint order for anything not positioned. A z-index
+      here settles it explicitly rather than leaving it to document order.
+
+   2. The cover must be OPAQUE. Sections on this site are transparent by
+      design and let <main> paint their ground (see the theme-ground note
+      above), so a transparent cover would slide up as a ghost with the
+      picture reading straight through it. The class is applied to whatever
+      section actually follows, so a fallback ground is declared here to keep
+      that guarantee if the page order changes.
+
+      The fallback must NOT beat the section's own fill. .services is pure
+      white by brief; this rule and that one are both one class deep, so
+      whichever is written later would win on source order alone. Hence
+      `background-color` only as a last resort, via a custom property the
+      section can pre-empt — .services sets --cover-ground to its own white.
+
+   The class is added by JS and only while the composition is live, so a
+   no-JS or reduced-motion visitor gets an ordinary section in normal flow. */
+.doubts-cover {
+  position: relative;
+  z-index: 5;
+  background-color: var(--cover-ground, var(--surface-sunken));
+  /* The transform is written every frame by the scrub; promoting the layer
+     keeps a full-viewport section off the main thread's paint path. */
+  will-change: transform;
 }
 
 /* Reduced motion: no pin, no scrub — the static composition above is the
@@ -2948,59 +3437,711 @@ main {
 
 /* --- 04 Four services --------------------------------------------------- */
 
+/* ONE FULL VIEWPORT, PLUS AN OVERSHOOT AT THE TOP.
+
+   min-height, not height: the section must never be SHORTER than the viewport,
+   which is what a fixed height risked. Combined with the content budget below
+   (every size derived from vh, so the rows always fit) it resolves to exactly
+   one viewport in practice, while still growing rather than clipping if a
+   font swap or a long translation makes the copy taller than modelled.
+
+   Why not svh: svh is the SMALLEST viewport height — the measure with the
+   mobile URL bar expanded. Using it meant the section was deliberately short
+   of the visible area. lvh (the largest measure) is the one that actually
+   covers the screen, with vh as the fallback for older browsers.
+
+   THE OVERSHOOT. This section is the cover for the pinned composition above
+   it: doubts.js pulls it up by exactly -innerHeight so it travels from the
+   fold to flush with the top. In practice a seam of the pinned photograph
+   still showed along the top edge — sub-pixel rounding in the scrub's
+   transform, a fractional device pixel ratio, and Math.round() on the pull
+   all land within a pixel or two of each other, and any positive remainder is
+   visible as a hairline of the wrong section.
+
+   --overshoot is padding added at the top and cancelled by an equal negative
+   margin, so the section's PAINTED box starts above its layout position while
+   its layout position, and therefore everything downstream, is unchanged. The
+   ground extends up under the seam and covers it. The value is deliberately
+   larger than any plausible rounding error and costs nothing: it is painted
+   over the section it is covering.
+
+   The 1px block borders are inside this box: box-sizing is border-box
+   globally, so they cost no extra height. */
 .services {
-  padding-block: var(--section-y);
-  background: var(--surface-sunken);
-  border-block: 1px solid var(--border);
+  /* Generous on purpose. 4px was sized against sub-pixel rounding alone and a
+     visible strip of the pinned photograph still showed, so this is no longer
+     a rounding allowance — it is wide enough to swallow any plausible
+     mismatch between the pull distance (doubts.js uses window.innerHeight, the
+     LARGE viewport measure) and the pinned stage's own height (100svh, the
+     SMALL one). Those two are equal on desktop but not on mobile, and the
+     difference lands exactly at this top edge.
+
+     It costs nothing: every pixel of it is painted over the section this one
+     is covering, and the negative margin below returns all of it to the
+     layout, so the section still occupies exactly one viewport. */
+  --overshoot: 96px;
+
+  position: relative;
+  /* The viewport, plus the overshoot the negative margin gives back. */
+  min-height: calc(100vh + var(--overshoot));
+  min-height: calc(100lvh + var(--overshoot));
+  padding-top: var(--overshoot);
+  margin-top: calc(var(--overshoot) * -1);
+
+  /* Clip the X axis only. The cards start off-stage to the right and WHAT
+     bleeds off the left, so horizontal overflow must not reach the document
+     and create a scrollbar. Vertical stays visible deliberately: the section
+     can now GROW (min-height), and clipping it would silently cut copy that
+     outgrew the modelled budget instead of letting the section take the room.
+
+     `clip`, not `hidden`: pairing hidden with visible is not a legal
+     combination — CSS forces the visible axis to `auto`, which would put a
+     vertical scrollbar inside the section. `clip` leaves the other axis
+     genuinely visible. overflow-x:hidden is kept first as the fallback for
+     browsers without `clip`; there the y axis becomes auto, but the content
+     budget means there is nothing to scroll. */
+  overflow-x: hidden;
+  overflow-x: clip;
+  overflow-y: visible;
+  isolation: isolate;
+
+  /* The section ground, declared ONCE. Pure white per the brief — deliberately
+     not --surface-page, which is the very slightly tinted #FAFBFC.
+
+     Three things must be exactly this colour and are all driven from here: the
+     section's own background, the .doubts-cover fallback ground it pre-empts
+     (that class would otherwise paint --surface-sunken grey over this white),
+     and the opaque fill inside the outlined WHAT, which has to match the ground
+     precisely or the letterforms show as pale boxes against it. */
+  --services-ground: #fff;
+
+  background: var(--services-ground);
+  --cover-ground: var(--services-ground);
+  /* Bottom border only. A top border would draw a hairline across the seam the
+     overshoot exists to hide — the one place on the page that must be
+     seamless. */
+  border-bottom: 1px solid var(--border);
 }
 
-.services__grid { display: grid; gap: var(--s-6); }
-@media (min-width: 760px) { .services__grid { grid-template-columns: repeat(2, 1fr); } }
+/* The inner fills the full viewport height and DISTRIBUTES its rows across it,
+   rather than stacking them at the top and leaving a dead band under the cards.
 
+   TWO rows now, not three — the "also" line that used to hold the bottom
+   margin has been removed. That changes what space-between does: with three
+   rows it spread the slack evenly and the cards landed optically centred, but
+   with two it would push the wordmark hard to the top and the cards hard to
+   the bottom, opening one large void between them.
+
+   So the distribution is `center` with the gap doing the separating. The two
+   rows sit as a group in the middle of the viewport, which is the same optical
+   result the three-row version produced without the element that anchored it. */
+.services__inner {
+  position: relative;
+  z-index: 1;
+  /* min-height, matching the section. `height: 100%` would resolve against the
+     parent's min-height rather than a definite height and collapse to the
+     content's size — the rows would then bunch at the top with nothing for
+     space-between to distribute, which is the failure mode this replaces.
+
+     Subtracts only the section's 1px bottom border — NOT the overshoot. The
+     overshoot is padding above the section's layout position, i.e. space that
+     is off-screen when the cover is flush at the top, so taking it out of the
+     content box would shrink the visible area by that much and push the rows
+     past the fold. (At a 96px overshoot that overflowed every viewport tested
+     below 1080px tall.) The content box is one full viewport; the overshoot
+     sits above it. */
+  min-height: calc(100vh - 1px);
+  min-height: calc(100lvh - 1px);
+  max-width: var(--shell);
+  margin-inline: auto;
+  /* The top value is now the ONLY thing setting how high the wordmark sits
+     (align-content is `start` below), so it is tightened from 4vh/2.75rem —
+     every pixel taken off here lifts the mark by the same amount. It keeps a
+     floor so the words never collide with the corner dot and ring, which are
+     positioned against the section at a comparable offset. */
+  padding: clamp(0.85rem, 2.4vh, 1.75rem) var(--s-5) clamp(1rem, 3vh, 2rem);
+  display: grid;
+  grid-template-rows: auto auto;
+  /* `start`, not `center`: the pair sits UP against the top padding rather than
+     floating in the middle of the viewport. Centring split the section's slack
+     evenly above and below the two rows, which held the wordmark lower than it
+     wants to be — the reference hangs its title near the top edge.
+
+     The leftover slack now collects at the BOTTOM of the section instead,
+     under the cards, which is where it is least visible. */
+  align-content: start;
+  /* The only separator between the wordmark and the cards. */
+  gap: clamp(1.25rem, 4vh, 3rem);
+}
+
+/* Corner marks from the reference: a small teal dot and an open ring. */
+.services__dot,
+.services__ring {
+  position: absolute;
+  /* Tracks the inner's top padding, which was tightened when the wordmark
+     moved up. These marks are positioned against the SECTION, not the inner,
+     so they do not follow it automatically — left at the old 4vh/2.5rem the
+     wordmark would have risen above them and crowded the ring. */
+  top: clamp(0.85rem, 2.4vh, 1.75rem);
+  z-index: 2;
+  border-radius: 50%;
+  pointer-events: none;
+}
+.services__dot {
+  left: var(--s-5);
+  width: 7px; height: 7px;
+  background: var(--accent-2);
+}
+.services__ring {
+  left: calc(var(--s-5) + 2.5rem);
+  width: clamp(34px, 4.5vh, 52px);
+  aspect-ratio: 1;
+  /* Brand teal — a decorative mark, which is exactly what --accent-2 is for,
+     and it pairs with the teal contour on WHAT beside it. */
+  border: 1px solid var(--accent-2);
+}
+
+/* --- THE WORDMARK ------------------------------------------------------- */
+
+/* A positioning canvas, not a text block. Its height is the type size, so the
+   three absolutely-placed words have a box to hang from. Overflow is visible
+   because WHAT deliberately bleeds off the left edge. */
+.services__wordmark {
+  /* The single size everything else derives from. Bounded by vw as well as vh,
+     because on a wide-but-short window a vh-only size stayed small while there
+     was plenty of width to fill.
+
+     History matters for this number. It was 26vh/15vw, which was too large;
+     it came down to 19vh/11.5vw, which was too small. This is the step back up
+     between them — NOT a return to 26, which would undo the reduction.
+
+     The room comes from the removed "also" row: that line and its rule were
+     taking ~40px plus a gap out of the section, and the height budget shows
+     119-323px of slack across tested viewports, so the wordmark can take a
+     share of it without threatening the one-viewport lock or shrinking the
+     cards, which keep their own min-height floor. */
+  --wm: clamp(4rem, min(22vh, 13vw), 12.5rem);
+
+  position: relative;
+  /* DO is offset 0.72em below WE and each word's box is 1em tall
+     (line-height:1 on .services__wInner), so the stack occupies 1.72em. */
+  height: calc(var(--wm) * 1.72);
+  margin: 0;
+  font-size: var(--wm);
+  letter-spacing: -0.02em;
+  text-transform: uppercase;
+
+  /* Clips the horizontal slide, exactly as the reference's .wwd__title does
+     with `overflow: hidden`. The words start pushed right by up to 120% of
+     their own width and must not be visible out there, nor widen the document.
+
+     X only, and via `clip` rather than `hidden`: WHAT sits at a negative left
+     offset and bleeds off the left edge by design, and `hidden` on one axis
+     forces the other to `auto`, which would add a scrollbar. `clip` leaves the
+     vertical axis genuinely visible so DO's drop is never cut. */
+  overflow-x: hidden;
+  overflow-x: clip;
+  overflow-y: visible;
+}
+
+/* NOT a mask any more.
+
+   The reference slides its words in HORIZONTALLY across the section and clips
+   them with `overflow: hidden` on the wordmark as a whole (.wwd__title in its
+   stylesheet), not with a per-word box. A per-word overflow would clip each
+   word against its own edge and cancel the horizontal travel entirely — the
+   words would simply appear in place.
+
+   So this is a bare positioned layer; the clipping lives on .services__wordmark
+   and the section. */
+.services__w {
+  position: absolute;
+  display: block;
+}
+/* line-height here rather than on the h2, so it is the words that set their own
+   box. Below ~1 the descender-free caps still get cropped visually. */
+.services__wInner {
+  display: block;
+  line-height: 1;
+  /* transform is animated every frame by the scrub; promoting the layer keeps
+     the largest type on the page off the main thread's paint path. */
+  will-change: transform;
+}
+
+/* WHAT — outline only, serif, hanging off the left edge and running widest.
+   -webkit-text-stroke is the only cross-browser way to get a hairline outline
+   on live text; paint-order keeps the stroke from eating the glyph interior.
+   Fraunces is already loaded for the site, so this costs no extra request. */
+.services__w--what {
+  left: -0.22em;   /* em, not vw — see the note on WE/DO below */
+  top: 0.38em;
+  /* TOP of the stack. WE sits BEHIND this word, so the outline's counters read
+     as windows onto the solid word passing behind it — the contour stays
+     unbroken and WE is what gets interrupted. With WHAT underneath (the
+     previous order) the solid WE simply covered the outline's stems and the
+     interlock was invisible. */
+  z-index: 3;
+  font-family: "Fraunces", var(--font-display);
+  /* Light weight, matching the reference's .title--cursive (font-weight:300).
+     Light is what lets the outline read as a drawn contour rather than a bold
+     shape with a hole in it. 300 is the bottom of the loaded range. */
+  font-weight: 300;
+  /* The reference also sets font-style:italic. NOT done here: our @font-face
+     declares `font-style: normal` and the woff2 carries no italic axis, so
+     `italic` would make the browser SYNTHESISE an oblique — a mechanical
+     slant that looks visibly wrong on a high-contrast serif at this size.
+     The lean is a skew on THIS element instead — the outer positioned layer,
+     never the inner span, because GSAP animates the inner span's transform
+     every frame and would overwrite it. The angle is explicit and tunable. */
+  transform: skewX(-11deg);
+  font-size: 1.06em;
+  letter-spacing: 0.02em;
+  /* OPAQUE WHITE FILL, not transparent — and this is what makes the new stack
+     order work rather than just look broken.
+
+     WHAT is the TOP layer with WE behind it. Left transparent, blue WE would
+     show through every counter and bowl of W-H-A-T, turning the outline into a
+     blue-filled word. The reference does exactly this and for the same
+     reason: .title--cursive sets `color: var(--c-font-secondary)` = #fff with
+     a contrasting stroke, so the glyph interiors are opaque page-ground and
+     only the letter SHAPES interrupt the word behind.
+
+     Tied to the section ground via the shared token, so the two cannot drift
+     apart — a fill even slightly off the ground shows as pale boxes. */
+  color: var(--services-ground);
+
+  /* TEAL — --accent-2-ink, the palette's teal-as-text value at 4.93:1 on white.
+
+     Not the raw --accent-2: that measures 2.68:1 and the palette reserves it
+     for decoration only, never letterforms. An outlined word is still a word a
+     sighted reader has to read, so it gets no decoration exemption.
+
+     Stroke width in em, so the outline scales with the type — a fixed 1px
+     looked hairline-thin on a 1920 viewport and heavy on a small laptop.
+
+     Remember only the OUTER half of this value is visible: text-stroke straddles
+     the glyph edge and the opaque fill covers everything inside it. So 0.014em
+     paints roughly a 1.7px contour at the desktop size (240px type) and about
+     1.1px at the smallest (151px) — a hairline that still survives at the
+     bottom of the range. 0.028em was double this and read as a drawn band
+     rather than a contour.
+
+     max() puts a 2px floor under it. At the mobile --wm (~72px) the em value
+     alone computes to ~1px declared = 0.5px visible, which browsers rasterise
+     unevenly and shows as a contour that fades in and out along a curve. 2px
+     declared keeps a full visible pixel everywhere.
+
+     Written as LONGHANDS, not the `-webkit-text-stroke` shorthand: that
+     shorthand is a legacy prefixed property and math functions inside it are
+     not reliably parsed, which would drop the whole declaration and leave the
+     word with no outline at all. The plain-em line below comes first as the
+     fallback for anything that cannot parse max() in the width longhand. */
+  -webkit-text-stroke-color: var(--accent-2-ink);
+  -webkit-text-stroke-width: 0.014em;
+  -webkit-text-stroke-width: max(2px, 0.014em);
+  /* fill FIRST, then stroke on top. The default `stroke fill` would paint the
+     white fill over the stroke's inner half and thin the contour further. */
+  paint-order: fill stroke;
+}
+
+/* WE and DO are positioned in em, NOT in %.
+
+   This matters: --wm is driven by vh, so the type shrinks on a short viewport
+   while a percentage left offset stays pegged to WIDTH. The words then drift
+   apart and DO stops overlapping WE — the composition comes apart at
+   1366x768 and 1440x680 exactly. In em, every offset shrinks with the
+   glyphs, so the interlock is identical at every size. */
+
+/* THE COLOUR PROGRESSION.
+
+     WHAT   teal outline    --accent-2-ink    4.93:1 on white
+     WE     brand blue      --accent          7.91:1 on white
+     DO     brand blue      --accent          7.91:1 on white
+
+   WE and DO share the one blue, so the two solid words read as a single
+   two-line statement with the teal contour laid across them. The teal is the
+   only other hue in the lockup, which keeps it to two colours rather than the
+   three-hue version this replaced.
+
+   --text-primary is deliberately NOT used for either: it is a near-neutral
+   #142231 tuned for reading copy, and at 240px it reads as grey rather than as
+   brand colour. Both blues clear AA for body text, which large display type
+   needs only 3:1 for. */
+
+/* WE — solid, heavy, passing BEHIND the outlined WHAT. Bottom of the stack, so
+   WHAT's contour crosses over it unbroken. Brand blue, the same as DO. */
+.services__w--we {
+  left: 1.55em;    /* ~ WHAT's second letter */
+  top: 0;
+  z-index: 1;
+  font-family: var(--font-display);
+  font-weight: 800;
+  color: var(--accent);
+}
+
+/* DO — solid, dropped down and right so it overlaps WE's baseline. */
+.services__w--do {
+  left: 2.85em;    /* inside WE's right edge, so the two interlock */
+  top: 0.72em;
+  z-index: 2;
+  font-family: var(--font-display);
+  font-weight: 800;
+  /* Brand blue, matching WE — the two solids are one statement. */
+  color: var(--accent);
+}
+
+/* NOTE: the words have NO hidden start state here.
+
+   They no longer need one. The reveal is horizontal now, and the words start
+   pushed to the right OUTSIDE the wordmark's overflow clip — so the clip
+   itself hides them, and the very first thing services.js does is gsap.set()
+   them into that off-stage position. There is nothing to un-hide.
+
+   Declaring visibility:hidden here as well would be actively wrong: the tween
+   is scroll-SCRUBBED, not played once, so there is no onStart moment at which
+   to clear it. */
+
+/* The top-right paragraph. Positioned against the wordmark row so it holds the
+   reference's slot without a second grid column. */
+.services__lede {
+  position: absolute;
+  top: 0;
+  right: 0;
+  z-index: 4;
+  max-width: 24ch;
+  margin: 0;
+  font-size: clamp(0.8rem, 1.7vh, 1rem);
+  line-height: 1.45;
+  color: var(--text-secondary);
+}
+@media (max-width: 900px) {
+  /* Below the wordmark instead of beside it — at this width the words fill the
+     full measure and an overlapping paragraph becomes unreadable. */
+  .services__lede { position: static; max-width: 40ch; margin-top: var(--s-4); }
+}
+
+/* --- THE CARDS ---------------------------------------------------------- */
+
+/* Four across, matching the reference's four ruled columns. */
+.services__grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  /* Tighter gutters than before. The cards are the substance of this section,
+     so at a fixed total width every pixel taken out of the gutter goes into
+     the panes themselves. */
+  gap: clamp(0.5rem, 1.1vw, 0.9rem);
+
+  /* THE CARDS' HEIGHT, claimed rather than inherited.
+     .services__inner distributes its slack with space-between, which puts
+     every spare pixel into the GAPS between the three rows — so shrinking the
+     wordmark above would otherwise just have opened a bigger void, leaving the
+     cards exactly the size their copy wrapped to.
+
+     This floor is what converts that freed height into card. It is a min, not
+     a height: a card whose copy needs more than this still takes more, so the
+     row can never clip its own text.
+
+     Bounded by 46vh so the section keeps its one-viewport promise on a short
+     laptop — at 768px tall that resolves to ~353px, which the wordmark, lede
+     and "also" rule still fit around. */
+  min-height: clamp(13rem, 38vh, 21rem);
+
+  /* stretch, so all four panes are the same height whatever their copy does.
+     Ragged-bottomed cards read as broken rather than deliberate. */
+  align-items: stretch;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* The card keeps the reference's CONSTRUCTION — a soft-cornered pane lit by a
+   gradient bleeding out of one corner — but in the pale end of our palette
+   rather than the screenshot's dark body. Three layers, each behaving
+   differently:
+
+     1. the tinted body         .service background-color
+     2. the corner glow         .service::before  (brand blue -> teal, top-left)
+     3. the bottom fade         .service::after   (the body tint again, so the
+                                scope list settles into the card the way the
+                                reference's last paragraph does)
+
+   The reference's glow is orange because its brand is orange. Ours is the two
+   brand hues in sequence — --accent blue nearest the corner, --accent-2 teal
+   spilling out of it — so the card reads as MedShield rather than as a copy of
+   the screenshot.
+
+   Because the body is light, every alpha in the stack had to come down with
+   it: on a pale ground the same values that read as "lit" on navy read as
+   "muddy". The glow is roughly a third of its dark-card strength. */
 .service {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  min-height: 0;
   display: flex;
   flex-direction: column;
-  padding: var(--s-6);
-  background: var(--surface-raised);
-  border: 1px solid var(--border);
-  border-top: 3px solid var(--accent-2-ink);
-  border-radius: var(--radius);
-}
-.service__num {
-  font-family: var(--font-display);
-  font-size: var(--t-small);
-  font-weight: 700;
-  letter-spacing: 0.1em;
-  color: var(--text-muted);
-  margin-bottom: var(--s-3);
-}
-.service__title {
-  font-size: var(--t-h3);
-  font-weight: 700;
-  margin-bottom: var(--s-4);
-}
-/* The "You get" line is the commercial promise — it outranks the description. */
-.service__get {
-  font-size: var(--t-body);
-  font-weight: 600;
-  color: var(--text-primary);
-  background: var(--success-bg);
-  border-left: 3px solid var(--accent-2-ink);
-  padding: var(--s-3) var(--s-4);
-  border-radius: 0 var(--radius) var(--radius) 0;
-  margin-bottom: var(--s-4);
-}
-.service__getLabel { color: var(--accent-2-ink); }
-.service__body { color: var(--text-secondary); max-width: 52ch; }
+  /* Roomier than the old glass pane, and roomier again now that the wordmark
+     has given height back. The reference's padding is what gives the figure
+     air; a tight card makes the glow look like a border artefact. */
+  padding: clamp(1.15rem, 3.1vh, 2rem);
+  /* The reference's defining shape: a large, soft, near-squircle radius, not
+     the page's 8px utility corner. In vh so it tracks the card's own height. */
+  border-radius: clamp(16px, 3vh, 26px);
 
-.services__also {
-  margin-top: var(--s-6);
-  padding-top: var(--s-5);
-  border-top: 1px solid var(--border);
-  color: var(--text-secondary);
-  max-width: var(--measure);
+  /* The base the gradients are mixed over. --surface-raised (#FEFEFF) rather
+     than the cooler --surface-sunken it replaced: the two gradient layers now
+     supply all of the card's colour, and a grey base under them dulled the
+     teal. A near-white base keeps the brand hues clean, and the card still
+     separates from the section's pure-white ground because the gradients tint
+     it everywhere. */
+  background-color: var(--surface-raised);
+  /* A navy hairline at low alpha. On a light body the edge has to be DARKER
+     than the fill to exist at all — the white hairline the dark card used
+     would be invisible here. */
+  border: 1px solid rgb(var(--surface-deep-rgb) / 0.10);
+  /* Softer and shallower than the dark card's drop: a pale pane sitting in a
+     heavy shadow reads as cut out and pasted on. The inset top highlight is
+     what gives the light body its slight lift. */
+  box-shadow:
+    0 12px 28px -10px rgb(var(--surface-deep-rgb) / 0.16),
+    0 2px 6px rgb(var(--surface-deep-rgb) / 0.06),
+    inset 0 1px 0 rgb(255 255 255 / 0.9);
 }
-.services__also strong { color: var(--text-primary); }
+
+/* THE GLOW. An off-card radial centred past the top-left corner, so what shows
+   inside the card is the gradient's flank — the reference's light comes from
+   outside the frame, which is why it has no visible hot spot.
+
+   TWO gradients, not one, and this is what keeps colour in the whole body:
+
+     1. the corner bloom — brand blue into teal, strongest at the top-left,
+        now running to 100% instead of dying at 84%. Stopping it short was what
+        left the lower third of the card reading as flat white.
+
+     2. a full-card wash — a linear teal-to-blue diagonal at low alpha under
+        the bloom. A radial alone can only ever be strong in one place; the
+        wash is what gives the far corner a tint to fade INTO, so the body
+        stays coloured edge to edge rather than falling off to the bare
+        surface token.
+
+   Layer order is painting order: the bloom is listed first and therefore sits
+   on top of the wash. */
+.service::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  /* z-index 0, not -1. The card creates its own stacking context
+     (isolation:isolate), so a negative index would paint the glow BEHIND the
+     card's own background-color and it would never be seen. 0 puts it above
+     the fill and below the content, which is at z-index:1. */
+  z-index: 0;
+  pointer-events: none;
+  background:
+    /* 1. the corner bloom */
+    radial-gradient(
+      ellipse 145% 125% at 6% -14%,
+      rgb(var(--accent-rgb) / 0.40) 0%,
+      rgb(var(--accent-rgb) / 0.28) 20%,
+      rgba(32, 176, 168, 0.22) 45%,
+      rgba(32, 176, 168, 0.13) 68%,
+      rgba(32, 176, 168, 0.07) 100%
+    ),
+    /* 2. the full-card wash — teal at the top-left corner through to brand
+       blue at the bottom-right, so the two hues bracket the whole pane. */
+    linear-gradient(
+      152deg,
+      rgba(32, 176, 168, 0.14) 0%,
+      rgba(32, 176, 168, 0.08) 38%,
+      rgb(var(--accent-rgb) / 0.09) 72%,
+      rgb(var(--accent-rgb) / 0.14) 100%
+    );
+}
+
+/* THE FADE. A pale veil across the card's foot, so the scope list — the
+   smallest, quietest type on the pane — is not fighting the gradient for
+   legibility. On a light body it has to be the PALE surface, not navy: a navy
+   veil here would darken the foot into a bruise rather than calming it.
+
+   Deliberately WEAKER and SHORTER than it was (0.94 over 46% of the card).
+   At those values it was erasing the gradient across nearly half the pane,
+   which is most of why the body read as white. At 0.55 over 34% it takes the
+   edge off the wash under the list and leaves the colour visible through it —
+   the list ink is --text-secondary at 8.3:1, which has plenty of headroom for
+   a tinted rather than white ground. */
+.service::after {
+  content: "";
+  position: absolute;
+  inset-inline: 0;
+  bottom: 0;
+  height: 34%;
+  /* Above the glow (0) so it can veil the glow's spill as well as the fill,
+     still below the content (1). */
+  z-index: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    to bottom,
+    rgb(250 251 252 / 0),
+    rgb(250 251 252 / 0.34) 55%,
+    rgb(250 251 252 / 0.55)
+  );
+}
+
+/* The number becomes the reference's outlined pill in the card's top row —
+   the one element up there that is a shape rather than text. Teal outline,
+   teal ink: --accent-2-ink is the palette's teal-as-TEXT value, 4.8:1 on the
+   light ground. Not the raw --accent-2, which the palette reserves for rules
+   and marks and which measures 2.68:1 — too low for a label. */
+.service__num {
+  align-self: flex-start;
+  font-family: var(--font-display);
+  font-size: clamp(0.6rem, 1.25vh, 0.72rem);
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  color: var(--accent-2-ink);
+  margin: 0 0 clamp(0.9rem, 2.4vh, 1.6rem);
+  padding: 0.35em 0.85em;
+  /* rgba() with the COMMA-separated channel token — --rgb-accent-2 is stored
+     as "32, 176, 168", so the slash-alpha rgb() form would not parse. */
+  border: 1px solid rgba(var(--rgb-accent-2), 0.5);
+  border-radius: 999px;
+  /* NEARLY OPAQUE, and that is a contrast requirement rather than a style
+     choice. The pill sits in the top-left corner — precisely where the bloom
+     is densest — and against that ground the teal label measures 2.26:1. The
+     pill therefore carries its own near-white ground so the label is read
+     against THAT (4.6:1) instead of against the gradient. A translucent chip
+     here is the one thing on the card the glow is not allowed to reach. */
+  background: rgb(255 255 255 / 0.93);
+}
+
+/* The oversized figure line. In the reference this is the one element the eye
+   lands on first, so it takes the biggest jump in the card's type scale.
+   Brand navy at full strength on the pale body. */
+.service__title {
+  font-family: var(--font-display);
+  font-size: clamp(1.1rem, 2.7vh, 1.6rem);
+  font-weight: 700;
+  line-height: 1.12;
+  letter-spacing: -0.015em;
+  color: var(--surface-deep);
+  margin: 0 0 clamp(0.45rem, 1.2vh, 0.75rem);
+}
+/* The promise line. Still no teal rule — weight and ink carry the hierarchy,
+   which is how the reference separates its two paragraphs, and a rule would
+   now compete with the pill above it. */
+.service__get {
+  font-size: clamp(0.78rem, 1.7vh, 0.95rem);
+  font-weight: 600;
+  line-height: 1.4;
+  color: var(--surface-deep);
+  margin: 0 0 clamp(0.5rem, 1.4vh, 0.9rem);
+}
+/* The scope list replaces the old body paragraph: same information, scannable,
+   and it costs a predictable number of lines instead of a variable wrap.
+   margin-top:auto pins it to the card's bottom so all four align. */
+/* margin-top:auto pins the list to the bottom of the pane, so the four cards'
+   rule-sets align on a common baseline however long their titles wrap. The
+   panes are equal-height siblings (align-items:stretch), and any slack is
+   small now that the row is auto-sized — so this aligns rather than leaving
+   the big mid-card dead band the 1fr row used to produce. */
+.service__list {
+  margin: auto 0 0;
+  padding: 0;
+  list-style: none;
+  font-size: clamp(0.72rem, 1.6vh, 0.88rem);
+  line-height: 1.5;
+  /* The footnote tier of the reference's card. --text-secondary is 8.3:1 on
+     the light ground — quiet, but it is the ONLY thing carrying each service's
+     scope, so it does not get pushed below AA the way the reference's does. */
+  color: var(--text-secondary);
+}
+.service__list li {
+  padding-top: 0.3em;
+  /* An alpha rule, not --border: it sits on a tinted pane under the fade
+     veil, so a solid hairline would read heavier here than on the page. */
+  border-top: 1px solid rgb(var(--surface-deep-rgb) / 0.11);
+}
+.service__list li + li { margin-top: 0.3em; }
+
+/* The travelling highlight, parked off the left edge until JS sweeps it. */
+.service__sheen {
+  position: absolute;
+  inset-block: 0;
+  left: 0;
+  width: 50%;
+  z-index: 0;
+  opacity: 0;
+  pointer-events: none;
+  /* Back up now that the pane is pale again — but not to the old 0.72, which
+     was tuned against a translucent card with page white showing through. On
+     this tinted body 0.55 is enough to read as a highlight crossing the
+     surface without blowing the card out to flat white mid-sweep. */
+  background: linear-gradient(
+    100deg,
+    transparent,
+    rgb(255 255 255 / 0.55) 50%,
+    transparent
+  );
+  transform: translateX(-140%) skewX(-14deg);
+}
+/* Real content sits above the sheen — and above both gradient pseudo-layers,
+   which are at z-index:-1 inside the card's own stacking context. */
+.service > :not(.service__sheen) { position: relative; z-index: 1; }
+
+/* Cards' resting state while JS drives the entrance. */
+.services--live .service { opacity: 0; }
+
+/* --- narrow viewports --------------------------------------------------- */
+
+/* Four glass cards cannot hold readable copy side by side under ~900px, and
+   the 100vh lock means they cannot stack either — a 4-row stack would need
+   ~180vh. So below 900px the section releases the fixed height and becomes a
+   normal 2-up (then 1-up) block. Honouring 100vh here would mean unreadable
+   6-point type; the height lock is a desktop composition, not a mobile one. */
+@media (max-width: 900px) {
+  .services {
+    /* Releases the one-viewport floor: four readable cards cannot share a
+       phone viewport, so the section becomes an ordinary block that takes the
+       height its content needs. The overshoot goes too — there is no pinned
+       cover to hide a seam against at this width (doubts.js releases the pull
+       with the composition), and leaving it would pull the section 4px up
+       under the previous one. */
+    --overshoot: 0px;
+    min-height: 0;
+    overflow: visible;
+    padding-block: var(--section-y);
+  }
+  .services__inner { min-height: 0; display: block; }
+  .services__wordmark {
+    --wm: clamp(3rem, 13vw, 6rem);
+    height: calc(var(--wm) * 1.7);
+  }
+  .services__grid {
+    grid-template-columns: repeat(2, 1fr);
+    margin-top: var(--s-6);
+    /* Releases the desktop card-height floor. That value sizes ONE row of four;
+       here the rows stack, so it would apply to the whole two-row column and
+       leave a tall void under the copy. Stacked cards take the height their
+       own copy needs. */
+    min-height: 0;
+  }
+}
+@media (max-width: 560px) {
+  .services__grid { grid-template-columns: 1fr; }
+  /* WHAT stops bleeding off-screen at phone widths — a half-clipped outline
+     word reads as a rendering bug rather than a deliberate crop. */
+  .services__w--what { left: 0; }
+  .services__ring { display: none; }
+}
+
+/* Reduced motion: the glass, the layered wordmark and the white ground all
+   stay. Only the movement goes. */
+@media (prefers-reduced-motion: reduce) {
+  .services--live .service { opacity: 1; }
+  /* No transform at all: the words sit at their resting xPercent:0 positions.
+     services.js returns before writing any start state under reduced motion. */
+  .services--live .services__wInner { transform: none; }
+  .service__sheen { display: none; }
+}
 
 /* --- 05 How a case runs ------------------------------------------------- */
 
