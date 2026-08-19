@@ -351,9 +351,24 @@
        cards touching the picture's edges, and a margin there is precisely what
        made this read as a small panel floating in a slot rather than as the
        cards being forced apart BY the picture. */
+    /* The compact cap is READ from the stylesheet rather than repeated here.
+       It used to be a literal 460 matching the `min(100%, 460px)` in the
+       band's grid-template-rows, with a comment on both sides asking whoever
+       changed one to change the other. That cap is now per-breakpoint
+       (--doubts-cap: 380px on small phones, 620px on tablets), so a duplicated
+       constant would be wrong at two widths out of three — and wrong silently,
+       since the symptom is only that the picture stops growing. Reading the
+       property keeps the single definition in the place the band already uses.
+
+       The fallback matches the stylesheet's own default for the same reason. */
+    var capProp = parseFloat(
+      getComputedStyle(grid).getPropertyValue('--doubts-cap')
+    );
+    if (!isFinite(capProp) || capProp <= 0) capProp = 460;
+
     var fullW = wide
       ? centreSeam() + effectivePush() * 2
-      : Math.min(fw * 0.86, 460);
+      : Math.min(fw * 0.86, capProp);
 
     /* On the compact layout the picture must not outgrow the empty grid row
        reserved for it, or it grows back over the cards the row exists to keep

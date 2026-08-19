@@ -356,53 +356,53 @@
      abut on one identical value. */
   --grad-rise: linear-gradient(
     180deg,
-    #FAFBFC 0%,
-    #F5F9FC 2.1739%,
-    #F1F6FC 4.3478%,
-    #ECF4FB 6.5217%,
-    #E8F1FA 8.6957%,
-    #E3EEFA 10.8696%,
-    #DDECFA 13.0435%,
-    #D9E9F9 15.2174%,
-    #D5E6F7 17.3913%,
-    #D1E3F5 19.5652%,
-    #CCE0F4 21.7391%,
-    #C8DDF2 23.913%,
-    #C3DAF0 26.087%,
-    #BFD7EF 28.2609%,
-    #BAD3ED 30.4348%,
-    #B5D0EB 32.6087%,
-    #B0CDE9 34.7826%,
-    #ABC9E7 36.9565%,
-    #A5C5E5 39.1304%,
-    #9FC2E3 41.3043%,
-    #99BEE1 43.4783%,
-    #92BADF 45.6522%,
-    #8BB7DD 47.8261%,
-    #84B2DB 50%,
-    #7EAED8 52.1739%,
-    #78A9D5 54.3478%,
-    #71A5D3 56.5217%,
-    #6AA0D0 58.6957%,
-    #639ACC 60.8696%,
-    #5A95C9 63.0435%,
-    #518FC6 65.2174%,
-    #4C8BC3 67.3913%,
-    #4687C0 69.5652%,
-    #3F83BD 71.7391%,
-    #397EBA 73.913%,
-    #357AB5 76.087%,
-    #3176B0 78.2609%,
-    #2D72AB 80.4348%,
-    #296EA6 82.6087%,
-    #246AA1 84.7826%,
-    #1F669B 86.9565%,
-    #1A6296 89.1304%,
-    #165E92 91.3043%,
-    #125B8E 93.4783%,
-    #0D588A 95.6522%,
-    #095588 97.8261%,
-    #075486 100%
+    #FAFBFC 0px,
+    #F5F9FC 10px,
+    #F1F6FC 20px,
+    #ECF4FB 30px,
+    #E8F1FA 40px,
+    #E3EEFA 50px,
+    #DDECFA 60px,
+    #D9E9F9 70px,
+    #D5E6F7 80px,
+    #D1E3F5 90px,
+    #CCE0F4 100px,
+    #C8DDF2 110px,
+    #C3DAF0 120px,
+    #BFD7EF 130px,
+    #BAD3ED 140px,
+    #B5D0EB 150px,
+    #B0CDE9 160px,
+    #ABC9E7 170px,
+    #A5C5E5 180px,
+    #9FC2E3 190px,
+    #99BEE1 200px,
+    #92BADF 210px,
+    #8BB7DD 220px,
+    #84B2DB 230px,
+    #7EAED8 240px,
+    #78A9D5 250px,
+    #71A5D3 260px,
+    #6AA0D0 270px,
+    #639ACC 280px,
+    #5A95C9 290px,
+    #518FC6 300px,
+    #4C8BC3 310px,
+    #4687C0 320px,
+    #3F83BD 330px,
+    #397EBA 340px,
+    #357AB5 350px,
+    #3176B0 360px,
+    #2D72AB 370px,
+    #296EA6 380px,
+    #246AA1 390px,
+    #1F669B 400px,
+    #1A6296 410px,
+    #165E92 420px,
+    #125B8E 430px,
+    #0D588A 440px,
+    #095588 450px,
+    #075486 460px
   );
 
 
@@ -418,44 +418,14 @@
      the whole page. The hero opts in; nothing else does. */
   --font-editorial: "Archivo", "Helvetica Neue", "Segoe UI", Arial, sans-serif;
 
-  /* Fluid scale, 390px → 1440px. clamp() keeps mobile a real edit.
-
-     CALIBRATED AGAINST SECTIONS 01-03. The hero, the proof strip and the
-     about statement were typeset first and are the approved reference for
-     how large type reads on this page; every rung below is taken from a
-     measured value in one of them rather than from an abstract ratio, so
-     sections 04-10 land at the same optical size as the top of the page:
-
-       --t-display  .about__display   (was clamp(1.9rem → 4.2rem))
-       --t-fig      .proof__figure    (was clamp(2.6rem → 4.6rem))
-       --t-lede     .proof__lede      (was clamp(0.95rem → 1.15rem))
-       --t-label    .proof__label     (was clamp(0.8rem → 0.95rem))
-       --t-eyebrow  .about__eyebrow / .hero__label
-       --t-micro    .hero__cta / .hero__cta-alt
-
-     --t-h2 was the biggest offender: it capped at 2.85rem while the two
-     display lines above it ran to 4.2rem, so every section title from 04
-     down read a full step smaller than the page it belonged to. */
-
-  /* Display statement — the about-style full-width sentence. */
-  --t-display: clamp(1.90rem, 0.90rem + 4.10vw, 4.20rem);
-  /* Hero-weight headline / section titles. Now one notch under --t-display
-     rather than two, so a section title sits in the same family as the
-     statements above it. */
+  /* Fluid scale, 390px → 1440px. clamp() keeps mobile a real edit. */
   --t-hero:  clamp(2.15rem, 1.30rem + 3.60vw, 4.30rem);
   --t-h2:    clamp(1.70rem, 1.20rem + 2.10vw, 2.85rem);
   --t-h3:    clamp(1.15rem, 1.02rem + 0.55vw, 1.42rem);
   --t-fig:   clamp(2.30rem, 1.60rem + 2.90vw, 3.90rem);
-  /* Supporting paragraph — proof__lede exactly. Note this is SMALLER than
-     the old --t-lede: the reference sections set their supporting copy
-     quieter than their body measure, not louder. */
   --t-lede:  clamp(1.06rem, 0.98rem + 0.42vw, 1.30rem);
   --t-body:  clamp(1.00rem, 0.96rem + 0.20vw, 1.09rem);
-  /* Captions under figures, list meta — proof__label exactly. */
-  --t-label: clamp(0.80rem, 0.74rem + 0.30vw, 0.95rem);
   --t-small: 0.875rem;
-  /* Tracked uppercase markers — about__eyebrow / hero__label. */
-  --t-eyebrow: 0.8125rem;
   --t-micro: 0.75rem;
 
   /* Space */
@@ -1206,7 +1176,7 @@ textarea:focus-visible,
      lines at this tracking. At span 4 it broke to three, which turned a
      corner annotation into a paragraph. */
   grid-column: 1 / span 4;
-  font-size: var(--t-eyebrow);
+  font-size: 0.8125rem;
   font-weight: 500;
   letter-spacing: 0.055em;
   text-transform: uppercase;
@@ -1229,7 +1199,7 @@ textarea:focus-visible,
   /* Same small uppercase treatment as the left label — in the reference both
      annotations are the same size and case. A larger sentence-case line here
      read as a subtitle rather than as the matching half of a pair. */
-  font-size: var(--t-eyebrow);
+  font-size: 0.8125rem;
   font-weight: 500;
   line-height: 1.45;
   letter-spacing: 0.055em;
@@ -1427,7 +1397,7 @@ html.hero-ready .hero__char {
    target on a moving vessel is a hard WCAG 2.5.5 floor. */
 .hero__cta {
   font-family: var(--font-editorial);
-  font-size: var(--t-micro);
+  font-size: 0.75rem;
   font-weight: 500;
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -1444,7 +1414,7 @@ html.hero-ready .hero__char {
   align-items: center;
   gap: 0.45rem;
   min-height: 44px;
-  font-size: var(--t-micro);
+  font-size: 0.75rem;
   font-weight: 400;
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -1908,7 +1878,7 @@ html.hero-ready .hero__foot    { transition-delay: 1.15s; }
 /* Centred, quiet, uppercase — the reference's section marker. */
 .about__eyebrow {
   text-align: center;
-  font-size: var(--t-eyebrow);
+  font-size: var(--t-small);
   font-weight: 600;
   letter-spacing: 0.14em;
   text-transform: uppercase;
@@ -1929,7 +1899,7 @@ html.hero-ready .hero__foot    { transition-delay: 1.15s; }
   margin: 0;
   text-align: center;
   font-family: var(--font-display);
-  font-size: var(--t-display);
+  font-size: clamp(1.9rem, 0.9rem + 4.1vw, 4.2rem);
   font-weight: 500;
   line-height: 0.98;
   letter-spacing: -0.04em;
@@ -2364,11 +2334,7 @@ main {
   /* The brand teal itself — the same --accent-2 the proof figures, service
      rules and step numbers use, here as a full ground.
 
-     ⚠ ACCESSIBILITY EXCEPTION — WHITE ON BRAND TEAL, BY REQUEST.
-     The ground is now a gradient (see `background` below) rather than a flat
-     #20B0A8, so the figures here describe its LIGHTEST end — the worst case,
-     at the top-left. The deep end under the form measures around 5.5:1 and
-     clears AA on its own.
+     ⚠ ACCESSIBILITY EXCEPTION — WHITE ON RAW BRAND TEAL, BY REQUEST.
      Pure white measures 2.68:1 on #20B0A8, against a 4.5:1 WCAG AA minimum
      for body text and 3:1 for large text and UI boundaries. Nothing in this
      panel meets AA. The colour system marks raw --accent-2 decoration-only
@@ -2390,45 +2356,7 @@ main {
 
      Everything inside paints with the --pnl-* variables below rather than
      naming a ramp directly, so the section can be re-grounded from here. */
-  /* Not a flat fill of raw teal. A flat #20B0A8 panel reads as a solid slab
-     of one hue with nothing behind it, and the white type sits on it at a
-     uniform 2.68:1 with no relief anywhere.
-
-     The ramp is deliberately NAVY-DOMINANT rather than teal-dominant. Teal
-     survives only as the top-left corner where the eyebrow and title sit —
-     the brand note the section opens on — and the panel then travels through
-     a teal-navy blend into --surface-deep-hi and --surface-deep itself, so
-     the body of the block belongs to the same navy family as the header, the
-     hero overlay and the closing band rather than standing apart as a teal
-     slab. Roughly the last two thirds of the panel, including every form
-     control, is navy.
-
-     Every stop is on the straight line between --accent-2 and
-     --surface-deep, which is what keeps the transition subtle: it is one
-     colour draining toward another already in the system, not two colours
-     meeting. #1A8E96 and #0F5F74 are that mix at about a third and two
-     thirds; #063E63 sits just under --surface-deep-hi.
-
-     The ink improves the whole way down. White is 2.68:1 on the teal corner,
-     past 4.5:1 by the midpoint and around 15:1 on the navy end, so the
-     fields, their underlines and the small print all land on the legible
-     half of the panel.
-
-     The radial is the soft top-left lift, low-alpha so it reads as light
-     falling across the panel rather than as a second colour. --accent-2
-     stays the final fallback so a browser that chokes on the stack gets the
-     old flat ground rather than nothing. */
   background: var(--accent-2);
-  background:
-    radial-gradient(110% 95% at 4% 0%,
-      rgba(255, 255, 255, 0.09) 0%,
-      rgba(255, 255, 255, 0) 55%),
-    linear-gradient(152deg,
-      var(--accent-2) 0%,
-      #1A8E96 22%,
-      #0F5F74 46%,
-      #063E63 72%,
-      var(--surface-deep) 100%);
 
   /* --- Panel ink, resolved once ---------------------------------------
      One tier only. See the exception note above for why the secondary and
@@ -2449,15 +2377,7 @@ main {
   --pnl-warning-bg: transparent;
   --pnl-rule:       #FFFFFF;
   --pnl-veil:       rgba(255, 255, 255, 0.22);
-  /* Stands in for "the panel ground behind this control" in two places: the
-     opaque bar Chrome paints over an autofilled input, and the dot punched
-     out of a checked checkbox. Both sit in the FORM, which the navy-dominant
-     gradient reaches well before its teal corner — so this is navy now.
-     Left at teal it flashed a bright teal bar across an otherwise navy
-     field on autofill, and put a teal pip inside every checked box.
-     --surface-deep-alt rather than --surface-deep so it reads as a shade
-     against the ground instead of a hole in it. */
-  --pnl-autofill:   var(--surface-deep-alt);
+  --pnl-autofill:   #20B0A8;
 
   color: var(--pnl-ink-2);
   will-change: width;
@@ -2510,7 +2430,7 @@ main {
    brief — clinical, not a poster — while still being the largest thing in
    the panel and clearly the statement the form answers to. */
 .contact__title {
-  font-size: var(--t-h2);
+  font-size: clamp(1.45rem, 1.05rem + 1.55vw, 2.35rem);
   font-weight: 700;
   line-height: 1.14;
   letter-spacing: -0.015em;
@@ -2658,22 +2578,14 @@ main {
 .field select {
   appearance: none;
   color: var(--pnl-ink);
-  /* A navy veil USED to be the right call here: when the panel was flat
-     teal, darkening was the only direction that did not push white ink
-     further under AA, and it bought these three controls 4.65:1.
-
-     The panel ground is now navy-dominant by the time it reaches the form,
-     so a navy veil has almost nothing left to darken — the well would sink
-     into the ground and the select would lose the one cue that separates it
-     from the bare-underline text fields.
-
-     A faint WHITE veil is what reads on this ground, and the contrast
-     objection no longer applies: white ink measures around 15:1 on the navy
-     end, so lifting the well a few percent costs nothing legibility can
-     notice while restoring the affordance. It still reads as a well rather
-     than a smudge because the rounded top and the underline below it do the
-     shaping. */
-  background-color: rgba(255, 255, 255, 0.07);
+  /* A NAVY veil, not a white one. The obvious choice for a "well" on a
+     coloured panel is white at low alpha, but that lightens the ground under
+     white type and drops it from 2.68:1 to 2.43:1 — the wrong direction on a
+     panel already under AA. Navy darkens instead, so these three controls
+     become the only ones in the form that genuinely clear AA: 4.65:1 at
+     rest, 5.4:1 on hover. It also reads as a deeper well rather than a
+     lighter smudge, which is the more convincing affordance. */
+  background-color: rgba(var(--rgb-deep), 0.32);
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8' fill='none' stroke='%23ffffff' stroke-width='1.75' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M1 1.5 6 6.5 11 1.5'/%3E%3C/svg%3E");
   background-position: right 0.7rem center;
   background-size: 11px 8px;
@@ -2685,11 +2597,10 @@ main {
   border-radius: var(--radius) var(--radius) 0 0;
   transition: background-color 0.16s ease, border-color 0.16s ease;
 }
-/* Lift on interaction — same direction as the rest state, so the control
-   grows more present as you engage with it. Small steps: the whole veil is
-   only a few percent, so the change should be felt rather than seen. */
-.field select:hover { background-color: rgba(255, 255, 255, 0.11); }
-.field select:focus { background-color: rgba(255, 255, 255, 0.14); }
+/* Deepen on interaction — same direction as the rest state, so the text gets
+   MORE contrast as you engage with the control, not less. */
+.field select:hover { background-color: rgba(var(--rgb-deep), 0.40); }
+.field select:focus { background-color: rgba(var(--rgb-deep), 0.46); }
 
 /* The open dropdown list is painted by the OS, not by the panel, so it does
    not inherit any of the panel's colour — left alone it is the default white
@@ -2993,16 +2904,7 @@ main {
   position: relative;
   background-color: #00100F;
   background-image: var(--grad-deep), var(--grad-rise);
-  /* SEAM. The two layers meet at y = --footer-rise. Both end/begin on the
-     identical #075486, but background-size rounds each layer independently on
-     a fractional footer height, so the boundary row could land half-way and
-     antialias into a 1px hairline. The deep layer is grown 1px upward and the
-     rise layer 1px downward, so the layers OVERLAP by a pixel on a colour they
-     already share — whichever way the rounding falls, the row underneath is
-     the same value and no line can show. */
-  background-size:
-    100% calc(100% - var(--footer-rise) + 1px),
-    100% calc(var(--footer-rise) + 1px);
+  background-size: 100% calc(100% - var(--footer-rise)), 100% var(--footer-rise);
   background-position: bottom center, top center;
   background-repeat: no-repeat, no-repeat;
   /* Footer-scoped lift of the secondary ink. The page-wide token (#CCD7E3)
@@ -4482,7 +4384,7 @@ main {
   z-index: 4;
   max-width: 24ch;
   margin: 0;
-  font-size: clamp(0.8rem, 1.7vh, 0.95rem);
+  font-size: clamp(0.8rem, 1.7vh, 1rem);
   line-height: 1.45;
   color: var(--text-secondary);
 }
@@ -4666,7 +4568,7 @@ main {
 .service__num {
   align-self: flex-start;
   font-family: var(--font-display);
-  font-size: clamp(0.62rem, 1.25vh, 0.75rem);
+  font-size: clamp(0.6rem, 1.25vh, 0.72rem);
   font-weight: 700;
   letter-spacing: 0.14em;
   color: var(--accent-2-ink);
@@ -4690,7 +4592,7 @@ main {
    Brand navy at full strength on the pale body. */
 .service__title {
   font-family: var(--font-display);
-  font-size: clamp(1.1rem, 2.7vh, 1.50rem);
+  font-size: clamp(1.1rem, 2.7vh, 1.6rem);
   font-weight: 700;
   line-height: 1.12;
   letter-spacing: -0.015em;
@@ -4701,7 +4603,7 @@ main {
    which is how the reference separates its two paragraphs, and a rule would
    now compete with the pill above it. */
 .service__get {
-  font-size: clamp(0.80rem, 1.7vh, 0.95rem);
+  font-size: clamp(0.78rem, 1.7vh, 0.95rem);
   font-weight: 600;
   line-height: 1.4;
   color: var(--surface-deep);
@@ -4719,7 +4621,7 @@ main {
   margin: auto 0 0;
   padding: 0;
   list-style: none;
-  font-size: clamp(0.74rem, 1.6vh, 0.875rem);
+  font-size: clamp(0.72rem, 1.6vh, 0.88rem);
   line-height: 1.5;
   /* The footnote tier of the reference's card. --text-secondary is 8.3:1 on
      the light ground — quiet, but it is the ONLY thing carrying each service's
@@ -4819,11 +4721,9 @@ main {
 
 .process {
   padding-block: var(--section-y);
-  /* Plain white ground, not --surface-page: this section is deliberately the
-     brightest stop on the page, so it takes pure white rather than the
-     slightly tinted default. */
-  background: #FFFFFF;
-  color: var(--text-secondary);
+  background:
+    linear-gradient(168deg, var(--surface-deep-hi) 0%, var(--surface-deep) 60%, var(--surface-deep) 100%);
+  color: var(--text-on-deep-secondary);
 }
 
 .process__list { display: grid; gap: var(--s-6); }
@@ -4833,7 +4733,7 @@ main {
   gap: var(--s-4);
   align-items: center;
   padding-bottom: var(--s-6);
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid var(--hairline-on-deep);
 }
 .step:last-child { border-bottom: 0; padding-bottom: 0; }
 
@@ -4844,8 +4744,8 @@ main {
 }
 
 .step__media {
-  background: var(--surface-raised);
-  border: 1px solid var(--border);
+  background: var(--veil-on-deep-weak);
+  border: 1px solid var(--hairline-on-deep);
   border-radius: var(--radius-lg);
   padding: var(--s-4);
 }
@@ -4863,17 +4763,17 @@ main {
 
 .step__num {
   font-family: var(--font-display);
-  font-size: var(--t-fig);
+  font-size: clamp(2rem, 1.4rem + 2.2vw, 3rem);
   font-weight: 700;
   line-height: 1;
-  color: var(--accent-2-ink);
+  color: var(--accent-2-on-deep);
   font-variant-numeric: tabular-nums;
   margin-bottom: var(--s-3);
 }
 .step__title {
   font-size: var(--t-h3);
   font-weight: 700;
-  color: var(--text-primary);
+  color: var(--text-on-deep);
   margin-bottom: var(--s-3);
 }
 .step__body { max-width: 46ch; }
@@ -4881,9 +4781,9 @@ main {
 .process__close {
   margin-top: var(--s-7);
   padding-top: var(--s-5);
-  border-top: 1px solid var(--border);
+  border-top: 1px solid var(--hairline-on-deep);
   font-size: var(--t-lede);
-  color: var(--text-primary);
+  color: var(--text-on-deep);
   max-width: 56ch;
 }
 

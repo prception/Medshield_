@@ -546,8 +546,17 @@
     // otherwise re-animate every scrollTo this engine performs.
     root.classList.add('has-smooth-scroll');
 
-    var WHEEL_MULTIPLIER = 0.75;   // reference value
-    var DURATION = 1.25;           // reference value, seconds
+    /* Distance travelled per wheel tick. The reference uses 0.75, but that is
+       tuned for a mouse wheel, which fires a few large deltas. A trackpad
+       fires a continuous stream of small ones, so the same multiplier
+       accumulates far more scroll for the same finger movement — the hero to
+       problems handoff shot past in a flick. 0.45 keeps a mouse wheel usable
+       while bringing a two-finger swipe back to roughly one screen. */
+    var WHEEL_MULTIPLIER = 0.45;
+    /* Seconds for the eased position to close ~63% of the gap. Slightly
+       longer than the reference 1.25 so the shorter steps still read as one
+       continuous glide rather than a series of nudges. */
+    var DURATION = 1.4;
     // NOTE: these are deliberately s-prefixed. The video-scrub block above
     // declares its own `target` (a playhead time in SECONDS) in this same
     // function scope; sharing the name meant the scrub overwrote the scroll
@@ -632,7 +641,22 @@
     // behind it, exactly as the reference calls lenis.stop()/start().
     window.__medshieldScroll = {
       stop: function () { sRunning = false; sTarget = window.scrollY; sPos = sTarget; },
-      start: function () { sTarget = window.scrollY; sPos = sTarget; }
+      start: function () { sTarget = window.scrollY; sPos = sTarget; },
+
+      /* Programmatic scroll that goes THROUGH the engine rather than around
+         it. A native window.scrollTo({behavior:'smooth'}) would be re-seeded
+         out from under itself by the scroll listener above on every step of
+         its animation, so back-to-top stalled or snapped back. Setting
+         sTarget and running the same frame loop keeps one source of truth. */
+      scrollTo: function (y) {
+        sTarget = Math.max(0, Math.min(maxScroll(), y));
+        if (!sRunning) {
+          sPos = window.scrollY;
+          frame.last = 0;
+          sRunning = true;
+          requestAnimationFrame(frame);
+        }
+      }
     };
   }
 
