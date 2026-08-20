@@ -4964,57 +4964,76 @@ main {
   color: var(--text-secondary);
 }
 
-.process__list { display: grid; gap: var(--s-6); }
+/* Two-column card grid. Each step is one card, so the eight steps read as a
+   set of comparable units rather than a long alternating ribbon. */
+.process__list {
+  display: grid;
+  gap: var(--s-5);
+  grid-template-columns: 1fr;
+}
+@media (min-width: 700px) {
+  .process__list { grid-template-columns: repeat(2, 1fr); gap: var(--s-6); }
+}
 
 .step {
-  display: grid;
-  gap: var(--s-4);
-  align-items: center;
-  padding-bottom: var(--s-6);
-  border-bottom: 1px solid var(--border);
-}
-.step:last-child { border-bottom: 0; padding-bottom: 0; }
-
-@media (min-width: 760px) {
-  .step { grid-template-columns: 1fr 1.1fr; gap: var(--s-7); }
-  /* Alternate sides so eight steps do not read as one column of sameness. */
-  .step:nth-child(even) .step__media { order: 2; }
-}
-
-.step__media {
+  display: flex;
+  flex-direction: column;
   background: var(--surface-raised);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
-  padding: var(--s-4);
+  overflow: hidden;
+  /* Cards in a row match height; the media block is fixed so the copy blocks
+     line up across the row regardless of body length. */
+  height: 100%;
 }
-/* Height-capped rather than width-driven: at full width these 4:3 images
-   pushed the section to 4,570px against a 3,000px budget. The artwork is
-   supporting evidence, not the argument — the captions are. */
+
+/* Photography, not line art: the frame is filled edge to edge and the step
+   number is badged over the image rather than stacked above the title. */
+.step__media {
+  position: relative;
+  margin: 0;
+  aspect-ratio: 5 / 3;
+  overflow: hidden;
+  background: var(--surface-sunken, #EEF1F4);
+}
 .step__media img {
   width: 100%;
-  height: auto;
-  max-height: 230px;
-  object-fit: contain;
-  border-radius: var(--radius);
+  height: 100%;
+  object-fit: cover;
+  display: block;
 }
-@media (min-width: 760px) { .step__media img { max-height: 260px; } }
 
 .step__num {
+  position: absolute;
+  inset-block-start: var(--s-3);
+  inset-inline-start: var(--s-3);
+  min-width: 2.5rem;
+  padding: 0.25rem 0.6rem;
+  border-radius: var(--radius);
+  background: rgba(11, 22, 34, 0.82);
+  color: #FFFFFF;
   font-family: var(--font-display);
-  font-size: var(--t-fig);
+  font-size: var(--t-label);
   font-weight: 700;
-  line-height: 1;
-  color: var(--accent-2-ink);
+  line-height: 1.4;
+  text-align: center;
   font-variant-numeric: tabular-nums;
-  margin-bottom: var(--s-3);
+  backdrop-filter: blur(4px);
+}
+
+.step__text {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  padding: var(--s-4) var(--s-4) var(--s-5);
 }
 .step__title {
   font-size: var(--t-h3);
   font-weight: 700;
   color: var(--text-primary);
-  margin-bottom: var(--s-3);
+  margin: 0;
 }
-.step__body { max-width: 46ch; }
+.step__body { margin: 0; max-width: 46ch; }
 
 .process__close {
   margin-top: var(--s-7);
