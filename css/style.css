@@ -3044,7 +3044,11 @@ main {
 .site-footer__main {
   display: flex;
   flex-direction: column;
-  gap: clamp(1rem, 0.6rem + 1.4vw, 1.6rem);
+  /* Raised from clamp(1rem, .., 1.6rem): at that size the link band and the
+     statement sat almost against the wordmark/legal band, so the two halves
+     of the footer read as one crowded block. This is the largest space in the
+     footer again, which is what separates the two bands visually. */
+  gap: clamp(3rem, 1.6rem + 4.4vw, 6rem);
   /* No negative margin here any more. The 37px lift is expressed as a smaller
      top padding on .site-footer instead, which cannot collapse through the
      footer's edge and so cannot drag the ramp out of alignment. */
@@ -3058,7 +3062,13 @@ main {
    has four their CAPTIONS started at different heights — the columns read as
    misaligned even though the grid was correct. Top-aligning locks both
    captions to one line, which is what the eye actually reads as "aligned". */
-.site-footer__top { display: grid; gap: var(--s-5); }
+.site-footer__top {
+  display: grid;
+  /* Row gap only bites once the columns stack (tablet/mobile), where the
+     statement would otherwise crowd the link stacks; column-gap below keeps
+     the desktop row at --s-5. */
+  gap: var(--s-7) var(--s-5);
+}
 @media (min-width: 900px) {
   .site-footer__top {
     grid-template-columns: repeat(12, minmax(0, 1fr));
@@ -3089,7 +3099,9 @@ main {
   font-weight: 400;
   text-wrap: balance;
   max-width: 40ch;
-  color: var(--text-on-deep-secondary);
+  /* White rather than the secondary tint: the footer's running text all sits
+     at one ink now, so the block reads as a single voice. */
+  color: var(--text-on-deep);
 }
 
 /* Small uppercase caption above each stack — the reference's footer_link_cpt.
@@ -3135,15 +3147,18 @@ main {
 }
 .site-footer__email:hover::after,
 .site-footer__email:focus-visible::after { transform: scaleX(0); transform-origin: right; }
+.site-footer__email { transition: color 0.25s ease; }
+.site-footer__email:hover,
+.site-footer__email:focus-visible { color: var(--accent-2-on-deep); }
 
 .site-footer__offices {
   margin-top: var(--s-4);
   font-size: var(--t-small);
   line-height: 1.6;
-  color: var(--text-on-deep-muted);
+  color: var(--text-on-deep);
   max-width: 34ch;
 }
-.site-footer__offices strong { color: var(--text-on-deep-secondary); font-weight: 600; }
+.site-footer__offices strong { color: var(--text-on-deep); font-weight: 600; }
 .site-footer__offices span { padding-inline: 0.35em; opacity: 0.5; }
 
 /* --- Link columns --- */
@@ -3159,18 +3174,21 @@ main {
   font-size: var(--t-small);
   line-height: 1.4;
   font-weight: 400;
-  color: var(--text-on-deep-secondary);
+  color: var(--text-on-deep);
   text-decoration: none;
   padding-block: 0.25em;
   transition: opacity 0.25s ease, color 0.25s ease;
 }
-.site-footer__link:hover { color: var(--text-on-deep); }
-/* The reference's signature hover: pointing at one link dims its siblings
-   instead of highlighting the target. :has() is progressive — without it the
-   links simply do not dim, which costs nothing. */
-.site-footer__links:has(.site-footer__link:hover) .site-footer__link { opacity: 0.4; }
-.site-footer__links .site-footer__link:hover,
-.site-footer__link:focus-visible { opacity: 1; }
+/* Hover lands on the on-deep teal (#5CE0D9, 10.6:1), not the raw brand
+   --accent-2 (#20B0A8) — the raw teal only clears contrast as a fill, not as
+   text on this navy. */
+.site-footer__link:hover,
+.site-footer__link:focus-visible { color: var(--accent-2-on-deep); }
+/* The reference dims a link's siblings on hover instead of highlighting the
+   target. That was dropped: now the links are white at rest and go teal on
+   hover, the target's own change is the signal, and dimming a whole column on
+   top of it just read as the footer greying out. Links hold opacity 1 always;
+   hover is the colour change alone (see :hover rule above). */
 
 /* --- Bottom band --- */
 
@@ -3231,12 +3249,13 @@ main {
   gap: var(--s-2) var(--s-5);
   justify-content: space-between;
   font-size: var(--t-micro);
-  color: var(--text-on-deep-muted);
+  color: var(--text-on-deep);
 }
 .site-footer__pending { font-style: italic; }
 
 @media (prefers-reduced-motion: reduce) {
   .site-footer__email::after { transition: none; }
+  .site-footer__email { transition: none; }
   .site-footer__link { transition: none; }
 }
 
@@ -4185,10 +4204,9 @@ main {
 
   background: var(--services-ground);
   --cover-ground: var(--services-ground);
-  /* Bottom border only. A top border would draw a hairline across the seam the
-     overshoot exists to hide — the one place on the page that must be
-     seamless. */
-  border-bottom: 1px solid var(--border);
+  /* No borders at all. A top border would draw a hairline across the seam the
+     overshoot exists to hide, and the bottom one read as an unwanted rule under
+     the cards — the section ends on white meeting white. */
 }
 
 /* The inner fills the full viewport height and DISTRIBUTES its rows across it,
@@ -4211,15 +4229,16 @@ main {
      content's size — the rows would then bunch at the top with nothing for
      space-between to distribute, which is the failure mode this replaces.
 
-     Subtracts only the section's 1px bottom border — NOT the overshoot. The
+     No longer subtracts a bottom border (there isn't one) — and never the
+     overshoot. The
      overshoot is padding above the section's layout position, i.e. space that
      is off-screen when the cover is flush at the top, so taking it out of the
      content box would shrink the visible area by that much and push the rows
      past the fold. (At a 96px overshoot that overflowed every viewport tested
      below 1080px tall.) The content box is one full viewport; the overshoot
      sits above it. */
-  min-height: calc(100vh - 1px);
-  min-height: calc(100lvh - 1px);
+  min-height: 100vh;
+  min-height: 100lvh;
   max-width: var(--shell);
   margin-inline: auto;
   /* The top value is now the ONLY thing setting how high the wordmark sits
@@ -4475,21 +4494,69 @@ main {
 
 /* The top-right paragraph. Positioned against the wordmark row so it holds the
    reference's slot without a second grid column. */
-.services__lede {
+.services__aside {
   position: absolute;
   top: 0;
   right: 0;
   z-index: 4;
   max-width: 24ch;
+  /* The block is right-aligned in the composition, but its CONTENTS are
+     left-aligned — a ragged-left paragraph would fight the wordmark. */
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+.services__lede {
   margin: 0;
   font-size: clamp(0.8rem, 1.7vh, 0.95rem);
   line-height: 1.45;
   color: var(--text-secondary);
 }
+
+/* The small CTA, in normal flow directly beneath the lede inside
+   .services__aside. margin-top is the only thing setting the gap, so the link
+   tracks the sentence's last line no matter how many lines it wraps to. */
+.services__cta {
+  margin-top: clamp(0.55rem, 1.4vh, 0.9rem);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45em;
+
+  font-size: clamp(0.76rem, 1.6vh, 0.9rem);
+  font-weight: 650;
+  line-height: 1.2;
+  text-decoration: none;
+  /* Brand blue, not teal: teal is emphasis on this page, blue is action. */
+  color: var(--accent);
+  /* The underline is drawn by the border so it can sit away from the
+     descenders and animate its colour independently of the label. */
+  /* --accent-rgb is stored SPACE-separated ("0 80 160"), so this takes the
+     slash-alpha rgb() form — the comma rgba() form used elsewhere on the page
+     belongs to the --rgb-* tokens, which are the comma-separated set. */
+  border-bottom: 1px solid rgb(var(--accent-rgb) / 0.35);
+  padding-bottom: 0.15em;
+  transition: color 0.16s ease, border-color 0.16s ease;
+}
+.services__cta:hover {
+  color: var(--accent-hover);
+  border-bottom-color: var(--accent-hover);
+}
+/* The arrow nudges on hover — the same one-shot vocabulary as the cards. */
+.services__ctaArrow {
+  display: inline-block;
+  transition: transform 0.22s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.services__cta:hover .services__ctaArrow { transform: translateX(3px); }
+
+@media (prefers-reduced-motion: reduce) {
+  .services__ctaArrow { transition: none; }
+  .services__cta:hover .services__ctaArrow { transform: none; }
+}
+
 @media (max-width: 900px) {
   /* Below the wordmark instead of beside it — at this width the words fill the
      full measure and an overlapping paragraph becomes unreadable. */
-  .services__lede { position: static; max-width: 40ch; margin-top: var(--s-4); }
+  .services__aside { position: static; max-width: 40ch; margin-top: var(--s-4); }
 }
 
 /* --- THE CARDS ---------------------------------------------------------- */
@@ -4755,6 +4822,77 @@ main {
   );
   transform: translateX(-140%) skewX(-14deg);
 }
+/* --- HOVER: a small lift with a single pulse ----------------------------
+   Two motions, deliberately different in kind so they don't fight:
+
+     1. a SUSTAINED lift — the card rises 6px and gains a deeper drop for as
+        long as the pointer is on it. This is the state; it must not animate
+        on a loop or the row reads as restless.
+
+     2. a ONE-SHOT pulse — a short scale bump that plays once on enter and
+        settles back to the lifted rest. Both motions share the one transform
+        property, so rather than fight over it the keyframes compose them:
+        the animation ENDS on exactly the :hover transform value, so nothing
+        jumps when the run finishes and the transition takes over again.
+
+   The animation is bound to :hover only, so leaving the card cancels it and
+   the transition takes the card back down.
+
+   Pointer-only: `@media (hover: hover)` keeps a touch tap from latching the
+   lifted state until the next tap elsewhere. */
+@media (hover: hover) and (pointer: fine) {
+  .service {
+    /* transform is NOT in the entrance tween's clearProps conflict path: GSAP
+       clears its inline transform on arrival, so from then on this rule owns
+       the property. */
+    transition:
+      transform 340ms cubic-bezier(0.22, 1, 0.36, 1),
+      box-shadow 340ms cubic-bezier(0.22, 1, 0.36, 1),
+      border-color 340ms ease;
+    will-change: transform;
+  }
+
+  .service:hover,
+  .service:focus-within {
+    transform: translateY(-6px);
+    /* The navy hairline goes TRANSPARENT rather than tinted. Lifted off the
+       white ground and scaled by the pulse, that 1px navy edge stopped
+       reading as a hairline and started reading as a hard black outline
+       drawn around the card. The edge is carried by the shadow stack
+       instead, which is soft and cannot alias into a line. Kept as
+       `transparent` and not `border:none` so the box size never changes —
+       removing the border would reflow the card by 1px on hover. */
+    border-color: transparent;
+    box-shadow:
+      0 22px 44px -14px rgb(var(--surface-deep-rgb) / 0.20),
+      0 4px 12px rgb(var(--surface-deep-rgb) / 0.06),
+      inset 0 1px 0 rgb(255 255 255 / 0.95);
+  }
+
+  .service:hover {
+    /* forwards so the card rests at the keyframe's end state — identical to
+       the :hover transform above, so nothing moves when the run finishes. */
+    animation: service-pulse 520ms cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  }
+}
+
+/* The bump: up-and-slightly-bigger, then settle. Peak scale is 1.03 — enough
+   to read as a nudge at card size, small enough that the 1px hairline and the
+   type inside don't visibly resample. */
+@keyframes service-pulse {
+  0%   { transform: translateY(0)     scale(1);    }
+  45%  { transform: translateY(-10px) scale(1.03); }
+  100% { transform: translateY(-6px)  scale(1);    }
+}
+
+/* Reduced motion: keep the state change (shadow, border) — it is the
+   affordance — and drop the movement entirely. */
+@media (prefers-reduced-motion: reduce) {
+  .service { transition: box-shadow 200ms ease, border-color 200ms ease; }
+  .service:hover,
+  .service:focus-within { transform: none; animation: none; }
+}
+
 /* Real content sits above the sheen — and above both gradient pseudo-layers,
    which are at z-index:-1 inside the card's own stacking context. */
 .service > :not(.service__sheen) { position: relative; z-index: 1; }
@@ -4996,42 +5134,112 @@ main {
 
 .people { padding-block: var(--section-y); background: var(--surface-page); }
 
-.people__grid { display: grid; gap: var(--s-6); }
-@media (min-width: 860px) { .people__grid { grid-template-columns: 1fr 1fr; gap: var(--s-7); } }
+/* Rail + content. The rail sits hard against the left edge of the shell and
+   the content column runs from there to the right edge — so the portraits end
+   flush right, as in the reference, rather than centred in the page. */
 
-.founder {
-  padding: var(--s-6);
-  background: var(--surface-raised);
-  border: 1px solid var(--border);
-  border-top: 3px solid var(--accent-2-ink);
-  border-radius: var(--radius);
+.people__layout { display: grid; gap: var(--s-5); }
+@media (min-width: 900px) {
+  .people__layout {
+    grid-template-columns: minmax(10rem, 15rem) 1fr;
+    gap: var(--s-7);
+    align-items: start;
+  }
 }
-.founder__role {
+
+/* Below the rail breakpoint the note would push the heading and the faces off
+   the first screen, so the rail is reordered under the content and reads as a
+   closing footnote instead. The sticky column only exists at width. */
+.people__rail { display: block; order: 2; margin-top: var(--s-6); }
+@media (min-width: 900px) {
+  .people__rail { position: sticky; top: var(--s-7); order: 0; margin-top: 0; }
+}
+.people__main { order: 1; }
+
+.people__tier {
   font-size: var(--t-micro);
   font-weight: 700;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: var(--accent-2-ink);
-  margin-bottom: var(--s-3);
+  color: var(--text-primary);
+  margin: 0 0 var(--s-4);
 }
-.founder__name {
+
+/* Sit the rail's first line on the same baseline as the heading's. The two
+   have very different line boxes (a 12px label against a ~46px display face),
+   so matching their box tops leaves the text visibly out of step; this pads
+   the rail down by the measured baseline difference instead. Only at width —
+   below the breakpoint the rail is reordered under the content entirely. */
+@media (min-width: 900px) {
+  .people__rail { padding-top: calc((var(--t-h2) - var(--t-micro)) * 0.89); }
+}
+
+/* Set small and secondary: this is standing context, not something to read
+   before the faces. */
+.people__note {
+  font-size: var(--t-small);
+  color: var(--text-secondary);
+  margin: 0;
+  max-width: 34ch;
+}
+
+@media (min-width: 900px) {
+  .people__note { max-width: none; }
+}
+
+.people__title {
   font-size: var(--t-h2);
   font-weight: 700;
-  margin-bottom: var(--s-3);
+  line-height: 1.1;
+  max-width: 20ch;
+  margin-bottom: var(--s-6);
 }
-/* A doctorate specifically in maritime occupational health is a rare
-   credential for this audience — it gets its own line, not a clause. */
-.founder__cred {
-  font-size: var(--t-body);
-  font-weight: 600;
-  color: var(--text-primary);
-  padding-bottom: var(--s-4);
-  margin-bottom: var(--s-4);
-  border-bottom: 1px solid var(--border);
-}
-.founder__body { color: var(--text-secondary); max-width: 50ch; }
 
-.panel { padding-top: var(--s-2); }
+/* The roster is bare: portrait, name, role. No card, no border, no fill —
+   the images supply their own edges against the page ground. */
+.roster {
+  list-style: none;
+  margin: 0 0 var(--s-7);
+  padding: 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--s-5);
+}
+@media (min-width: 900px) {
+  .roster { gap: var(--s-6); }
+}
+
+.roster__portrait {
+  aspect-ratio: 4 / 5;
+  background: var(--surface-sunken);
+  border-radius: var(--radius);
+  overflow: hidden;
+  margin-bottom: var(--s-4);
+}
+/* Chest-up studio frames: centring the crop drops the face low in the slot. */
+.roster__portrait img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 50% 18%;
+  display: block;
+}
+
+.roster__name {
+  font-size: var(--t-small);
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 0.15em;
+}
+.roster__role {
+  font-size: var(--t-small);
+  color: var(--text-muted);
+}
+
+/* The panel keeps its rules, but now runs only the width of the content
+   column so it lines up with the portraits above it. */
+.panel { padding-top: var(--s-5); border-top: 1px solid var(--border); }
+.panel__head { margin-bottom: var(--s-5); }
 .panel__title { font-size: var(--t-h3); font-weight: 700; margin-bottom: var(--s-2); }
 .panel__sub {
   font-size: var(--t-small);
@@ -5039,16 +5247,18 @@ main {
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--text-muted);
-  margin-bottom: var(--s-5);
 }
 .panel__list {
   display: grid;
+  gap: 0 var(--s-6);
   border-top: 1px solid var(--border);
 }
+@media (min-width: 720px) { .panel__list { grid-template-columns: 1fr 1fr; } }
 .panel__list li {
   padding-block: var(--s-3);
   border-bottom: 1px solid var(--border);
   color: var(--text-secondary);
+  font-size: var(--t-small);
 }
 
 /* --- 09 Closing CTA band ------------------------------------------------ */

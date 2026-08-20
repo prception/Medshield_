@@ -522,11 +522,26 @@
         </span>
       </h2>
 
-      <!-- Top-right paragraph, same slot as the reference's. -->
-      <p class="services__lede">
-        We manage the whole crew medical case &mdash; from the first call at sea
-        to the closed claim.
-      </p>
+      <!-- Top-right block, in the same slot as the reference's paragraph.
+           The WRAPPER is what holds the absolute position; the paragraph and
+           the CTA below it stay in normal flow inside it, so the CTA sits
+           directly under the last line of the sentence however that sentence
+           wraps. -->
+      <div class="services__aside">
+        <p class="services__lede">
+          We manage the whole crew medical case &mdash; from the first call at
+          sea to the closed claim.
+        </p>
+
+        <!-- Deliberately a text link and not a .btn: a filled button up here
+             would compete with the wordmark for first fixation, and the
+             section's real conversion point is the closing band. This is the
+             quiet "and if you want to talk now" exit. -->
+        <a class="services__cta" href="#contact">
+          Request a proposal
+          <span class="services__ctaArrow" aria-hidden="true">&rarr;</span>
+        </a>
+      </div>
 
       <!-- The reference's four ruled columns become our four glass cards, in
            the same slot and the same 4-across rhythm.
@@ -825,30 +840,70 @@
 
   <!-- 08 - The people ........................................... -->
   <section class="people" id="about" aria-labelledby="people-h">
-    <div class="shell">
-      <header class="section-head">
-        <p class="eyebrow">The people</p>
-        <h2 class="section-title" id="people-h">Who handles your case</h2>
-      </header>
+    <div class="shell people__layout">
 
-      <div class="people__grid">
-        <article class="founder">
-          <p class="founder__role">Founder</p>
-          <h3 class="founder__name">Dr. Desikan Setlur</h3>
-          <p class="founder__cred">PhD in Maritime Occupational Health &amp; Safety, Swansea University</p>
-          <p class="founder__body">
-            Two decades in maritime healthcare, with deep operational experience in
-            medical evacuation and port operations across India and Asia, and
-            long-standing work alongside global insurers, TPAs and maritime agents.
-          </p>
-        </article>
+      <!-- A headline and one line. The rail sits beside the faces, so it can
+           only carry the single claim that matters; the detail belongs on an
+           inner team page. -->
+      <div class="people__rail">
+        <p class="people__tier">The people</p>
+        <p class="people__note">
+          Medically qualified founders who run the case desk themselves.
+        </p>
+      </div>
 
-        <!-- Nine teams, not nine individuals. The ten individual doctor bios in the
-             client folder belong on an inner team page: on the homepage they cost
-             scroll and date quickly as people move. -->
+      <div class="people__main">
+        <h2 class="people__title" id="people-h">
+          Get to know the people<br>who handle your case.
+        </h2>
+
+        <!-- Name and role only. A face plus a title is what establishes who is
+             accountable; the full biographies belong on an inner team page,
+             where they can run long without costing the homepage its scroll. -->
+        <ul class="roster">
+          <li class="roster__item">
+            <div class="roster__portrait">
+              <picture>
+                <source type="image/webp"
+                        srcset="assets/people/desikan.webp 560w, assets/people/desikan@2x.webp 1120w"
+                        sizes="(min-width: 900px) 30vw, 45vw">
+                <img src="assets/people/desikan.jpg"
+                     srcset="assets/people/desikan.jpg 560w, assets/people/desikan@2x.jpg 1120w"
+                     sizes="(min-width: 900px) 30vw, 45vw"
+                     alt="Dr. Desikan Setlur, founder and chief executive of MedShield."
+                     width="560" height="700" loading="lazy" decoding="async">
+              </picture>
+            </div>
+            <p class="roster__name">Dr. Desikan Setlur</p>
+            <p class="roster__role">Founder and CEO</p>
+          </li>
+
+          <li class="roster__item">
+            <div class="roster__portrait">
+              <picture>
+                <source type="image/webp"
+                        srcset="assets/people/princi.webp 560w, assets/people/princi@2x.webp 1120w"
+                        sizes="(min-width: 900px) 30vw, 45vw">
+                <img src="assets/people/princi.jpg"
+                     srcset="assets/people/princi.jpg 560w, assets/people/princi@2x.jpg 1120w"
+                     sizes="(min-width: 900px) 30vw, 45vw"
+                     alt="Dr. Princi Singh, co-founder and chief operating officer of MedShield."
+                     width="560" height="700" loading="lazy" decoding="async">
+              </picture>
+            </div>
+            <p class="roster__name">Dr. Princi Singh</p>
+            <p class="roster__role">Co-founder and COO</p>
+          </li>
+        </ul>
+
+        <!-- Nine teams, not nine individuals. The ten individual doctor bios in
+             the client folder belong on that same inner team page: on the
+             homepage they cost scroll and date quickly as people move. -->
         <div class="panel">
-          <h3 class="panel__title">The SME panel</h3>
-          <p class="panel__sub">130+ experts, nine disciplines</p>
+          <div class="panel__head">
+            <h3 class="panel__title">The SME panel</h3>
+            <p class="panel__sub">130+ experts, nine disciplines</p>
+          </div>
           <ul class="panel__list">
             <li>Maritime medical specialists and super-specialists</li>
             <li>Telemedicine</li>
@@ -862,6 +917,7 @@
           </ul>
         </div>
       </div>
+
     </div>
   </section>
 

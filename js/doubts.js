@@ -5,8 +5,8 @@
    The section is one continuous spatial composition that scrubs through
    three visually distinct states while the stage is pinned:
 
-     STATE 1  (0 -> 30%)   split screen: intro left, statement right
-     STATE 2  (30 -> 60%)  the six cards arrive from the centre and settle
+     STATE 1  (0 -> ~32%)  split screen: intro left, statement right
+     STATE 2  (~12 -> 43%) the six cards arrive from the centre and settle
                            around a NARROW vertical central image
      STATE 3  (60 -> 100%) the image expands from its own centre while the
                            cards are pushed outward, opening into the final
@@ -115,6 +115,18 @@
      One viewport is a 1:1 relationship between scroll and cover, which is what
      makes the move feel direct rather than parallaxed. */
   var OVERLAP_VH = 1;
+
+  /* Scroll distance the three acts play over, in viewports (the OVERLAP_VH
+     tail is added on top of this).
+
+     Back to the original 3.2. Stretching this was the wrong lever: it does
+     not slow the animation down, it just makes the section longer, so the
+     reader scrolls further at the same rate and the acts still flash past.
+     What actually governs how fast the choreography reads is the scroll
+     engine's lerp (see hero.js), which is now matched to Lenis's default
+     0.1 — a gentle settle that never launches the timeline at speed in the
+     first place. With that fixed, 3.2 viewports is the right length again. */
+  var TRACK_VH = 3.2;
 
   /* Breathing room kept between the expanded picture and the cards it has
      pushed aside, per side. The picture is sized to the opening MINUS this,
@@ -602,7 +614,7 @@
            after this timeline). Without the extra viewport the pin would
            release the moment the picture finished, and the cover would have
            nothing standing still to cover. */
-        end: '+=' + Math.round(window.innerHeight * (3.2 + OVERLAP_VH)),
+        end: '+=' + Math.round(window.innerHeight * (TRACK_VH + OVERLAP_VH)),
         pin: stage,
         pinSpacing: true,
         // The site drives real window scroll (hero.js's wheel engine calls
@@ -610,12 +622,15 @@
         // would fight that engine's per-frame writes.
         pinType: 'fixed',
         anticipatePin: 1,
-        scrub: 0.6,
+        /* The engine's lerp already carries the smoothing, so this stays
+           light — a second heavy lag on top would read as the section
+           lagging behind the page rather than moving with it. */
+        scrub: 0.5,
         invalidateOnRefresh: true
       }
     });
 
-    /* ---- STATE 1 (0 -> 0.30): the panel wipes leftward ------------------
+    /* ---- STATE 1 (0 -> ~0.32): the panel wipes leftward -----------------
 
        The mechanic the reference uses, reproduced against this palette: the
        filled right-hand panel travels one full panel-width to the LEFT and
@@ -726,7 +741,7 @@
       // never cross-dissolve.
       .to(split, { autoAlpha: 0, duration: 0.14 }, 0.14);
 
-    /* ---- STATE 2 (0.30 -> 0.60): cards arrive, strip is established ----
+    /* ---- STATE 2 (~0.12 -> 0.43): cards arrive, strip is established ---
 
        Cards start collapsed at the centre (scaled down, stacked on the seam)
        and travel outward to their resting grid positions. Because the tween
@@ -750,14 +765,14 @@
           autoAlpha: 0
         },
         {
-          x: 0, autoAlpha: 1, duration: 0.30,
+          x: 0, autoAlpha: 1, duration: 0.22,
           delay: 0
         },
         /* Overlaps the fill deliberately: the panel is still growing leftward
            at 0.12, so the cards are inside the colour field as it arrives.
            They are ON the fill, never behind it. The per-card offset keeps
            them sweeping in rather than landing as one block. */
-        0.12 + i * 0.022
+        0.12 + i * 0.018
       );
     });
 
@@ -784,7 +799,7 @@
        CARDS_SETTLED is derived from the card timings above rather than typed
        as a constant, so the two cannot drift apart if the stagger or the
        duration is retuned. */
-    var CARDS_SETTLED = 0.12 + (cards.length - 1) * 0.022 + 0.30;
+    var CARDS_SETTLED = 0.12 + (cards.length - 1) * 0.018 + 0.22;
     var PART_AT = CARDS_SETTLED + 0.03;
 
     /* ---- STATE 3: the centre pushes the layout apart --------------------
@@ -836,11 +851,25 @@
        means the picture never expands across anything: by the time it starts
        growing there is nothing left to cover.
 
-       The 0.12 left at the end is dead scroll holding the finished frame. */
-    var TOTAL_DUR  = (1 - EXPAND_AT) - 0.12;
-    var STAGE1_DUR = TOTAL_DUR * 0.50;
+       The 0.04 left at the end is dead scroll holding the finished frame.
+
+       This was 0.12, and together with the entry timings it left the picture
+       badly short of room. Measured against a 900px viewport the split was:
+
+         entry (panel + six cards)  0.00 -> 0.53   ~1180px
+         picture, narrow -> full    0.56 -> 0.88    ~920px  (in three beats)
+         dead hold                  0.88 -> 1.00    ~346px
+
+       The expansion is the largest visual change in the section and it was
+       getting less scroll than the entry, with a third of a viewport doing
+       nothing at the end. That ratio — not the section's overall length — is
+       why this act reads as fast: per pixel scrolled it moves several times
+       more than anything before it. Reclaiming most of the hold and giving
+       the reclaimed distance to the growth beats evens the rate out. */
+    var TOTAL_DUR  = (1 - EXPAND_AT) - 0.04;
+    var STAGE1_DUR = TOTAL_DUR * 0.44;
     var CLEAR_AT   = EXPAND_AT + STAGE1_DUR;
-    var CLEAR_DUR  = TOTAL_DUR * 0.18;
+    var CLEAR_DUR  = TOTAL_DUR * 0.12;
     var STAGE2_AT  = CLEAR_AT + CLEAR_DUR;
     var STAGE2_DUR = TOTAL_DUR - STAGE1_DUR - CLEAR_DUR;
 
@@ -961,10 +990,10 @@
        trigger's distance was extended in the same proportion, the acts keep
        the scroll distance they were tuned against.
 
-       OVERLAP_SPAN is that proportion: OVERLAP_VH viewports of the 3.2 the
-       composition uses. Derived from the same two numbers the `end` is built
-       from, so retuning either cannot put the two out of step. */
-    var OVERLAP_SPAN = OVERLAP_VH / 3.2;
+       OVERLAP_SPAN is that proportion: OVERLAP_VH viewports of the TRACK_VH
+       the composition uses. Derived from the same two numbers the `end` is
+       built from, so retuning either cannot put the two out of step. */
+    var OVERLAP_SPAN = OVERLAP_VH / TRACK_VH;
 
     /* The tail claims its scroll distance, and the cover is pulled up into it.
 

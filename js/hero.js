@@ -546,17 +546,112 @@
     // otherwise re-animate every scrollTo this engine performs.
     root.classList.add('has-smooth-scroll');
 
-    /* Distance travelled per wheel tick. The reference uses 0.75, but that is
-       tuned for a mouse wheel, which fires a few large deltas. A trackpad
-       fires a continuous stream of small ones, so the same multiplier
-       accumulates far more scroll for the same finger movement — the hero to
-       problems handoff shot past in a flick. 0.45 keeps a mouse wheel usable
-       while bringing a two-finger swipe back to roughly one screen. */
-    var WHEEL_MULTIPLIER = 0.45;
-    /* Seconds for the eased position to close ~63% of the gap. Slightly
-       longer than the reference 1.25 so the shorter steps still read as one
-       continuous glide rather than a series of nudges. */
-    var DURATION = 1.4;
+    /* --- Tuned to match Lenis's stock defaults --------------------------
+
+       The reference this section was rebuilt against is tresmarescapital.com,
+       which runs Lenis constructed with NO tuning at all:
+
+           new Lenis({ autoRaf: true, autoResize: true })
+
+       So the feel we are matching is simply Lenis's defaults, and the two
+       numbers that produce it are these.
+
+       WHEEL_MULTIPLIER 1.0 — Lenis consumes the wheel delta at full strength.
+       This was 0.45, which sounds calmer but is the opposite: taking a small
+       bite of each gesture means the reader flicks harder to cover the page,
+       which lands MORE pending distance in the engine, not less. Honouring
+       the delta 1:1 makes one wheel tick move what the OS says a wheel tick
+       moves, and a page of scrolling take a page's worth of gesture.
+
+       LERP 0.1 — the fraction of the remaining gap closed per frame at 60fps.
+       This is the whole feel. Our engine was running an effective 0.24, which
+       chases the target more than twice as hard as Lenis and is why the page
+       arrived with a snap instead of a glide. 0.1 is a long, soft settle.
+
+       Together these invert what the engine used to do: it took smaller bites
+       of the gesture and then chased them harder. Lenis takes the full bite
+       and chases it gently, which is the smoothness being asked for. */
+    /* One scroll speed, two input devices.
+
+       The goal is that a trackpad and a mouse move the page at the SAME rate:
+       the mouse feel is the target, and the trackpad should match it. What
+       differs is only the shape of the event stream each one emits.
+
+         mouse wheel — a few large discrete detents (~100px each), a handful
+                       per second. 1.0 is correct: one detent moves what the
+                       OS says a detent moves.
+
+         trackpad    — a continuous stream of small deltas, 60-120 per second.
+                       Their SUM is already the pixel distance the fingers
+                       travelled, because the OS has done that conversion
+                       before the event is dispatched. So the multiplier here
+                       is also 1.0 — scaling it down would make the trackpad
+                       SLOWER than the mouse, which is not what is wanted.
+
+       What actually made the trackpad feel out of control is not the per
+       event scale, it is the momentum tail: after the fingers lift, the OS
+       keeps firing decaying deltas for up to a second or so, and every one of
+       them piles more distance into sTarget with no gesture behind it. A
+       mouse cannot produce that. So the tail is what gets bounded, NOT the
+       speed — see the pending clamp in the wheel handler.
+
+       Note this is not what stock Lenis does: it applies one multiplier to
+       both and simply accumulates (`targetScroll + delta`), so on a trackpad
+       it runs away in the same way. The clamp below is the part it lacks. */
+    var WHEEL_MULTIPLIER = 1.0;
+    var TRACKPAD_MULTIPLIER = 1.0;
+    /* Fraction of a momentum-tail event that is kept. 0.35 brings a typical
+       swipe from 2.4x its finger travel down to ~1.55x, which still glides
+       (a trackpad that stopped dead on release would feel broken) but no
+       longer overshoots the target the reader aimed at. */
+    var TAIL_DAMP = 0.35;
+    var LERP = 0.1;
+
+    /* --- Device detection -----------------------------------------------
+
+       There is no API that reports the pointing device, so it is inferred
+       from the shape of the event stream, and re-inferred continuously — a
+       laptop user with a mouse plugged in switches between the two mid
+       session and must not be locked to whichever arrived first.
+
+       Three tells, any one of which means trackpad:
+         - a fractional deltaY. Wheels emit whole numbers; trackpads routinely
+           emit values like 4.5 from pixel-precise scrolling.
+         - a small deltaY. A wheel detent is ~100px (>=40 in practice after OS
+           scaling); trackpad deltas during a swipe are typically single or
+           low double digits.
+         - events arriving faster than a wheel physically can (<30ms apart)
+           while the delta stays small.
+
+       A wheel detent that happens to be small AND arrives fast would be
+       misread, so the classification is sticky: it takes a clear wheel-shaped
+       event (large, whole-numbered) to switch back. */
+    var isTrackpad = false;
+    var lastWheelAt = 0;
+    // Largest delta seen in the current gesture, used to spot the decay that
+    // marks the momentum tail. Reset whenever a new gesture begins.
+    var tailPeak = 0;
+
+    function classify(delta, now) {
+      var abs = Math.abs(delta);
+      var gap = now - lastWheelAt;
+      lastWheelAt = now;
+
+      // Unmistakably a wheel detent: large and a whole number of pixels.
+      if (abs >= 50 && delta % 1 === 0) { isTrackpad = false; return; }
+      // Unmistakably a trackpad: sub-pixel precision, or a fast stream of
+      // small deltas that no wheel could produce. `gap < 30 || !gap` so the
+      // first event of a burst, which has no previous timestamp to measure
+      // against, is judged on its size alone rather than defaulting to wheel.
+      if (delta % 1 !== 0 || (abs < 40 && (gap < 30 || !lastWheelAt))) {
+        isTrackpad = true;
+      }
+    }
+
+    /* Lenis applies LERP once per frame assuming 60fps. Rebasing it on real
+       elapsed time keeps the identical feel on 120/144Hz displays instead of
+       settling twice as fast there. */
+    var LERP_BASE_FPS = 60;
     // NOTE: these are deliberately s-prefixed. The video-scrub block above
     // declares its own `target` (a playhead time in SECONDS) in this same
     // function scope; sharing the name meant the scrub overwrote the scroll
@@ -578,10 +673,14 @@
       var dt = Math.min(0.064, (now - (frame.last || now)) / 1000);
       frame.last = now;
 
-      // Frame-rate independent exponential approach. lambda is chosen so the
-      // remaining distance decays by 1/e over DURATION seconds.
-      var lambda = 1 / DURATION;
-      var alpha = 1 - Math.exp(-lambda * dt * 6);
+      /* Lenis's exact integration: sPos += (sTarget - sPos) * LERP, once per
+         60fps frame. Expressed against real elapsed time so the settle takes
+         the same wall-clock duration at any refresh rate.
+
+         No velocity cap. The reference has none, and a cap is what makes a
+         long throw feel like it hits a wall partway down. A gentle lerp does
+         not need one: it never launches fast in the first place. */
+      var alpha = 1 - Math.pow(1 - LERP, dt * LERP_BASE_FPS);
       sPos += (sTarget - sPos) * alpha;
 
       if (Math.abs(sTarget - sPos) < 0.4) {
@@ -607,8 +706,49 @@
 
       e.preventDefault();
 
+      var evtAt = e.timeStamp || performance.now();
+      var absDelta = Math.abs(delta);
+      var sinceLast = evtAt - lastWheelAt;
+      // A pause longer than the tail could survive means a new gesture.
+      if (sinceLast > 120) tailPeak = 0;
+
+      classify(delta, evtAt);
+      var mult = isTrackpad ? TRACKPAD_MULTIPLIER : WHEEL_MULTIPLIER;
+
       if (!sRunning) { sPos = window.scrollY; frame.last = 0; }
-      sTarget = Math.max(0, Math.min(maxScroll(), sTarget + delta * WHEEL_MULTIPLIER));
+      sTarget = Math.max(0, Math.min(maxScroll(), sTarget + delta * mult));
+
+      /* Trackpad only: damp the OS momentum tail.
+
+         The finger movement itself is honoured at full 1:1, so a swipe moves
+         the page exactly as far as the same-sized wheel gesture would. What
+         is attenuated is only what arrives AFTER the fingers lift, which is
+         the part with no gesture behind it. Measured against a typical swipe
+         (450px of finger travel) the tail was adding another 650px — the page
+         travelled 2.4x the distance actually asked for, which is what reads
+         as running away.
+
+         The tail is recognised by its shape rather than by any event flag,
+         because none is exposed: it is a fast stream (<40ms apart) of deltas
+         that are monotonically SHRINKING. During real finger movement the
+         deltas fluctuate up and down as the swipe accelerates; only the decay
+         after release is consistently downward. */
+      if (isTrackpad) {
+        var falling = absDelta < tailPeak * 0.98 && sinceLast < 40;
+        if (falling) {
+          // Roll back most of what this tail event contributed, re-clamping
+          // to the page bounds so a rollback at the very top or bottom cannot
+          // push the target back outside the scrollable range.
+          sTarget = Math.max(0, Math.min(maxScroll(),
+                    sTarget - delta * mult * (1 - TAIL_DAMP)));
+        } else {
+          // Live finger movement: track the peak so the decay is measured
+          // against the strongest part of the gesture, decaying the reference
+          // slowly so a brief dip mid-swipe is not mistaken for release.
+          tailPeak = Math.max(tailPeak * 0.6, absDelta);
+        }
+      }
+
 
       if (!sRunning) {
         sRunning = true;

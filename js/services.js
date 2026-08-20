@@ -71,6 +71,7 @@
   var words    = Array.prototype.slice.call(section.querySelectorAll('.services__wInner'));
   var cards    = Array.prototype.slice.call(section.querySelectorAll('.service'));
   var lede     = section.querySelector('.services__lede');
+  var cta      = section.querySelector('.services__cta');
   var wordmark = section.querySelector('.services__wordmark');
   if (!words.length || !cards.length) return;
 
@@ -236,6 +237,18 @@
       { opacity: 0, y: 14 },
       { opacity: 1, y: 0, duration: 0.8, ease: 'power2.out' },
       0.5
+    );
+  }
+
+  /* The CTA follows the lede by a beat, so the eye reads the sentence and then
+     is handed the exit — rather than both arriving as one block. fromTo, like
+     the lede, so there is no hidden start state left behind if GSAP is absent
+     or the timeline never resolves. */
+  if (cta) {
+    tl.fromTo(cta,
+      { opacity: 0, y: 10 },
+      { opacity: 1, y: 0, duration: 0.7, ease: 'power2.out' },
+      0.68
     );
   }
 
