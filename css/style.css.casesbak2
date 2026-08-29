@@ -1901,17 +1901,6 @@ html.hero-ready .hero__foot    { transition-delay: 1.15s; }
      .theme-transition and block the ground it is supposed to be handing
      over. */
   background: transparent;
-
-  /* .about now directly follows .doubts, so doubts.js tags IT as the
-     .doubts-cover — the layer dealt up over the pinned stage. That class
-     paints var(--cover-ground, --surface-sunken), and the grey default would
-     be wrong here: this section's ground is the page surface. Setting the
-     token rather than `background` keeps the rule above intact — the fill is
-     applied by .doubts-cover, which exists only while the animation is live,
-     so the transparent, ground-handing-over behaviour is unchanged for
-     no-JS and reduced-motion readers. */
-  --cover-ground: var(--surface-page);
-
   padding-top: clamp(4.5rem, 2.5rem + 7vw, 9rem);
   padding-bottom: clamp(5.5rem, 3rem + 9.5vw, 12rem);
 }
@@ -4111,36 +4100,6 @@ main {
   position: relative;
   z-index: 5;
   background-color: var(--cover-ground, var(--surface-sunken));
-
-  /* THE COVER MUST BE AT LEAST AS TALL AS THE STAGE IT COVERS.
-
-     The pinned stage is `height: 100svh` and is held for a full viewport
-     while this section slides up over it. This section's opaque ground is
-     the ONLY thing hiding it, so if the cover is shorter than the stage, the
-     stage's bottom edge sticks out below it — and what sits there is the
-     NEXT section, which declares its ground via data-theme-ground and is
-     therefore transparent. The held picture then shows straight through it
-     as a horizontal band across that section's content.
-
-     That is the reported bug: the problem section's image cutting through
-     the stats strip. Measured at 1907x914 it was a 280px band; with this
-     rule the exposed tail is 0.
-
-     It used to hold by accident. .services is ~996px against a 900px
-     viewport, so it covered the stage without ever being asked to; .about is
-     ~618px and does not. Stating the requirement here makes it a property of
-     the COVER MECHANISM rather than of whichever section happens to follow,
-     so a future reorder cannot silently reintroduce it.
-
-     100svh, not 100vh, to match the stage's own unit exactly — on mobile the
-     two must resolve to the same number or the tail reappears at the
-     difference between the dynamic and small viewport.
-
-     min-height, so a section that is already taller keeps its own height,
-     and the extra height lands BELOW the content, which is what is wanted:
-     it is the cover's TOP edge that does the covering as it rises. */
-  min-height: 100svh;
-
   /* The transform is written every frame by the scrub; promoting the layer
      keeps a full-viewport section off the main thread's paint path. */
   will-change: transform;
@@ -5033,15 +4992,7 @@ main {
   .service__sheen { display: none; }
 }
 
-/* --- 05 How our case runs ------------------------------------------------
-   THE MECHANIC. Header in normal flow, ONE visual frame pinned beside a list
-   of five stages that scrolls past it at ordinary speed. Nothing is scroll-
-   jacked: the page never stops, the reader is never held. See the long note
-   on the section in index.html and js/process-stages.js.
-
-   Type is sized against the reference's own metrics: item titles ~32px at
-   1.16 line-height and -0.01em tracking, eyebrows 13px uppercase with wide
-   tracking, body copy small and quiet. */
+/* --- 05 How a case runs ------------------------------------------------- */
 
 .process {
   padding-block: var(--section-y);
@@ -5052,266 +5003,84 @@ main {
   color: var(--text-secondary);
 }
 
-/* --- 1. THE HEADER. Ordinary flow. Never pinned, never animated. -------- */
-
-.process__header {
-  padding-bottom: var(--s-7);
-  border-bottom: 1px solid var(--border);
-}
-.process__eyebrow { margin-bottom: var(--s-4); }
-.process__title {
-  margin: 0;
-  max-width: 20ch;
-}
-
-/* --- THE STAGE AREA ------------------------------------------------------
-   position:relative gives the pinned camera a box to be measured and
-   released against — js/process-stages.js pins within this element's own
-   scroll range, so the visual is fixed for exactly as long as the list
-   beside it is passing and no longer. */
-.process__body {
-  position: relative;
-  /* THE TAIL — A SETTLE BEAT, NOT A JOURNEY.
-
-     The hand-off morph engages when #process's BOTTOM reaches the fold, so
-     this padding is the gap between the last stage finishing and the close
-     starting. It exists only so the close does not begin on the same frame
-     the final letter lights.
-
-     KEPT SHORT DELIBERATELY. This was 72vh, sized when the last item was
-     scored on the same long run-out as every other stage. That put ~968px of
-     scroll between stage 05 arriving and the close starting: the reader had
-     finished reading and was still scrolling, watching the picture drift
-     down with nothing happening. js/process-stages.js now scores the FINAL
-     item against a much shorter span (see readProgress), so the title is lit
-     while it is comfortably on screen rather than after it has left, and the
-     tail no longer has to cover the item's whole height.
-
-     Measured at 12vh: ~120px between the last letter and the close, across
-     1040-1920 wide and 700-1080 tall. Enough to read as a beat, short enough
-     that the close feels like it starts as soon as the stage is done. */
-  padding-bottom: 12vh;
-}
-@media (max-width: 1039.98px) {
-  /* Nothing is held below 1040px, so there is nothing to keep on screen and
-     no reading line to run out past. */
-  .process__body { padding-bottom: 0; }
-}
-
-.process__bodyShell {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: var(--s-6);
-}
-
-/* Two columns from 1040px: the pinned visual on the LEFT of the reader's
-   eye-line is wrong for this composition — the reference puts the copy left
-   and the object right, and so does this. */
-@media (min-width: 1040px) {
-  .process__bodyShell {
-    grid-template-columns: minmax(0, 1fr) minmax(0, 0.92fr);
-    gap: var(--s-8);
-    align-items: start;
-  }
-  /* The list is the first column, the pinned visual the second — but the
-     visual is written FIRST in the markup so that it is the thing the
-     hand-off morph measures without having to reach past the list. Order
-     puts them back the right way round visually. */
-  .process__pinWrap { order: 2; }
-  .process__list { order: 1; }
-}
-
-/* --- 2. THE PINNED VISUAL ------------------------------------------------
-   .process__pinWrap holds the column open. .process__camera is the element
-   JS switches to position:fixed for the pinned stretch; because the wrapper
-   keeps its height, nothing below jumps when the camera leaves the flow. */
-.process__pinWrap {
-  position: relative;
-}
-
-/* SIZED FROM THE HEIGHT, not the width.
-
-   The frame must never be taller than the space left under the fixed header,
-   or the held picture is cut off at the top — and js/process-stages.js
-   centres it in that same space, so it cannot rescue a frame that does not
-   fit. A max-height alone would not do it: with aspect-ratio the box still
-   claims its full width and the ratio breaks. Driving the WIDTH from the
-   available height (via the ratio) keeps the frame whole and its proportions
-   exact, with max-width still capping it on wide screens.
-
-   THE RATIO IS THE PHOTOGRAPHS' OWN, 16/9. The five stage pictures are all
-   roughly 1.78:1, and they are shown whole — object-fit:contain, nothing
-   cropped away. A frame of any other shape would letterbox them inside it,
-   so the frame matches the pictures instead of the pictures being made to
-   fit the frame. */
-.process__frame {
-  position: relative;
-  width: min(100%, 34rem, calc(58vh * 16 / 9));
-  aspect-ratio: 16 / 9;
-  margin-inline: auto;
-  border-radius: var(--radius-lg);
-  overflow: hidden;
-  background: linear-gradient(180deg, #EAF6F6 0%, #FFFFFF 62%);
-  border: 1px solid var(--border);
-  box-shadow: 0 24px 60px -32px rgba(0, 29, 59, 0.28);
-}
-
-.process__sceneWrap {
-  position: absolute;
-  inset: 0;
-}
-
-/* Each stage's photograph occupies the same box. Opacity is written by JS
-   from scroll progress, so the five pictures cross-dissolve into one another
-   in the held frame rather than being swapped hard. Stage 0 is the resting /
-   no-JS state.
-
-   object-fit:contain shows each photograph WHOLE — nothing is cropped out.
-   The frame carries the pictures' own 16/9 ratio, so contain fills it edge
-   to edge without letterboxing. */
-.process__sceneStage {
-  position: absolute;
-  inset: 0;
-  opacity: 0;
-}
-.process__sceneStage img {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-  object-position: 50% 50%;
-  display: block;
-}
-.process__sceneStage[data-scene="0"] { opacity: 1; }
-
-/* Small ambient motion INSIDE the frame, decorative only. */
-.process__pulse {
-  animation: processPulse 2.4s ease-in-out infinite;
-  transform-origin: center;
-}
-.process__ring {
-  animation: processSpin 18s linear infinite;
-  transform-origin: center;
-}
-.process__pathLine { animation: processDash 2.2s linear infinite; }
-.process__pulseLine { animation: processGlow 2.6s ease-in-out infinite; }
-
-@keyframes processPulse {
-  0%, 100% { opacity: 0.55; transform: scale(0.9); }
-  50% { opacity: 1; transform: scale(1.15); }
-}
-@keyframes processSpin { to { transform: rotate(360deg); } }
-@keyframes processDash { to { stroke-dashoffset: -28; } }
-@keyframes processGlow {
-  0%, 100% { opacity: 0.75; }
-  50% { opacity: 1; }
-}
-@media (prefers-reduced-motion: reduce) {
-  .process__pulse, .process__ring, .process__pathLine, .process__pulseLine {
-    animation: none;
-  }
-}
-
-/* --- 3. THE STAGE LIST ---------------------------------------------------
-   Five items, all present, ordinary scrolling content. The generous spacing
-   is what gives each one its own moment against the held visual — it is the
-   list's HEIGHT that sets how long the pin lasts, so these two are the same
-   decision. */
+/* Two-column card grid. Each step is one card, so the eight steps read as a
+   set of comparable units rather than a long alternating ribbon. */
 .process__list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
+  display: grid;
+  gap: var(--s-5);
+  grid-template-columns: 1fr;
+}
+@media (min-width: 700px) {
+  .process__list { grid-template-columns: repeat(2, 1fr); gap: var(--s-6); }
 }
 
-/* THE ITEM HEIGHT IS THE PIN LENGTH.
-
-   The camera is held for exactly as long as this list is passing (see
-   js/process-stages.js), so how tall each item is IS how much scroll each
-   stage gets — and therefore whether its title has room to light all the way
-   through before the next one takes over. Too short and the last stages fly
-   past half-lit; too tall and the section becomes the scroll-jack this
-   deliberately is not.
-
-   ~62vh per item puts five stages at roughly three viewports of reading,
-   which lands each title's sweep comfortably inside its own beat while
-   keeping the whole section under the length where it would start to feel
-   held. Padding alone cannot do this — a short title would collapse the
-   item and take its stage's scroll budget with it. */
-.process__item {
-  min-height: 62vh;
+.step {
   display: flex;
   flex-direction: column;
-  justify-content: center;
-  padding-block: var(--s-6);
-  border-top: 1px solid var(--border);
-}
-.process__item:first-child { border-top: 0; }
-
-@media (max-width: 1039.98px) {
-  /* Stacked under the visual, where the frame is already taking viewport
-     height of its own — the items do not also need a screen each. */
-  .process__item {
-    min-height: 0;
-    padding-block: var(--s-7);
-  }
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  /* Cards in a row match height; the media block is fixed so the copy blocks
+     line up across the row regardless of body length. */
+  height: 100%;
 }
 
-.process__itemEyebrow {
-  margin: 0 0 var(--s-4);
-  font-size: 0.8125rem;
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--accent-2-ink);
-  font-variant-numeric: tabular-nums;
-}
-
-/* THE TITLE. Split into per-letter spans by JS and lit progressively as the
-   item crosses the reading line — see .process__letter. Sized to the
-   reference: large enough to carry the item, well short of a display
-   heading. */
-.process__itemTitle {
-  margin: 0 0 var(--s-4);
-  font-family: var(--font-display);
-  font-size: clamp(1.55rem, 1.15rem + 1.5vw, 2.05rem);
-  font-weight: 600;
-  line-height: 1.16;
-  letter-spacing: -0.01em;
-  color: var(--text-primary);
-  max-width: 18ch;
-}
-
-/* THE PROGRESSIVE READ.
-
-   Letters rest DIM and are brought to full as the item passes the reading
-   line, left to right — the movement the reference's left column actually
-   has. The dim value is a real reading value, not a near-invisible one: the
-   copy has to stay legible before it is lit, because it is ordinary content
-   the reader may simply read at their own pace.
-
-   Written as an inline opacity by JS. The 0.28 here is only the resting
-   value for no-JS / reduced motion, where every letter simply sits at full
-   instead (see the reduced-motion block below). */
-.process__letter {
-  opacity: 0.28;
-  transition: opacity 120ms linear;
-  will-change: opacity;
-}
-
-.process__itemBody {
+/* Photography, not line art: the frame is filled edge to edge and the step
+   number is badged over the image rather than stacked above the title. */
+.step__media {
+  position: relative;
   margin: 0;
-  max-width: 44ch;
-  font-size: var(--t-small);
-  line-height: 1.6;
-  color: var(--text-muted);
+  aspect-ratio: 5 / 3;
+  overflow: hidden;
+  background: var(--surface-sunken, #EEF1F4);
+}
+.step__media img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
 }
 
-/* NO-JS / REDUCED MOTION: nothing is dimmed, nothing is pinned. The section
-   is a header, five readable stages and one illustration — complete, and
-   with no state the reader has to scroll to unlock. */
-@media (prefers-reduced-motion: reduce) {
-  .process__letter { opacity: 1; transition: none; }
+.step__num {
+  position: absolute;
+  inset-block-start: var(--s-3);
+  inset-inline-start: var(--s-3);
+  min-width: 2.5rem;
+  padding: 0.25rem 0.6rem;
+  border-radius: var(--radius);
+  background: rgba(11, 22, 34, 0.82);
+  color: #FFFFFF;
+  font-family: var(--font-display);
+  font-size: var(--t-label);
+  font-weight: 700;
+  line-height: 1.4;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  backdrop-filter: blur(4px);
+}
+
+.step__text {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  padding: var(--s-4) var(--s-4) var(--s-5);
+}
+.step__title {
+  font-size: var(--t-h3);
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0;
+}
+.step__body { margin: 0; max-width: 46ch; }
+
+.process__close {
+  margin-top: var(--s-7);
+  padding-top: var(--s-5);
+  border-top: 1px solid var(--border);
+  font-size: var(--t-lede);
+  color: var(--text-primary);
+  max-width: 56ch;
 }
 
 /* --- 05b Process -> Case studies transition ----------------------------- */
@@ -5328,37 +5097,24 @@ main {
 /* THE SPACER. Carries no content and paints nothing. Its height is written by
    JS to match the pin distance exactly, which is why the pin runs with
    pinSpacing:false — this element IS the spacer, so ScrollTrigger must not
-   add a second one on top of it.
-
-   Its margin-bottom is ALSO written by JS (see REVEAL_VH / revealPull() in
-   process-to-cases.js) — a fixed negative value for the whole pin, not
-   animated. #case-studies follows immediately after in the document, so
-   pulling .p2c's bottom edge up pulls case-studies' resting top up with it,
-   independently of how much scroll the pin itself spends. Without this the
-   spacer's height alone determines both numbers at once, which is what let
-   case-studies' top reach the fold only on the pin's very last scrolled
-   pixel — see the note in process-to-cases.js for the full derivation. */
+   add a second one on top of it. */
 .p2c { display: none; }
 .p2c--live { display: block; }
 
-/* THE MASK RELATIONSHIP.
+/* THE TRAVELLING COMPOSITION.
 
-   Case studies is not a section that arrives after the process transition —
-   it is ALREADY THERE, sitting in its own ordinary document position
-   immediately under the pinned #process (see the removed margin/rise in
-   process-to-cases.js). What the reader sees change is purely which of the
-   two layers is painting: #process on top, opaque, covering the viewport;
-   Case studies underneath, present but hidden behind it.
+   While the pin is live #process is fixed to the viewport and its .shell is
+   flying down into the card, so it has to paint ABOVE the section rising
+   underneath it — otherwise Case studies' own ground slices the composition
+   in half at its top edge as it comes up.
 
-   While the pin is live #process's ground drops to transparent and the
-   camera inside it is the only thing left opaque, so as the camera's clip
-   closes inward, the transparent ground around it lets Case studies show
-   through in the space being given up — a mask opening, not two sections
-   trading places.
+   The section's ground is dropped to transparent for the same stretch: an
+   opaque white pinned section would hide the very layout the pull exists to
+   bring up around the landing object. The white the reader sees behind the
+   composition at the start of the pin is the page's own ground.
 
-   Both the z-index and the transparency are scoped to .p2c--live, so during
-   normal scrolling #process keeps its plain white background and its default
-   stacking exactly as authored. */
+   Both are scoped to .p2c--live, so during normal scrolling #process keeps
+   its plain white background and its default stacking exactly as authored. */
 /* Scoped to .is-morphing, which process-to-cases.js adds only for the stretch
    the pin is actually engaged (onToggle) and removes the moment it releases.
 
@@ -5369,458 +5125,44 @@ main {
    page, which is a visible regression on the brightest stop in the design. */
 #process.is-morphing {
   position: relative;
-  /* Above Case studies for the whole pin, so the camera is the foreground
-     layer and Case studies is what shows through the mask as the camera's
-     ground turns transparent and its clip opens. Dropped with the class the
-     moment the pin releases, so nothing is left stacked over Case studies
-     afterwards. */
+  /* Above the rising Case studies layer for the whole pin, so the next
+     section passes underneath the camera and the camera stays the foreground
+     object right through the landing. Dropped with the class the moment the
+     pin releases, so nothing is left stacked over Case studies afterwards. */
   z-index: 10;
   /* Transparent only while pinned: an opaque white section fixed over the
-     viewport would hide Case studies entirely instead of letting it show
-     through the space the closing clip opens up. */
+     viewport would hide the Case studies layout the pull exists to bring up
+     around the landing composition. */
   background: transparent;
-  /* ZERO THE SECTION'S OWN PADDING WHILE PINNED.
-
-     #process carries padding-block: var(--section-y) (~56-104px) for its
-     normal, unpinned layout. That padding is OUTSIDE .process__camera, so
-     while pinned it pushed the camera's box down from the fixed section's own
-     top edge by that amount, with the bottom padding pushing an equal slice
-     of the camera off the bottom of the viewport — the camera was never
-     actually filling the pinned viewport edge-to-edge, it was inset within
-     it by a static, ungoverned offset that GSAP's own y-translate then
-     compounded, reading as extra downward travel that has nothing to do with
-     the solved geometry in travel(). Removed only for the pin's duration —
-     the moment .is-morphing comes off, the section's ordinary padding is
-     back for normal scrolling. */
-  padding-block: 0;
 }
 
-/* THE CAMERA BECOMES THE WHOLE VIEWPORT FOR THE MORPH.
+#process.is-morphing > .shell { will-change: transform; }
 
-   The mechanism this transition runs on is a boundary CLOSING INWARD from
-   all four edges while the object comes DOWN into the featured card (see
-   process-to-cases.js). That only reads if the source is LARGER than the
-   destination on both axes — the insets can only ever close a gap, never
-   open one, and the solve takes the larger of the two ratios so the scaled
-   source still covers the card.
-
-   Section 05's resting camera is now a 506x601 frame sitting in the right
-   column, which is SMALLER than the 454x828 destination plate on the height
-   axis. Left as-is the solve resolves to a scale of ~1.38 — the object grows
-   on its way down and the close has nothing to travel, which is the exact
-   "zoom toward a card that was already there" reading the whole file exists
-   to avoid.
-
-   So for the pinned stretch only, the camera stops being the small right-
-   hand frame and becomes the full pinned viewport: the last thing the reader
-   was looking at, edge to edge, exactly as the eight-card grid used to be.
-   The frame inside keeps its own size and simply sits within it, so nothing
-   about the held picture changes — only the boundary that is about to close
-   around it. Reverts the instant .is-morphing comes off. */
-/* THE CROP DOES THE SEATING — nothing here repositions anything.
-
-   .process__pinWrap is given exactly one viewport of height while the pin is
-   engaged (see openCamera in process-to-cases.js) and the frame stays where
-   it was held inside it, so the camera's crop lands on precisely the viewport
-   the reader was looking at when stage 05 finished. That is the original
-   contract this transition was built and tuned for: an in-flow camera with a
-   height and an overflow, and no measured correction anywhere. */
-/* THE HAND-OFF: THE WHOLE VIEWPORT CLOSES INWARD.
-
-   What the reader must see is the screen they are looking at — the held
-   picture, the copy beside it, all of it — closing in from four edges and
-   becoming the featured case card. Not the picture alone shrinking inside
-   its column.
-
-   So while the pin is engaged the camera stops being the right-hand column
-   and becomes the pinned viewport itself: pulled to the screen's left edge
-   (--stage-x, measured in openCamera) and one viewport wide and tall. The
-   clip then closes THAT box down to the card, which is the original
-   mechanism exactly.
-
-   NOTHING INSIDE MOVES. The frame keeps the width and the screen position it
-   was held at (--held-w / --held-x, published by js/process-stages.js), so
-   at the moment the pin engages the picture is pixel-identical to the frame
-   before it — only the boundary around it starts closing. Growing or
-   re-centring the frame here was tried and is exactly the visible "the image
-   jumps" defect it looks like. */
-#process.is-morphing .process__pinWrap {
-  position: static;
-}
-#process.is-morphing .process__body,
-#process.is-morphing .process__bodyShell {
-  position: static;
-}
-#process.is-morphing .process__camera {
-  position: absolute;
-  top: 0;
-  left: calc(var(--stage-x, 0px) * -1);
-  width: 100vw;
-  box-sizing: border-box;
-}
-#process.is-morphing .process__frame {
-  will-change: transform;
-  /* Exactly where and how big it was while held — see --held-* above. */
-  position: absolute;
-  top: var(--held-y, 0px);
-  left: var(--held-x, 0px);
-  width: var(--held-w, auto);
-  max-width: none;
-  margin: 0;
-}
-
-/* THE STAGE COPY STANDS DOWN FOR THE HAND-OFF.
-
-   The five stages are ordinary scrolling content and they are still sitting
-   in the pinned viewport when the morph starts — so the last stage's title
-   and body were left painted over the top of the closing object and, once
-   Case studies had assembled, over that section's own heading too.
-
-   They fade rather than being hidden outright: the transition is scrubbed
-   and fully reversible, so scrolling back up has to bring the copy back
-   exactly as it was, and pointer-events:none stops invisible text
-   intercepting clicks meant for the card underneath it.
-
-   CLIPPED BY THE CLOSING BOUNDARY, NOT FADED.
-
-   The copy belongs to the same composition the picture does, so the same
-   edge has to sweep across both. It used to fade instead — first on --wash
-   (which emptied the column while the frame was still full width), then in
-   step with the close — but a fade is not what the image does, and the two
-   read as different events however the timing is matched.
-
-   .process__list is a SIBLING of the camera, not a child, so the camera's
-   own clip-path cannot reach it: a clip only crops its own subtree. Rather
-   than restructure the DOM (which would break the two-column layout and the
-   scroll hold), process-to-cases.js mirrors the camera's current clip into
-   --copy-clip, converted from the camera's scaled local space into this
-   element's own screen space. The list wears the identical rectangle, so
-   there is one boundary closing on one composition.
-
-   Scrubbed like everything else here, so it reverses exactly on the way back
-   up. pointer-events:none stops clipped-away text intercepting clicks meant
-   for the card underneath it. */
-#process.is-morphing .process__list,
-#process.is-morphing .process__header {
-  clip-path: var(--copy-clip, none);
-  pointer-events: none;
-  /* IT HAS TO FADE ON ITS OWN, BECAUSE THE WASH CANNOT REACH IT.
-
-     The picture never fades — measured, its opacity stays at 1 for the whole
-     close — and it vanishes only because the camera's wash darkens it into
-     the card's surface. The obvious move is to put the copy under that same
-     wash and let it be swallowed identically, and that is what this rule did.
-
-     It does not work, for two measured reasons. The copy sits OUTSIDE the
-     camera's box (it is a sibling, in the other column), so once the wash is
-     opaque the camera is no longer the topmost thing over the text at all —
-     hit-testing the title returned .process__bodyShell, not the camera. And
-     at the landing the camera's own opacity goes to 0, taking the wash with
-     it, while the text would still be sitting there at full strength.
-
-     So the copy fades on --wash instead: the same signal that darkens the
-     picture, applied as opacity here. It reaches zero as the wash reaches
-     full, which is the moment the composition has become the card's surface
-     — the same instant the picture stops being readable. Scrubbed, so it
-     reverses exactly.
-
-     z-index 1 still clears the camera's white ground, which is what hid the
-     text outright before this. */
-  position: relative;
-  z-index: 1;
-  opacity: clamp(0, 1 - var(--wash, 0), 1);
-}
-@media (prefers-reduced-motion: reduce) {
-  #process.is-morphing .process__list,
-  #process.is-morphing .process__header { opacity: 1; }
-}
-
-/* Case studies sits under the pinned composition for the same stretch — the
-   mask's lower layer, painting in its own resting position the whole time. */
+/* Case studies sits under the pinned composition for the same stretch. */
 .cases--awaiting { z-index: 1; }
 
-/* LAYERING is set on #process.is-morphing above (z-index 10) against this
-   layer's 1: Case studies paints UNDER the camera, which stays the foreground
-   object until the final handoff. Scoped to the transition, so afterwards
-   Case studies is an ordinary section with nothing stacked over it. */
+/* THE RISING LAYER.
 
-/* THE SKIN CHANGE.
+   Transform-only: process-to-cases.js writes a translateY on it and nothing
+   else. It has no styling of its own on purpose — it must not introduce a
+   box, a ground or any spacing of its own, because .cases__layout inside it
+   owns the composition and this wrapper only carries the movement.
 
-   While the frame is closing inward, the CONTENT inside it has to become the
-   case-study card's design — navy ground, light type — so that what the reader
-   follows is one object changing its skin, not a white panel that turns into a
-   navy card at the last moment.
+   will-change is scoped to the pinned stretch so the layer is not promoted to
+   its own compositor layer for the whole life of the page. */
+.cases--awaiting .cases__rise { will-change: transform; }
 
-   A WASH, NOT A RECOLOUR. The obvious approach is to restyle the process
-   content: invert its type, swap its card grounds. That cannot work here.
-   The eight steps are photographs in light cards, and there is no set of
-   colour overrides that turns a white card with a photo in it into the
-   featured plate — the photography would have to disappear, which breaks the
-   one rule this whole transition runs on: the object must stay the object.
+/* LAYERING is set on #process.is-morphing above (z-index 5) against the
+   rising layer's 0: the next section passes UNDER the camera, which stays the
+   foreground object until the final handoff. Scoped to the transition, so
+   afterwards Case studies is an ordinary section with nothing stacked over
+   it. */
 
-   So the card's own ground is laid OVER the composition at an opacity the
-   timeline drives from 0 to 1. The photographs darken under it exactly as
-   they would if they were sitting on the plate, the white ground reads as
-   navy, and by the time the frame has finished closing the surface inside it
-   IS the featured card's surface — with the real process content still
-   visible through the top of it, which is precisely what a case-study plate
-   with an image on it looks like.
-
-   mix-blend-mode: multiply rather than a flat alpha fill. A plain translucent
-   navy greys the whites out and flattens the photographs to a haze; multiply
-   keeps the images' own contrast and darkens toward the navy, so the result
-   reads as the plate's ground rather than as a sheet of tinted glass laid on
-   top. The final flat pass is what closes the last of the gap to the exact
-   token colour.
-
-   pointer-events:none so the wash never intercepts a click, and it paints
-   only while the pin is live — outside the transition the camera has no
-   pseudo-element at all and #process is untouched. */
-#process.is-morphing .process__camera {
-  /* NO `position` HERE — the geometry rule above owns it (absolute, pulled to
-     the screen's left edge). This block owns only the SKIN. A `relative` here
-     silently reverted that and put the stage back in its column. */
-  /* CONTAIN THE BLEND.
-
-     mix-blend-mode blends with everything in the element's stacking context,
-     and #process is transparent and pinned over the rising Case studies layer
-     for this whole stretch — so without an explicit stacking context the
-     multiply would darken the next section showing through from behind rather
-     than the process content in front of it.
-
-     isolation:isolate makes the camera its own context, so the wash can only
-     ever blend with what is actually inside the frame. */
-  isolation: isolate;
-  /* THE FRAME BRINGS ITS OWN GROUND.
-
-     #process is dropped to transparent for the pin (see above), so the white
-     the reader sees behind the composition is the page's, not the section's.
-     That is correct while the frame is open and full-bleed — but the moment
-     the camera becomes its own stacking context, there is nothing white
-     INSIDE it for the wash to multiply against, and the tint would have only
-     the step cards to act on while the gaps between them stayed page-white.
-
-     Giving the camera the same pure white #process normally carries puts the
-     ground back inside the frame where the blend can reach it. Visually
-     identical while the wash is at 0, and it is what lets the whole surface —
-     cards and the space between them alike — become the plate together. */
-  background: #FFFFFF;
-}
-
-#process.is-morphing .process__camera::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  /* Sits above the composition, below nothing else — the camera holds only
-     the process content. */
-  z-index: 2;
-  background: var(--surface-deep);
-  mix-blend-mode: multiply;
-  /* DRIVEN THROUGH A CUSTOM PROPERTY.
-
-     GSAP cannot address a pseudo-element — there is no node to hand it — so
-     the timeline animates --wash on .process__camera itself and the
-     pseudo-element reads it. The fallback of 0 keeps the wash invisible if
-     the tween never runs, so the section is untouched without JS. */
-  opacity: var(--wash, 0);
-}
-
-/* THE SECOND PASS — the flat fill that lifts the darks back up.
-
-   Worth being precise about what this is for, because it is the opposite of
-   what it looks like. Multiply on its own already lands the WHITE ground
-   exactly on the token navy — white multiplied by a colour is that colour, so
-   the ground needs no help at all.
-
-   The problem is the other end. Multiply drives everything DARKER than white
-   below the target: at full wash a mid-grey photo pixel goes to #000f1e,
-   noticeably darker than the #001D3B plate around it, and the photographs
-   read as black holes punched into the card rather than as an image on it.
-
-   This normal-blend pass pulls those darks back toward the token — the same
-   mid-grey finishes at #001b37, a hair off the plate and still carrying its
-   own tonal variation. That is why it comes up late and stops short of full:
-   its whole job is to compress the range the multiply opened up, not to paint
-   the ground. Verified numerically against white, mid-grey and the card
-   grey. */
-#process.is-morphing .process__camera::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  z-index: 3;
-  background: var(--surface-deep);
-  /* Its own property, so the two passes can be timed independently — see the
-     skin tween in process-to-cases.js. */
-  opacity: var(--wash-flat, 0);
-}
-
-/* THE CAPTION PREVIEW.
-
-   Hidden outright unless the transition is actually live: with no JS, or
-   under reduced motion, .process__camera is never given a height/clip and
-   nothing here should paint or take up space in the section's normal flow. */
-.process__captionPreview { display: none; }
-
-/* Shown only while pinned, and only styled at all here — during ordinary
-   scrolling #process carries no such element visually.
-
-   left/right/bottom ARE TWEENED, NOT inset:0 — THEY TRACK THE SAME CLOSING
-   BOX THE CLIP DOES.
-
-   This used to be inset:0, matching how the wash (.process__camera::after /
-   ::before, above) relies on the clip alone for containment: a full-bleed
-   colour behind an inward-closing clip does not need its own positioning,
-   whatever is visible IS the colour. Text is different — it has to land in
-   the SAME corner the real caption occupies, and inset:0 (even centred)
-   put it in the middle of whatever window the clip currently left open,
-   which is not that corner until the close has fully finished.
-
-   process-to-cases.js now tweens left/right/bottom directly to travel()'s
-   own insetL/insetR/insetB — the exact numbers the clip-path tween uses —
-   on the identical span and easing. That makes this box ALWAYS the same
-   rectangle the clip is currently showing, so bottom-left alignment inside
-   it reads as "the text is already sitting in the card's corner" from the
-   first frame of the close, not centred and relocated at the end. The
-   0/0/0 here is only the SEED the tween interpolates from before JS takes
-   over (see openCamera() seeding the clip itself for the same reason) —
-   left/right/bottom are written on every tick once the pin is live. */
-#process.is-morphing .process__captionPreview {
-  display: flex;
-  align-items: flex-end;
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  /* Higher than the wash pseudo-elements' 2/3 would suggest is enough, but
-     #process.is-morphing > .shell carries will-change:transform (see that
-     rule), which gives .shell its own stacking context — and empirically
-     that context still painted above a z-index:4 sibling here. Confirmed by
-     testing: nothing short of a large explicit value reliably wins, so this
-     is set well clear of it rather than chasing the exact minimum. */
-  z-index: 50;
-  padding: var(--s-6) var(--s-5);
-  pointer-events: none;
-  color: var(--text-on-deep);
-  /* THE SAME SCHEDULE AS THE COLOUR. Tied directly to --wash rather than a
-     separate JS tween — the request this exists to satisfy is that the text
-     fades in on exactly the same timeline the wash colour already uses
-     (CLOSE_IN -> CLOSE_END, see process-to-cases.js), so one custom property
-     drives both and they can never drift out of sync. Held back to 0 until
-     --wash is comfortably underway (0.35) so the text does not appear on
-     still-white, unwashed process photography — the colour needs a run-up
-     before the type reads as sitting on a card rather than on a picture. */
-  opacity: clamp(0, (var(--wash, 0) - 0.35) / 0.65, 1);
-}
-
-/* The actual stacked column — num / scope / title / figure — kept to a
-   sensible width, left-aligned to match .case--featured .case__inner. */
-.process__captionPreview-inner {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  max-width: 30ch;
-}
-
-@media (min-width: 1040px) {
-  #process.is-morphing .process__captionPreview {
-    padding: var(--s-7) var(--s-6) var(--s-6);
-  }
-}
-
-/* ONE OR THE OTHER, NEVER BOTH. #process.is-landed is added by
-   process-to-cases.js at the exact frame .case__reveal's own opacity crosses
-   above 0 (see the onUpdate callback) — the same instant the real caption
-   starts taking over. Hiding the preview there means the handoff is a single
-   frame, not a cross-fade between two texts occupying the same space. */
-#process.is-morphing.is-landed .process__captionPreview { display: none; }
-
-/* AND THE CAMERA ITSELF STANDS DOWN AT THE LANDING.
-
-   The camera paints above Case studies for the whole pin (z-index 10 vs 1),
-   which is right while it IS the object — but it is what the reader sees at
-   the destination too, and it ends up a blank navy plate covering the real
-   card's copy. Hit-tested: .process__camera was the topmost element over the
-   featured card.
-
-   That did not arise in the original because the camera wrapped the process
-   composition itself, so the thing painting in the card's box was real
-   content that visually became the card. Here the camera is a viewport-wide
-   frame whose picture sits elsewhere in it, so once the caption has handed
-   over to the real .case__reveal there is nothing left worth painting.
-
-   is-landed fires at the exact frame the real caption starts showing (see
-   process-to-cases.js), so this hides the camera on that same frame — one
-   swap, no stretch with both or neither visible. */
-/* GATED ON .cases--landed, NOT .is-landed.
-
-   .is-landed fires the instant the caption has ANY opacity (op > 0), which
-   is right for swapping the two captions — but the featured card's own navy
-   ground only comes back at .cases--landed (op > 0.5). Hiding the camera on
-   the earlier signal left a stretch where the camera was gone and the card
-   had not yet painted: a washed-out ghost frame right before the landing.
-
-   Both are driven from the same onUpdate, so keying this to the ground's own
-   class makes the camera disappear on exactly the frame the card appears. */
-#process.is-morphing.is-camera-done .process__camera { opacity: 0; }
-
-/* Sized and coloured to match .case--featured's own .case__num / .case__scope
-   / .case__title / .case__figure / .case__figureNum exactly (see those rules
-   above .cases), so the handoff at landing is a straight swap, not a resize. */
-.process__captionPreview-num {
-  display: block;
-  color: var(--accent-2-on-deep);
-  font-size: var(--t-micro);
-}
-.process__captionPreview-scope {
-  display: block;
-  color: var(--text-on-deep-muted);
-  font-size: var(--t-micro);
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  margin-top: var(--s-1);
-}
-.process__captionPreview-title {
-  display: block;
-  color: var(--text-on-deep);
-  font-size: 1.05rem;
-  font-weight: 500;
-  line-height: 1.35;
-  letter-spacing: -0.01em;
-  max-width: 30ch;
-  margin-top: var(--s-3);
-}
-.process__captionPreview-figure {
-  display: block;
-  margin-top: var(--s-4);
-  padding-top: var(--s-4);
-  border-top: 1px solid var(--hairline-on-deep);
-  color: var(--text-on-deep-secondary);
-  font-size: var(--t-micro);
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-.process__captionPreview-figureNum {
-  display: block;
-  font-family: var(--font-display);
-  font-size: clamp(1.9rem, 1.4rem + 1.6vw, 2.6rem);
-  letter-spacing: -0.02em;
-  margin-bottom: 0.15em;
-  font-weight: 700;
-  line-height: 1;
-  color: var(--accent-2-on-deep);
-}
-
-/* A BACKSTOP, not the mechanism.
-
-   The frame closing around the object is done by the animated clip-path on
-   .process__camera (see the containment tween in process-to-cases.js), which
-   lands the camera exactly inside this card's box. This rule only guarantees
-   that a sub-pixel overhang at the end of the scrub — or a frame rendered
-   mid-refresh, before the clip has been re-solved against new geometry —
-   cannot spill outside the card. Only while the pin is live. */
+/* The arriving composition is scaled to the card's WIDTH, so it is still
+   taller than the card when it lands and its lower half hangs past the
+   frame. Clipping to the card's own box is what makes the last moment read
+   as the frame closing around the object rather than the object sitting
+   loose on top of the section. Only while the pin is live. */
 .cases--awaiting .cases__featured { overflow: hidden; }
 
 /* --- 06 Case studies ---------------------------------------------------- */
@@ -5843,36 +5185,14 @@ main {
    that box is the frame the arriving composition has to fit inside. */
 
 .cases {
-  /* THE ROW HEIGHT, DECLARED ONCE.
-
-     The rail, the featured plate and the supporting stack are three columns
-     of ONE row and must resolve to the same height — the reference has the
-     three supporting cards spanning exactly the plate's top and bottom edges.
-     This was previously the same clamp written out in six places; a change to
-     one copy silently broke the alignment. Override this token alone to
-     retune the row.
-
-     Taller than the previous 74vh/80vh: the reference plate is a deep
-     portrait frame, and it is also the geometry the process camera is scaled
-     to fit when it lands here. */
-  --cases-plate-h: clamp(36rem, 88vh, 58rem);
-
   padding-block: var(--section-y);
   background: var(--surface-page);
-  /* Sits UNDER the pinned process section while the pin is live, in its own
-     ordinary document position — no margin or transform moves it. The
-     transparent, higher-stacked #process.is-morphing above it is what makes
-     it visible only through the space the camera's closing clip opens up.
-     See .p2c--live and the mask relationship in that block. */
+  /* Sits UNDER the pinned process section while the pin is live: this section
+     is pulled up across the held composition by the negative margin
+     process-to-cases.js writes, and the travelling composition must not be
+     clipped by this section's own ground as it rises. See .p2c--live. */
   position: relative;
   z-index: 0;
-}
-
-/* From 1360px the row takes its full depth. Stepped on the TOKEN, so the
-   rail, the plate and the supporting stack all move together and stay level
-   with each other. */
-@media (min-width: 1360px) {
-  .cases { --cases-plate-h: clamp(40rem, 92vh, 62rem); }
 }
 
 .cases__layout {
@@ -5891,7 +5211,7 @@ main {
        explicitly rather than being allowed to settle near its neighbours —
        when all three columns land at similar widths the section reads as a
        three-up card grid, which is exactly what this layout is not. */
-    grid-template-columns: minmax(13rem, 0.92fr) minmax(0, 1.32fr) minmax(0, 1.04fr);
+    grid-template-columns: minmax(14rem, 0.92fr) minmax(0, 1.45fr) minmax(0, 1.02fr);
     gap: var(--s-7) var(--s-6);
     align-items: start;
   }
@@ -5902,7 +5222,7 @@ main {
    column tightens to a rail. */
 @media (min-width: 1360px) {
   .cases__layout {
-    grid-template-columns: minmax(14rem, 0.88fr) minmax(0, 1.42fr) minmax(0, 1.0fr);
+    grid-template-columns: minmax(15rem, 0.86fr) minmax(0, 1.6fr) minmax(0, 0.98fr);
   }
 }
 
@@ -5914,74 +5234,33 @@ main {
   /* Optically aligns the heading's cap-height with the top of the featured
      plate rather than its box, which sits a few pixels higher. */
   .cases__head { padding-top: var(--s-2); }
-
-  /* THE RAIL IS A COLUMN, NOT A STACK.
-
-     In the reference the display heading sits at the TOP of the rail and the
-     supporting copy sits at its FOOT, with the whole height of the plate open
-     between them. Matching the plate's own min-height and letting the space
-     collect above the lede is what produces that gap — it is the emptiness
-     that makes the two blocks read as the top and bottom of one column rather
-     than a heading with a paragraph under it. */
-  .cases__head {
-    display: flex;
-    flex-direction: column;
-    min-height: var(--cases-plate-h);
-    /* .cases__layout sets align-items:start, so without this the rail is
-       sized to its content and the min-height above has nothing to act on —
-       the auto margin then has no free space to collect and the foot group
-       stays tucked under the masthead. */
-    align-self: stretch;
-  }
 }
-
 
 /* Larger than the page --t-h2 here, and only here: this section is the
    index/chapter break the transition lands on, so its heading is allowed to
    be the dominant typography on the page for that moment. */
 .cases__display {
   color: var(--accent);
-  /* The dominant typography of the section, set tight and large as in the
-     reference — the two words are a masthead, not a heading. */
-  font-size: clamp(2.4rem, 1.2rem + 4.4vw, 5.2rem);
-  line-height: 0.94;
-  letter-spacing: -0.035em;
-  font-weight: 400;
+  font-size: clamp(2.1rem, 1.3rem + 3.4vw, 4rem);
+  line-height: 1.02;
+  letter-spacing: -0.02em;
   max-width: none;
 }
 
 .cases__lede {
   margin-top: var(--s-5);
-  /* Down from --t-lede: in the reference the foot paragraph is set at body
-     size, well below the masthead, so the contrast between the two blocks is
-     scale rather than weight. */
-  font-size: 0.95rem;
-  line-height: 1.55;
+  font-size: var(--t-lede);
   color: var(--text-secondary);
-  max-width: 32ch;
+  max-width: 34ch;
 }
 
 .cases__confirm {
-  margin-top: var(--s-4);
+  margin-top: var(--s-5);
   padding-top: var(--s-4);
   border-top: 1px solid var(--border);
-  font-size: var(--t-micro);
-  line-height: 1.5;
+  font-size: var(--t-small);
   color: var(--text-secondary);
   max-width: 38ch;
-}
-
-/* THE FOOT GROUP SITS AT THE BOTTOM OF THE RAIL.
-
-   Declared here rather than in the 1040px block above, which is earlier in
-   the file: these selectors have the same specificity as the base rules for
-   .cases__lede and .cases__confirm, so up there the base margin-top simply
-   won on source order and the auto margin never resolved. */
-@media (min-width: 1040px) {
-  /* The auto margin goes on the LEDE, which carries the confirm note after
-     it, so the collected space opens between the masthead and the foot group
-     rather than between the two foot paragraphs. */
-  .cases__lede { margin-top: auto; }
 }
 
 /* CENTRE — the featured case ---------------------------------------------- */
@@ -6026,23 +5305,15 @@ main {
 
 @media (min-width: 1040px) {
   .case--featured {
-    /* THE DESTINATION'S DEPTH.
-
-       This card's box is the rectangle the process camera's clip closes onto,
-       so its height is a geometry decision as much as a design one. Any value
-       works — process-to-cases.js measures the rendered box every refresh and
-       solves the clip against whatever it finds — but it must stay a single
-       self-contained box, because that box IS the shape the closing frame
-       arrives at.
-
-       (An earlier version had the script write a --cases-plate-ar here to
-       match a width-bound scale. The camera is fit by HEIGHT now and the clip
-       closes the remaining width, so no such variable exists and this is an
-       ordinary token.) */
-    min-height: var(--cases-plate-h);
+    min-height: clamp(30rem, 74vh, 46rem);
   }
 }
 
+@media (min-width: 1360px) {
+  .case--featured {
+    min-height: clamp(34rem, 80vh, 52rem);
+  }
+}
 
 .case--featured .case__inner {
   position: relative;
@@ -6089,26 +5360,12 @@ main {
 
 .case--featured .case__num {
   color: var(--accent-2-on-deep);
-  font-size: var(--t-micro);
   margin: 0;
 }
-.case--featured .case__scope {
-  color: var(--text-on-deep-muted);
-  font-size: var(--t-micro);
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  margin: 0;
-}
+.case--featured .case__scope { color: var(--text-on-deep-muted); margin: 0; }
 .case--featured .case__title {
   color: var(--text-on-deep);
-  /* Reduced from --t-h3. In the reference the plate's own copy is small and
-     set on one or two quiet lines — the plate's weight comes from its size
-     and its ground, not from the type inside it. */
-  font-size: 1.05rem;
-  font-weight: 500;
-  line-height: 1.35;
-  letter-spacing: -0.01em;
-  max-width: 30ch;
+  font-size: var(--t-h3);
   margin: 0;
 }
 .case--featured .case__figure {
@@ -6116,18 +5373,12 @@ main {
   padding-top: var(--s-4);
   border-top: 1px solid var(--hairline-on-deep);
   color: var(--text-on-deep-secondary);
-  font-size: var(--t-micro);
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  font-size: var(--t-small);
 }
 .case--featured .case__figureNum {
   display: block;
   font-family: var(--font-display);
-  /* The one figure allowed to be large on the plate — everything else around
-     it has come down, so this reads as the single number the card is about. */
-  font-size: clamp(1.9rem, 1.4rem + 1.6vw, 2.6rem);
-  letter-spacing: -0.02em;
-  margin-bottom: 0.15em;
+  font-size: var(--t-h2);
   font-weight: 700;
   line-height: 1;
   color: var(--accent-2-on-deep);
@@ -6149,9 +5400,9 @@ main {
   border-top: 1px solid var(--hairline-on-deep);
   color: var(--text-on-deep);
   text-decoration: none;
-  font-size: 0.7rem;
+  font-size: var(--t-micro);
   font-weight: 700;
-  letter-spacing: 0.14em;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
   transition: background 200ms ease;
 }
@@ -6216,35 +5467,6 @@ main {
   box-shadow: none;
 }
 
-/* ...AND IT COMES BACK ONCE THE CAMERA HAS LANDED.
-
-   Added by process-to-cases.js at the same moment the copy resolves. Without
-   this the card stayed transparent for the whole of normal scrolling, so the
-   plate was painted ONLY by the camera — which lands scaled to the card's
-   WIDTH and therefore covers just the lower part of a tall frame, leaving the
-   plate looking as though it started well below the top of the supporting
-   stack. Restoring the ground fills the frame for its full height, level with
-   the stack, with the camera inside it supplying the image.
-
-   Gated on .cases--landed (opacity > 0.5), not any earlier signal: this box
-   sits in Case studies' own ordinary stacking context, UNDER the camera, for
-   the whole pin (see the mask relationship notes on #process.is-morphing) —
-   it is never raised above the camera, so it must stay genuinely invisible
-   until the camera has actually arrived in its geometry. An earlier version
-   of this rule fired as soon as the caption's opacity tween had anything to
-   show and paired it with raising Case studies' whole stacking context above
-   the camera's — but the camera's own vertical arrival (the scale transform,
-   see phase two) is not complete at that point, so the two were visible
-   SIMULTANEOUSLY as two separate objects: the camera, still a tall untransformed
-   sliver mid-fall, and this box, already fully painted and card-shaped, sitting
-   below it. Waiting for --landed keeps this box invisible until the one real
-   object — the camera — has actually finished becoming the card. */
-.cases--awaiting.cases--landed .cases__featured {
-  background: var(--surface-deep);
-  border-color: var(--border);
-  box-shadow: 0 24px 60px -44px rgba(var(--rgb-deep), 0.55);
-}
-
 /* RIGHT — the three supporting findings ------------------------------------ */
 
 /* Stacked, never a grid. align-content:start keeps them at their natural
@@ -6281,12 +5503,7 @@ main {
    the column can never exceed the section. */
 @media (min-width: 1040px) {
   .cases__support {
-    /* The stack ends exactly with the plate. min-height alone only guarantees
-       the FLOOR — when the plate grows past it the two columns drift apart at
-       the foot, so the stack is also stretched to the grid row the plate
-       defines. */
-    align-self: stretch;
-    min-height: var(--cases-plate-h);
+    min-height: clamp(30rem, 74vh, 46rem);
     /* 1fr rows divide the space that REMAINS after the two gaps, so the three
        rectangles plus the air between them still add up to exactly the
        plate's height. */
@@ -6295,6 +5512,11 @@ main {
   }
 }
 
+@media (min-width: 1360px) {
+  .cases__support {
+    min-height: clamp(34rem, 80vh, 52rem);
+  }
+}
 
 /* SUPPORTING ROWS, not cards.
 
@@ -6319,14 +5541,7 @@ main {
      block flow. */
   min-height: 8.5rem;
   height: 100%;
-  /* THE CHIP IS AT THE TOP, THE COPY AT THE FOOT.
-
-     In the reference each supporting plate carries its number chip in the top
-     corner and its statement at the bottom, with the faint line-art filling
-     the space between them on the right. Centring the whole group vertically
-     — what this rule used to do — bunched chip and title together in the
-     middle of the plate and left the art with nothing to sit behind. */
-  justify-content: space-between;
+  justify-content: center;
   /* A wash rather than a fill: the row is a tint of the page, not a raised
      surface, so it never competes with the featured plate. */
   background: linear-gradient(
@@ -6345,12 +5560,12 @@ main {
   display: inline-flex;
   align-items: center;
   gap: 0.45em;
-  padding: 0.3em 0.55em;
+  padding: 0.25em 0.5em;
   background: var(--surface-deep);
   color: var(--text-on-deep);
   border-radius: 2px;
-  font-size: 0.7rem;
-  letter-spacing: 0.08em;
+  font-size: var(--t-micro);
+  letter-spacing: 0.1em;
 }
 
 /* The teal square inside the chip — the brand accent doing the marking work
@@ -6366,28 +5581,21 @@ main {
    not bold headlines — the weight belongs to the featured plate. */
 .case--support .case__title {
   margin: 0;
-  /* Down again from 1rem: in the reference these are short quiet statements
-     set close to body size, so the eye reads the three of them as a scan list
-     rather than as three headings competing with the plate. */
-  font-size: 0.92rem;
+  /* Down from --t-lede: the row is a third of the plate now, and at lede size
+     a wrapped title crowded the chip and the result line. */
+  font-size: 1rem;
   font-weight: 400;
   color: var(--text-primary);
-  line-height: 1.4;
-  letter-spacing: -0.005em;
-  /* NO ch cap. The plate's own padding-right already reserves the art's
-     column; adding a character cap on top of it cut the measure to about
-     twenty characters and wrapped every title to four lines, which is what
-     made the rows read as tall blocks rather than the reference's one- and
-     two-line statements. */
-  max-width: none;
+  line-height: 1.3;
+  letter-spacing: -0.01em;
+  max-width: 26ch;
   position: relative;
   z-index: 1;
 }
 
 .case--support .case__result {
   margin: 0;
-  font-size: var(--t-micro);
-  line-height: 1.45;
+  font-size: var(--t-small);
   color: var(--text-secondary);
   position: relative;
   z-index: 1;
@@ -6405,27 +5613,20 @@ main {
    inert here, and it sits UNDER the copy at z-index 0. */
 .case--support .case__art {
   position: absolute;
-  /* Bigger and set further into the corner than before: in the reference the
-     art is a large faint object anchored to the lower-right of the plate and
-     clipped by its edge, not a small icon floating beside the copy. */
-  right: -1.25rem;
-  bottom: -1.25rem;
-  top: auto;
-  transform: none;
-  width: 10rem;
-  height: 10rem;
+  right: -0.5rem;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 7rem;
+  height: 7rem;
   color: var(--accent);
-  opacity: 0.13;
+  opacity: 0.15;
   pointer-events: none;
   z-index: 0;
 }
 .case--support .case__art svg { width: 100%; height: 100%; display: block; }
 
 @media (min-width: 1040px) {
-  /* Only enough inset to keep the copy off the densest part of the art. The
-     art is at 0.13 opacity and sits under the text, so the copy may overlap
-     its outer reaches — reserving the full 8.5rem starved the titles. */
-  .case--support .case__inner { padding-right: 4.5rem; }
+  .case--support .case__inner { padding-right: 7.5rem; }
 }
 
 /* NARROW DESKTOP BAND. Between 1040 and 1240 the rows are at their shortest
@@ -6438,9 +5639,8 @@ main {
     padding-top: var(--s-4);
     padding-bottom: var(--s-4);
   }
-  .case--support .case__title { font-size: 0.88rem; }
-  .case--support .case__art { width: 8rem; height: 8rem; }
-  .case--support .case__inner { padding-right: 3.5rem; }
+  .case--support .case__title { font-size: 0.95rem; }
+  .case--support .case__art { width: 6rem; height: 6rem; }
 }
 
 /* Under 1040px the rows are ordinary stacked blocks and the art would crowd
@@ -7186,38 +6386,4 @@ main {
   .wa-float { transition-duration: .01ms; transform: none; }
   /* The fill still tracks scroll — it is information, not decoration. */
   .to-top-fill { transition: background .1s linear; }
-}
-
-/* ==========================================================================
-   "How a case runs" head
-   Scoped to #process only: a small, tight two-line black headline over a
-   smaller black eyebrow, both in --font-display.
-   ========================================================================== */
-
-#process .inner-section__head { margin-bottom: var(--s-7); }
-
-#process .eyebrow {
-  font-family: var(--font-display);
-  font-size: 0.6875rem;
-  font-weight: 500;
-  letter-spacing: 0.10em;
-  text-transform: none;
-  color: #000;
-  margin-bottom: var(--s-5);
-}
-
-/* Size and weight stay on the global .section-title (--t-h2 / 700) exactly as
-   before; only the family, colour and the two-line measure are set here. */
-#process .section-title {
-  font-family: var(--font-display);
-  color: #000;
-  max-width: 18ch;
-  text-wrap: balance;
-}
-
-/* Two lines, broken where the sense breaks. */
-#process .section-title .nb { white-space: nowrap; }
-
-@media (max-width: 40rem) {
-  #process .section-title { max-width: 20ch; }
 }

@@ -7,9 +7,9 @@
 
      ACT 1  the wordmark   WHAT (outline) -> WE -> DO rise out of their masks,
                            140ms apart, then the lede fades in
-     ACT 2  the cards      four glass panes slide straight in from the right,
-                           140ms apart, each followed by a highlight sweeping
-                           across its face once it has landed
+     ACT 2  the cards      four glass panes swing in from the right, 130ms
+                           apart, each followed by a highlight sweeping across
+                           its face once it has landed
 
    The wordmark is the anchor: act 2 does not begin until the first word has
    fully arrived, so the reader's eye is on the type before anything moves in
@@ -25,17 +25,18 @@
       animate out of them. A missing or failed script therefore leaves a
       complete, fully visible static section. Same contract as doubts.js.
 
-   2. The cards arrive on a STRAIGHT slide — a pure x-translation, no rotation,
-      no skew, no scale. Anything that turns the pane as it lands reads as a
-      swing rather than as a slide, and this section wants the plainer reading:
-      four panes entering from the right edge and stopping.
+   2. The cards arrive on an ARC, not a straight slide. Each starts with
+      rotationY and a slight skew so the pane appears to swing round to face
+      the reader as it lands. A pure x-translation on a translucent panel reads
+      as a sliding rectangle; the rotation is what sells it as a sheet of
+      glass. transformPerspective is set per element, so no ancestor needs a
+      perspective of its own — which matters because an ancestor perspective
+      would have created a containing block and broken the 100vh grid.
 
-   3. Travel distance is MEASURED, not hard-coded — but it is measured ONCE,
-      from the leftmost card, and shared by all four. Per-card distances meant
-      per-card speeds over a shared duration, which is a fan. One distance is
-      what makes the row move as parallel straight slides. Measured at render
-      time, not at build time, so it is correct after webfonts and layout have
-      settled.
+   3. Travel distance is MEASURED, not hard-coded, from each card's own box to
+      the right edge of the window. The far-left card therefore travels furthest
+      and the rightmost least, which is what makes the four read as one sheet
+      of glass panes fanning in rather than four equal slides.
 
    4. The sheen is chained AFTER its card lands, never concurrent with it.
       Sweeping a highlight across a pane that is still rotating reads as a
@@ -94,84 +95,21 @@
   /* Distance from the card's resting box to beyond the right edge of the
      window. +64px clears the pane's drop shadow so nothing shows off-stage.
 
-     UNIFORM ACROSS THE FOUR CARDS, and that is the point of the current
-     entrance. Measuring each card from ITS OWN left edge gave the far-left
-     card a travel roughly four times the rightmost one's; run over the same
-     duration that is four different speeds, so the row read as a fan opening
-     rather than as four panes sliding straight in. Taking the offset from the
-     LEFTMOST card and giving it to all four means every pane covers the same
-     distance at the same rate — one straight, parallel slide from the right.
-
-     NOT safe to measure lazily, which is what this note used to claim. The
-     card is parked with `visibility` in CSS, but GSAP writes the from-state's
-     transform at tween-CREATION time (immediateRender defaults to true on
-     fromTo), so by the time a second card is measured the first is already
-     displaced and getBoundingClientRect reports it off-stage. Hence the single
-     up-front measurement below. */
-  /* MEASURED FROM THE UNTRANSFORMED LAYOUT, ONCE, AND CACHED.
-
-     The subtle failure this replaces: gsap.fromTo() defaults to
-     immediateRender:TRUE — including inside a paused timeline. (Only plain
-     .to() tweens default to false; an earlier comment in this file had that
-     backwards.) So the moment card 1's tween is CREATED, GSAP writes its
-     from-state and physically displaces card 1 to translateX(~1336px).
-
-     offsetFor() then ran again while building card 2's tween — and it loops
-     over every card taking getBoundingClientRect().left to find the leftmost.
-     Card 1 was no longer at 168px; it was at 1504px, off-stage. So "leftmost"
-     became card 2, and card 2 got a SHORTER travel. Card 2's tween then
-     displaced card 2, so card 3 measured shorter still, and so on. Each card
-     poisoned the measurement for the next:
-
-         intended   1336  1336  1336  1336   (uniform — the design)
-         actual     1336  1057   778   500   (cascade)
-
-     Every card therefore started at exactly viewport+64 — just past the right
-     edge — and crossed only its OWN distance to its own resting slot. Card 1
-     had to cover 1272px of screen in the same 1.25s that card 4 covered 436px.
-     Under power2.out, which spends most of its distance early, card 1 was home
-     within the first third of its tween while the others were still visibly
-     gliding. That is the "first card is already there" bug: not a timing
-     fault, a measurement fault.
-
-     Measuring ONCE up front, before a single tween exists, is what makes the
-     travel genuinely uniform. Cached in a closure variable rather than
-     recomputed per call so no later render can re-enter the same trap, and
-     re-measured explicitly on resize (below) where the layout really has
-     changed and nothing is mid-flight. */
-  var travel = 0;
-
-  function measureTravel() {
-    /* Clear any inline transform first: on a resize the cards may still carry
-       the from-state from the initial build, and reading through it would
-       reproduce exactly the cascade described above. */
-    gsap.set(cards, { x: 0 });
-
-    var left = window.innerWidth;
-    cards.forEach(function (c) {
-      var l = c.getBoundingClientRect().left;
-      if (l < left) left = l;
-    });
-    travel = (window.innerWidth - left) + 64;
-    return travel;
-  }
-
-  measureTravel();
-
-  function offsetFor() {
-    return travel;
+     Safe to measure directly: the card is parked with `visibility`, never a
+     transform, so its box is always its true layout box. (An earlier version
+     parked it at translateX(120%), which getBoundingClientRect reports THROUGH
+     — returning roughly double the correct travel.) */
+  function offsetFor(card) {
+    return (window.innerWidth - card.getBoundingClientRect().left) + 64;
   }
 
   /* WHY THIS IS NOT A PLAIN start: 'top 68%'.
 
-     .doubts pins its stage with pinType:'fixed' and holds it for an extra
-     viewport while the section AFTER IT is pulled up over it like a card
-     dealt on top: doubts.js writes a negative margin-top of -100vh onto its
-     nextElementSibling and tags it .doubts-cover. That used to be this
-     section; after the page reorder it is .about. Either way the reasoning
-     below stands unchanged — measuring the real on-screen rect is correct
-     whether or not anything upstream has shifted this section's document
-     position, which is exactly why it was written that way.
+     The section above (.doubts) pins its stage with pinType:'fixed' and holds
+     it for an extra viewport while THIS section is pulled up over it like a
+     card dealt on top. doubts.js does that by writing a negative
+     margin-top of -100vh onto its nextElementSibling — which is this section —
+     and tags it .doubts-cover.
 
      That margin moves the section's document position a full viewport EARLIER
      than where it visually arrives. A position-based start therefore fires
@@ -234,70 +172,39 @@
     failsafe = -1;   /* non-null, so armFailsafe can never re-arm it */
   });
 
-  /* WATCHES THE SECTION'S REAL ON-SCREEN POSITION.
+  /* WATCHES THE GRID, NOT THE SECTION — and that is the whole point.
 
-     Not a ScrollTrigger start position, and not a scroll listener — the two
-     obvious choices are both wrong here for the same underlying reason.
+     The section is 100vh + 96px of overshoot and is pulled up by a negative
+     margin, so its TOP edge crosses any threshold a long time before the cards
+     do: the grid sits in the vertical middle of a full-viewport section, which
+     means roughly half a screen further down. Releasing on the section's top
+     therefore started act 2 while the cards were still below the fold — they
+     completed their 1.05s slide unseen, and what the reader finally scrolled
+     to was four cards already at rest. That is the "appearing in place" bug,
+     and no amount of tuning the tween could fix it, because the tween was
+     never the thing at fault.
 
-     A start position is wrong because an upstream pin can pull a section up
-     over it with margin-top:-100vh, putting the section's document position a
-     full viewport earlier than where it visually arrives. Any position-based
-     start resolves against the shifted position and fires while the section is
-     still off screen — the choreography then plays out unseen and the reader
-     scrolls in to find everything at rest. (.doubts does exactly this to
-     whatever follows it; that is no longer this section, but the guarantee is
-     what matters, not which section currently benefits from it.)
+     So the threshold is measured on .services__grid itself: fire once the
+     cards' own top edge has risen to 88% of the viewport — they are just
+     breaking the bottom of the screen, which is exactly when a slide from the
+     right edge is worth watching.
 
-     A scroll listener is wrong because a covering section is moved by the
-     pinned stage's transform, and the frame it arrives on does not reliably
-     emit a scroll event.
+     Still on GSAP's ticker rather than a scroll listener: this section is the
+     cover for the pinned composition above it and is moved by that stage's
+     transform, and the frame it arrives on does not reliably emit a scroll
+     event. The ticker sees every frame, so the release is exact. It measures
+     one rect per frame only until it fires once, then detaches itself. */
+  var grid = section.querySelector('.services__grid') || section;
 
-     The ticker sees every frame and measures the section's live rect, which is
-     correct whether or not something upstream has pulled it up. Nothing here
-     depends on the overlap's size, so retuning OVERLAP_VH in doubts.js cannot
-     desynchronise it, and it behaves identically if the cover mechanism is
-     removed. One rect per frame, only until it fires once, then it detaches —
-     nothing is left measuring for the life of the page. Running immediately
-     also covers a deep link to #services or a reload mid-page. */
   function watch() {
-    var vh = window.innerHeight;
+    var top = grid.getBoundingClientRect().top;
 
-    /* RELEASE WHEN THE SECTION ARRIVES — which is what the reader perceives
-       as "reaching the section", and is the whole requirement.
+    /* Arm the guard once the grid is within a viewport of the fold. From here
+       the release is imminent, so a stall is a real fault rather than a reader
+       who simply has not scrolled yet. */
+    if (top <= window.innerHeight * 2) armFailsafe();
 
-       This gate has been through two wrong shapes, both worth recording.
-
-       It first watched only the grid's TOP edge (0.55vh). That was fine in
-       itself. Then, chasing the "card 1 is already there" bug, it also
-       required the row's BOTTOM edge on screen (bottom <= vh - 8). That fixed
-       nothing — the real cause was a measurement cascade in offsetFor(), see
-       measureTravel() — and it introduced this delay:
-
-           viewport   grid top when     grid top the gate
-           height     section flush     actually waited for    late by
-             768          212                  422              210px
-            1080          232                  688              456px
-            1440          239                 1048              809px
-
-       Because the grid sits ~220px below the section's top edge, demanding its
-       bottom be on screen means demanding the section scroll several hundred
-       pixels PAST flush. The reader arrives, the row sits there, and the cards
-       only move once they have scrolled well in. That is the reported lateness.
-
-       With travel now genuinely uniform, the bottom test earns nothing: every
-       card starts fully off-stage and crosses the screen at the same rate, so
-       there is no card that can finish early and no reason to wait for the row
-       to be vertically complete.
-
-       So the gate is back to the section's own top edge, at 0.8 — it fires as
-       the section is coming up to fill the screen, slightly BEFORE flush, so
-       the first frames of travel play as the reader settles onto the section
-       rather than after. Measured on the section rather than the grid because
-       the section is the thing whose arrival the reader is registering. */
-    var top = section.getBoundingClientRect().top;
-
-    if (top <= vh * 0.8) {
-      armFailsafe();
+    if (top <= window.innerHeight * 0.88) {
       gsap.ticker.remove(watch);
       tl.play();
     }
@@ -422,26 +329,6 @@
 
   /* ---- ACT 2: the glass cards ------------------------------------------ */
 
-  /* A SHARED LEAD-IN BEFORE THE FIRST CARD MOVES.
-
-     Card 1 used to sit at t=0, so it began travelling on the very frame the
-     ticker released the timeline. That frame is the one frame in the whole
-     sequence least likely to be settled: it is the frame the cover's transform
-     just carried the grid across the release line on, and card 1 is the only
-     card exposed to it — cards 2-4 are held back 0.14s, 0.28s and 0.42s and so
-     always start from a quiet frame. The asymmetry is why the artefact only
-     ever showed on the first card.
-
-     0.12s costs nothing perceptually and puts all four cards on the same
-     footing: by the time card 1 moves, the release frame is behind us and the
-     row is demonstrably still. The stagger between cards is untouched, so the
-     fan reads exactly as before — the whole row simply begins a breath later.
-
-     Kept small deliberately. Anything longer starts to read as a pause between
-     the wordmark settling and the cards answering it, which is a different
-     piece of choreography from the one this section is composed as. */
-  var LEAD_IN = 0.12;
-
   cards.forEach(function (card, i) {
     var sheen = card.querySelector('.service__sheen');
     /* The first card moves IMMEDIATELY on release, because release is now tied
@@ -453,7 +340,7 @@
 
        0.14 apart rather than 0.13, so the four-card stagger still reads as a
        fan rather than as one block, and the last card lands ~1.5s in. */
-    var at = LEAD_IN + i * 0.14;
+    var at = i * 0.14;
 
     tl.fromTo(card,
       {
@@ -467,18 +354,14 @@
         /* REVEALED IN THE FROM-STATE, not in onStart, and the difference is
            the whole bug.
 
-           gsap.fromTo() defaults to immediateRender:TRUE, even inside a
-           paused timeline — it is only plain .to() tweens that default to
-           false. So the from-values land the moment the tween is CREATED, and
-           onStart fires much later, on release. Revealing the card in onStart
-           therefore left it visibility:hidden for the whole build-to-release
-           gap and for the first render of travel; with the easing spending
-           most of its distance early, the card became visible only once it was
-           essentially home, so each one blinked into its final position
-           instead of sliding.
-
-           (That same immediateRender:true is what made the shared travel
-           distance measurable only ONCE, up front — see measureTravel().)
+           A fromTo inside a timeline defaults to immediateRender:false, so the
+           from-values are applied when the tween's playhead is first reached —
+           and onStart fires AFTER that first render. Revealing the card there
+           meant GSAP had already rendered a frame or more of travel while the
+           card was still visibility:hidden. With power3.out spending most of
+           its distance in the first fraction of the duration, the card became
+           visible only once it was essentially home, so each one appeared to
+           blink into its final position instead of sliding.
 
            Putting visibility in the from-state makes the reveal and the
            off-stage transform land in the SAME render, so the card is visible
@@ -494,18 +377,12 @@
            layout that no longer exists, so the card starts at the wrong offset
            and the first frame jumps to correct it. That jump is the glitch at
            the START of the slide. */
-        x: function () { return offsetFor(); }
+        x: function () { return offsetFor(card); }
       },
       {
         x: 0,
-        /* Longer and on a gentler curve than the old power3.out. power3 spends
-           ~80% of its distance in the first third of the tween, so a card was
-           essentially home before the eye could track it and the slide read as
-           a pop. power2.out over 1.25s keeps the pane visibly crossing the
-           screen for most of its run, which is what makes a straight slide
-           legible as a slide. */
-        duration: 1.25,
-        ease: 'power2.out',
+        duration: 1.05,
+        ease: 'power3.out',
         /* PROMOTED FOR THE DURATION OF THE SLIDE, AND ONLY THAT LONG.
 
            Each card carries two large gradient pseudo-layers plus a border
@@ -581,18 +458,6 @@
     resizeId = setTimeout(function () {
       baseW = wordmarkWidth();
       wordTweens.forEach(function (t) { t.invalidate(); });
-
-      /* Re-measure the cards' shared travel too, but ONLY while the entrance
-         is still pending. Once the timeline has played the cards sit at x:0
-         and the start offset is never read again — while measureTravel()
-         writes x:0 to clear inline transforms, which on a landed row is a
-         harmless no-op but on a row mid-flight would yank every card to its
-         resting place. Guarding on progress keeps it to the case that needs
-         it: a resize that happens before the reader ever reaches the section,
-         where the grid has re-laid out at a new width and the offsets measured
-         at load are stale. */
-      if (tl.progress() === 0 && !tl.isActive()) measureTravel();
-
       ScrollTrigger.refresh();
     }, 150);
   });

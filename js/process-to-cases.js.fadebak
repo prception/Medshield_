@@ -1,0 +1,643 @@
+/* ==========================================================================
+   MedShield — process-to-cases.js
+   The transition from section 05 ("How a case runs") into section 06
+   ("Case studies").
+
+   THE PRINCIPLE. One physical object moves from one layout position to
+   another. The object is the REAL process composition — #process's own
+   .shell, the heading and all eight cards the reader has just been reading.
+   Nothing is cloned, duplicated or stood in for. That exact element shrinks,
+   travels downward, and lands inside the large centre card of Case studies,
+   where it becomes the featured case.
+
+       the case has finished running  ->  here is what those cases achieved
+
+   WHAT THIS IS NOT. It is not a process layer fading out while a featured
+   card fades in underneath it, and it is not eight cards rearranging into
+   four. Both of those read as "one thing disappeared and another appeared".
+   The whole point is that the reader can follow a single object the entire
+   way and never sees a swap.
+
+   ---------------------------------------------------------------------------
+   THE FOUR PIECES
+
+   1. THE SOURCE — #process > .shell. Pinned via #process itself, then given
+      scale + x + y as ONE layer. Its internal layout is never touched: the
+      eight cards keep their grid, their sizes and their spacing, and simply
+      ride along inside the shrinking box. Before the pin engages nothing is
+      written to it at all — during normal scrolling the section is pixel-for-
+      pixel the design it always was.
+
+   2. THE DESTINATION — .cases__featured. Measured with getBoundingClientRect
+      at the moment the pin releases, never guessed. The transform is a
+      FLIP-style solve: scale is the ratio of the two boxes, translation is
+      the delta between their centres.
+
+   3. THE EMPTY SLOT — .case__reveal. The destination card's CONTENT is held
+      at opacity 0 for the whole travel, so the space the composition is
+      flying into is genuinely empty. There is no second card underneath to
+      cross-fade with. Only once the composition has landed does the case copy
+      come up inside that same frame.
+
+   4. THE SPACER — the empty .p2c section. The pin's extra scroll distance is
+      claimed there, which is what lets #process be pinned without its own
+      layout moving and without a gap opening downstream.
+
+   ---------------------------------------------------------------------------
+   DESIGN NOTES
+
+   A. CSS OWNS THE RESTING LAYOUT. If this file never runs — no GSAP, a throw,
+      an old browser, reduced motion — .p2c stays display:none, #process is a
+      normal section and the featured card shows its content as usual. The
+      page reads correctly with nothing missing. Same contract as doubts.js /
+      services.js / why.js.
+
+   B. TRANSFORMS ONLY on the travelling layer: scale, x, y. No width, height,
+      top or left is ever animated, so the whole move stays on the compositor
+      however many cards are inside it.
+
+   C. THE DOWNWARD TRAVEL IS THE POINT. The composition must visibly drop, not
+      zoom out in place, so the y distance is taken from the real destination
+      geometry rather than a fixed number — see travel().
+
+   D. SCRUBBED AND SYMMETRICAL. Every tween is `ease: 'none'` on a scrubbed
+      timeline, so scrolling back up reverses it exactly.
+
+   E. RESPONSIVE. Below 700px the full-composition morph is skipped: an eight-
+      card grid shrunk to a phone-width card is illegible long before it
+      lands. That breakpoint gets a short compress-and-hand-over instead.
+   ========================================================================== */
+
+(function () {
+  'use strict';
+
+  var section = document.querySelector('.p2c');
+  var process = document.getElementById('process');
+  var cases = document.getElementById('case-studies');
+  if (!section || !process || !cases) return;
+  if (!window.gsap || !window.ScrollTrigger) return;
+
+  /* Reduced motion: no pin, no travel. Everything stays where CSS put it. */
+  var reduce = window.matchMedia('(prefers-reduced-motion: reduce)');
+  if (reduce.matches) return;
+
+  gsap.registerPlugin(ScrollTrigger);
+
+  /* THE SOURCE. The CAMERA — a clipping frame around the real composition,
+     not the composition itself and not a copy of it.
+
+     This is the correction that matters: transforming .shell scaled the whole
+     eight-card section as one block, so every step visibly shrank and
+     travelled. The camera is instead sized to a single viewport and clipped,
+     and the shell is offset inside it so the frame shows only the LAST
+     viewport of the section — the exact area the reader was looking at when
+     the pin engaged. Scaling the frame therefore moves that final view and
+     nothing else; the earlier steps are cropped out of it entirely and never
+     appear to move. */
+  var camera = process.querySelector('.process__camera');
+  var shell = process.querySelector('.shell');
+  var source = camera;
+  var featured = cases.querySelector('.cases__featured');
+  var reveal = cases.querySelector('.case__reveal');
+  var rise = cases.querySelector('.cases__rise');
+  var head = cases.querySelector('.cases__head');
+  var support = cases.querySelectorAll('.cases__support > *');
+  if (!camera || !shell || !featured || !reveal || !head || !rise) return;
+
+  /* Scroll distance, in viewports. TRAVEL_VH is the pinned stretch the
+     transformation plays over; TAIL_VH is spent pulling Case studies up
+     across the held composition so it arrives around the landing object.
+
+     OVERLAP_VH is how much of the pull happens WHILE the composition is still
+     shrinking, rather than strictly after it.
+
+     Why it matters: with the pull running only after the travel, the shrink
+     finished with Case studies still a full viewport below the fold, so for
+     that whole stretch the only thing on screen was the miniature process
+     composition alone on blank ground. When the new section then slid up
+     around an object that was already tiny, the eye read the arrangement as
+     one shrunken page — i.e. as though Case studies had been scaled too, even
+     though it never receives a transform of any kind.
+
+     Starting the pull early fixes the read: the heading and the three cards
+     are on screen at their true size while the composition is still visibly
+     coming down, so the size difference is obviously happening to ONE object
+     against a full-size neighbour. Pure scroll geometry — no animation value,
+     layout or design is touched. */
+  var TRAVEL_VH = 1.2;
+  var TAIL_VH = 1.0;
+  /* How far below its resting place the Case studies layer starts.
+
+     MEASURED, not a fixed fraction of the viewport. The distance the section
+     actually has to cover is set by the margin above and the pin length, and
+     a guessed value simply leaves a band of empty ground between the camera's
+     bottom edge and the top of the arriving section for most of the pin —
+     which is the "large white gap" the whole handoff has to avoid.
+
+     riseDistance() returns the real number: where the layer sits when the pin
+     engages, relative to where it must come to rest. */
+  /* How far the layer must travel, measured against the pin rather than
+     guessed.
+
+     The margin decides where Case studies comes to REST. Ordinary scrolling
+     across the pin covers part of the distance to that resting place on its
+     own; the rise has to cover what is left, which is the gap still open at
+     the moment the pin engages.
+
+     At pin-start the page is scrolled to trigger.start, so the section's
+     resting top sits at (restTopDoc - start) in viewport terms. Anything
+     below the fold at that instant is the shortfall the timeline must close
+     — and closing it on the same scrub as the shrink is what makes the two
+     one event instead of two unrelated movements. */
+  function riseDistance() {
+    /* Derived from the layout constants, not from a live rect.
+
+       A live measurement cannot work here: the only moments GSAP evaluates
+       this are build time (before the trigger exists) and refresh time (when
+       the section is already parked at rest), so the reading is either
+       unavailable or self-cancelling — both give 0, and the rise does nothing.
+
+       The geometry is fixed and known. The pin consumes pinDistance() of
+       scroll; the margin pulls Case studies up by TAIL_VH of that. What is
+       left below the fold when the pin engages — and therefore what the
+       timeline has to close — is the remainder. */
+    return Math.max(0, pinDistance()
+      - Math.round(window.innerHeight * TAIL_VH)
+      - headerClear());
+  }
+
+  var tl = null;
+
+  function isCompact() { return window.innerWidth < 700; }
+
+  function pinDistance() {
+    return Math.round(window.innerHeight * (TRAVEL_VH + TAIL_VH));
+  }
+
+  /* How far short of a full viewport the pull stops, so the section it lands
+     on clears the sticky header instead of starting underneath it. */
+  function headerClear() {
+    var bar = document.getElementById('site-header');
+    return Math.round((bar ? bar.getBoundingClientRect().height : 64) + 24);
+  }
+
+  /* ---- the FLIP solve ---------------------------------------------------
+     Where the source has to end up so that it visually occupies the
+     destination card.
+
+     scale is deliberately a SINGLE number, not separate x/y: the composition
+     inside is a real layout with real type in it, and scaling the two axes
+     differently would stretch the eight cards and their text. The object
+     keeps its own proportions the whole way down and simply gets smaller. */
+  function travel() {
+    var s = sourceRect();
+    var f = featured.getBoundingClientRect();
+    if (!s || !s.width || !s.height || !f.width || !f.height) return null;
+
+    /* Where the destination card will BE when the pin releases. During the
+       tail, Case studies is pulled up across the held composition, so the
+       card's resting position is its document offset minus the scroll the pin
+       lets go at. Read from the trigger's own end where one exists, so the
+       landing and the card's real resting place cannot drift apart. */
+    var st = tl && tl.scrollTrigger;
+    var release = (st && st.end) ? st.end
+      : (section.getBoundingClientRect().top + window.scrollY + pinDistance());
+
+    /* Subtract whatever the rise layer is currently offset by.
+
+       .cases__featured lives inside .cases__rise, so its measured rect carries
+       that layer's translateY. Solving against it as-measured aims the camera
+       at where the card happens to be MID-RISE, and since the rise finishes at
+       0 the card then moves out from under the landing — the two miss by
+       exactly the offset still outstanding when the solve ran.
+
+       What the camera has to target is the card's RESTING place, which is its
+       measured top minus the offset that is still to be unwound. At the end of
+       the timeline the rise is 0 and this term vanishes, so the two agree. */
+    var riseY = gsap.getProperty(rise, 'y') || 0;
+    var endTop = (f.top - riseY + window.scrollY) - release;
+
+    /* FILL the card, do not fit inside it. Scaling by the tighter axis leaves
+       the composition narrower than the frame it is landing in, and at the
+       handover that gap reads as two misaligned rectangles rather than one
+       object becoming another. Binding to WIDTH makes the arriving layer
+       exactly as wide as the card; it stays taller than the card, and the
+       card's own overflow:hidden crops the overhang, which is precisely the
+       "frame closing around it" read we want at the end.
+
+       Width also happens to be the axis the eye actually checks: the card's
+       left and right edges are shared with the columns either side of it, so
+       any mismatch there is obvious in a way a cropped bottom is not. */
+    var scale = f.width / s.width;
+
+    /* transform-origin is the TOP centre (see the tween), so what has to line
+       up is the top-centre of each box, not their middles. The source's top
+       edge stays put under scaling, so the y delta is simply between the two
+       tops — and the x delta between the two horizontal centres. */
+    return {
+      scale: scale,
+      x: (f.left + f.width / 2) - (s.left + s.width / 2),
+      y: endTop - s.top
+    };
+  }
+
+  /* The source's NATURAL rect — what it measures with no transform on it.
+
+     Measuring it mid-flight would fold the current transform back into the
+     solve and the destination would creep on every refresh, so the transform
+     is stripped, the box is read, and the transform is put back in the same
+     frame. Nothing paints in between. */
+  function sourceRect() {
+    var saved = {
+      x: gsap.getProperty(source, 'x'),
+      y: gsap.getProperty(source, 'y'),
+      scale: gsap.getProperty(source, 'scale')
+    };
+    gsap.set(source, { x: 0, y: 0, scale: 1 });
+    var r = source.getBoundingClientRect();
+    gsap.set(source, saved);
+    return r;
+  }
+
+  /* Turn the camera on: give it exactly one viewport of height, clip it, and
+     slide .shell up inside it so the frame is looking at the LAST viewport of
+     the section — the same pixels that were on screen when the pin engaged.
+
+     The offset is measured, not assumed: it is however much of the shell sits
+     above that final viewport. Zero if the section is shorter than the fold,
+     in which case the camera simply shows the whole thing.
+
+     .shell is given a NEGATIVE MARGIN rather than a transform. The camera is
+     the element GSAP is scaling, and a transform on its child would be
+     multiplied by the camera's own — the crop would drift as the scale
+     changed. A margin is pure layout, so the framing holds at every scale. */
+  /* Measured ONCE per build, from the uncropped section, and reused.
+
+     Recomputing it inside openCamera() compounds: the second call measures a
+     shell that the first call already pulled up, so the offset grows on every
+     re-entry and the landing drifts. */
+  var camOffset = 0;
+
+  function measureCamera() {
+    closeCamera();
+    var shellH = shell.getBoundingClientRect().height;
+    camOffset = Math.max(0, Math.round(shellH - window.innerHeight));
+    return camOffset;
+  }
+
+  function openCamera() {
+    var frameH = window.innerHeight;
+    var offset = camOffset;
+
+    camera.style.height = frameH + 'px';
+    camera.style.overflow = 'hidden';
+    shell.style.marginTop = (-offset) + 'px';
+
+    /* Pull the camera itself down by the same amount it just cropped.
+
+       Cropping alone is not enough. #process is pinned at its natural place,
+       which puts the top of the section far above the fold — so a camera that
+       starts at the section's top starts off-screen, and scaling about its top
+       edge moves an object the reader cannot see. Offsetting the frame by the
+       cropped distance seats it exactly over the last viewport, which is the
+       area actually on screen when the pin engages. The travel then starts
+       from what the reader is looking at. */
+    camera.style.marginTop = offset + 'px';
+    return offset;
+  }
+
+  function closeCamera() {
+    camera.style.height = '';
+    camera.style.overflow = '';
+    camera.style.marginTop = '';
+    shell.style.marginTop = '';
+  }
+
+  function build() {
+    section.classList.add('p2c--live');
+    /* Holds the destination card's content at opacity 0 and marks the section
+       as the one being flown into. Removed in teardown so the card is never
+       left blank if the animation is torn down. */
+    cases.classList.add('cases--awaiting');
+
+    measureCamera();
+
+    if (isCompact()) { buildCompact(); return; }
+
+    var TAIL_SPAN = TAIL_VH / TRAVEL_VH;
+
+    /* THE PULL. pinSpacing is off, so .p2c's own height IS the scroll the pin
+       consumes (set below). Case studies then has to be walked up across the
+       held composition, which is what makes the new section arrive AROUND the
+       object landing in it rather than after it. Held back by the header
+       clearance so the heading does not start under the bar.
+
+       A negative margin rather than a transform, deliberately: everything
+       after this section has to follow it up, and a transform would move
+       Case studies alone and leave a viewport-tall hole beneath it.
+
+       THE MARGIN SETS THE RESTING PLACE; THE TIMELINE DOES THE RISING.
+
+       The margin alone cannot produce the handoff. It is a static layout
+       offset, so the section it positions rises at exactly one pixel per
+       pixel of scroll — a rate fixed by the page, with no relationship to how
+       fast the camera is shrinking. That is why the previous version read as
+       an object travelling down to meet a card that was already sitting
+       there: the two movements were never on the same clock.
+
+       So the margin now only decides where Case studies COMES TO REST, and
+       the rise itself is a transform on .cases__rise driven by this same
+       scrubbed timeline (see THE RISE below). The layer starts offset
+       downward and is pulled to 0 as the camera compresses, which is what
+       makes the released space and the arriving section one event. */
+    section.style.height = pinDistance() + 'px';
+    cases.style.marginTop =
+      (-Math.round(window.innerHeight * TAIL_VH) + headerClear()) + 'px';
+
+    tl = gsap.timeline({
+      scrollTrigger: {
+        /* #process is the trigger AND the pinned element: the composition the
+           reader is looking at is the thing that stops. Pinning a separate
+           stage is what made the previous version feel like a stand-in. */
+        trigger: process,
+        /* The pin engages when the END of the process section reaches the
+           bottom of the fold — the moment the reader has just finished it and
+           its final state is fully on screen. */
+        start: 'bottom bottom',
+        end: '+=' + pinDistance(),
+        pin: process,
+        /* .p2c already reserves this distance as real document height, so
+           ScrollTrigger must NOT add a spacer of its own on top of it. */
+        pinSpacing: false,
+        /* The page has no scroll-smoothing library and jumps to anchors with
+           window.scrollTo, so a fixed pin is correct here — matching
+           doubts.js, whose pin shares this page. */
+        pinType: 'fixed',
+        anticipatePin: 1,
+        scrub: 0.6,
+        invalidateOnRefresh: true,
+        /* The pinned-only styling: transparent ground and a raised stacking
+           order, applied for exactly the stretch the pin is engaged and taken
+           off the instant it releases. Scoping this to the toggle rather than
+           to a class present from load is what keeps #process's normal
+           appearance untouched during ordinary scrolling. */
+        onToggle: function (self) {
+          process.classList.toggle('is-morphing', self.isActive);
+          /* The crop exists ONLY while the pin is engaged. Leaving it on
+             during normal scrolling would clip the section down to one
+             viewport and hide the first six steps outright, so it is opened
+             as the pin takes hold and closed the instant it releases. */
+          /* The crop is wanted for the whole pin AND for everything past it —
+             at the far end the composition has already faded out under the
+             revealed case copy, and restoring the full-height section there
+             would snap all eight cards back into view for a frame before the
+             pin releases. It is only unwanted ABOVE the section, where the
+             reader is reading the steps normally and it must be whole.
+
+             Written as a state test rather than an activate/deactivate edge:
+             re-entering the pin from below fires the toggle with isActive
+             true but had, as an edge, already skipped the open — leaving the
+             frame cropped with no offset and the composition parked off
+             screen. Deriving it from progress every time makes the state the
+             same whichever direction the reader arrives from. */
+          if (self.progress > 0) openCamera(); else closeCamera();
+        }
+      }
+    });
+
+    /* --- 0.00 -> 0.16  the pause ---------------------------------------
+       The composition has stopped but nothing has changed yet. This beat is
+       what makes the pin read as the section coming to rest rather than
+       lurching straight into a move. */
+    tl.to({}, { duration: 0.16 });
+
+    /* --- 0.16 -> 1.00  the travel --------------------------------------
+       The whole composition — one layer, its internal grid untouched —
+       shrinks and drops into the destination card. Function-based values so
+       invalidateOnRefresh re-solves the FLIP against fresh geometry on every
+       resize without the timeline being rebuilt.
+
+       transformOrigin is the TOP centre, not the middle: the composition is
+       taller than the fold, so scaling about its centre would haul its top
+       edge down across the screen before the move even reads. Anchoring the
+       top keeps the heading where the reader last saw it and makes the shrink
+       read as the section drawing itself in from below. */
+    tl.to(source, {
+      scale: function () { var t = travel(); return t ? t.scale : 1; },
+      x: function () { var t = travel(); return t ? t.x : 0; },
+      y: function () { var t = travel(); return t ? t.y : 0; },
+      transformOrigin: '50% 0%',
+      /* Runs INTO the tail rather than finishing before it.
+
+         The timeline's 0->1 is the travel phase and the tail adds TAIL_SPAN
+         beyond it, so a travel that ended at 1 was done by roughly 55% of the
+         actual scroll — the composition reached card size while Case studies
+         was still a full viewport below the fold, and the reader spent the
+         rest of the shrink looking at a miniature page alone on blank ground.
+         When the new section then rose around an already-tiny object, the
+         whole arrangement read as one scaled-down page.
+
+         Carrying the shrink across most of the pull means the composition is
+         still visibly coming down while the heading and the three cards are
+         on screen at full size, so the size change is unmistakably happening
+         to ONE object next to a full-size neighbour. The end state, the
+         destination and the landing are all unchanged — only how the same
+         motion is distributed across the same scroll. */
+      duration: 0.84 + TAIL_SPAN * 0.62,
+      ease: 'none'
+    }, 0.16);
+
+    /* --- THE RISE, 0.10 -> 1.00 ------------------------------------------
+       Case studies comes UP as one object, on the same scrub as the shrink.
+
+       RISE_VH is how far below its resting place the layer starts. It is
+       expressed in viewports and applied as a translateY on .cases__rise, so
+       the whole composition — heading, featured card, all three supporting
+       cards — moves together as one section. Nothing here is scaled: the
+       layer's scale stays 1 throughout, and the cards never fly in
+       individually from separate positions.
+
+       It starts at 0.10, just after the pin takes hold and BEFORE the camera
+       begins compressing at 0.16, so the next section is already in motion
+       when the shrink starts. Running to 1.00 means the rise and the shrink
+       finish together: the camera reaches the featured card's geometry at the
+       same moment the section it belongs to finishes arriving.
+
+       The layer is pulled to 0 rather than to some computed offset because 0
+       is its real, in-flow resting place — the margin above already put it
+       exactly where it belongs, so ending the transform at zero leaves the
+       document in its natural state with nothing left over to unwind. */
+    tl.fromTo(rise,
+      { y: function () { return riseDistance(); } },
+      { y: 0, duration: 0.72, ease: 'none' },
+      0.06);
+
+    /* riseDistance() reads the trigger's own start, which does not exist while
+       the timeline is being built — the function-based `from` above therefore
+       resolves to 0 on this first pass and the rise would do nothing at all.
+       Invalidating once the trigger is attached forces GSAP to re-read both
+       ends against real geometry. invalidateOnRefresh keeps it correct after
+       every resize thereafter. */
+    tl.scrollTrigger.refresh();
+
+    /* --- 0.42 -> 0.72  the new chapter's heading -------------------------
+       Comes up while the composition is still travelling, so Case studies is
+       assembling around the object rather than waiting for it to arrive. */
+    tl.fromTo(head,
+      { opacity: 0, y: 40 },
+      { opacity: 1, y: 0, duration: 0.30, ease: 'none' },
+      0.42);
+
+    /* --- 0.52 -> 0.85  the three supporting findings --------------------- */
+    if (support.length) {
+      tl.fromTo(support,
+        { opacity: 0, y: 44 },
+        { opacity: 1, y: 0, duration: 0.22, ease: 'none', stagger: 0.045 },
+        0.52);
+    }
+
+    /* --- the tail --------------------------------------------------------
+       Empty duration that keeps the pin alive while the negative margin above
+       walks Case studies up across the held composition. Without it the
+       timeline would resolve as the travel ended and the pin would release
+       there, leaving nothing standing still to be arrived at. */
+    tl.to({}, { duration: TAIL_SPAN }, 1);
+
+    /* --- the landing, at the very end ------------------------------------
+       The composition is now sitting exactly in the destination card's box.
+       Only here does the case copy come up INSIDE that same frame — the frame
+       is continuous, so this reads as the object revealing what it became,
+       not as a different card replacing it.
+
+       The composition fades under the copy over the same beat. That fade is
+       the one place opacity does any structural work, and it is doing it on
+       two things occupying the identical rect after the travel has already
+       carried the meaning: at no point was there a card underneath waiting to
+       be swapped in, because .case__reveal was empty the whole way down. */
+    var END = 1 + TAIL_SPAN;
+    var LAND = TAIL_SPAN * 0.26;
+
+    /* THE CAMERA NEVER FADES.
+
+       It used to go opacity 1 -> 0 here while the card's content came up,
+       which is a crossfade however it is timed: the object the reader has
+       followed all the way down dissolves, and something else takes its
+       place. The identity of the thing has to survive the landing.
+
+       So the camera stays fully opaque and simply IS the featured card's
+       visual from here on. What fades up is only the copy the camera cannot
+       carry — the number, scope, title and figure — and it comes up INSIDE
+       the geometry the camera is already occupying, over the darkened lower
+       part of its own image. Nothing is swapped; the object gains its
+       caption.
+
+       The scrim is what keeps that copy legible over whatever the camera's
+       last frame happens to be, and it belongs to the card rather than the
+       camera so it arrives with the text. */
+    tl.to(reveal, { opacity: 1, duration: LAND * 0.55, ease: 'none' },
+      END - LAND * 0.55);
+  }
+
+  /* Compact choreography. Same story — the composition stops, draws in, and
+     hands over — but no long travel: an eight-card grid scaled down to phone
+     width is unreadable well before it would land, so the shrink is shallow
+     and the handover happens early. */
+  function buildCompact() {
+    var TAIL = 1.0;
+    var dist = Math.round(window.innerHeight * (0.7 + TAIL));
+    section.style.height = dist + 'px';
+    cases.style.marginTop =
+      (-Math.round(window.innerHeight * TAIL) + headerClear()) + 'px';
+
+    tl = gsap.timeline({
+      scrollTrigger: {
+        trigger: process,
+        start: 'bottom bottom',
+        end: '+=' + dist,
+        pin: process,
+        pinSpacing: false,
+        pinType: 'fixed',
+        anticipatePin: 1,
+        scrub: 0.6,
+        invalidateOnRefresh: true,
+        onToggle: function (self) {
+          process.classList.toggle('is-morphing', self.isActive);
+          if (self.progress > 0) openCamera(); else closeCamera();
+        }
+      }
+    });
+
+    tl.to({}, { duration: 0.15 });
+    tl.to(source, {
+      scale: 0.88, y: function () { return window.innerHeight * 0.10; },
+      transformOrigin: '50% 0%', duration: 0.45, ease: 'none'
+    }, 0.15);
+    tl.fromTo(head, { opacity: 0, y: 30 },
+      { opacity: 1, y: 0, duration: 0.25, ease: 'none' }, 0.40);
+    tl.fromTo(reveal, { opacity: 0, y: 30 },
+      { opacity: 1, y: 0, duration: 0.25, ease: 'none' }, 0.55);
+    /* Compact keeps the same rule: the camera does not fade out, the copy
+       comes up inside it. */
+    if (support.length) {
+      tl.fromTo(support, { opacity: 0, y: 30 },
+        { opacity: 1, y: 0, duration: 0.20, ease: 'none', stagger: 0.04 }, 0.68);
+    }
+    tl.to({}, { duration: TAIL / 0.7 }, 1);
+  }
+
+  function teardown() {
+    if (tl) {
+      if (tl.scrollTrigger) tl.scrollTrigger.kill(true);
+      tl.kill();
+      tl = null;
+    }
+    /* The source especially: it is a REAL section of the page, so anything
+       left on it would persist as a visible defect rather than just breaking
+       an animation. clearProps puts it back to exactly what the stylesheet
+       says. */
+    gsap.set([source, reveal, head], { clearProps: 'all' });
+    closeCamera();
+    if (support.length) gsap.set(support, { clearProps: 'all' });
+    /* Measured against the viewport height at build time; stale values across
+       a resize would overlap the sections by the wrong amount. */
+    cases.style.marginTop = '';
+    section.style.height = '';
+    cases.classList.remove('cases--awaiting');
+    section.classList.remove('p2c--live');
+    process.classList.remove('is-morphing');
+  }
+
+  /* Rebuild on a real width change only. A vertical-only resize is almost
+     always mobile browser chrome collapsing, and rebuilding there would make
+     the composition jump mid-scroll. ScrollTrigger's own refresh handles the
+     height change. Same policy as doubts.js. */
+  var lastW = window.innerWidth;
+  var resizeTimer;
+
+  window.addEventListener('resize', function () {
+    if (window.innerWidth === lastW) return;
+    lastW = window.innerWidth;
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(function () {
+      teardown();
+      build();
+      ScrollTrigger.refresh();
+    }, 200);
+  }, { passive: true });
+
+  /* If the reader turns reduced motion on mid-session, drop the whole thing
+     rather than leaving a pin they did not ask for. */
+  if (reduce.addEventListener) {
+    reduce.addEventListener('change', function (e) { if (e.matches) teardown(); });
+  }
+
+  build();
+
+  /* The pin distance and the FLIP solve both depend on measured heights,
+     which are not final until the webfonts have swapped and the eight process
+     images have decoded. */
+  if (document.fonts && document.fonts.ready) {
+    document.fonts.ready.then(function () { ScrollTrigger.refresh(); });
+  }
+  window.addEventListener('load', function () { ScrollTrigger.refresh(); });
+}());

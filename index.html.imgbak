@@ -687,51 +687,162 @@
             <div class="process__frame">
               <div class="process__sceneWrap">
 
-                <!-- THE FIVE STAGE PHOTOGRAPHS.
+                <!-- Shared ship/water backdrop, present across all five
+                     stages so the cruise environment reads as one continuous
+                     setting rather than five separate pictures. -->
+                <svg class="process__scene-bg" viewBox="0 0 640 760" aria-hidden="true">
+                  <defs>
+                    <linearGradient id="skyGrad" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0" stop-color="#EAF6F6"/>
+                      <stop offset="1" stop-color="#FFFFFF"/>
+                    </linearGradient>
+                    <linearGradient id="seaGrad" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0" stop-color="#CDEAEA"/>
+                      <stop offset="1" stop-color="#AADEDD"/>
+                    </linearGradient>
+                  </defs>
+                  <rect x="0" y="0" width="640" height="760" fill="url(#skyGrad)"/>
+                  <rect x="0" y="560" width="640" height="200" fill="url(#seaGrad)"/>
+                  <path d="M0 568 Q320 552 640 568" fill="none" stroke="#0050A0" stroke-opacity="0.12" stroke-width="3"/>
+                </svg>
 
-                     One photograph per stage, all five stacked in the same
-                     box and cross-dissolved by opacity alone — the contract
-                     js/process-stages.js writes to. They are in stage order:
-                     1 case reported, 2 medical assessment, 3 care
-                     coordination, 4 treatment & monitoring, 5 case closed.
-
-                     The frame carries the pictures' own 16/9 ratio and they
-                     are shown whole with object-fit:contain — nothing is
-                     cropped out of any of the five. -->
-
-                <!-- STAGE 01 - CASE REPORTED -->
+                <!-- STAGE 01 — CASE REPORTED -->
                 <div class="process__sceneStage" data-scene="0">
-                  <img src="assets/how case runs/1.png"
-                       alt="A ship's officer calling Medshield from the bridge the moment a medical case happens."
-                       loading="eager" decoding="async">
+                  <svg viewBox="0 0 640 760" aria-hidden="true">
+                    <rect x="40" y="120" width="560" height="420" rx="18" fill="#FFFFFF" stroke="#DCE7EC" stroke-width="2"/>
+                    <rect x="70" y="150" width="500" height="8" rx="4" fill="#EAF3F3"/>
+                    <circle cx="520" cy="200" r="34" fill="#EAF6F6" stroke="#20B0A8" stroke-width="3"/>
+                    <circle cx="520" cy="200" r="22" fill="none" stroke="#20B0A8" stroke-opacity="0.4" stroke-width="2"/>
+                    <g transform="translate(210,240)">
+                      <ellipse cx="0" cy="270" rx="70" ry="14" fill="#0050A0" opacity="0.06"/>
+                      <rect x="-38" y="60" width="76" height="150" rx="26" fill="#0B3B63"/>
+                      <rect x="-38" y="60" width="76" height="40" rx="18" fill="#0050A0"/>
+                      <circle cx="0" cy="20" r="34" fill="#F2C9A6"/>
+                      <path d="M-34 6c0-24 15-40 34-40s34 16 34 40" fill="#2A3B4C"/>
+                    </g>
+                    <g transform="translate(300,300)">
+                      <rect x="0" y="0" width="46" height="88" rx="10" fill="#0B1622"/>
+                      <rect x="4" y="8" width="38" height="72" rx="4" fill="#FFFFFF"/>
+                      <circle cx="23" cy="30" r="9" fill="#20B0A8" class="process__pulse"/>
+                      <rect x="10" y="46" width="26" height="4" rx="2" fill="#CFE0E6"/>
+                      <rect x="10" y="54" width="18" height="4" rx="2" fill="#CFE0E6"/>
+                    </g>
+                    <g transform="translate(360,180)" class="process__floatChip">
+                      <rect x="0" y="0" width="150" height="56" rx="12" fill="#FFFFFF" stroke="#DCE7EC" stroke-width="1.5"/>
+                      <circle cx="24" cy="28" r="10" fill="#FDEBEA" stroke="#D8564A" stroke-width="1.5"/>
+                      <path d="M24 22v8M24 33v1" stroke="#D8564A" stroke-width="2" stroke-linecap="round"/>
+                      <rect x="46" y="16" width="88" height="8" rx="4" fill="#0B3B63"/>
+                      <rect x="46" y="30" width="64" height="6" rx="3" fill="#A5B6C8"/>
+                    </g>
+                  </svg>
                 </div>
 
-                <!-- STAGE 02 - MEDICAL ASSESSMENT -->
+                <!-- STAGE 02 — MEDICAL ASSESSMENT -->
                 <div class="process__sceneStage" data-scene="1">
-                  <img src="assets/how case runs/2.png"
-                       alt="A nurse examining a crew member with a stethoscope in the ship's medical room."
-                       loading="lazy" decoding="async">
+                  <svg viewBox="0 0 640 760" aria-hidden="true">
+                    <rect x="40" y="120" width="560" height="420" rx="18" fill="#FFFFFF" stroke="#DCE7EC" stroke-width="2"/>
+                    <rect x="70" y="150" width="500" height="8" rx="4" fill="#EAF3F3"/>
+                    <circle cx="520" cy="200" r="34" fill="#EAF6F6" stroke="#20B0A8" stroke-width="3"/>
+                    <g transform="translate(400,235)">
+                      <ellipse cx="0" cy="275" rx="72" ry="14" fill="#0050A0" opacity="0.06"/>
+                      <rect x="-40" y="60" width="80" height="155" rx="24" fill="#FFFFFF" stroke="#20B0A8" stroke-width="3"/>
+                      <rect x="-40" y="60" width="80" height="34" rx="16" fill="#EAF6F6"/>
+                      <circle cx="0" cy="20" r="34" fill="#E8B48C"/>
+                      <path d="M-34 4c0-22 15-38 34-38s34 16 34 38" fill="#3B2C22"/>
+                      <path d="M-18 96c0 30 12 44 18 44s18-14 18-44" fill="none" stroke="#0050A0" stroke-width="4" stroke-linecap="round"/>
+                      <circle cx="0" cy="142" r="8" fill="#0050A0"/>
+                    </g>
+                    <g transform="translate(220,290)">
+                      <ellipse cx="0" cy="220" rx="66" ry="13" fill="#0050A0" opacity="0.06"/>
+                      <rect x="-34" y="30" width="68" height="120" rx="22" fill="#0B3B63"/>
+                      <circle cx="0" cy="0" r="30" fill="#F2C9A6"/>
+                      <path d="M-28 -12c0-22 13-36 28-36s28 14 28 36" fill="#2A3B4C"/>
+                    </g>
+                    <g transform="translate(360,150)" class="process__floatChip">
+                      <rect x="0" y="0" width="150" height="70" rx="12" fill="#FFFFFF" stroke="#DCE7EC" stroke-width="1.5"/>
+                      <polyline points="14,50 34,30 52,42 70,18 90,32 110,14 132,26" fill="none" stroke="#20B0A8" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+                      <circle cx="132" cy="26" r="4" fill="#20B0A8"/>
+                    </g>
+                  </svg>
                 </div>
 
-                <!-- STAGE 03 - CARE COORDINATION -->
+                <!-- STAGE 03 — CARE COORDINATION -->
                 <div class="process__sceneStage" data-scene="2">
-                  <img src="assets/how case runs/3.png"
-                       alt="A Medshield coordinator on a video call with a doctor, vessel and hospital linked on screen."
-                       loading="lazy" decoding="async">
+                  <svg viewBox="0 0 640 760" aria-hidden="true">
+                    <g transform="translate(140,260)">
+                      <ellipse cx="0" cy="180" rx="64" ry="13" fill="#0050A0" opacity="0.06"/>
+                      <rect x="-58" y="0" width="116" height="150" rx="16" fill="#FFFFFF" stroke="#DCE7EC" stroke-width="2"/>
+                      <path d="M-58 0 0 -46 58 0Z" fill="#EAF6F6" stroke="#DCE7EC" stroke-width="2"/>
+                      <rect x="-14" y="50" width="28" height="18" rx="3" fill="#0050A0" opacity="0.85"/>
+                      <text x="0" y="176" text-anchor="middle" font-family="Segoe UI, Arial" font-size="15" fill="#3B4E60">Ship</text>
+                    </g>
+                    <g transform="translate(320,220)">
+                      <circle cx="0" cy="0" r="52" fill="#0050A0"/>
+                      <circle cx="0" cy="0" r="52" fill="none" stroke="#5CE0D9" stroke-width="2" stroke-dasharray="3 5" class="process__ring"/>
+                      <path d="M-18 6l10-24 8 16 8-10 10 18" fill="none" stroke="#FFFFFF" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+                      <text x="0" y="82" text-anchor="middle" font-family="Segoe UI, Arial" font-size="15" fill="#3B4E60">Medshield</text>
+                    </g>
+                    <g transform="translate(500,260)">
+                      <ellipse cx="0" cy="180" rx="64" ry="13" fill="#0050A0" opacity="0.06"/>
+                      <rect x="-56" y="10" width="112" height="140" rx="14" fill="#FFFFFF" stroke="#DCE7EC" stroke-width="2"/>
+                      <rect x="-8" y="30" width="16" height="34" fill="#20B0A8"/>
+                      <rect x="-18" y="42" width="36" height="10" fill="#20B0A8"/>
+                      <text x="0" y="176" text-anchor="middle" font-family="Segoe UI, Arial" font-size="15" fill="#3B4E60">Hospital</text>
+                    </g>
+                    <path class="process__pathLine" d="M198 240 C250 210 290 210 320 220" fill="none" stroke="#20B0A8" stroke-width="2.5" stroke-dasharray="6 8"/>
+                    <path class="process__pathLine" d="M372 226 C420 214 452 224 486 250" fill="none" stroke="#20B0A8" stroke-width="2.5" stroke-dasharray="6 8"/>
+                  </svg>
                 </div>
 
-                <!-- STAGE 04 - TREATMENT & MONITORING -->
+                <!-- STAGE 04 — TREATMENT & MONITORING -->
                 <div class="process__sceneStage" data-scene="3">
-                  <img src="assets/how case runs/4.png"
-                       alt="A nurse taking a crew member's blood pressure with vitals shown on the monitor beside them."
-                       loading="lazy" decoding="async">
+                  <svg viewBox="0 0 640 760" aria-hidden="true">
+                    <rect x="40" y="120" width="560" height="420" rx="18" fill="#FFFFFF" stroke="#DCE7EC" stroke-width="2"/>
+                    <rect x="70" y="150" width="500" height="8" rx="4" fill="#EAF3F3"/>
+                    <g transform="translate(230,340)">
+                      <rect x="-90" y="30" width="180" height="16" rx="8" fill="#DCE7EC"/>
+                      <rect x="-84" y="0" width="168" height="34" rx="10" fill="#FFFFFF" stroke="#DCE7EC" stroke-width="2"/>
+                      <ellipse cx="-40" cy="6" rx="26" ry="14" fill="#F2C9A6"/>
+                      <rect x="-20" y="6" width="90" height="20" rx="8" fill="#20B0A8" opacity="0.35"/>
+                    </g>
+                    <g transform="translate(410,250)">
+                      <ellipse cx="0" cy="255" rx="68" ry="13" fill="#0050A0" opacity="0.06"/>
+                      <rect x="-38" y="56" width="76" height="145" rx="22" fill="#FFFFFF" stroke="#20B0A8" stroke-width="3"/>
+                      <rect x="-38" y="56" width="76" height="32" rx="15" fill="#EAF6F6"/>
+                      <circle cx="0" cy="18" r="32" fill="#E8B48C"/>
+                      <path d="M-26 2c0-20 13-34 26-34s26 14 26 34" fill="#3B2C22"/>
+                    </g>
+                    <g transform="translate(390,150)" class="process__floatChip">
+                      <rect x="0" y="0" width="150" height="70" rx="12" fill="#0B3B63"/>
+                      <polyline points="12,44 32,44 40,22 50,58 60,44 80,44 88,30 96,44 132,44" fill="none" stroke="#5CE0D9" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="process__pulseLine"/>
+                      <rect x="12" y="54" width="100" height="5" rx="2.5" fill="#0050A0"/>
+                      <rect x="12" y="54" width="70" height="5" rx="2.5" fill="#5CE0D9"/>
+                    </g>
+                  </svg>
                 </div>
 
-                <!-- STAGE 05 - CASE CLOSED -->
+                <!-- STAGE 05 — CASE CLOSED -->
                 <div class="process__sceneStage" data-scene="4">
-                  <img src="assets/how case runs/5.png"
-                       alt="A recovered crew member and nurse talking beside a Case Closed notice."
-                       loading="lazy" decoding="async">
+                  <svg viewBox="0 0 640 760" aria-hidden="true">
+                    <rect x="40" y="120" width="560" height="420" rx="18" fill="#FFFFFF" stroke="#DCE7EC" stroke-width="2"/>
+                    <g transform="translate(250,260)">
+                      <ellipse cx="0" cy="230" rx="70" ry="14" fill="#0050A0" opacity="0.06"/>
+                      <rect x="-38" y="50" width="76" height="150" rx="26" fill="#0B3B63"/>
+                      <rect x="-38" y="50" width="76" height="36" rx="16" fill="#0050A0"/>
+                      <circle cx="0" cy="14" r="32" fill="#F2C9A6"/>
+                      <path d="M-30 0c0-20 14-34 30-34s30 14 30 34" fill="#2A3B4C"/>
+                    </g>
+                    <g transform="translate(400,270)">
+                      <ellipse cx="0" cy="220" rx="60" ry="12" fill="#0050A0" opacity="0.06"/>
+                      <rect x="-34" y="46" width="68" height="140" rx="20" fill="#FFFFFF" stroke="#20B0A8" stroke-width="3"/>
+                      <circle cx="0" cy="12" r="28" fill="#E8B48C"/>
+                      <path d="M-22 -2c0-18 11-30 22-30s22 12 22 30" fill="#3B2C22"/>
+                    </g>
+                    <g transform="translate(300,150)" class="process__floatChip">
+                      <circle cx="0" cy="0" r="42" fill="#FFFFFF" stroke="#20B0A8" stroke-width="3"/>
+                      <path d="M-16 0l10 11 22-24" fill="none" stroke="#20B0A8" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+                    </g>
+                  </svg>
                 </div>
 
               </div>
@@ -1701,6 +1812,9 @@
 <script src="js/services.js" defer></script>
 <script src="js/why.js" defer></script>
 <script src="js/process-stages.js" defer></script>
+<!-- Before process-to-cases.js: the wash builds its layer as #process's first
+     child and must exist before the morph reads the section. -->
+<script src="js/process-gradient.js" defer></script>
 <script src="js/process-to-cases.js" defer></script>
 
 </body>
