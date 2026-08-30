@@ -212,40 +212,6 @@
         <span class="hero__row hero__row--c hero__row--end"><span class="hero__row-t">maritime care</span></span>
       </h1>
 
-      <!-- Band 2b. The SECOND display state.
-
-           Same three-row skeleton, same alignment tension as the H1 above —
-           it occupies the identical grid row and is laid out on top of it, so
-           the swap is a crossfade-in-place, not a reflow.
-
-           Row 3 is the only thing that changes after the swap: it cycles
-           through the four positioning lines from the reference rail
-           (01 SIMPLIFIED / 02 MANAGED END-TO-END / 03 OPTIMIZED /
-           04 COMPLIANCE-READY). The phrases live in the markup, not in JS, so
-           the copy is editable without touching script and a no-JS page still
-           renders the first one.
-
-           aria-hidden: the H1 above already carries the page's heading. This
-           block is a decorative restatement, and announcing a headline that
-           rewrites itself on a timer is exactly the kind of thing a screen
-           reader should never be handed. -->
-      <div class="hero__display hero__display--alt" id="hero-display-alt" aria-hidden="true">
-        <span class="hero__row hero__row--a"><span class="hero__row-t">Crew</span></span>
-        <span class="hero__row hero__row--b"><span class="hero__row-t">healthcare</span></span>
-        <!-- The cycling row. Every phrase is stacked in the same cell; only
-             one carries .is-current at a time. Absolute positioning on the
-             non-current phrases is what keeps the row from growing to the
-             height of four lines. -->
-        <span class="hero__row hero__row--c hero__row--end hero__row--cycle">
-          <span class="hero__cycle">
-            <span class="hero__cycle-item is-current"><span class="hero__row-t">Simplified.</span></span>
-            <span class="hero__cycle-item"><span class="hero__row-t">Managed end-to-end.</span></span>
-            <span class="hero__cycle-item"><span class="hero__row-t">Optimized.</span></span>
-            <span class="hero__cycle-item"><span class="hero__row-t">Compliance-ready.</span></span>
-          </span>
-        </span>
-      </div>
-
       <!-- Band 3. The quiet footer rail: CTA at the left, metadata at the
            right. Secondary action is a text link, not a second button. -->
       <div class="hero__foot">
@@ -1037,7 +1003,7 @@
 
       <!-- TOP RIGHT — fixed headline. Never animates. -->
       <header class="why__head">
-        <h2 class="why__display">What changes when you<br>bring MedShield onboard.</h2>
+        <h2 class="why__display">What changes when<br>one partner owns the case.</h2>
         <p class="why__lede">
           One accountable partner. One complete record. Better outcomes for everyone.
         </p>

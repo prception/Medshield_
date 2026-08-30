@@ -146,20 +146,6 @@
      is for accent TEXT sitting directly on navy, where it is: the fills come
      in at 2.8:1 and fail AA outright. Same brand hue, lifted to 6.5:1. */
   --accent-ink-on-deep:    #4DA3FF;
-  /* Accent text sitting on the hero VIDEO rather than on flat navy.
-
-     --accent-ink-on-deep above is measured against the navy ground and is
-     correct there. The hero is not that ground: the video's wake pushes the
-     brightest pixel behind the headline's bottom-right region to #2B6076
-     even under the scrim, and #4DA3FF measures only 2.63:1 against it —
-     below the 3.0 large-text threshold, i.e. a fail.
-
-     #7DBEFF is the same brand hue lifted until it clears that measured
-     worst case with real headroom: 3.52:1. (#66B2FF also clears at 3.09 but
-     with almost none, which is not worth it when the video encode may
-     change.) Re-measure if the clip, the scrim or the crop changes — the
-     value was taken from actual rendered frames, not estimated. */
-  --accent-ink-on-video:   #7DBEFF;
 
   /* --- SECONDARY ACCENT (teal) ----------------------------------------
      Emphasis only: proof-strip figures, step numbers, rules, chips. Used
@@ -1410,145 +1396,6 @@ html.hero-ready .hero__char {
 }
 
 
-/* Band 2b — the second display state ("CREW / HEALTHCARE / <cycling>").
-
-   Both display blocks are assigned the SAME grid row and the same grid cell,
-   so they are laid out one on top of the other rather than stacked in
-   sequence. That is what makes the swap read as one headline rewriting
-   itself in place: the floor rail below never moves, because the row's
-   height is whichever block is taller and that never changes.
-
-   Neither block is absolutely positioned. Absolute positioning here would
-   take BOTH out of flow and collapse the grid row to zero, dropping the
-   headline on top of the floor rail. Sharing a cell keeps them in flow. */
-.hero__display--alt {
-  grid-row: 3;
-  grid-column: 1;
-}
-.hero__display {
-  grid-column: 1;
-}
-
-/* Only one state is visible at a time. The outgoing block is faded and
-   pushed out of the pointer/hit path, not display:none — display:none would
-   drop the per-character transforms and make the entrance jump when the
-   block came back. */
-.hero__display--alt {
-  opacity: 0;
-  pointer-events: none;
-}
-/* The swap itself. Nothing in the markup carries these classes; hero.js adds
-   .is-out to the H1 and .is-in to the alt block once the entrance has held.
-   Without script the H1 stays visible and the alt block stays hidden, which
-   is the correct no-JS state — the approved sentence, uncut. */
-.hero__display.is-out {
-  opacity: 0;
-  pointer-events: none;
-}
-.hero__display--alt.is-in {
-  opacity: 1;
-  pointer-events: auto;
-}
-
-/* The crossfade is deliberately asymmetric: the outgoing headline leaves
-   faster than the incoming one arrives, so the frame is never carrying two
-   legible headlines at full strength at the same time. The incoming block's
-   own per-character wipe (hero.js re-runs the mask animation on it) is what
-   the eye actually reads; this opacity ramp only covers the handoff. */
-.hero__display,
-.hero__display--alt {
-  transition: opacity 0.45s ease;
-}
-.hero__display--alt.is-in {
-  transition: opacity 0.7s ease 0.15s;
-}
-
-/* The cycling row is set in the brand blue, not the headline white.
-
-   --accent-ink-on-deep (#4DA3FF) is the token that exists for exactly this
-   case: accent TEXT sitting directly on the navy ground. The button fills
-   (--accent-on-deep, #0050A0) are the wrong choice here — they measure 2.8:1
-   on navy and fail outright, because they are meant to carry white ink on
-   top rather than to be read themselves.
-
-   Contrast is measured against the hero VIDEO under the scrim, not against
-   flat navy, since that is what is actually behind these words — and it was
-   measured off rendered frames, not estimated. Sampling every pixel of the
-   row's box across twelve frames puts the brightest background there at
-   #2B6076, which is brighter than the #186175 the headline was measured
-   against (see .hero__scrim) because this row sits further into the wake.
-
-   Against that, --accent-ink-on-deep (#4DA3FF) gives only 2.63:1 and FAILS
-   the 3.0 large-text threshold. --accent-ink-on-video (#7DBEFF) is the same
-   hue lifted to 3.52:1. The row is large text at every breakpoint — the
-   smallest is 26.6px at 360px wide, well over the 24px cutoff — so 3.0 is
-   the applicable threshold.
-
-   White stays on CREW / HEALTHCARE: making the whole block blue would drop
-   the headline's own contrast and lose the reference's colour hierarchy,
-   where the fixed half is white and only the changing half is blue. */
-.hero__row--cycle {
-  color: var(--accent-ink-on-video);
-}
-
-/* The cycling row.
-
-   .hero__cycle is the sizing box: it is inline-block so the right-aligned
-   row still measures from the right edge, and it takes the width of whichever
-   phrase is current. Every phrase after the first is absolutely positioned
-   against it, pinned to the RIGHT edge (right: 0) rather than the left —
-   this row is right-aligned, so growing and shrinking phrases must all share
-   their right edge or the line visibly jitters horizontally as it cycles. */
-.hero__cycle {
-  position: relative;
-  display: inline-block;
-  /* Own line box, so the absolutely-positioned phrases inherit a sane
-     baseline and the row height stays that of a single line. */
-  vertical-align: top;
-  white-space: nowrap;
-}
-
-.hero__cycle-item {
-  display: inline-block;
-  white-space: nowrap;
-  /* Out of flow by default: only .is-current holds the box open. */
-  position: absolute;
-  top: 0;
-  right: 0;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.4s ease;
-}
-
-/* The current phrase is the one IN flow — it is what gives .hero__cycle its
-   width, which is why the box tracks the phrase length instead of being
-   frozen at the width of the longest one. */
-.hero__cycle-item.is-current {
-  position: relative;
-  opacity: 1;
-  pointer-events: auto;
-}
-
-/* The width change between phrases is animated so the right-aligned row
-   grows and shrinks smoothly rather than snapping between four lengths.
-   hero.js measures the incoming phrase and writes --cycle-w before the swap;
-   with no script the property is unset and the box simply sizes to content. */
-.hero__cycle {
-  transition: width 0.5s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-/* Reduced motion: no crossfade, no width animation. The alt block still takes
-   over (it is the intended final composition) and the cycling row still
-   changes phrase, but every transition is cut to an instant swap. */
-@media (prefers-reduced-motion: reduce) {
-  .hero__display,
-  .hero__display--alt,
-  .hero__cycle,
-  .hero__cycle-item {
-    transition: none !important;
-  }
-}
-
 /* Band 3 — the quiet floor rail: action left, metadata right. */
 .hero__foot {
   grid-row: 4;
@@ -1741,19 +1588,6 @@ html.hero-ready .hero__foot    { transition-delay: 1.15s; }
   .hero__row--b .hero__row-t--far { --row-x: calc(var(--hero-progress, 0) * 150%); }
   .hero__row--c .hero__row-t { --row-x: calc(var(--hero-progress, 0) *  150%); }
 
-  /* The alt block's rows exit on the same values. Its row 2 is NOT a split
-     row (there is no second half to throw the other way), so it takes the
-     plain --row--b amplitude via the rule above; only the cycling row needs
-     its own selector, because its .hero__row-t sits one level deeper inside
-     .hero__cycle-item and the descendant rules above already reach it. The
-     cycle BOX also has to travel — moving only the inner text would leave the
-     absolutely-positioned phrases anchored to a box that never left. */
-  .hero__row--cycle .hero__cycle {
-    transform: translateX(calc(var(--hero-progress, 0) * 150%));
-  }
-  /* Its inner text must then NOT move again, or the exit doubles up. */
-  .hero__row--cycle .hero__row-t { --row-x: 0%; }
-
   /* The two annotations split the same way — left one exits left, right one
      exits far right (+300%, as the reference throws its right paragraph). */
   /* html-prefixed to out-rank `html.hero-ready .hero__label-t`, which also
@@ -1799,26 +1633,6 @@ html.hero-ready .hero__foot    { transition-delay: 1.15s; }
 
 @media (max-width: 860px) {
   .hero__display { font-size: 8.3vw; }
-
-  /* The cycling row runs out of width here before any other row does.
-     "MANAGED END-TO-END." is the longest phrase in the set and measured
-     773px against 767px of content width at 820, and 724 against 718 at 768
-     — a clip of a few pixels, which is worse than either wrapping or
-     shrinking because it silently eats the final period.
-
-     It is shrunk rather than wrapped: this row is the composition's
-     right-aligned counterweight to CREW / HEALTHCARE, and letting it break
-     to two lines pushes the block into the floor rail. 6.8vw holds the
-     longest phrase on one line down to 700, where the mobile rule below
-     takes over with its own size. */
-  .hero__row--cycle {
-    font-size: 6.8vw;
-    /* Re-anchored to the row box: the phrases are absolutely positioned
-       against .hero__cycle, and a font-size change on the row alone would
-       leave the locked pixel width measured at the old size until the next
-       resize. hero.js re-measures on resize, so this only has to be correct
-       for the steady state. */
-  }
 }
 
 /* Mobile — recomposed, not scaled down.
@@ -1972,7 +1786,6 @@ html.hero-ready .hero__foot    { transition-delay: 1.15s; }
 
   /* Kill the scroll-driven horizontal exit entirely. */
   .hero__row-t,
-  .hero__cycle,
   .hero__label-t,
   .hero__note-t,
   .hero__actions,

@@ -232,37 +232,9 @@
   var chars = [];   // { el, row, i, n } for every character
   var rowsEls = [];
 
-  /* Scoped to ONE display block. The hero now carries two of them (the H1 and
-     the CREW HEALTHCARE alt block) and they must split independently: their
-     per-character transition delays both have to start from zero, or the alt
-     block's wipe would inherit the H1's row offsets and start mid-stagger.
-
-     `scope` is the block to split. Passing nothing splits the H1, which is
-     what the original single-block call site expects. */
-  function splitRows(scope) {
-    var container = scope || document.querySelector('.hero__display:not(.hero__display--alt)') || document;
-    var all = container.querySelectorAll('.hero__row-t');
-    if (!all.length) return;
-
-    /* Rows inside a cycling phrase that is NOT the current one are skipped.
-       Splitting the whole alt block in one pass would split all four phrases
-       up front, and the three that are waiting their turn would be left with
-       their characters parked off to the right for good — the block they sit
-       in is never wiped in again, only the phrase is. Each phrase is instead
-       split by showPhrase at the moment it becomes current.
-
-       A row inside the CURRENT phrase still splits here, so the first phrase
-       arrives as part of the alt block's own wipe-in. */
-    var rows = Array.prototype.filter.call(all, function (n) {
-      var item = n.closest ? n.closest('.hero__cycle-item') : null;
-      return !item || item.classList.contains('is-current');
-    });
+  function splitRows() {
+    var rows = document.querySelectorAll('.hero__row-t');
     if (!rows.length) return;
-
-    // Already split. The alt block and each cycling phrase are separate
-    // scopes, so this guard applies per scope and is what keeps a repeat call
-    // from wrapping masks inside masks.
-    if (rows[0].querySelector('.hero__cmask')) return;
 
     // Capture the full sentence BEFORE splitting, so the accessible name is
     // always whatever the markup actually says.
@@ -332,15 +304,8 @@
        failure is invisible to sighted testing — the page shows one sentence
        while screen readers announce the previous one. Collected before the
        rows were split, so it is the original text, in order. */
-    /* ONLY the real H1 gets one, and it is identified positively rather than
-       by excluding the other cases. Excluding by class missed the cycling
-       phrases: each is its own split scope, so each was handed a copy of its
-       own text and the row rendered the phrase twice. Both the alt block and
-       every phrase inside it are aria-hidden decoration — a screen-reader
-       copy there would announce a second headline that rewrites itself. */
-    var h1 = (container.classList && container.classList.contains('hero__display') &&
-              !container.classList.contains('hero__display--alt')) ? container : null;
-    if (h1 && h1.querySelector && !h1.querySelector('.hero__sr') && srText) {
+    var h1 = document.querySelector('.hero__display');
+    if (h1 && !h1.querySelector('.hero__sr') && srText) {
       var sr = document.createElement('span');
       sr.className = 'hero__sr visually-hidden';
       sr.textContent = srText;
@@ -350,234 +315,12 @@
 
   // Split only once the font is settled: splitting against the fallback face
   // and then swapping would measure and lay out every character twice.
-  // Wrapped rather than passed directly: document.fonts.ready resolves WITH
-  // the FontFaceSet, which would arrive as splitRows' scope argument and send
-  // it looking for rows inside an object that has no querySelectorAll.
-  function splitH1() { splitRows(); }
   if (document.fonts && document.fonts.ready) {
-    document.fonts.ready.then(splitH1);
+    document.fonts.ready.then(splitRows);
   } else {
-    splitH1();
+    splitRows();
   }
-  window.setTimeout(function () { if (!chars.length) splitH1(); }, 900);
-
-  /* --- 2c. The second display state + its cycling row --------------------- */
-
-  /* Two things happen here, in order:
-
-       1. THE SWAP. Once the H1's character entrance has finished and held,
-          the H1 wipes out and the CREW HEALTHCARE block wipes in, running the
-          same per-character mask animation so the second headline arrives the
-          way the first one did rather than just appearing.
-
-       2. THE CYCLE. From then on the third row rewrites itself every few
-          seconds through the four positioning lines, wiping the outgoing
-          phrase out and the incoming one in with that same animation.
-
-     Everything below is a no-op if the alt block is absent, so the hero still
-     works unchanged on any page that does not carry one. */
-
-  var altEl = document.getElementById('hero-display-alt');
-  var h1El  = document.querySelector('.hero__display:not(.hero__display--alt)');
-
-  if (altEl && h1El) {
-    var cycleBox   = altEl.querySelector('.hero__cycle');
-    var cycleItems = altEl.querySelectorAll('.hero__cycle-item');
-    var cycleIdx   = 0;
-    var cycleTimer = null;
-
-    var reduce = window.matchMedia('(prefers-reduced-motion: reduce)');
-
-    /* How long the first headline holds before handing over. Counted from the
-       font gate, not from page load: the entrance is itself font-gated, so a
-       delay measured from load would cut it off on a slow font and leave a
-       dead gap on a fast one. */
-    var H1_HOLD    = 2600;   // ms the first headline stays after it lands
-    var CYCLE_HOLD = 3200;   // ms each cycling phrase stays
-
-    /* Re-runs the per-character wipe on a scope that is already split.
-
-       .hero-ready lives on <html> and is what releases every character at
-       once, so a second block cannot simply be handed that class later — by
-       the time the block is split the class is already on, and its characters
-       would be released before they were ever parked. Instead they are parked
-       back at the start offset inline and released on the next frame, which
-       reproduces the same transition locally. */
-    function wipeIn(scope) {
-      var cs = scope.querySelectorAll('.hero__char');
-      if (!cs.length) return;
-      if (reduce.matches) {
-        Array.prototype.forEach.call(cs, function (c) {
-          c.style.transition = 'none';
-          c.style.transitionDelay = '0s';
-          c.style.setProperty('--c-x', '0%');
-        });
-        return;
-      }
-      // Park.
-      Array.prototype.forEach.call(cs, function (c) {
-        c.style.transition = 'none';
-        c.style.setProperty('--c-x', '100%');
-      });
-      // Force the parked state to be committed before the release, or the
-      // browser collapses both writes into one recalc and nothing animates.
-      void scope.offsetWidth;
-      requestAnimationFrame(function () {
-        Array.prototype.forEach.call(cs, function (c) {
-          // Cleared, not restated: the transition and the per-character delay
-          // both come back from the stylesheet rule, so the cadence stays the
-          // one the entrance already uses.
-          c.style.transition = '';
-          c.style.setProperty('--c-x', '0%');
-        });
-      });
-    }
-
-    /* Parks every character to the right WITHOUT animating, to prime a block
-       about to become visible — otherwise it paints fully-formed for one
-       frame before wipeIn parks it. */
-    function park(scope) {
-      if (reduce.matches) return;
-      Array.prototype.forEach.call(scope.querySelectorAll('.hero__char'), function (c) {
-        c.style.transition = 'none';
-        c.style.setProperty('--c-x', '100%');
-      });
-    }
-
-    /* Wipes a scope's characters OUT to the left, the mirror of the entrance.
-       Returns how long the exit takes so the caller can schedule what follows
-       instead of guessing at it. */
-    function wipeOut(scope) {
-      var cs = scope.querySelectorAll('.hero__char');
-      if (!cs.length || reduce.matches) return 0;
-      Array.prototype.forEach.call(cs, function (c, i) {
-        c.style.transition = 'transform 0.6s cubic-bezier(0.7, 0, 0.84, 0)';
-        c.style.transitionDelay = (i * 0.012).toFixed(3) + 's';
-        c.style.setProperty('--c-x', '-110%');
-      });
-      return 600 + cs.length * 12;
-    }
-
-    /* --- the cycling row ------------------------------------------------- */
-
-    /* The row is right-aligned, so the box needs an explicit width for the
-       growth between phrases to be animatable — width: auto does not
-       transition. The width is MEASURED off the phrase rather than assumed,
-       so editing the copy in the markup needs no change here. */
-    function lockCycleWidth() {
-      if (!cycleBox) return;
-      var cur = cycleItems[cycleIdx];
-      if (!cur) return;
-      // Measured with the box unconstrained, or every phrase after the first
-      // is measured inside the PREVIOUS phrase's locked width and the row
-      // never grows past whatever the first one happened to need.
-      var prev = cycleBox.style.width;
-      cycleBox.style.width = 'auto';
-      var w = cur.getBoundingClientRect().width;
-      cycleBox.style.width = prev;
-      void cycleBox.offsetWidth;
-      cycleBox.style.width = w + 'px';
-    }
-
-    /* Advances to `next`.
-
-       cycleIdx is moved SYNCHRONOUSLY, before the deferred commit, and the
-       outgoing element is captured in a local. Advancing it inside the
-       timeout instead let a second tick read a stale index while the first
-       swap was still waiting out its wipe, and the row then skipped a phrase
-       and desynced from the running order (Simplified -> Managed ->
-       Compliance-ready -> Simplified -> Optimized). Everything the deferred
-       half needs is now bound at call time. */
-    function showPhrase(next) {
-      if (!cycleItems.length) return;
-      var outgoing = cycleItems[cycleIdx];
-      var incoming = cycleItems[next];
-      if (!incoming || incoming === outgoing) return;
-
-      cycleIdx = next;
-
-      var outMs = outgoing ? wipeOut(outgoing) : 0;
-
-      window.setTimeout(function () {
-        // A later tick may already have moved on while this one was waiting;
-        // if so this swap is stale and must not paint over the newer phrase.
-        if (cycleItems[cycleIdx] !== incoming) return;
-
-        if (outgoing) outgoing.classList.remove('is-current');
-        incoming.classList.add('is-current');
-
-        // Split this phrase on first use. Each .hero__cycle-item is its own
-        // scope, so splitRows' already-split guard applies per phrase.
-        splitRows(incoming);
-        park(incoming);
-        lockCycleWidth();
-        wipeIn(incoming);
-      }, reduce.matches ? 0 : Math.min(outMs, 420));
-    }
-
-    /* CYCLE_HOLD has to clear the wipe-out wait plus the wipe-in itself, or
-       the next tick lands while the current phrase is still arriving. */
-    function startCycle() {
-      if (cycleItems.length < 2) return;
-      window.clearInterval(cycleTimer);
-      cycleTimer = window.setInterval(function () {
-        showPhrase((cycleIdx + 1) % cycleItems.length);
-      }, CYCLE_HOLD);
-    }
-
-    /* --- the swap -------------------------------------------------------- */
-
-    function doSwap() {
-      // Split the alt block now, against the settled font, and prime it so
-      // its characters are parked before it becomes visible. Only the CURRENT
-      // cycling phrase is split here; the other three are still whole and
-      // hidden, and are split lazily when their turn comes.
-      splitRows(altEl);
-      splitRows(cycleItems[cycleIdx]);
-      park(altEl);
-
-      wipeOut(h1El);
-      h1El.classList.add('is-out');
-      altEl.classList.add('is-in');
-      wipeIn(altEl);
-
-      lockCycleWidth();
-      startCycle();
-    }
-
-    /* The cycle is paused while the hero is off screen — a headline rewriting
-       itself behind the fold is pure battery cost, and returning to a phrase
-       caught mid-wipe reads as a glitch rather than as a loop. */
-    if ('IntersectionObserver' in window) {
-      new IntersectionObserver(function (entries) {
-        var vis = entries[0] && entries[0].isIntersecting;
-        if (vis) {
-          if (altEl.classList.contains('is-in')) startCycle();
-        } else {
-          window.clearInterval(cycleTimer);
-        }
-      }, { threshold: 0 }).observe(heroEl || altEl);
-    }
-
-    // Recompute the locked width when the type reflows.
-    window.addEventListener('resize', function () {
-      if (altEl.classList.contains('is-in')) lockCycleWidth();
-    }, { passive: true });
-
-    /* Kick-off. Armed off the same font gate as the entrance so the hold
-       starts when the first headline actually lands, with the same 900ms hard
-       floor behind it in case the font never settles. */
-    var swapArmed = false;
-    function armSwap() {
-      if (swapArmed) return;
-      swapArmed = true;
-      window.setTimeout(doSwap, H1_HOLD);
-    }
-    if (document.fonts && document.fonts.ready) {
-      document.fonts.ready.then(armSwap);
-    }
-    window.setTimeout(armSwap, 900);
-  }
+  window.setTimeout(function () { if (!chars.length) splitRows(); }, 900);
 
   /* --- 3. Hero video + scroll progress ------------------------------------ */
 

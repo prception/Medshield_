@@ -67,6 +67,11 @@
   var stmt   = section.querySelector('.doubts__statement');
   var grid   = section.querySelector('.doubts__grid');
   var media  = section.querySelector('.doubts__media');
+  /* The payoff layer inside the frame: the About statement and the numbers.
+     Optional — if the markup is the older version without it, everything
+     below simply skips, so this file still drives a page that does not have
+     one. */
+  var reveal = section.querySelector('.doubts__reveal');
   var cards  = Array.prototype.slice.call(section.querySelectorAll('.doubt'));
 
   /* The section that slides up over the finished picture. Taken as "whatever
@@ -119,14 +124,32 @@
   /* Scroll distance the three acts play over, in viewports (the OVERLAP_VH
      tail is added on top of this).
 
-     Back to the original 3.2. Stretching this was the wrong lever: it does
-     not slow the animation down, it just makes the section longer, so the
-     reader scrolls further at the same rate and the acts still flash past.
-     What actually governs how fast the choreography reads is the scroll
-     engine's lerp (see hero.js), which is now matched to Lenis's default
-     0.1 — a gentle settle that never launches the timeline at speed in the
-     first place. With that fixed, 3.2 viewports is the right length again. */
-  var TRACK_VH = 3.2;
+     3.2 was right while the section ended on the picture. It does not survive
+     the payoff layer being added on top of it: measured on a 900px viewport
+     the whole reveal - scrim, statement, lede, CTA and the stats band - was
+     getting 282px of a 3780px track, 7.5%, and the cover began rising 29px
+     before it finished. One trackpad flick is 300-500px, so a fast scroll
+     crossed the entire beat inside a single gesture and the reader arrived at
+     Services having never seen the text.
+
+     Stretching the track is normally the wrong lever - it makes the section
+     longer without making anything slower, since the acts keep their same
+     fractions. It is the right one HERE because the extra distance is not
+     spread across the section: it is given to the reveal and to a hold after
+     it (see REVEAL_HOLD below), so the earlier acts keep the pixel budget
+     they were tuned against and the payoff gets the room it never had. */
+  var TRACK_VH = 4.4;
+
+  /* Scroll held on the FINISHED composition before the cover starts rising,
+     in viewports. This is the part that actually fixes a fast scroll: an
+     animation can always be crossed in one gesture, but a hold cannot be -
+     the reader has to scroll THROUGH it, and for that distance the finished
+     statement and stats band are simply standing there, complete and still.
+
+     0.55 of a viewport is ~500px, which is about one full trackpad flick. So
+     even the fastest single gesture that lands inside this section ends with
+     the payoff on screen rather than past it. */
+  var REVEAL_HOLD_VH = 0.55;
 
   /* Breathing room kept between the expanded picture and the cards it has
      pushed aside, per side. The picture is sized to the opening MINUS this,
@@ -614,7 +637,14 @@
            after this timeline). Without the extra viewport the pin would
            release the moment the picture finished, and the cover would have
            nothing standing still to cover. */
-        end: '+=' + Math.round(window.innerHeight * (TRACK_VH + OVERLAP_VH)),
+        /* The hold is scroll distance like any other act, so it is claimed
+           here too. Without it in the `end` the timeline would simply have
+           more duration packed into the same pixels - every act, the hold
+           included, would get proportionally FEWER pixels rather than more,
+           which is the opposite of the point. */
+        end: '+=' + Math.round(
+          window.innerHeight * (TRACK_VH + REVEAL_HOLD_VH + OVERLAP_VH)
+        ),
         pin: stage,
         pinSpacing: true,
         // The site drives real window scroll (hero.js's wheel engine calls
@@ -929,6 +959,94 @@
           top:    topPx,
           duration: STAGE2_DUR
         }, STAGE2_AT);
+
+      /* THE PAYOFF. The statement and the numbers come up ON the finished
+         picture, in the dead scroll that was already being held at the end of
+         the timeline (the 0.04 subtracted from TOTAL_DUR above).
+
+         Placed at the END of stage 2, not underneath it, for the same reason
+         the clear-out is its own beat: type rising through a frame that is
+         still growing reads as two unrelated animations, and the line lengths
+         reflow every frame while the box widens. By the time this starts the
+         frame has stopped, so the layout the type is measured against is
+         final and the only thing moving is the type.
+
+         The rows lift in sequence — statement, then the stats band — which is
+         the reading order, and it is what makes the band land as a floor
+         under a claim that is already standing rather than as four numbers
+         arriving with it. */
+      if (reveal) {
+        /* Queried individually rather than as .revealInner > * because the
+           statement group is a WRAPPER (see .doubts__revealTop in the
+           markup): lifting the wrapper would move its four children as one
+           slab, and the sequence is the whole point. */
+        var revealRows = [
+          reveal.querySelector('.doubts__revealEyebrow'),
+          reveal.querySelector('.doubts__revealTitle'),
+          reveal.querySelector('.doubts__revealLede'),
+          reveal.querySelector('.doubts__revealLink'),
+          reveal.querySelector('.doubts__stats')
+        ].filter(Boolean);
+
+        /* MUST FINISH BY TIMELINE POSITION 1. The tail from 1 ->
+           1+OVERLAP_SPAN is the cover rising over the pinned stage, so
+           anything still animating past 1 plays behind a section that is
+           already sliding up over it - which is exactly what a first pass
+           did: the statement arrived, and the stats band was still under the
+           fold when the cover ate it.
+
+           MEASURED, not assumed. The timeline here is 1.3125 long (the tail
+           is OVERLAP_SPAN on top of the composition's 1), and the cover
+           crosses the fold at normalized progress ~0.755, which is exactly
+           position 1. So position 1 really is the deadline.
+
+           It starts at 0.62 of stage 2 rather than after it because the end of
+           the timeline is a thin slice of scroll: anchored to the very end the
+           whole reveal ran inside ~7.5% of the section - 282px of a 3780px
+           track, less than one trackpad flick - and read as type snapping on
+           at the last moment, or on a fast scroll never being seen at all.
+           Starting mid-growth gives it a real run, and the frame is close
+           enough to its final width by then that the type is not measured
+           against a box still visibly moving.
+
+           Widening the run is only half of it, though, and the weaker half: a
+           longer animation is still an animation, and any animation can be
+           crossed in one gesture. What actually guarantees the reader sees
+           this is the HOLD after it (REVEAL_HOLD_VH), which cannot be crossed
+           without scrolling through it. */
+        var REVEAL_AT  = STAGE2_AT + STAGE2_DUR * 0.62;
+        var REVEAL_END = 0.99;
+        var REVEAL_DUR = REVEAL_END - REVEAL_AT;
+
+        /* The scrim first and alone: it is what makes white type legible on
+           the photograph, so it must be under the type before any of it is
+           readable, not arriving with it. */
+        tl.fromTo(reveal,
+          { autoAlpha: 0 },
+          { autoAlpha: 1, duration: REVEAL_DUR * 0.45 },
+          REVEAL_AT);
+
+        /* The rows are fitted INSIDE the reveal's own span rather than
+           given free fractions of it. The last row finishes at
+             offset + stagger*(n-1) + duration
+           and with 0.2 / 0.09 / 0.7 that came to 1.26 of REVEAL_DUR - the
+           tail of the stagger ran 77px past the composition's end and into
+           the hold. Solving the fractions against the row count instead means
+           the band lands exactly on REVEAL_END however many rows there are. */
+        var ROW_OFFSET  = 0.14;
+        var ROW_STAGGER = 0.08;
+        var ROW_SPAN    = 1 - ROW_OFFSET - ROW_STAGGER * (revealRows.length - 1);
+
+        tl.fromTo(revealRows,
+          { y: 26, autoAlpha: 0 },
+          {
+            y: 0, autoAlpha: 1,
+            duration: REVEAL_DUR * ROW_SPAN,
+            stagger: REVEAL_DUR * ROW_STAGGER,
+            ease: 'power2.out'
+          },
+          REVEAL_AT + REVEAL_DUR * ROW_OFFSET);
+      }
     }
 
     /* The SAME distance the picture was sized against — one function, called
@@ -995,6 +1113,15 @@
        built from, so retuning either cannot put the two out of step. */
     var OVERLAP_SPAN = OVERLAP_VH / TRACK_VH;
 
+    /* The hold, in the same units: viewports of the track the composition
+       occupies. It sits BETWEEN the composition finishing and the cover
+       starting, so the timeline is now
+         0 .. 1                         the composition
+         1 .. 1+HOLD_SPAN               the finished picture, standing still
+         .. +OVERLAP_SPAN               the cover rising over it
+       and the deadline the reveal has to beat is still position 1. */
+    var HOLD_SPAN = REVEAL_HOLD_VH / TRACK_VH;
+
     /* The tail claims its scroll distance, and the cover is pulled up into it.
 
        Two things together make the overlap, and neither works alone:
@@ -1022,11 +1149,57 @@
        A negative margin rather than a transform, deliberately: the sections
        after this one must follow the cover up, and a transform would move the
        cover alone and leave a viewport-tall hole beneath it. */
+    /* THE COVER IS NOT ANIMATED BY A TWEEN - it is pulled up by a negative
+       margin and then rises PASSIVELY with page scroll for whatever spacer
+       distance is left under it. That is what makes the overlap 1:1 and it is
+       why the margin, not the timeline, decides how far it travels.
+
+       It also means the hold and the cover are in direct conflict: the hold
+       claims pin distance that the cover must NOT move through, but a passive
+       rise moves through everything. Cancelling the hold in the margin as well
+       fixed the extra scroll and destroyed the hold with it (the stats band
+       started being covered 160px after the composition ended); cancelling
+       only the overlap gave the hold back and put the empty scroll back, since
+       the cover then spent 1400px crossing a 900px viewport at two-thirds rate.
+
+       So the margin keeps its original job - cancel the overlap, exactly one
+       viewport of travel - and the HOLD is handled separately below, by
+       pinning the cover in place with a transform for its duration and then
+       releasing it. Distance the cover is held through is distance it does not
+       rise through, which is what the hold was always asking for. */
     if (next) {
-      next.style.marginTop = (-Math.round(window.innerHeight * OVERLAP_VH)) + 'px';
+      next.style.marginTop = (-Math.round(
+        window.innerHeight * (OVERLAP_VH + REVEAL_HOLD_VH)
+      )) + 'px';
     }
 
-    tl.to({}, { duration: OVERLAP_SPAN }, 1);
+    /* The hold first, then the overlap. Two empty tweens rather than one: the
+       cover's pull-up is keyed to OVERLAP_VH alone (it must travel exactly one
+       viewport, no more), while the hold adds scroll distance that the cover
+       must NOT move through. Merging them would have made the cover rise
+       across the hold as well, at a fraction of the rate, which is the slow
+       drifting overlap this was meant to avoid. */
+    /* THE HOLD, expressed on the cover itself.
+
+       The margin above pulled the cover up by OVERLAP + HOLD, so without this
+       it would already be mid-rise when the composition finishes. This tween
+       puts that borrowed distance back as a transform for the hold's duration:
+       the cover sits translated DOWN by the hold's height - i.e. exactly where
+       the margin would have left it without the hold - holds there while the
+       reader scrolls the hold's distance, and then travels back to 0 across
+       the overlap.
+
+       The net effect is the one the hold was added for: the finished payoff
+       stands still and uncovered for ~500px of scroll, and the cover then does
+       its full 1:1 viewport rise afterwards, with no empty scroll at either
+       end because every pixel of pin is now doing something. */
+    var holdPx = Math.round(window.innerHeight * REVEAL_HOLD_VH);
+
+    tl.fromTo(next,
+      { y: holdPx },
+      { y: holdPx, duration: HOLD_SPAN, ease: 'none' },
+      1);
+    tl.to(next, { y: 0, duration: OVERLAP_SPAN, ease: 'none' }, 1 + HOLD_SPAN);
   }
 
   function teardown() {
@@ -1038,6 +1211,16 @@
     // .doubts__split covers the intro inside it; only elements this file
     // actually tweens need clearing.
     gsap.set([cards, media, panel, stmt, split], { clearProps: 'all' });
+    /* The payoff layer and its rows: build() writes autoAlpha/y onto both the
+       layer and each child, so both have to be released — clearing only the
+       wrapper would leave the rows sitting at opacity 0 inside a visible
+       parent after a resize. */
+    if (reveal) {
+      reveal.style.removeProperty('--doubts-reveal-drop');
+      gsap.set(reveal, { clearProps: 'all' });
+      gsap.set(reveal.children, { clearProps: 'all' });
+      gsap.set(reveal.querySelectorAll('.doubts__revealInner *'), { clearProps: 'all' });
+    }
     /* The cover is a sibling, not part of the composition, so its own two
        pieces are undone here. The margin especially: it is a negative pull
        measured against the viewport height at build time, and leaving a stale
