@@ -8449,10 +8449,7 @@ main {
   padding-bottom: var(--s-2);
   border-bottom: 2px solid currentColor;
   font-family: var(--font-editorial);
-  /* Matched to .cta-band__sub beside it. This used to run up to 1.5rem, which
-     made the link the largest thing in the band after the heading and left it
-     visibly out of step with the sentence it sits under. */
-  font-size: var(--t-small);
+  font-size: clamp(1.05rem, 0.9rem + 0.6vw, 1.5rem);
   font-weight: 500;
   line-height: 1.1;
   color: var(--text-primary);

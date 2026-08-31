@@ -1421,22 +1421,25 @@
            none at all. -->
       <div class="contact__inner">
 
-        <!-- Left half: the photograph, carrying BOTH text blocks - the intro
-             at the top of the frame and the emergency notice at the bottom
-             left. The picture is the ground for the whole left column now;
-             the form half holds only the form. -->
+        <!-- Left half: photograph with the intro copy over it, as in the
+             reference - the picture carries a heading and a short statement in
+             its lower half rather than being a bare image.
+
+             A portrait-format vessel at sea, sourced for this column: the
+             previous shots were landscape interiors that lost their subject
+             when cropped to a tall half-screen. -->
         <div class="contact__media">
           <img class="contact__mediaImg"
-               src="assets/contact-cruise.jpg"
+               src="assets/contact-vessel.jpg"
                alt="" width="1400" height="2100" loading="lazy" decoding="async">
 
           <!-- Scrim, not a filter on the <img>: a filter would dim the type
-               sitting on top of it too. Darkened at BOTH ends now, since there
-               is type at the top and the bottom, with the middle left clear so
-               the vessel still reads as a photograph. -->
+               sitting on top of it too. A gradient rather than a flat wash, so
+               the dark end is where the words are and the top of the frame
+               stays a photograph. -->
           <div class="contact__scrim" aria-hidden="true"></div>
 
-          <div class="contact__mediaTop">
+          <div class="contact__mediaCopy">
             <p class="contact__mediaEyebrow">MedShield Care</p>
             <p class="contact__mediaTitle">Care that follows your crew.</p>
             <p class="contact__mediaBody">
@@ -1444,19 +1447,6 @@
               sail, one team manages the case, the hospital and the bill.
             </p>
           </div>
-
-          <!-- Bottom-left of the picture. Still the same block, and still the
-               one thing on the page someone with a live casualty needs, so it
-               keeps its own heading and its distinct treatment rather than
-               becoming part of the caption above. -->
-          <aside class="contact__mediaAlert" aria-labelledby="emergency-h">
-            <h3 class="contact__alertTitle" id="emergency-h">Medical emergency at sea right now?</h3>
-            <p class="contact__alertBody">
-              Do not use this form. Call
-              <strong class="confirm">[CONFIRM: 24/7 number]</strong>
-              - answered by a coordinator, any hour.
-            </p>
-          </aside>
         </div>
 
         <!-- Right half: the statement and the fields. -->
@@ -1600,6 +1590,19 @@
             <p class="success__body">A case manager will reply within one business day.</p>
           </div>
 
+          <!-- Kept: the one block someone with a live casualty needs. Placed
+               after the fields so it cannot be mistaken for part of them. -->
+          <aside class="emergency" aria-labelledby="emergency-h">
+            <h3 class="emergency__title" id="emergency-h">Medical emergency at sea right now?</h3>
+            <p class="emergency__body">
+              Do not use this form. Call
+              <strong class="confirm">[CONFIRM: 24/7 number]</strong>
+              - answered by a coordinator, any hour.
+            </p>
+            <p class="emergency__note">
+              This number is not yet published. It must ring a monitored line before launch.
+            </p>
+          </aside>
 
         </div>
       </div>

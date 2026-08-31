@@ -2617,13 +2617,10 @@ main {
   min-height: 0;
 }
 
-/* Two text blocks now - the intro pinned to the top of the frame and the
-   emergency notice to the bottom. space-between puts the picture's clear
-   middle between them. */
+/* The copy sits in the lower half of the picture, as in the reference. */
 .contact__media {
   display: flex;
-  flex-direction: column;
-  justify-content: space-between;
+  align-items: flex-end;
   isolation: isolate;
 }
 
@@ -2644,64 +2641,23 @@ main {
 /* Dark at the bottom where the words are, clear at the top so the photograph
    still reads as one. Deep navy rather than black, to stay in the same colour
    family as the panel beside it. */
-/* Dark at both ends where the type sits, clear through the middle so the
-   vessel still reads as a photograph. Deep navy rather than black, to stay in
-   the same colour family as the rest of the page. */
 .contact__scrim {
   position: absolute;
   inset: 0;
   z-index: 1;
-  background: linear-gradient(to bottom,
-    rgba(0, 19, 37, 0.92) 0%,
-    rgba(0, 19, 37, 0.72) 22%,
-    rgba(0, 19, 37, 0.20) 45%,
-    rgba(0, 19, 37, 0.42) 62%,
-    rgba(0, 19, 37, 0.88) 84%,
-    rgba(0, 19, 37, 0.95) 100%);
+  background: linear-gradient(to top,
+    rgba(0, 19, 37, 0.94) 0%,
+    rgba(0, 19, 37, 0.82) 30%,
+    rgba(0, 19, 37, 0.45) 60%,
+    rgba(0, 19, 37, 0.12) 100%);
 }
 
-.contact__mediaTop {
+.contact__mediaCopy {
   position: relative;
   z-index: 2;
   width: 100%;
   padding: clamp(1.25rem, 0.75rem + 2vw, 2.75rem);
   color: #FFFFFF;
-}
-
-/* Bottom-left of the picture. Constrained rather than full-bleed so it reads
-   as a notice sitting in the corner, not as a second caption bar. */
-.contact__mediaAlert {
-  position: relative;
-  z-index: 2;
-  margin: clamp(1.25rem, 0.75rem + 2vw, 2.75rem);
-  max-width: 34rem;
-  padding: 0.85rem 1rem;
-  color: #FFFFFF;
-  /* A veil plus a left rule, the same identity the block had on the form
-     side: it must not read as more marketing copy. The amber rule survives
-     the move because it is the one non-white mark on this picture. */
-  background: rgba(0, 19, 37, 0.62);
-  backdrop-filter: blur(3px);
-  border-left: 3px solid #F5B95C;
-  border-radius: var(--radius);
-}
-.contact__alertTitle {
-  font-size: var(--t-micro);
-  font-weight: 700;
-  color: #F5B95C;
-  margin-bottom: 0.3rem;
-}
-.contact__alertBody {
-  font-size: var(--t-micro);
-  line-height: 1.5;
-  color: #FFFFFF;
-}
-/* The [CONFIRM: ...] marker keeps its build-time highlight, but on this dark
-   ground it needs light ink rather than the dark-on-yellow it uses on paper. */
-.contact__mediaAlert .confirm {
-  background: rgba(245, 185, 92, 0.22);
-  color: #FFD9A0;
-  border-color: rgba(245, 185, 92, 0.55);
 }
 .contact__mediaEyebrow {
   font-size: 0.6875rem;
@@ -2775,6 +2731,9 @@ main {
   .cform__row { gap: 0.5rem var(--s-4); }
   .cform__input { padding: 0.45rem 0.75rem; }
   .cform__textarea { min-height: 2.5rem; }
+  .contact__form-col .emergency { margin-top: var(--s-3); padding: 0.6rem 0.75rem; }
+  /* Build-time guidance for the team, not information the visitor needs. */
+  .contact__form-col .emergency__note { display: none; }
 }
 
 
@@ -3244,43 +3203,37 @@ main {
   /* 13px rather than --t-small's 14px. Still comfortably above the 12px floor
      the type scale sets for input text. */
   font-size: 0.8125rem;
-  /* Underline fields, as in the reference: no box, no fill, just a rule under
-     the text. The control is transparent rather than white so it sits on the
-     panel itself - a white fill would be invisible on a white ground anyway,
-     and transparent keeps it honest if the ground ever changes. */
+  /* White fields with a black border, by request. On a white ground the
+     border is the whole affordance - it is what separates the field from the
+     page - so it is a real solid line rather than the hairline tint a filled
+     control can get away with. */
   color: var(--surface-deep);
-  background: transparent;
-  border: 0;
-  border-bottom: 1px solid rgba(0, 29, 59, 0.35);
-  border-radius: 0;
+  background: #FFFFFF;
+  border: 1px solid #000000;
+  border-radius: var(--radius);
   /* Sized down to fit the 100dvh section without the column scrolling. Each
      field costs its input plus its label, so a few px off the control here is
      multiplied by seven rows. 0.4rem of vertical padding on a 13px control
      lands at ~33px - below the 44px touch guideline but this is a pointer-led
      B2B form, and the mobile block below puts the height back for touch. */
-  /* No horizontal padding: the text starts at the left edge of the rule, the
-     way it does in the reference. A little more below the baseline so the
-     text is not sitting on the line. */
-  padding: 0.3rem 0 0.45rem;
+  padding: 0.4rem 0.7rem;
   line-height: 1.35;
   /* Colour only - no transform, no size change. */
   transition: background-color 0.16s ease, border-color 0.16s ease;
 }
 .cform__input::placeholder { color: #6B7A88; }
 
-/* State is carried by the rule alone. The compensating bottom padding keeps
-   the control exactly the same height as the line thickens, so no row shifts
-   under the cursor. */
-.cform__input:hover {
-  border-bottom-color: var(--surface-deep);
-  border-bottom-width: 2px;
-  padding-bottom: calc(0.45rem - 1px);
-}
+/* Both field and ground are white, so hover cannot be shown by a fill change
+   - it thickens the border instead. The compensating padding keeps the
+   control exactly the same height, so nothing shifts under the cursor. */
+.cform__input:hover { border-color: #000000; border-width: 2px; padding: calc(0.4rem - 1px) calc(0.7rem - 1px); }
+/* Focus takes the brand teal at the same 2px weight: a clear state change
+   that is not carried by colour alone. */
 .cform__input:focus {
   outline: none;
-  border-bottom-color: var(--accent-2-ink);
-  border-bottom-width: 2px;
-  padding-bottom: calc(0.45rem - 1px);
+  border-color: var(--accent-2-ink);
+  border-width: 2px;
+  padding: calc(0.4rem - 1px) calc(0.7rem - 1px);
 }
 .cform__input:focus-visible {
   outline: 2px solid var(--focus);
@@ -3288,22 +3241,18 @@ main {
 }
 
 .cform__textarea { min-height: 2.4rem; resize: vertical; line-height: 1.45; }
-/* Chrome draws a resize grip in the bottom-right corner that collides with an
-   underline field. Vertical-only resizing keeps the grip, so it is dropped in
-   favour of the rule reading cleanly. */
-.cform__textarea { resize: none; }
 
 /* Native select arrow removed and redrawn, so the control matches the text
    inputs instead of rendering as an OS widget on the panel. */
 .cform__select {
   appearance: none;
   -webkit-appearance: none;
-  padding-right: 1.5rem;
+  padding-right: 2rem;
   /* Black arrow, matching the border on a white field. */
   background-image:
     url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%23000000' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
-  background-position: right 0.1rem center;
+  background-position: right 0.85rem center;
   cursor: pointer;
 }
 /* The dropdown list itself is painted by the OS, not the panel, so its
@@ -3313,9 +3262,6 @@ main {
 
 /* Chrome paints an opaque bar over an autofilled input. Push the panel's own
    navy back into it so the field does not flash a pale block. */
-/* Chrome fills an autofilled control with an opaque block, which on an
-   underline field paints a box where there should be none. The inset shadow
-   is the only way to override it; white matches the panel behind. */
 .cform__input:-webkit-autofill,
 .cform__input:-webkit-autofill:hover,
 .cform__input:-webkit-autofill:focus {
@@ -3364,9 +3310,9 @@ main {
    by colour alone. Padding matches the hover/focus rules so the control does
    not change height when it becomes invalid. */
 .cform__input[aria-invalid="true"] {
-  border-bottom-color: var(--pnl-error);
-  border-bottom-width: 2px;
-  padding-bottom: calc(0.45rem - 1px);
+  border-color: var(--pnl-error);
+  border-width: 2px;
+  padding: calc(0.4rem - 1px) calc(0.7rem - 1px);
 }
 
 /* --- Send --------------------------------------------------------------- */
@@ -3409,8 +3355,17 @@ main {
 
 /* The emergency block sits under the rebuilt form. The top margin is a real
    break so it cannot read as the last row of the fields. */
-/* The emergency block lives on the photograph now (.contact__mediaAlert), not
-   in the form column. Its old rules here are gone with it. */
+/* Compacted for the height budget: the note about the number not yet being
+   published is build-time guidance, not something the reader needs, so it is
+   the one line that gives way. The call-to-action itself is untouched. */
+.contact__form-col .emergency {
+  margin-top: var(--s-4);
+  max-width: none;
+  padding: var(--s-3);
+}
+.contact__form-col .emergency__title { margin-bottom: 0.2rem; }
+.contact__form-col .emergency__body  { margin-bottom: 0.3rem; }
+.contact__form-col .emergency__note  { padding-top: 0.3rem; }
 
 /* Stacked layout overrides. Placed after the .cform base rules rather than
    beside the other contact layout CSS: several of these (the checkbox grid,
@@ -3422,11 +3377,7 @@ main {
      picture takes a smaller share and the fields get the rest. */
   /* Taller than the 15dvh this was: the picture carries the intro copy now,
      and at 15dvh the words were clipped by the top of the band. */
-  /* The picture carries TWO blocks now - the intro and the emergency notice -
-     so it needs real height on a phone. 18dvh clipped the alert. */
-  .contact__inner { grid-template-rows: 30dvh minmax(0, 1fr); }
-  /* Tighter alert on a narrow column so it does not run to the screen edge. */
-  .contact__mediaAlert { margin: 0.75rem; padding: 0.6rem 0.7rem; max-width: none; }
+  .contact__inner { grid-template-rows: 18dvh minmax(0, 1fr); }
   /* The body line is the part that does not fit a short band on a phone. The
      eyebrow and the statement carry the message on their own. */
   .contact__mediaBody { display: none; }
@@ -3435,7 +3386,7 @@ main {
     margin-bottom: 0;
     font-size: clamp(1.15rem, 0.9rem + 1.8vw, 1.5rem);
   }
-  .contact__mediaTop { padding: 0.9rem 1rem; }
+  .contact__mediaCopy { padding: 0.9rem 1rem; }
   .contact__mediaEyebrow { margin-bottom: 0.25rem; }
 
   /* Stacked, the column is narrow, so the paired rows collapse to one field
@@ -3457,6 +3408,9 @@ main {
      broke 3 + 1 and wasted a line. */
   .cform__checkRow { display: grid; grid-template-columns: 1fr 1fr; gap: 0.4rem 0.6rem; }
   .cform__textarea { min-height: 2rem; }
+  .contact__form-col .emergency { margin-top: var(--s-3); padding: 0.6rem 0.7rem; }
+  /* Build-time guidance for the team, not for the visitor. */
+  .contact__form-col .emergency__note { display: none; }
 }
 
 /* Honeypot — off-screen rather than display:none, which some bots detect.
@@ -8449,10 +8403,7 @@ main {
   padding-bottom: var(--s-2);
   border-bottom: 2px solid currentColor;
   font-family: var(--font-editorial);
-  /* Matched to .cta-band__sub beside it. This used to run up to 1.5rem, which
-     made the link the largest thing in the band after the heading and left it
-     visibly out of step with the sentence it sits under. */
-  font-size: var(--t-small);
+  font-size: clamp(1.05rem, 0.9rem + 0.6vw, 1.5rem);
   font-weight: 500;
   line-height: 1.1;
   color: var(--text-primary);

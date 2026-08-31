@@ -151,14 +151,16 @@
      --accent-ink-on-deep above is measured against the navy ground and is
      correct there. The hero is not that ground: the video's wake pushes the
      brightest pixel behind the headline's bottom-right region to #2B6076
-     even under the scrim, and #4DA3FF measures only 2.63:1 against it —
+     (measured when a scrim still covered the video; the scrim has since been
+     removed, so the real worst case is now BRIGHTER than this and every
+     ratio below is optimistic). #4DA3FF measures only 2.63:1 against it —
      below the 3.0 large-text threshold, i.e. a fail.
 
      #7DBEFF is the same brand hue lifted until it clears that measured
      worst case with real headroom: 3.52:1. (#66B2FF also clears at 3.09 but
      with almost none, which is not worth it when the video encode may
-     change.) Re-measure if the clip, the scrim or the crop changes — the
-     value was taken from actual rendered frames, not estimated. */
+     change.) The scrim is gone, so these values need re-measuring against
+     the raw clip; re-measure too if the clip or the crop changes. */
   --accent-ink-on-video:   #7DBEFF;
 
   /* --- SECONDARY ACCENT (teal) ----------------------------------------
@@ -217,12 +219,6 @@
   --focus:       #1C8EFF;
   --focus-halo:  #FFFFFF;
 
-  /* --- SCRIM -----------------------------------------------------------
-     Hero video overlay, built from --surface-deep. Alphas are measured
-     against the brightest pixel of all 192 frames of hero.mp4, not an
-     average frame. See .hero__scrim for the layer stack and the per-region
-     ratios it produces. */
-  --scrim-deep:  0, 29, 59;   /* --surface-deep as RGB channels for rgba() */
 
   /* RGB channel triplets, for the places that genuinely need an alpha —
      translucent chips over video, hairlines on the deep ground, the header
@@ -1139,44 +1135,6 @@ textarea:focus-visible,
   .hero__video { transition: none; }
 }
 
-/* The grade. Four stacked layers, re-measured for THIS composition against
-   every frame of hero-scrub.mp4 — the alphas below are the numbers that made
-   the measurement pass, not round guesses.
-
-   These are deliberately LIGHTER than the previous grade (flat tint 0.46 ->
-   0.30). The brief is explicit that the ship and ocean must stay visible and
-   that the result should read as cinematic footage under editorial type, not
-   as a flat navy panel. The old alphas were carrying text regions that no
-   longer exist (a top-right intro block, a chip rail) and were burying the
-   vessel to do it.
-
-   Worst-case measured ratios against the brand navy (--surface-deep #001D3B):
-   brightest pixel per region across all 96 frames, scrim composited in paint
-   order, object-fit: cover at object-position center 38% — not an average
-   frame, not an eyeballed swatch.
-     label     --text-on-deep  on #156679  ->  6.28:1  (11px, needs 4.5)
-     note      --text-on-deep  on #446378  ->  6.09:1  (small, needs 4.5)
-     headline  --text-on-deep  on #186175  ->  6.67:1  (large, needs 3.0)
-     cta       --text-on-deep  on #183652  -> 11.92:1
-     meta      --text-on-deep-muted on #19344F -> 6.13:1 (11px, needs 4.5)
-     nav       --text-on-deep-secondary on #29445D -> 6.89:1
-
-   NOTE: .hero__label is --text-on-deep, NOT the secondary tone. At 11px over
-   the video's brightest wake the secondary tone measured 4.25:1 and failed.
-   Re-run the measurement if the video, the navy, or the crop changes. */
-.hero__scrim {
-  position: absolute;
-  inset: 0;
-  background:
-    /* 1. bottom-up ramp, carries the headline and the floor rail */
-    linear-gradient(to top, rgba(var(--scrim-deep), 0.88) 0%, rgba(var(--scrim-deep), 0.55) 38%, rgba(var(--scrim-deep), 0.14) 70%),
-    /* 2. top-right ramp, carries the supporting note over the bright sky */
-    linear-gradient(to bottom left, rgba(var(--scrim-deep), 0.72) 0%, rgba(var(--scrim-deep), 0.42) 30%, rgba(var(--scrim-deep), 0.06) 62%, rgba(var(--scrim-deep), 0) 78%),
-    /* 3. top band, keeps the transparent header legible over near-white sky */
-    linear-gradient(to bottom, rgba(var(--scrim-deep), 0.60) 0%, rgba(var(--scrim-deep), 0.28) 12%, rgba(var(--scrim-deep), 0) 22%),
-    /* 4. flat tint, kills the source's tropical cyan cast */
-    rgba(var(--scrim-deep), 0.30);
-}
 
 /* --- Hero layout --------------------------------------------------------- */
 
@@ -1241,8 +1199,9 @@ textarea:focus-visible,
   text-transform: uppercase;
   line-height: 1.62;
   /* Full white, not the secondary tone: at 11px over the video's brightest
-     wake the secondary tone measures 4.25:1 and fails AA. See .hero__scrim
-     for the full measurement table. */
+     wake the secondary tone measured 4.25:1 and failed AA. That was under
+     the hero scrim, which has since been removed — re-measure against the
+     raw video. */
   color: var(--text-on-deep);
   margin: 0;
   max-width: 30ch;
@@ -1486,12 +1445,14 @@ html.hero-ready .hero__char {
    on navy and fail outright, because they are meant to carry white ink on
    top rather than to be read themselves.
 
-   Contrast is measured against the hero VIDEO under the scrim, not against
-   flat navy, since that is what is actually behind these words — and it was
+   Contrast was measured against the hero VIDEO under a scrim that has
+   since been removed, not against flat navy, since the video is what is
+   actually behind these words. The numbers below are therefore optimistic
+   and want re-measuring against the raw clip. It was
    measured off rendered frames, not estimated. Sampling every pixel of the
    row's box across twelve frames puts the brightest background there at
    #2B6076, which is brighter than the #186175 the headline was measured
-   against (see .hero__scrim) because this row sits further into the wake.
+   against, because this row sits further into the wake.
 
    Against that, --accent-ink-on-deep (#4DA3FF) gives only 2.63:1 and FAILS
    the 3.0 large-text threshold. --accent-ink-on-video (#7DBEFF) is the same
@@ -1781,11 +1742,6 @@ html.hero-ready .hero__foot    { transition-delay: 1.15s; }
      composition instead of sitting still while everything else flies apart. */
   .hero__actions { transform: translate3d(calc(var(--hero-progress, 0) * -60%), 0, 0); }
   .hero__meta    { transform: translate3d(calc(var(--hero-progress, 0) *  60%), 0, 0); }
-
-  /* Only the overlay fades, exactly as the reference does it. */
-  .hero__scrim {
-    opacity: calc(1 - var(--hero-progress, 0));
-  }
 }
 
 /* --- Hero responsive ----------------------------------------------------- */
@@ -1995,7 +1951,6 @@ html.hero-ready .hero__foot    { transition-delay: 1.15s; }
   .hero__media {
     transform: none !important;
   }
-  .hero__scrim { opacity: 1 !important; }
 
   .site-header { transition: none; }
   .site-header.is-hidden { transform: none; }
@@ -2532,26 +2487,45 @@ main {
   padding: 0;
   overflow: hidden;
 
-  /* Plain white, by request. No gradient and no tint - the form half is a
-     white page beside the photograph, and every mark on it is dark. */
-  background: #FFFFFF;
+  /* A light teal gradient, by request.
+
+     The ink ramp below is NAVY, not white, and that is forced by the ground
+     rather than a style choice: on this teal, pure white measures between
+     2.1:1 and 3.0:1 depending on where you sample the gradient - it fails the
+     4.5:1 AA minimum everywhere, and this panel is almost entirely type and
+     form labels. --surface-deep on the same teal measures 5.7:1 to 8.0:1 and
+     passes throughout. So the panel goes light and the type goes dark, which
+     is the only combination of "lighter teal" that stays legible.
+
+     A gentle vertical ramp rather than a flat fill, so the panel has some
+     depth against the photograph beside it. Both stops are close together -
+     this reads as one colour with light falling across it, not as two. */
+  background: var(--accent-2);
+  background:
+    linear-gradient(160deg,
+      #39C7BD 0%,
+      #24B3AA 45%,
+      #17A099 100%);
 
   /* --- Panel ink, resolved once -------------------------------------
-     A white ground gives the widest ramp this panel has had: every tier below
-     clears AA comfortably, so hierarchy comes from colour as well as weight.
-     --pnl-ink is the page's own navy, so the section matches the rest of the
-     site's body copy rather than inventing a second near-black. */
-  --pnl-ink:        var(--surface-deep);
-  --pnl-ink-2:      #123252;
-  --pnl-ink-muted:  #4A5C6E;
-  --pnl-accent:     var(--accent-2-ink);
-  --pnl-error:      #A3132E;
-  --pnl-warning:    #6B3200;
-  --pnl-warning-bg: #FFF8EE;
-  --pnl-rule:       rgba(0, 29, 59, 0.18);
-  --pnl-veil:       rgba(0, 29, 59, 0.06);
-  /* Chrome's opaque autofill bar has to match the white field under it. */
-  --pnl-autofill:   #FFFFFF;
+     Navy on teal, not white on teal - see the contrast note above. Unlike the
+     old white-on-teal ramp, this one can carry real tiers: the secondary and
+     muted steps below still clear 4.5:1, so hierarchy is available again
+     rather than everything being forced to one weight. */
+  --pnl-ink:        #001D3B;
+  --pnl-ink-2:      #06294D;
+  --pnl-ink-muted:  #0A3557;
+  --pnl-accent:     #00293F;
+  /* A true red that reads against teal; the old white error state was
+     invisible the moment the fields stopped being dark. */
+  --pnl-error:      #7A0B22;
+  --pnl-warning:    #5A2A00;
+  --pnl-warning-bg: rgba(255, 255, 255, 0.30);
+  --pnl-rule:       rgba(0, 29, 59, 0.35);
+  --pnl-veil:       rgba(0, 29, 59, 0.14);
+  /* The ground behind an autofilled control - the fields are dark navy now,
+     so Chrome's opaque bar must be too. */
+  --pnl-autofill:   #0B2E4E;
 
   color: var(--pnl-ink-2);
 }
@@ -2617,13 +2591,10 @@ main {
   min-height: 0;
 }
 
-/* Two text blocks now - the intro pinned to the top of the frame and the
-   emergency notice to the bottom. space-between puts the picture's clear
-   middle between them. */
+/* The copy sits in the lower half of the picture, as in the reference. */
 .contact__media {
   display: flex;
-  flex-direction: column;
-  justify-content: space-between;
+  align-items: flex-end;
   isolation: isolate;
 }
 
@@ -2644,64 +2615,23 @@ main {
 /* Dark at the bottom where the words are, clear at the top so the photograph
    still reads as one. Deep navy rather than black, to stay in the same colour
    family as the panel beside it. */
-/* Dark at both ends where the type sits, clear through the middle so the
-   vessel still reads as a photograph. Deep navy rather than black, to stay in
-   the same colour family as the rest of the page. */
 .contact__scrim {
   position: absolute;
   inset: 0;
   z-index: 1;
-  background: linear-gradient(to bottom,
-    rgba(0, 19, 37, 0.92) 0%,
-    rgba(0, 19, 37, 0.72) 22%,
-    rgba(0, 19, 37, 0.20) 45%,
-    rgba(0, 19, 37, 0.42) 62%,
-    rgba(0, 19, 37, 0.88) 84%,
-    rgba(0, 19, 37, 0.95) 100%);
+  background: linear-gradient(to top,
+    rgba(0, 19, 37, 0.94) 0%,
+    rgba(0, 19, 37, 0.82) 30%,
+    rgba(0, 19, 37, 0.45) 60%,
+    rgba(0, 19, 37, 0.12) 100%);
 }
 
-.contact__mediaTop {
+.contact__mediaCopy {
   position: relative;
   z-index: 2;
   width: 100%;
   padding: clamp(1.25rem, 0.75rem + 2vw, 2.75rem);
   color: #FFFFFF;
-}
-
-/* Bottom-left of the picture. Constrained rather than full-bleed so it reads
-   as a notice sitting in the corner, not as a second caption bar. */
-.contact__mediaAlert {
-  position: relative;
-  z-index: 2;
-  margin: clamp(1.25rem, 0.75rem + 2vw, 2.75rem);
-  max-width: 34rem;
-  padding: 0.85rem 1rem;
-  color: #FFFFFF;
-  /* A veil plus a left rule, the same identity the block had on the form
-     side: it must not read as more marketing copy. The amber rule survives
-     the move because it is the one non-white mark on this picture. */
-  background: rgba(0, 19, 37, 0.62);
-  backdrop-filter: blur(3px);
-  border-left: 3px solid #F5B95C;
-  border-radius: var(--radius);
-}
-.contact__alertTitle {
-  font-size: var(--t-micro);
-  font-weight: 700;
-  color: #F5B95C;
-  margin-bottom: 0.3rem;
-}
-.contact__alertBody {
-  font-size: var(--t-micro);
-  line-height: 1.5;
-  color: #FFFFFF;
-}
-/* The [CONFIRM: ...] marker keeps its build-time highlight, but on this dark
-   ground it needs light ink rather than the dark-on-yellow it uses on paper. */
-.contact__mediaAlert .confirm {
-  background: rgba(245, 185, 92, 0.22);
-  color: #FFD9A0;
-  border-color: rgba(245, 185, 92, 0.55);
 }
 .contact__mediaEyebrow {
   font-size: 0.6875rem;
@@ -2775,6 +2705,9 @@ main {
   .cform__row { gap: 0.5rem var(--s-4); }
   .cform__input { padding: 0.45rem 0.75rem; }
   .cform__textarea { min-height: 2.5rem; }
+  .contact__form-col .emergency { margin-top: var(--s-3); padding: 0.6rem 0.75rem; }
+  /* Build-time guidance for the team, not information the visitor needs. */
+  .contact__form-col .emergency__note { display: none; }
 }
 
 
@@ -2786,11 +2719,7 @@ main {
    teal at exactly the corner where the eyebrow sits, measuring 1.84:1. It
    takes the panel ink instead and keeps its identity through the uppercase
    letterspaced treatment. */
-/* Back to the teal accent now the ground is white. This was forced to plain
-   ink while the panel was dark/teal, where the brand teal failed against its
-   own background; --accent-2-ink is the text-safe teal and measures 4.8:1
-   here, so the eyebrow reads as a brand mark again. */
-.contact__head .eyebrow { color: var(--pnl-accent); }
+.contact__head .eyebrow { color: var(--pnl-ink); }
 
 /* The reference runs this headline at 74px. Held well below that per the
    brief — clinical, not a poster — while still being the largest thing in
@@ -3244,43 +3173,34 @@ main {
   /* 13px rather than --t-small's 14px. Still comfortably above the 12px floor
      the type scale sets for input text. */
   font-size: 0.8125rem;
-  /* Underline fields, as in the reference: no box, no fill, just a rule under
-     the text. The control is transparent rather than white so it sits on the
-     panel itself - a white fill would be invisible on a white ground anyway,
-     and transparent keeps it honest if the ground ever changes. */
-  color: var(--surface-deep);
-  background: transparent;
-  border: 0;
-  border-bottom: 1px solid rgba(0, 29, 59, 0.35);
-  border-radius: 0;
+  /* Dark navy fields on the light teal, by request - not the white boxes
+     this had. The inversion works in the panel's favour: white type on
+     #0B2E4E measures about 13:1, and the dark control reads clearly as an
+     input against a light ground without needing a border to define it. */
+  color: #FFFFFF;
+  background: #0B2E4E;
+  border: 1px solid rgba(0, 29, 59, 0.25);
+  border-radius: var(--radius);
   /* Sized down to fit the 100dvh section without the column scrolling. Each
      field costs its input plus its label, so a few px off the control here is
      multiplied by seven rows. 0.4rem of vertical padding on a 13px control
      lands at ~33px - below the 44px touch guideline but this is a pointer-led
      B2B form, and the mobile block below puts the height back for touch. */
-  /* No horizontal padding: the text starts at the left edge of the rule, the
-     way it does in the reference. A little more below the baseline so the
-     text is not sitting on the line. */
-  padding: 0.3rem 0 0.45rem;
+  padding: 0.4rem 0.7rem;
   line-height: 1.35;
   /* Colour only - no transform, no size change. */
   transition: background-color 0.16s ease, border-color 0.16s ease;
 }
-.cform__input::placeholder { color: #6B7A88; }
+.cform__input::placeholder { color: rgba(255, 255, 255, 0.55); }
 
-/* State is carried by the rule alone. The compensating bottom padding keeps
-   the control exactly the same height as the line thickens, so no row shifts
-   under the cursor. */
-.cform__input:hover {
-  border-bottom-color: var(--surface-deep);
-  border-bottom-width: 2px;
-  padding-bottom: calc(0.45rem - 1px);
-}
+.cform__input:hover { background: #11395E; }
+/* Focus lifts the field slightly and takes a white edge, which is the
+   strongest boundary available against both the dark control and the light
+   ground around it. */
 .cform__input:focus {
   outline: none;
-  border-bottom-color: var(--accent-2-ink);
-  border-bottom-width: 2px;
-  padding-bottom: calc(0.45rem - 1px);
+  background: #11395E;
+  border-color: #FFFFFF;
 }
 .cform__input:focus-visible {
   outline: 2px solid var(--focus);
@@ -3288,40 +3208,33 @@ main {
 }
 
 .cform__textarea { min-height: 2.4rem; resize: vertical; line-height: 1.45; }
-/* Chrome draws a resize grip in the bottom-right corner that collides with an
-   underline field. Vertical-only resizing keeps the grip, so it is dropped in
-   favour of the rule reading cleanly. */
-.cform__textarea { resize: none; }
 
 /* Native select arrow removed and redrawn, so the control matches the text
    inputs instead of rendering as an OS widget on the panel. */
 .cform__select {
   appearance: none;
   -webkit-appearance: none;
-  padding-right: 1.5rem;
-  /* Black arrow, matching the border on a white field. */
+  padding-right: 2rem;
+  /* White arrow: the select is a dark navy box again. */
   background-image:
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%23000000' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%23ffffff' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
-  background-position: right 0.1rem center;
+  background-position: right 0.85rem center;
   cursor: pointer;
 }
 /* The dropdown list itself is painted by the OS, not the panel, so its
    options need an explicit dark ground - left alone they render as white
    text on white on several platforms. */
-.cform__select option { background: #FFFFFF; color: var(--surface-deep); }
+.cform__select option { background: #0B2E4E; color: #FFFFFF; }
 
 /* Chrome paints an opaque bar over an autofilled input. Push the panel's own
    navy back into it so the field does not flash a pale block. */
-/* Chrome fills an autofilled control with an opaque block, which on an
-   underline field paints a box where there should be none. The inset shadow
-   is the only way to override it; white matches the panel behind. */
 .cform__input:-webkit-autofill,
 .cform__input:-webkit-autofill:hover,
 .cform__input:-webkit-autofill:focus {
-  -webkit-text-fill-color: var(--surface-deep);
+  -webkit-text-fill-color: #FFFFFF;
   -webkit-box-shadow: 0 0 0 100px var(--pnl-autofill) inset;
-  caret-color: var(--surface-deep);
+  caret-color: #FFFFFF;
 }
 
 /* --- Checkboxes --------------------------------------------------------- */
@@ -3342,9 +3255,9 @@ main {
 .cform__check input {
   width: 0.95rem;
   height: 0.95rem;
-  /* Navy fill when checked - the same ink as the type, and clearly visible
-     against the white ground. */
-  accent-color: var(--surface-deep);
+  /* Navy fill when checked, matching the fields rather than disappearing
+     into the light ground. */
+  accent-color: #0B2E4E;
   cursor: pointer;
   flex: none;
 }
@@ -3359,15 +3272,10 @@ main {
   margin-top: 0.4rem;
 }
 .cform__error::before { content: "\2191 "; }
-/* A deep red at 2px, reading against both the white field and the white
-   ground. The "^" prefix on the message stays, so the state is never carried
-   by colour alone. Padding matches the hover/focus rules so the control does
-   not change height when it becomes invalid. */
-.cform__input[aria-invalid="true"] {
-  border-bottom-color: var(--pnl-error);
-  border-bottom-width: 2px;
-  padding-bottom: calc(0.45rem - 1px);
-}
+/* A light red, so the border reads against the DARK field it outlines. The
+   error message below it uses --pnl-error, a deep red for the light ground.
+   The "^" prefix stays, so the state is never carried by colour alone. */
+.cform__input[aria-invalid="true"] { border-color: #FF8A9B; border-width: 2px; }
 
 /* --- Send --------------------------------------------------------------- */
 .cform__send { display: block; margin-top: var(--s-2); }
@@ -3409,8 +3317,17 @@ main {
 
 /* The emergency block sits under the rebuilt form. The top margin is a real
    break so it cannot read as the last row of the fields. */
-/* The emergency block lives on the photograph now (.contact__mediaAlert), not
-   in the form column. Its old rules here are gone with it. */
+/* Compacted for the height budget: the note about the number not yet being
+   published is build-time guidance, not something the reader needs, so it is
+   the one line that gives way. The call-to-action itself is untouched. */
+.contact__form-col .emergency {
+  margin-top: var(--s-4);
+  max-width: none;
+  padding: var(--s-3);
+}
+.contact__form-col .emergency__title { margin-bottom: 0.2rem; }
+.contact__form-col .emergency__body  { margin-bottom: 0.3rem; }
+.contact__form-col .emergency__note  { padding-top: 0.3rem; }
 
 /* Stacked layout overrides. Placed after the .cform base rules rather than
    beside the other contact layout CSS: several of these (the checkbox grid,
@@ -3422,11 +3339,7 @@ main {
      picture takes a smaller share and the fields get the rest. */
   /* Taller than the 15dvh this was: the picture carries the intro copy now,
      and at 15dvh the words were clipped by the top of the band. */
-  /* The picture carries TWO blocks now - the intro and the emergency notice -
-     so it needs real height on a phone. 18dvh clipped the alert. */
-  .contact__inner { grid-template-rows: 30dvh minmax(0, 1fr); }
-  /* Tighter alert on a narrow column so it does not run to the screen edge. */
-  .contact__mediaAlert { margin: 0.75rem; padding: 0.6rem 0.7rem; max-width: none; }
+  .contact__inner { grid-template-rows: 18dvh minmax(0, 1fr); }
   /* The body line is the part that does not fit a short band on a phone. The
      eyebrow and the statement carry the message on their own. */
   .contact__mediaBody { display: none; }
@@ -3435,7 +3348,7 @@ main {
     margin-bottom: 0;
     font-size: clamp(1.15rem, 0.9rem + 1.8vw, 1.5rem);
   }
-  .contact__mediaTop { padding: 0.9rem 1rem; }
+  .contact__mediaCopy { padding: 0.9rem 1rem; }
   .contact__mediaEyebrow { margin-bottom: 0.25rem; }
 
   /* Stacked, the column is narrow, so the paired rows collapse to one field
@@ -3457,6 +3370,9 @@ main {
      broke 3 + 1 and wasted a line. */
   .cform__checkRow { display: grid; grid-template-columns: 1fr 1fr; gap: 0.4rem 0.6rem; }
   .cform__textarea { min-height: 2rem; }
+  .contact__form-col .emergency { margin-top: var(--s-3); padding: 0.6rem 0.7rem; }
+  /* Build-time guidance for the team, not for the visitor. */
+  .contact__form-col .emergency__note { display: none; }
 }
 
 /* Honeypot — off-screen rather than display:none, which some bots detect.
@@ -8449,10 +8365,7 @@ main {
   padding-bottom: var(--s-2);
   border-bottom: 2px solid currentColor;
   font-family: var(--font-editorial);
-  /* Matched to .cta-band__sub beside it. This used to run up to 1.5rem, which
-     made the link the largest thing in the band after the heading and left it
-     visibly out of step with the sentence it sits under. */
-  font-size: var(--t-small);
+  font-size: clamp(1.05rem, 0.9rem + 0.6vw, 1.5rem);
   font-weight: 500;
   line-height: 1.1;
   color: var(--text-primary);
