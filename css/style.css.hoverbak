@@ -2521,20 +2521,6 @@ main {
   min-height: 100dvh;
 }
 
-/* A little more room than a bare viewport on a real screen: the form half was
-   running tight against its own padding and the photograph beside it had no
-   breathing space above and below the two text blocks it carries. The extra
-   12dvh goes to both halves at once - the panel inherits it, the picture
-   stretches into it, and the fields get their vertical rhythm back. Desktop
-   only: stacked on a phone the section is already a full screen of content
-   and any extra height just pushes the submit button off it. */
-@media (min-width: 900px) {
-  .contact {
-    min-height: 112vh;
-    min-height: 112dvh;
-  }
-}
-
 .contact__panel {
   /* Full width, no inset, no radius, nothing animated. */
   width: 100%;
@@ -2639,14 +2625,6 @@ main {
   flex-direction: column;
   justify-content: space-between;
   isolation: isolate;
-  /* space-between alone pins both blocks hard to the top and bottom edges of
-     the frame, which read as stuck to the panel rather than placed in the
-     picture. Padding on the flex container itself pulls them both inward
-     toward the vessel - the intro drops down from the top, the emergency
-     notice lifts up from the bottom - without touching either block's own
-     internal spacing. Scales with the frame, so it stays proportional as the
-     section grows. */
-  padding-block: clamp(1.5rem, 0.5rem + 4vh, 5rem);
 }
 
 .contact__mediaImg {
@@ -2687,11 +2665,6 @@ main {
   z-index: 2;
   width: 100%;
   padding: clamp(1.25rem, 0.75rem + 2vw, 2.75rem);
-  /* Dropped further down the frame than the container's own inset takes it.
-     The intro is the block that reads first, and sitting nearer the vessel's
-     bow rather than up in the corner is what gives it that. vh-based so it
-     tracks the frame height instead of pinning to one screen size. */
-  padding-top: clamp(2rem, 0.5rem + 7vh, 7rem);
   color: #FFFFFF;
 }
 
@@ -2731,7 +2704,7 @@ main {
   border-color: rgba(245, 185, 92, 0.55);
 }
 .contact__mediaEyebrow {
-  font-size: 0.75rem;
+  font-size: 0.6875rem;
   font-weight: 700;
   letter-spacing: 0.14em;
   text-transform: uppercase;
@@ -2742,18 +2715,15 @@ main {
   /* The display note of the section. Fraunces, matching the other statement
      headings on the page. */
   font-family: var(--font-display, inherit);
-  /* Up from a 1.35-2.1rem ramp: this is the section's display note and it was
-     reading smaller than the form headline opposite it. */
-  font-size: clamp(1.6rem, 1.1rem + 2.1vw, 2.7rem);
+  font-size: clamp(1.35rem, 1rem + 1.6vw, 2.1rem);
   font-weight: 600;
-  line-height: 1.12;
+  line-height: 1.15;
   letter-spacing: -0.01em;
-  margin-bottom: 0.75rem;
+  margin-bottom: 0.6rem;
   max-width: 16ch;
 }
 .contact__mediaBody {
-  /* One step up from --t-micro so it holds its own under the larger title. */
-  font-size: 0.9375rem;
+  font-size: var(--t-micro);
   line-height: 1.55;
   color: rgba(255, 255, 255, 0.88);
   max-width: 40ch;
@@ -2793,16 +2763,7 @@ main {
 
    Everything here is spacing and the lede. No control shrinks below a
    comfortable target and no field is hidden. */
-/* Threshold lowered from 820px alongside the section's taller floor: at
-   112dvh a 780-820px screen now has the room it was previously being
-   compressed for, so the squeeze starts only below that. */
-@media (min-width: 900px) and (max-height: 760px) {
-  /* The inward pull is a luxury of a tall frame; on a short screen the two
-     blocks need the edges back. */
-  .contact__media { padding-block: 0.75rem; }
-  /* The larger intro and its drop are both a tall-frame luxury. */
-  .contact__mediaTop { padding-top: clamp(1.25rem, 0.75rem + 2vw, 2.75rem); }
-  .contact__mediaTitle { font-size: clamp(1.5rem, 1.1rem + 1.4vw, 2rem); }
+@media (min-width: 900px) and (max-height: 820px) {
   .contact__form-col { padding: 0.9rem 1.5rem; }
   .contact__head { margin-bottom: var(--s-3); }
   .contact__title { font-size: clamp(1.35rem, 1rem + 1.1vw, 1.8rem); }
@@ -3464,8 +3425,6 @@ main {
   /* The picture carries TWO blocks now - the intro and the emergency notice -
      so it needs real height on a phone. 18dvh clipped the alert. */
   .contact__inner { grid-template-rows: 30dvh minmax(0, 1fr); }
-  /* 30dvh is already tight for two blocks - no inward padding to spare. */
-  .contact__media { padding-block: 0; }
   /* Tighter alert on a narrow column so it does not run to the screen edge. */
   .contact__mediaAlert { margin: 0.75rem; padding: 0.6rem 0.7rem; max-width: none; }
   /* The body line is the part that does not fit a short band on a phone. The
@@ -3476,9 +3435,7 @@ main {
     margin-bottom: 0;
     font-size: clamp(1.15rem, 0.9rem + 1.8vw, 1.5rem);
   }
-  /* Explicit padding-top: the desktop rule sets that longhand separately,
-     and a shorthand alone in a later block still needs to state it to win. */
-  .contact__mediaTop { padding: 0.9rem 1rem; padding-top: 0.9rem; }
+  .contact__mediaTop { padding: 0.9rem 1rem; }
   .contact__mediaEyebrow { margin-bottom: 0.25rem; }
 
   /* Stacked, the column is narrow, so the paired rows collapse to one field
@@ -4081,8 +4038,6 @@ main {
 .doubt__media {
   position: relative;
   margin: 0;
-  /* Container for .doubt__detail's cqw type — see that rule. */
-  container-type: inline-size;
   aspect-ratio: 3 / 2;
   overflow: clip;
   background: var(--surface-sunken, rgba(10, 22, 40, 0.06));
@@ -4116,67 +4071,6 @@ main {
   color: #7FE3DC;
   margin: 0;
 }
-/* --- The hover detail ---------------------------------------------------
-   The long-form account of each doubt did not disappear when the cards took
-   their photographs; it moved onto the picture. Hovering (or keyboard-focusing)
-   a card fades a deep scrim over the image and lifts the full paragraph into
-   it, so the resting grid stays a set of six short statements while the
-   detail is one gesture away.
-
-   The card carries tabindex so a keyboard reaches the same text, and the
-   paragraph stays in the DOM (never display:none) so screen readers and the
-   no-JS document read it as ordinary card copy. */
-.doubt__detail {
-  position: absolute;
-  inset: 0;
-  margin: 0;
-  display: grid;
-  align-content: center;
-  padding: var(--s-2) var(--s-3) var(--s-3);
-  padding-top: calc(var(--s-2) + 2.5rem);
-  background: linear-gradient(180deg, rgba(6, 20, 38, 0.90), rgba(6, 20, 38, 0.94));
-  backdrop-filter: blur(2px);
-  color: var(--text-on-deep, #EAF2FA);
-  /* Sized to the longest of the six paragraphs at the narrowest card the grid
-     produces, so nothing ever needs to scroll: the panel is a fixed window
-     onto a picture, and a scrollbar inside it would read as a broken card
-     rather than as more copy. cqw ties the type to the CARD's width, not the
-     viewport's, so a three-up row and a one-up column each get type in
-     proportion to the box it has to fill. */
-  font-size: clamp(0.72rem, 4.1cqw, 1rem);
-  line-height: 1.38;
-  text-wrap: pretty;
-  opacity: 0;
-  visibility: hidden;
-  transform: translateY(6px);
-  transition: opacity 0.32s ease, transform 0.32s ease, visibility 0s linear 0.32s;
-  overflow: hidden;
-}
-.doubt:hover .doubt__detail,
-.doubt:focus-visible .doubt__detail,
-.doubt:focus-within .doubt__detail {
-  opacity: 1;
-  visibility: visible;
-  transform: none;
-  transition: opacity 0.32s ease, transform 0.32s ease, visibility 0s;
-}
-/* The numeral stays legible on top of the scrim — it is the only thing that
-   should still read as the picture's own furniture once the panel is up. */
-.doubt__num { z-index: 2; }
-.doubt:hover .doubt__num,
-.doubt:focus-within .doubt__num {
-  background: rgba(6, 20, 38, 0.85);
-}
-.doubt { transition: border-color 0.32s ease; }
-.doubt:hover, .doubt:focus-within { border-color: rgba(32, 176, 168, 0.55); }
-.doubt:focus-visible { outline: 2px solid var(--accent-2); outline-offset: 2px; }
-
-@media (prefers-reduced-motion: reduce) {
-  .doubt__detail { transition: opacity 0.01ms linear, visibility 0s; transform: none; }
-}
-/* Touch: there is no hover, so the panel opens on tap instead — the card
-   carries tabindex, which makes :focus-within fire on a touch press. */
-
 /* .doubt__title now carries the SHORT statement ("3:00 AM. No VHF range.") and
    .doubt__body the teal question beneath it. The elements kept their names
    because the DOM order — heading then paragraph — still reads correctly to a
@@ -6474,23 +6368,7 @@ main {
      bottom of the section, which is the intent, rather than as a wall of
      pictures. More cards are on screen at once at this size, which also makes
      the leftward motion easier to read. */
-  /* SIZED SO THE FIVE ALWAYS OVERFLOW THE SCREEN.
-
-     This was min(19rem, 52vh*4/5, 66vw) — a 304px plate, which put five cards
-     plus their gaps at 1584px. That is NARROWER than an ordinary desktop
-     frame, and it broke the band's mechanic: the strip rewinds to put stage 01
-     back at the left once 05 has arrived (see js/process-marquee.js), so when
-     the five already fit there is almost nothing to travel first. Measured at
-     1440 the run was 144px — a four-second drift and then a snap back, over
-     and over, which reads as a glitch rather than as a sequence.
-
-     The cards are therefore large enough that the five ALWAYS overflow: the
-     band has real distance to cover, the run lasts 16-50s depending on the
-     screen, and the rewind happens once at the end of a full pass instead of
-     every few seconds. The vh term is raised alongside the rem cap because it
-     is what actually binds on a short laptop screen — leaving it at 52vh
-     capped the run at 15s there no matter how large the rem cap went. */
-  width: min(30rem, calc(66vh * 4 / 5), 66vw);
+  width: min(19rem, calc(52vh * 4 / 5), 66vw);
   aspect-ratio: 4 / 5;
   border-radius: var(--radius-lg);
   overflow: hidden;
@@ -6677,7 +6555,21 @@ main {
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
 }
-.process:not(.process--live) .process__card--clone { display: none; }
+/* THE DUPLICATE SET IS HIDDEN ALWAYS, NOT ONLY AT REST.
+
+   It existed to close a seamless wrap: the strip ran until card 01's
+   duplicate reached 01's starting place, so the loop could repeat with no
+   visible join. That is no longer the mechanic. The band now runs the five
+   ONCE and stops with stage 05 whole on screen, holds, resets to 01 at the
+   lead-in and runs again from rest (see js/process-marquee.js). The run ends
+   before a duplicate could ever reach the frame, so showing them only adds
+   dead width to the track — and if anything ever did drift far enough to
+   reveal one, it would be the exact repeat the restart exists to avoid.
+
+   Kept in the markup rather than deleted: index.html documents them as the
+   seam-closer, they are already aria-hidden, and leaving the DOM alone keeps
+   this a one-line CSS decision that is trivial to reverse. */
+.process__card--clone { display: none; }
 
 /* --- 05b Process -> Case studies transition ----------------------------- */
 /* The transition has almost no styling of its own, by design: the thing that
@@ -8010,10 +7902,8 @@ main {
    with the cards, which is exactly what this layout must not do. */
 .why {
   position: relative;
-  /* A little over one viewport: at a bare 100svh the card row left a band of
-     dead ground under it and the section read as half-empty. */
-  min-height: calc(100vh + 4rem);
-  min-height: calc(100svh + 4rem);
+  min-height: 100vh;
+  min-height: 100svh;
   display: flex;
   align-items: center;
   background: var(--surface-sunken);
@@ -8028,40 +7918,20 @@ main {
   grid-template-columns: minmax(13rem, 18vw) 1fr;
   grid-template-rows: auto 1fr;
   column-gap: clamp(1.5rem, 4vw, 4.5rem);
-  row-gap: clamp(0.5rem, 1.2vh, 1rem);
+  row-gap: clamp(1rem, 3vh, 2.5rem);
   align-items: start;
-  /* height, not max-height: the grid has to CLAIM the section's locked height
-     so its 1fr second row can hand the carousel everything the headline does
-     not use. Left as max-height the grid sized to its content, the row
-     collapsed to the card's own height, and a card grown by its copy then
-     overran the section and was clipped at the bottom. */
-  height: calc(100svh + 4rem - clamp(2rem, 6vh, 4.5rem));
-  max-height: calc(100svh + 4rem - clamp(2rem, 6vh, 4.5rem));
-  min-height: 0;
+  max-height: calc(100svh - clamp(2rem, 6vh, 4.5rem));
 }
 
 /* --- LEFT RAIL — spans both rows so the "not us" block can sit low, level
    with the foot of the card row, rather than floating under the points. */
-.why__rail .eyebrow {
-  /* Scoped to this rail, never the global .eyebrow: the label is dropped off
-     the section's top edge so it does not sit hard against the band's crown,
-     and its bottom margin is pulled in so it reads as a kicker sitting
-     directly on "Why us" rather than floating between the two. */
-  margin-top: clamp(1.6rem, 4vh, 2.8rem);
-  margin-bottom: clamp(0.4rem, 1vh, 0.6rem);
-}
-
 .why__rail {
   grid-column: 1;
   grid-row: 1 / span 2;
   display: flex;
   flex-direction: column;
   min-height: 0;
-  /* Sized to its own content, NOT the full column. At height:100% the rail
-     spanned both grid rows and the auto margin below spread its blocks from
-     the section's crown to its floor, leaving the "what we are not" note
-     stranded far under the card row. */
-  height: auto;
+  height: 100%;
 }
 
 .why__rail-title {
@@ -8071,7 +7941,7 @@ main {
   line-height: 0.95;
   letter-spacing: -0.03em;
   color: var(--text-primary);
-  margin: 0;
+  margin: 0.25em 0 0;
 }
 
 /* The support points: hairline marks, not bullets. Filled teal square for the
@@ -8105,9 +7975,7 @@ main {
 /* Pushed to the foot of the rail by the auto margin — the lower-left anchor
    of the composition. */
 .notus {
-  /* A fixed gap, not `margin-top: auto` — the auto margin is what pushed this
-     block to the bottom of the section. */
-  margin-top: clamp(1.4rem, 3.6vh, 2.4rem);
+  margin-top: auto;
   padding-top: clamp(0.9rem, 2.4vh, 1.6rem);
   border-top: 1px solid var(--border);
   color: var(--text-secondary);
@@ -8142,15 +8010,8 @@ main {
 .why__head {
   grid-column: 2;
   grid-row: 1;
-  /* Wide enough to hold "bring MedShield onboard." on ONE line: at 52ch the
-     second line broke again before "onboard." and the headline ran to three
-     lines, losing the two-line shape the <br> is there to set. */
-  max-width: 68ch;
+  max-width: 52ch;
   padding-left: clamp(0rem, 4vw, 3.5rem);
-  /* Dropped to start level with "Why us" in the rail rather than with the
-     eyebrow above it, so the two columns share one optical top line. Tracks
-     the rail's own top spacing — the eyebrow's margin plus its box. */
-  padding-top: clamp(4.3rem, 9.4vh, 6rem);
 }
 .why__display {
   font-size: clamp(1.4rem, 0.9rem + 1.7vw + 1vh, 2.35rem);
@@ -8160,14 +8021,6 @@ main {
   color: var(--text-primary);
   margin: 0;
 }
-/* --accent-2-ink, not the raw --accent-2: the brand teal is a fill-only hue
-   and is barred from type at any size (see the token block). The ink variant
-   is the text-safe teal and measures 4.8:1 on this band. */
-.why__display-brand {
-  color: var(--accent-2-ink);
-  white-space: nowrap;
-}
-
 .why__lede {
   margin: clamp(0.5rem, 1.4vh, 0.9rem) 0 0;
   color: var(--text-secondary);
@@ -8188,21 +8041,13 @@ main {
 .why__carousel {
   grid-column: 2;
   grid-row: 2;
-  align-self: stretch;
+  align-self: end;
   min-width: 0;
-  min-height: 0;
-  display: flex;
-  /* End-aligned, then lifted off the floor: the row sits near the section's
-     baseline (rather than centred, which banked a dead band beneath it) but
-     is raised clear of the very bottom edge. */
-  align-items: flex-end;
-  padding-bottom: clamp(1.5rem, 4.5vh, 3rem);
   padding-left: clamp(0rem, 4vw, 3.5rem);
 }
 
 .why__viewport {
   --why-bleed: clamp(1rem, 3vw, 3rem);
-  width: 100%;
   overflow: hidden;
   padding-block: 0.75rem;         /* room for the card shadow, uncropped */
   margin-right: calc(-1 * var(--why-bleed));
@@ -8234,28 +8079,10 @@ main {
   --why-gap: clamp(0.85rem, 1.6vw, 1.5rem);
   --why-visible: 3;
   display: flex;
-  /* Every card the same height, set by the tallest copy in the set. Without
-     this each card sized to its own body text and the row read as a ragged
-     skyline as it advanced. */
-  align-items: stretch;
   gap: var(--why-gap);
   will-change: transform;
 }
 
-/* --- the card ------------------------------------------------------------
-   A picture card. The illustration is NOT a band across the top: it is an
-   oversized figure pinned to the card's bottom-right corner, bleeding past
-   the right and bottom edges so it is cropped by the card rather than framed
-   inside it. The copy — number, title, body — sits over it in the top-left,
-   and the foot rail (tag pill, go button) sits over its lower edge. The face
-   is a vertical mint-to-teal gradient — the palette the supplied artwork was
-   rendered against — so the illustration's own glow continues into the card
-   rather than sitting on a white plate.
-
-   The artwork ships on black. `mix-blend-mode: screen` drops that black to
-   nothing while keeping every teal highlight intact, which is why no cut-out
-   PNG is needed and why the bed must be painted (never transparent) for the
-   blend to have something to lift against. */
 .why-card {
   position: relative;
   overflow: hidden;
@@ -8265,35 +8092,16 @@ main {
   );
   display: flex;
   flex-direction: column;
-  /* `auto`, not `height: 100%`: a percentage height resolves against the
-     track and wins over align-items, which is what left the row ragged. On
-     auto the flex stretch governs and every card matches the tallest.
-
-     The floor is what reserves the lower half for the artwork: the figure is
-     absolutely positioned and so contributes NO height, and without a minimum
-     the card would shrink to its copy and crop the illustration. */
-  height: auto;
-  min-height: clamp(18rem, 52vh, 27rem);
-  padding: clamp(1.1rem, 2.4vh, 1.6rem) clamp(1.05rem, 1.7vw, 1.5rem)
-           clamp(1rem, 2.2vh, 1.45rem);
+  min-height: clamp(13rem, 30vh, 19rem);
+  padding: clamp(1.15rem, 2.8vh, 1.75rem) clamp(1.1rem, 1.8vw, 1.6rem);
   border-radius: clamp(16px, 2.6vh, 24px);
-
-  /* The gradient of the reference: an all-but-white mint at the crown,
-     deepening through the brand teal to a saturated foot. */
-  background-image: linear-gradient(
-    180deg,
-    #EAF9F8 0%,
-    #CFF0EE 30%,
-    #A8E4E2 58%,
-    #7FD6D5 80%,
-    #63CBCC 100%
-  );
-  border: 1px solid rgb(255 255 255 / 0.55);
+  background-color: var(--surface-raised);
+  border: 1px solid rgb(var(--surface-deep-rgb) / 0.08);
   box-shadow:
-    0 18px 34px -20px rgb(var(--surface-deep-rgb) / 0.28),
-    0 1px 3px rgb(var(--surface-deep-rgb) / 0.05);
-  transition: transform 340ms cubic-bezier(0.22, 1, 0.36, 1),
-              box-shadow 340ms cubic-bezier(0.22, 1, 0.36, 1);
+    0 14px 30px -18px rgb(var(--surface-deep-rgb) / 0.18),
+    0 1px 3px rgb(var(--surface-deep-rgb) / 0.04);
+  transition: box-shadow 340ms cubic-bezier(0.22, 1, 0.36, 1),
+              border-color 340ms ease;
 }
 
 /* Kept so the existing sheen markup still has a rule, but no longer swept:
@@ -8306,169 +8114,103 @@ main {
   opacity: 0;
   pointer-events: none;
 }
- /* The figure is excluded BY NAME alongside the sheen: this selector is
-   (0,2,0) and would otherwise beat the (0,1,0) `position: absolute` that
-   hangs the artwork off the card's corner, dropping it back into the flow
-   where it takes a block of height at the top and shoves the copy down. */
-.why-card > :not(.why-card__sheen):not(.why-card__figure) {
+/* Everything except the sheen and the corner figure is lifted above them.
+   .why-card__num is excluded by name: this selector is (0,2,0) and would
+   otherwise beat the (0,1,0) `position: absolute` that pins the figure to
+   the corner, dropping it back into the flow on top of the title. */
+.why-card > :not(.why-card__sheen):not(.why-card__num) {
   position: relative;
   z-index: 1;
 }
-/* The copy keeps its measured height; only the spacer above it gives ground
-   when the card is short. Without this the flex default lets every line box
-   shrink, and the text is what collapses instead of the gap. */
-.why-card__num,
-.why-card__title,
-.why-card__body,
-.why-card__foot { flex: 0 0 auto; }
 
 @media (hover: hover) and (pointer: fine) {
   .why-card:hover {
-    transform: translateY(-3px);
+    border-color: rgba(var(--rgb-accent-2), 0.45);
     box-shadow:
-      0 26px 44px -22px rgb(var(--surface-deep-rgb) / 0.34),
-      0 1px 3px rgb(var(--surface-deep-rgb) / 0.06);
-  }
-  .why-card:hover .why-card__figure img { transform: scale(1.04); }
-  .why-card:hover .why-card__go {
-    background: var(--surface-deep);
-    color: #fff;
+      0 20px 40px -20px rgb(var(--surface-deep-rgb) / 0.22),
+      0 1px 3px rgb(var(--surface-deep-rgb) / 0.05);
   }
 }
 
-/* The illustration: taken out of the flow entirely and hung off the card's
-   bottom-right corner. It is deliberately wider and taller than the space it
-   occupies and is inset NEGATIVELY on the right and bottom, so the card's
-   own overflow:hidden crops it — the artwork runs off the corner instead of
-   sitting in a frame with a visible edge.
-
-   z-index 0 keeps it under the copy; the copy carries z-index 1. */
-.why-card__figure {
-  position: absolute;
-  z-index: 0;
-  margin: 0;
-  padding: 0;
-  /* The renders carry a wide black margin of their own, so the box has to be
-     pushed well past the corner for the SUBJECT — not the file's edge — to be
-     the thing that bleeds off. */
-  right: -22%;
-  bottom: -16%;
-  width: 104%;
-  /* Kept to the lower portion: the copy now sits at the CARD'S TOP, so the
-     artwork must not reach up behind the title. */
-  height: 70%;
-  pointer-events: none;
-  overflow: visible;
+.why-card__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: clamp(2rem, 4vh, 2.45rem);
+  height: clamp(2rem, 4vh, 2.45rem);
+  border-radius: 50%;
+  background: rgba(var(--rgb-accent-2), 0.10);
+  border: 1px solid rgba(var(--rgb-accent-2), 0.35);
+  color: var(--accent-2-ink);
+  flex: none;
+  align-self: flex-start;
 }
-.why-card__figure img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  object-position: center;
-  /* screen against the mint bed: the render's black ground goes to nothing
-     and only the teal glass survives. */
-  mix-blend-mode: screen;
-  transform-origin: right bottom;
-  transition: transform 500ms cubic-bezier(0.22, 1, 0.36, 1);
-}
+.why-card__icon svg { width: 55%; height: 55%; }
 
-/* The number leads the copy block, which now sits at the card's top — the
-   spacer that follows the body is what pushes the foot rail to the baseline. */
+/* The editorial marker: a large, quiet figure pinned to the card's top-right
+   corner, level with the teal icon on the left.
+
+   It is kept OUT of the flow and behind the content (z-index 0 against the
+   z-index 1 the .why-card children carry), and the title is given a measure
+   short enough that it never runs under the figure — so at three-up card
+   widths, where a two-line title is the common case, the number reads as a
+   watermark beside the heading rather than a collision with it. */
 .why-card__num {
+  position: absolute;
+  top: clamp(1.15rem, 2.8vh, 1.75rem);
+  right: clamp(1.1rem, 1.8vw, 1.6rem);
+  z-index: 0;
   font-family: var(--font-display);
-  font-size: clamp(0.82rem, 0.25vw + 0.76rem, 0.95rem);
+  font-size: clamp(1.75rem, 1rem + 1.3vw, 2.5rem);
   font-weight: 700;
   line-height: 1;
-  letter-spacing: 0.02em;
-  color: var(--accent-2-ink);
+  letter-spacing: -0.04em;
+  color: rgb(var(--surface-deep-rgb) / 0.14);
   margin: 0;
-}
-
-/* The spacer that drops the copy block into the card's lower half, clearing
-   the artwork above it. A `margin-top: auto` on the number did this too, but
-   an auto margin claims ALL the free space before the box is allowed to
-   overflow — on a short viewport it pushed the title and body straight out
-   the bottom of the height-locked card. A flex spacer that is allowed to
-   shrink to nothing gives the same look with none of that: it yields its
-   height back to the copy exactly when the card gets tight. */
-.why-card__spacer {
-  flex: 1 1 auto;
-  min-height: 0;
   pointer-events: none;
-}
-/* The short rule that trails the figure in the reference. */
-.why-card__num::after {
-  content: "";
-  display: inline-block;
-  width: 0.85em;
-  height: 1px;
-  margin-left: 0.5em;
-  vertical-align: 0.28em;
-  background: currentColor;
-  opacity: 0.6;
 }
 
 .why-card__title {
   font-family: var(--font-display);
-  font-size: clamp(1.12rem, 0.55vw + 1vh + 0.36rem, 1.65rem);
+  font-size: clamp(1rem, 0.5vw + 0.85rem, 1.22rem);
   font-weight: 700;
-  line-height: 1.12;
-  letter-spacing: -0.02em;
+  line-height: 1.2;
+  letter-spacing: -0.015em;
   color: var(--surface-deep);
-  margin: clamp(0.3rem, 0.8vh, 0.5rem) 0 clamp(0.25rem, 0.7vh, 0.45rem);
-  /* Wide enough for a two-line title at three-up widths: at 11ch these ran to
-     three lines, and three lines of display type plus a four-line body does
-     not fit the height-locked card. Widened again with the larger size so the
-     bigger type does not buy back the third line. */
-  max-width: 17ch;
+  margin: clamp(0.8rem, 2vh, 1.2rem) 0 clamp(0.4rem, 1vh, 0.6rem);
+  max-width: 15ch;
 }
 .why-card__body {
-  font-size: clamp(0.78rem, 0.24vw + 0.5vh + 0.4rem, 0.95rem);
+  font-size: clamp(0.78rem, 0.3vw + 0.7rem, 0.88rem);
   line-height: 1.5;
-  /* Deep navy at reduced strength, not --text-secondary: the grey token was
-     mixed for the white page and goes muddy on a saturated teal. */
-  color: rgb(var(--surface-deep-rgb) / 0.72);
-  margin: 0;
-  max-width: 30ch;
+  color: var(--text-secondary);
+  margin: 0 0 clamp(0.7rem, 1.6vh, 1.1rem);
 }
 
-/* The foot rail: pill left, go button right, riding over the lower edge of
-   the artwork. It follows the body directly — see the note on __num. */
-.why-card__foot {
-  margin-top: clamp(0.5rem, 1.4vh, 0.9rem);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.6rem;
+.why-card__list {
+  margin: auto 0 0;
+  padding: clamp(0.7rem, 1.6vh, 1.05rem) 0 0;
+  border-top: 1px solid var(--border);
+  list-style: none;
+  font-size: clamp(0.7rem, 0.2vw + 0.66rem, 0.78rem);
+  line-height: 1.5;
+  color: var(--text-secondary);
 }
-.why-card__tag {
-  display: inline-flex;
-  align-items: center;
-  padding: 0.42em 0.95em;
-  border-radius: 999px;
-  background: rgb(255 255 255 / 0.72);
-  color: var(--surface-deep);
-  font-size: clamp(0.66rem, 0.18vw + 0.62rem, 0.74rem);
-  font-weight: 600;
-  line-height: 1.2;
-  letter-spacing: 0.005em;
-  white-space: nowrap;
-  box-shadow: 0 1px 2px rgb(var(--surface-deep-rgb) / 0.06);
+.why-card__list li {
+  padding-left: 1.05em;
+  position: relative;
 }
-.why-card__go {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  flex: none;
-  width: clamp(2rem, 3.6vh, 2.4rem);
-  height: clamp(2rem, 3.6vh, 2.4rem);
+.why-card__list li + li { margin-top: 0.3em; }
+.why-card__list li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0.52em;
+  width: 5px;
+  height: 5px;
   border-radius: 50%;
-  background: rgb(255 255 255 / 0.85);
-  color: var(--surface-deep);
-  box-shadow: 0 1px 3px rgb(var(--surface-deep-rgb) / 0.10);
-  transition: background 260ms ease, color 260ms ease;
+  background: var(--accent-2-ink);
 }
-.why-card__go svg { width: 48%; height: 48%; }
 
 /* --- tablet: still three up, but the rail tightens and the section releases
    its height lock — a rail plus three readable cards does not fit a
@@ -8480,8 +8222,8 @@ main {
     grid-template-columns: minmax(11rem, 26vw) 1fr;
   }
   .why__carousel { margin-top: clamp(1.5rem, 4vh, 2.5rem); }
-  .why-card { min-height: 19rem; }
-  .why-card__title { max-width: 12ch; }
+  .why-card { min-height: 15rem; }
+  .why-card__title { max-width: none; }
 }
 
 /* --- mobile: the rail stops being a rail. One column, and the carousel drops
@@ -8501,10 +8243,8 @@ main {
     margin-top: clamp(1.5rem, 4vh, 2.25rem);
   }
   .why__track { --why-visible: 1; }
-  .why-card { min-height: clamp(15rem, 52vw, 19rem); }
-  .why-card__title { max-width: 14ch; }
-  .why-card__body { max-width: 24ch; }
-  .why-card__figure { width: 68%; height: 62%; }
+  .why-card { min-height: 0; }
+  .why-card__title { max-width: 18ch; }
 }
 
 @media (max-width: 860px) {
@@ -8522,7 +8262,6 @@ main {
    cards become a plain row the reader scrolls by hand. */
 @media (prefers-reduced-motion: reduce) {
   .why-card { transition: none; }
-  .why-card__figure img { transition: none; }
   .why__viewport {
     overflow-x: auto;
     scroll-snap-type: x mandatory;

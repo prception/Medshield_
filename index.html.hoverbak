@@ -325,62 +325,56 @@
              (state 3) positions and GSAP transforms them back toward the
              centre for state 2, so the resting layout is the CSS one. -->
         <ol class="doubts__grid">
-          <li class="doubt" tabindex="0" data-doubt-slot="tl">
+          <li class="doubt" data-doubt-slot="tl">
             <figure class="doubt__media">
               <img src="assets/problems/prob1.png" alt="A darkened bridge at night with a distress alert lit on the radio console"
                    width="1536" height="1024" loading="lazy" decoding="async">
               <p class="doubt__num">01</p>
-              <p class="doubt__detail">It is 03:00 and the nearest coast station is out of VHF range. No one on board knows which number reaches a doctor.</p>
             </figure>
             <h3 class="doubt__title">3:00 AM. No VHF range.</h3>
             <p class="doubt__body">Who do we call?</p>
           </li>
-          <li class="doubt" tabindex="0" data-doubt-slot="tm">
+          <li class="doubt" data-doubt-slot="tm">
             <figure class="doubt__media">
               <img src="assets/problems/prob2.png" alt="A seafarer clutching his chest on deck"
                    width="1536" height="1024" loading="lazy" decoding="async">
               <p class="doubt__num">02</p>
-              <p class="doubt__detail">Chest pain, or indigestion after a long watch? Nobody aboard is qualified to tell the difference – and guessing wrong costs hours that matter.</p>
             </figure>
             <h3 class="doubt__title">Chest pain. What is it?</h3>
             <p class="doubt__body">Is it serious?</p>
           </li>
-          <li class="doubt" tabindex="0" data-doubt-slot="tr">
+          <li class="doubt" data-doubt-slot="tr">
             <figure class="doubt__media">
               <img src="assets/problems/prob3.png" alt="A container ship altering course toward a marked port"
                    width="1536" height="1024" loading="lazy" decoding="async">
               <p class="doubt__num">03</p>
-              <p class="doubt__detail">A diversion burns fuel, breaks the charter and costs days. Not diverting could cost a life. That call sits with the master, alone, at sea.</p>
             </figure>
             <h3 class="doubt__title">A diversion burns fuel,<br>breaks the charter.</h3>
             <p class="doubt__body">Do we divert?</p>
           </li>
-          <li class="doubt" tabindex="0" data-doubt-slot="bl">
+          <li class="doubt" data-doubt-slot="bl">
             <figure class="doubt__media">
               <img src="assets/problems/prob4.png" alt="A lit hospital on a headland above a harbour at dusk"
                    width="1536" height="1024" loading="lazy" decoding="async">
               <p class="doubt__num">04</p>
-              <p class="doubt__detail">The closest harbour is not always the one with a cardiac unit, a surgeon on duty, or clearance to take a foreign crew member ashore.</p>
             </figure>
             <h3 class="doubt__title">Nearest port<br>&#8800; best care.</h3>
             <p class="doubt__body">Which port?</p>
           </li>
-          <li class="doubt" tabindex="0" data-doubt-slot="bm">
+          <li class="doubt" data-doubt-slot="bm">
             <figure class="doubt__media">
               <img src="assets/problems/prob5.png" alt="A medical invoice with the charge marked three times over"
                    width="1536" height="1024" loading="lazy" decoding="async">
               <p class="doubt__num">05</p>
-              <p class="doubt__detail">Once a hospital learns an employer is paying, prices move. We have seen consultation fees at three times the market rate and surgery quoted at nearly four.</p>
             </figure>
             <h3 class="doubt__title">Same treatment.<br>3&#215; the price.</h3>
             <p class="doubt__body">Are we overcharged?</p>
           </li>
-          <li class="doubt" tabindex="0" data-doubt-slot="br">
+          <li class="doubt" data-doubt-slot="br">
             <figure class="doubt__media">
               <img src="assets/problems/prob6.png" alt="A doctor and a ship’s officer reviewing hospital options on a screen"
                    width="1536" height="1024" loading="lazy" decoding="async">
               <p class="doubt__num">06</p>
-              <p class="doubt__detail">If the referral came from a vendor with a financial relationship rather than a clinical one, recovery takes longer and costs more – and nobody ashore finds out until the invoice arrives.</p>
             </figure>
             <h3 class="doubt__title">Who chose<br>this hospital?</h3>
             <p class="doubt__body">And why?</p>
@@ -1144,7 +1138,7 @@
 
       <!-- TOP RIGHT — fixed headline. Never animates. -->
       <header class="why__head">
-        <h2 class="why__display">What changes when you<br>bring <span class="why__display-brand">MedShield</span> onboard.</h2>
+        <h2 class="why__display">What changes when you<br>bring MedShield onboard.</h2>
         <p class="why__lede">
           One accountable partner. One complete record. Outcomes that land on both
           sides &mdash; a lower cost of care for the owner, a better-handled
@@ -1162,147 +1156,138 @@
           <div class="why__track">
           <article class="why-card">
             <span class="why-card__sheen" aria-hidden="true"></span>
-            <figure class="why-card__figure">
-              <img src="assets/why-us/1.png" alt="Illustration of a rising bar chart with an upward arrow." loading="lazy" decoding="async" width="1536" height="1024">
-            </figure>
+            <span class="why-card__icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M9 15h6M9 11h3"/></svg>
+            </span>
             <p class="why-card__num">01</p>
             <h3 class="why-card__title">Lower medical spend</h3>
             <p class="why-card__body">Treatment costed and approved against pre-negotiated rates before delivery.</p>
-            <span class="why-card__spacer" aria-hidden="true"></span>
-            <div class="why-card__foot">
-              <span class="why-card__tag">Cost assurance</span>
-              <span class="why-card__go" aria-hidden="true">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h13"/><path d="m12.5 5.5 6.5 6.5-6.5 6.5"/></svg>
-              </span>
-            </div>
+            <ul class="why-card__list">
+              <li>Cost assurance</li>
+              <li>Rate benchmarking</li>
+              <li>Pre-approval validation</li>
+              <li>Savings you can measure</li>
+            </ul>
           </article>
           <article class="why-card">
             <span class="why-card__sheen" aria-hidden="true"></span>
-            <figure class="why-card__figure">
-              <img src="assets/why-us/2.png" alt="Illustration of a folder of documents with a verified check mark." loading="lazy" decoding="async" width="1536" height="1024">
-            </figure>
+            <span class="why-card__icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-11V5l-8-3-8 3v6c0 7 8 11 8 11Z"/><path d="m9 12 2 2 4-4"/></svg>
+            </span>
             <p class="why-card__num">02</p>
             <h3 class="why-card__title">Fewer disputed claims</h3>
             <p class="why-card__body">The file is complete from hour one, not reconstructed at settlement.</p>
-            <span class="why-card__spacer" aria-hidden="true"></span>
-            <div class="why-card__foot">
-              <span class="why-card__tag">Complete evidence</span>
-              <span class="why-card__go" aria-hidden="true">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h13"/><path d="m12.5 5.5 6.5 6.5-6.5 6.5"/></svg>
-              </span>
-            </div>
+            <ul class="why-card__list">
+              <li>Complete documentation</li>
+              <li>Evidence integrity</li>
+              <li>Clear liability position</li>
+              <li>Stronger defensibility</li>
+            </ul>
           </article>
           <article class="why-card">
             <span class="why-card__sheen" aria-hidden="true"></span>
-            <figure class="why-card__figure">
-              <img src="assets/why-us/3.png" alt="Illustration of three figures linked by orbiting rings." loading="lazy" decoding="async" width="1536" height="1024">
-            </figure>
+            <span class="why-card__icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.25"/><path d="M2.5 20c0-3.5 3-6 6.5-6s6.5 2.5 6.5 6"/><circle cx="18" cy="8.5" r="2.5"/><path d="M16 14.2c2.9.4 5 2.5 5 5.3"/></svg>
+            </span>
             <p class="why-card__num">03</p>
             <h3 class="why-card__title">Faster decisions</h3>
             <p class="why-card__body">A doctor and a case manager on the same call.</p>
-            <span class="why-card__spacer" aria-hidden="true"></span>
-            <div class="why-card__foot">
-              <span class="why-card__tag">Live collaboration</span>
-              <span class="why-card__go" aria-hidden="true">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h13"/><path d="m12.5 5.5 6.5 6.5-6.5 6.5"/></svg>
-              </span>
-            </div>
+            <ul class="why-card__list">
+              <li>Live case collaboration</li>
+              <li>Medical &amp; legal alignment</li>
+              <li>Faster approvals</li>
+              <li>Quicker resolutions</li>
+            </ul>
           </article>
           <article class="why-card">
             <span class="why-card__sheen" aria-hidden="true"></span>
-            <figure class="why-card__figure">
-              <img src="assets/why-us/4.png" alt="Illustration of a shield carrying a check mark." loading="lazy" decoding="async" width="1536" height="1024">
-            </figure>
+            <span class="why-card__icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="m12 2 8 3.5v5c0 6-3.5 9.5-8 11.5-4.5-2-8-5.5-8-11.5v-5Z"/><path d="m9 12 2 2 4-4"/></svg>
+            </span>
             <p class="why-card__num">04</p>
             <h3 class="why-card__title">Regulatory confidence</h3>
             <p class="why-card__body">MLC and ILO obligations documented as the case runs.</p>
-            <span class="why-card__spacer" aria-hidden="true"></span>
-            <div class="why-card__foot">
-              <span class="why-card__tag">Full compliance</span>
-              <span class="why-card__go" aria-hidden="true">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h13"/><path d="m12.5 5.5 6.5 6.5-6.5 6.5"/></svg>
-              </span>
-            </div>
+            <ul class="why-card__list">
+              <li>MLC &amp; ILO compliance</li>
+              <li>Audit-ready records</li>
+              <li>Regulatory alignment</li>
+              <li>Full traceability</li>
+            </ul>
           </article>
           <article class="why-card">
             <span class="why-card__sheen" aria-hidden="true"></span>
-            <figure class="why-card__figure">
-              <img src="assets/why-us/5.png" alt="Illustration of a person, a folder and a database held in a cloud." loading="lazy" decoding="async" width="1536" height="1024">
-            </figure>
+            <span class="why-card__icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="m12 2 2.6 5.6 6.1.6-4.6 4.1 1.3 6-5.4-3.2-5.4 3.2 1.3-6-4.6-4.1 6.1-.6Z"/></svg>
+            </span>
             <p class="why-card__num">05</p>
             <h3 class="why-card__title">One record per seafarer</h3>
             <p class="why-card__body">Across vessels, ports and years.</p>
-            <span class="why-card__spacer" aria-hidden="true"></span>
-            <div class="why-card__foot">
-              <span class="why-card__tag">Secure continuity</span>
-              <span class="why-card__go" aria-hidden="true">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h13"/><path d="m12.5 5.5 6.5 6.5-6.5 6.5"/></svg>
-              </span>
-            </div>
+            <ul class="why-card__list">
+              <li>Centralised record</li>
+              <li>Portability across ships</li>
+              <li>History that travels</li>
+              <li>Continuity of care</li>
+            </ul>
           </article>
           <article class="why-card">
             <span class="why-card__sheen" aria-hidden="true"></span>
-            <figure class="why-card__figure">
-              <img src="assets/why-us/6.png" alt="Illustration of a stethoscope around a heart carrying a pulse line." loading="lazy" decoding="async" width="1536" height="1024">
-            </figure>
+            <span class="why-card__icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-4.4-7-9.5A4.5 4.5 0 0 1 12 8a4.5 4.5 0 0 1 7 3.5C19 16.6 12 21 12 21Z"/><path d="M2 12h3l1.5-2.5L8 14l1.5-2H11"/></svg>
+            </span>
             <p class="why-card__num">06</p>
             <h3 class="why-card__title">Enhanced crew satisfaction</h3>
             <p class="why-card__body">Crew see their care handled promptly. Owners get a retention argument that costs no wage rise.</p>
-            <span class="why-card__spacer" aria-hidden="true"></span>
-            <div class="why-card__foot">
-              <span class="why-card__tag">Crew retention</span>
-              <span class="why-card__go" aria-hidden="true">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h13"/><path d="m12.5 5.5 6.5 6.5-6.5 6.5"/></svg>
-              </span>
-            </div>
+            <ul class="why-card__list">
+              <li>Confidence in care</li>
+              <li>One point of contact</li>
+              <li>Stronger crew retention</li>
+              <li>Employer of choice</li>
+            </ul>
           </article>
           <article class="why-card">
             <span class="why-card__sheen" aria-hidden="true"></span>
-            <figure class="why-card__figure">
-              <img src="assets/why-us/7.png" alt="Illustration of concentric discs orbited by spheres." loading="lazy" decoding="async" width="1536" height="1024">
-            </figure>
+            <span class="why-card__icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10.5" width="16" height="10.5" rx="2"/><path d="M8 10.5V7a4 4 0 0 1 8 0v3.5"/><path d="M12 14.5v2.5"/></svg>
+            </span>
             <p class="why-card__num">07</p>
             <h3 class="why-card__title">Data held securely</h3>
             <p class="why-card__body">Crew medical information handled to GDPR and HIPAA standards where applicable.</p>
-            <span class="why-card__spacer" aria-hidden="true"></span>
-            <div class="why-card__foot">
-              <span class="why-card__tag">GDPR &amp; HIPAA</span>
-              <span class="why-card__go" aria-hidden="true">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h13"/><path d="m12.5 5.5 6.5 6.5-6.5 6.5"/></svg>
-              </span>
-            </div>
+            <ul class="why-card__list">
+              <li>GDPR &amp; HIPAA aligned</li>
+              <li>Controlled access</li>
+              <li>Consent handled properly</li>
+              <li>Lower breach exposure</li>
+            </ul>
           </article>
           <article class="why-card">
             <span class="why-card__sheen" aria-hidden="true"></span>
-            <figure class="why-card__figure">
-              <img src="assets/why-us/9.png" alt="Illustration of a padlock resting on a lit platform." loading="lazy" decoding="async" width="1536" height="1024">
-            </figure>
+            <span class="why-card__icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 4v4.5h-4.5"/><path d="m9 12 2 2 4-4"/></svg>
+            </span>
             <p class="why-card__num">08</p>
             <h3 class="why-card__title">Faster return to work</h3>
             <p class="why-card__body">Treatment monitored and fitness-to-work coordinated, closing the gap to sign-on.</p>
-            <span class="why-card__spacer" aria-hidden="true"></span>
-            <div class="why-card__foot">
-              <span class="why-card__tag">Back on board</span>
-              <span class="why-card__go" aria-hidden="true">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h13"/><path d="m12.5 5.5 6.5 6.5-6.5 6.5"/></svg>
-              </span>
-            </div>
+            <ul class="why-card__list">
+              <li>Structured case management</li>
+              <li>Fewer delays to repatriation</li>
+              <li>Shorter time off-hire</li>
+              <li>Earnings resume sooner</li>
+            </ul>
           </article>
           <article class="why-card">
             <span class="why-card__sheen" aria-hidden="true"></span>
-            <figure class="why-card__figure">
-              <img src="assets/why-us/8.png" alt="Illustration of a return arrow above a check mark on a platform." loading="lazy" decoding="async" width="1536" height="1024">
-            </figure>
+            <span class="why-card__icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19h16"/><path d="M7 19V9"/><path d="M12 19V5"/><path d="M17 19v-6"/><path d="m15 9 3-3 3 3"/></svg>
+            </span>
             <p class="why-card__num">09</p>
             <h3 class="why-card__title">Lower operational cost</h3>
             <p class="why-card__body">One case team replaces overseas coordinators kept on standby for crew healthcare.</p>
-            <span class="why-card__spacer" aria-hidden="true"></span>
-            <div class="why-card__foot">
-              <span class="why-card__tag">One case team</span>
-              <span class="why-card__go" aria-hidden="true">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h13"/><path d="m12.5 5.5 6.5 6.5-6.5 6.5"/></svg>
-              </span>
-            </div>
+            <ul class="why-card__list">
+              <li>No standby overseas teams</li>
+              <li>Fixed, predictable cost</li>
+              <li>Less admin per case</li>
+              <li>Specialists without headcount</li>
+            </ul>
           </article>
           </div>
         </div>

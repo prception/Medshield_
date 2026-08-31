@@ -15,6 +15,25 @@
    the same place and the seam is invisible. Nothing is cloned at runtime and
    no element is ever moved in the DOM.
 
+   THE SEQUENCE RESTARTS AT THE LEFT. The one thing this is NOT allowed to do
+   is bring stage 01 in from the right behind stage 05 — the five are a
+   sequence, and a sequence that re-enters trailing its own last item never
+   reads as beginning again. So the band runs 01 -> 05 and then rewinds to put
+   01 back at the left.
+
+   THE REWIND IS HIDDEN BEHIND A FADE. That rewind is a hard cut — at the
+   moment it fires, four full-height photographs are on screen and one frame
+   later they are gone. So the band holds stage 05 in view, fades to nothing,
+   RESETS WHILE IT IS INVISIBLE, and fades back up with 01 at the left. The
+   reader sees the sequence end, the band clear, and the sequence begin: no
+   frame ever shows the jump itself.
+
+   AND THE CARDS ARE SIZED SO THIS IS RARE. Five cards have to be WIDER than
+   the frame or there is nothing to travel before 05 arrives — at the old
+   19rem the run was 144px on a 1440 screen and the turnaround fired every
+   four seconds, which read as a glitch. At the current size a full pass is
+   16-31s. See the note on .process__card in style.css.
+
    WHY NOT A CSS ANIMATION. Two reasons, both about the hand-off into Case
    studies. A keyframed translate cannot be paused and resumed at an arbitrary
    sub-pixel offset without a visible jump, and it cannot be made to stop on
@@ -22,9 +41,8 @@
    write per frame on an already-composited layer and gives both for free.
 
    TIME-BASED, NOT FRAME-BASED. The step is derived from the real elapsed
-   milliseconds, so the band runs at the same speed on a 60Hz laptop and a
-   144Hz monitor. A per-frame constant would run the strip 2.4x faster on the
-   latter.
+   milliseconds, so a run takes the same time on a 60Hz laptop and a 144Hz
+   monitor. A per-frame constant would run it 2.4x faster on the latter.
 
    IT KEEPS RUNNING THROUGH THE HAND-OFF, deliberately — see the note in
    style.css. Freezing the band the moment the morph engages would announce
@@ -59,6 +77,40 @@
      twice as long as it takes to read the three lines on it. */
   var SPEED = 34;
 
+  /* THE TURNAROUND — how the rewind is hidden.
+
+     The rewind is a hard cut: at the moment it fires, cards 02-05 are still
+     filling the frame, and one frame later they are gone and 01 is at the
+     left. Measured on a 1440 screen, four full-height photographs change in a
+     single frame. However rare that is, it reads as a glitch.
+
+     So the band FADES ACROSS IT. The strip dims to nothing over FADE_MS, the
+     offset is reset while there is nothing on screen to see move, and it
+     fades back up with 01 at the left. The reader sees the sequence end, the
+     band clear, and the sequence begin again — which is what the rewind
+     actually means.
+
+     HOLD_MS is the beat at each end: the run's last frame stays up briefly so
+     stage 05 can be read before the band clears, and 01 sits at the left for a
+     moment before it starts moving, so the restart reads as a start rather
+     than as motion that was already underway. */
+  var FADE_MS = 420;
+  /* How long stage 05 is held, fully lit, once it lands. Long enough to read
+     the title and the line under it. */
+  var HOLD_MS = 900;
+  /* How long the band stays blank between the two runs. Deliberately short —
+     it only has to cover the reset, and a longer gap reads as the section
+     having stopped working. */
+  var BLANK_MS = 160;
+
+  /* Turnaround state: RUN -> END (05 held, readable) -> OUT (fade down) ->
+     BLANK (reset happens here, nothing on screen) -> IN (fade up with 01 at
+     the left) -> RUN. */
+  var PHASE_RUN = 0, PHASE_END = 1, PHASE_OUT = 2, PHASE_BLANK = 3,
+      PHASE_IN = 4;
+  var phase = PHASE_RUN;
+  var phaseLeft = 0;
+
   /* HOW FAR ONE FULL CYCLE IS.
 
      Half the track's scroll width — i.e. exactly one set of five cards plus
@@ -78,6 +130,14 @@
      below into NaN. */
   var offset = 0;
 
+  /* Where the strip rewinds — see the note in measure(). Distinct from
+     `cycle`, which stays the seamless-wrap distance and is what the fallback
+     uses when the five already fit on screen. */
+  var runEnd = 0;
+
+  /* The band's current opacity, driven by the turnaround phases. */
+  var alpha = 1;
+
   function measure() {
     /* The header's height feeds .process__body's min-height, which decides
        where the band sits — so it has to be published BEFORE the band's own
@@ -86,19 +146,16 @@
 
     /* MEASURED FROM THE CARDS, NOT FROM THE TRACK'S WIDTH.
 
-       cycle used to be track.scrollWidth / 2, which was exact while the strip
-       was a bare row of ten cards. The track now carries a left padding — the
-       lead-in that puts card 01 under the heading (see style.css) — and that
-       padding exists on the LEFT only, so it is inside the first half of the
-       scroll width and absent from the second. Halving the total would fold
-       half a gutter into the cycle and the wrap would drift by that much
-       every lap, which accumulates into a visible jump.
+       The track carries a left padding — the lead-in that puts card 01 under
+       the heading (see style.css) — and that padding exists on the LEFT only,
+       so it is inside the first half of the scroll width and absent from the
+       second. Halving the total would fold half a gutter into the cycle and
+       the wrap would drift by that much every lap.
 
        The cycle is the distance from card 01 to its own duplicate, so measure
        exactly that: the gap between the first card's left edge and the sixth
        card's left edge. Padding, gap and sub-pixel rounding are all already
-       inside it by construction, and it stays correct whatever furniture is
-       added around the strip.
+       inside it by construction.
 
        Offsets, not rects: offsetLeft is unaffected by the transform this file
        is currently writing, so there is no need to clear it first. */
@@ -108,9 +165,32 @@
       ? cards[half].offsetLeft - cards[0].offsetLeft
       : 0;
     if (!(cycle > 0)) cycle = 0;
-    /* The offset is a position within the cycle, so a shorter cycle must not
-       leave it parked past the end. */
-    if (cycle > 0) offset = offset % cycle;
+
+    /* WHERE THE RUN ENDS, i.e. where the rewind happens.
+
+       Stage 05 has finished arriving when its right edge reaches the frame's
+       right edge: that is 05's right edge in track space, minus the frame's
+       own width. Up to that moment every card the reader has seen has been a
+       first-time arrival; one pixel later duplicate-01 starts showing up
+       behind it, which is the thing we are avoiding.
+
+       FALLS BACK TO THE FULL CYCLE when the five already fit on screen (a wide
+       monitor: five 19rem cards are 1584px, narrower than a 1920 frame). The
+       subtraction goes negative there and there is no honest "05 arrives"
+       moment to rewind on, so the band behaves as the plain seamless marquee
+       it always was rather than juddering on a nonsense value. */
+    var lastReal = null;
+    for (var i = cards.length - 1; i >= 0; i--) {
+      if (!cards[i].classList.contains('process__card--clone')) {
+        lastReal = cards[i]; break;
+      }
+    }
+    var frameW = frame.getBoundingClientRect().width;
+    runEnd = lastReal
+      ? (lastReal.offsetLeft + lastReal.offsetWidth) - cards[0].offsetLeft - frameW
+      : 0;
+    if (!(runEnd > 0)) runEnd = cycle;
+    if (runEnd > 0) offset = offset % runEnd;
     readBandOffset();
   }
 
@@ -125,6 +205,12 @@
        compositor layer on every engine, which is what makes this a
        transform-only write with no paint behind it. */
     track.style.transform = 'translate3d(' + (-offset).toFixed(2) + 'px,0,0)';
+    /* Opacity is written here rather than driven by a CSS transition, for the
+       same reason the transform is: it has to be exact on the frame the
+       offset resets, and a transition cannot be relied on to have finished by
+       then. Both are compositor-only properties, so this stays a
+       transform+opacity write with no paint behind it. */
+    track.style.opacity = alpha.toFixed(3);
   }
 
   function tick(now) {
@@ -145,11 +231,70 @@
     if (dt > 64) dt = 64;
     if (dt < 0) dt = 0;
 
+    /* THE TURNAROUND. While any phase other than RUN is active the strip does
+       not advance — the reader is watching it fade, sit blank, or fade back
+       in, and moving underneath that would show the very cut being hidden. */
+    if (phase !== PHASE_RUN) {
+      phaseLeft -= dt;
+
+      if (phase === PHASE_END) {
+        /* Stage 05 has just landed and is held at full opacity so it can be
+           read. Nothing moves and nothing fades yet. */
+        alpha = 1;
+        if (phaseLeft <= 0) { phase = PHASE_OUT; phaseLeft = FADE_MS; }
+      } else if (phase === PHASE_OUT) {
+        alpha = Math.max(0, phaseLeft / FADE_MS);
+        if (phaseLeft <= 0) {
+          /* NOTHING IS ON SCREEN NOW, so this is the frame to reset on: the
+             jump from 05-at-the-right to 01-at-the-left happens behind a
+             fully transparent band and is never seen. */
+          offset = 0;
+          alpha = 0;
+          phase = PHASE_BLANK;
+          phaseLeft = BLANK_MS;
+        }
+      } else if (phase === PHASE_BLANK) {
+        alpha = 0;
+        if (phaseLeft <= 0) { phase = PHASE_IN; phaseLeft = FADE_MS; }
+      } else {
+        alpha = Math.min(1, 1 - (phaseLeft / FADE_MS));
+        if (phaseLeft <= 0) { alpha = 1; phase = PHASE_RUN; }
+      }
+
+      write();
+      return;
+    }
+
     offset += SPEED * (dt / 1000);
     if (cycle > 0) {
-      /* while, not if: a clamped dt cannot overshoot a whole cycle, but a
-         re-measure to a much shorter cycle can. */
-      while (offset >= cycle) offset -= cycle;
+      /* THE REWIND — the one thing that separates this from a plain marquee.
+
+         A marquee wraps at `cycle`, the distance from card 01 to its own
+         duplicate. That wrap is seamless precisely BECAUSE duplicate-01 has
+         already slid into 01's place behind stage 05: the two travel together,
+         01 arrives from the right trailing the last stage, and the sequence
+         never reads as starting again.
+
+         So the band wraps EARLIER, at `runEnd` — the point where stage 05 has
+         just finished coming into the frame. At that instant the strip is
+         showing the tail of the run, and resetting to 0 puts card 01 back at
+         its lead-in on the LEFT with the five ready to go past again.
+
+         That reset is a jump rather than a seam, and it is meant to be: it is
+         the sequence returning to its beginning, which is exactly what a
+         seamless wrap cannot express.
+
+         while, not if: a clamped dt cannot overshoot a whole run, but a
+         re-measure to a much shorter one can. */
+      if (offset >= runEnd) {
+        /* THE RUN IS DONE. Park exactly on the end — not wrapped past it, so
+           stage 05 is held precisely where it landed — and start the fade.
+           The offset reset itself happens at the end of PHASE_OUT above. */
+        offset = runEnd;
+        phase = PHASE_END;
+        phaseLeft = HOLD_MS;
+        alpha = 1;
+      }
     }
     write();
   }
@@ -177,7 +322,22 @@
   var visible = false;
 
   function sync() {
-    if (visible && !document.hidden) start(); else stop();
+    /* NOT UNTIL THE READER IS ACTUALLY HERE.
+
+       `seeded` is the arrival flag set by the narrow observer below. The
+       run/idle observer that sets `visible` carries a full viewport of margin
+       on purpose, so it turns true a whole screen early — and a band that has
+       been running for that screen is already mid-stride when the section
+       finally comes up, with stage 01 gone. Rewinding on arrival used to
+       paper over that, but a rewind is a jump: the reader who is halfway into
+       the section sees the strip snap backwards.
+
+       So the band simply does not move until arrival. It sits at offset 0
+       with stage 01 at the lead-in, and starts from there the first time the
+       frame is genuinely on screen. The generous margin still does its real
+       job — it keeps the strip running while the section is only just off the
+       fold, so scrolling back up and down again never shows a dead band. */
+    if (seeded && visible && !document.hidden) start(); else stop();
   }
 
   /* THE BAND STARTS FROM CARD 01, WHEN THE READER ARRIVES.
@@ -214,8 +374,14 @@
     new IntersectionObserver(function (entries) {
       if (!seeded && entries[0].isIntersecting) {
         seeded = true;
+        /* Already at 0 — nothing has moved it — so this is a no-op guard
+           rather than a rewind, and there is no jump to see. */
         offset = 0;
         write();
+        /* Arrival is what starts the run, so sync() has to be re-asked now
+           that `seeded` is true; the run/idle observer fired long ago and
+           will not fire again. */
+        sync();
       }
     }, { rootMargin: '0px', threshold: 0.01 }).observe(frame);
 
@@ -224,6 +390,9 @@
       sync();
     }, { rootMargin: '100% 0px' }).observe(frame);
   } else {
+    /* No IntersectionObserver: there is nothing to tell us when the reader
+       arrives, so the band just runs — the same fallback as before. */
+    seeded = true;
     visible = true;
   }
 
@@ -402,6 +571,7 @@
       stop();
       section.classList.remove('process--live');
       track.style.transform = '';
+      track.style.opacity = '';
     });
   }
 }());
