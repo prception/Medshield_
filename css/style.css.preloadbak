@@ -5482,10 +5482,9 @@ main {
   margin-inline: 0;
   /* The top value is now the ONLY thing setting how high the wordmark sits
      (align-content is `start` below), so it is tightened from 4vh/2.75rem —
-     every pixel taken off here lifts the mark by the same amount. The floor
-     is now just breathing room against the top edge — it used to also keep the
-     words clear of a decorative dot and ring in this corner, and those are
-     gone. */
+     every pixel taken off here lifts the mark by the same amount. It keeps a
+     floor so the words never collide with the corner dot and ring, which are
+     positioned against the section at a comparable offset. */
   padding: clamp(0.85rem, 2.4vh, 1.75rem) var(--site-margin) clamp(1rem, 3vh, 2rem);
   display: grid;
   grid-template-rows: auto auto;
@@ -5499,6 +5498,38 @@ main {
   align-content: start;
   /* The only separator between the wordmark and the cards. */
   gap: clamp(1.25rem, 4vh, 3rem);
+}
+
+/* Corner marks from the reference: a small teal dot and an open ring. */
+.services__dot,
+.services__ring {
+  position: absolute;
+  /* Tracks the inner's top padding, which was tightened when the wordmark
+     moved up. These marks are positioned against the SECTION, not the inner,
+     so they do not follow it automatically — left at the old 4vh/2.5rem the
+     wordmark would have risen above them and crowded the ring. */
+  top: clamp(0.85rem, 2.4vh, 1.75rem);
+  z-index: 2;
+  border-radius: 50%;
+  pointer-events: none;
+}
+.services__dot {
+  left: var(--s-5);
+  width: 7px; height: 7px;
+  background: var(--accent-2);
+}
+.services__ring {
+  left: calc(var(--s-5) + 2.5rem);
+  width: clamp(34px, 4.5vh, 52px);
+  aspect-ratio: 1;
+  /* Brand teal — a decorative mark, which is exactly what --accent-2 is for,
+     and it pairs with the teal WHAT beside it.
+
+     Note the two teals are deliberately different tokens: raw --accent-2 here
+     because the ring is pure ornament, --accent-2-ink on WHAT because that is a
+     word someone has to read. Ornament is the one job --accent-2 is cleared
+     for at 2.68:1. */
+  border: 1px solid var(--accent-2);
 }
 
 /* --- THE WORDMARK ------------------------------------------------------- */
@@ -5536,22 +5567,9 @@ main {
      composition, and the slide animation, exactly as they were.
 
      A negative inline-start margin rather than a change to the shell, because
-     only the wordmark moves - the lede and the cards keep the page measure.
-
-     NOW ZERO. The lockup used to sit at calc(var(--wm) * -0.42), which pulled
-     it outside the site margin so WHAT could bleed off the left edge. That put
-     the section's first mark on a different vertical than the hero's headline,
-     which starts flush at var(--site-margin) with no optical correction of its
-     own - so the two biggest pieces of type on the page began at two different
-     left edges, and because --wm is viewport-driven the size of the mismatch
-     changed with the window.
-
-     At 0 the wordmark box starts on the page's one left edge, and WHAT (left:0
-     below) starts with it. The composition is unchanged: WE and DO are still
-     placed in em against WHAT, so the interlock and the slide are exactly as
-     they were - the whole lockup just begins where the hero heading begins. */
+     only the wordmark moves - the lede and the cards keep the page measure. */
   margin: 0;
-  margin-inline-start: 0;
+  margin-inline-start: calc(var(--wm) * -0.42);
   font-size: var(--wm);
   letter-spacing: -0.02em;
   text-transform: uppercase;
@@ -5560,13 +5578,10 @@ main {
      with `overflow: hidden`. The words start pushed right by up to 120% of
      their own width and must not be visible out there, nor widen the document.
 
-     X only, and via `clip` rather than `hidden`: `hidden` on one axis forces
-     the other to `auto`, which would add a scrollbar and, worse, would clip
-     DO's 0.72em drop. `clip` leaves the vertical axis genuinely visible.
-
-     WHAT no longer bleeds off the left edge - it starts at left:0, the box's
-     own edge - so this clip only ever hides the slide-in travel out to the
-     right, which is all it needs to do. */
+     X only, and via `clip` rather than `hidden`: WHAT sits at a negative left
+     offset and bleeds off the left edge by design, and `hidden` on one axis
+     forces the other to `auto`, which would add a scrollbar. `clip` leaves the
+     vertical axis genuinely visible so DO's drop is never cut. */
   overflow-x: hidden;
   overflow-x: clip;
   overflow-y: visible;
@@ -5611,24 +5626,7 @@ main {
      The separation is set by WHAT's WIDTH against WE's fixed left: 1.55em. So
      the width comes down (font-size and letter-spacing below) and `left` only
      has to place what remains. */
-  /* FLUSH LEFT, from -0.40em.
-
-     The bleed is gone deliberately. Together with the container's former
-     negative margin this hung the W off the left edge, so the wordmark's
-     leading glyph never lined up with the hero's headline - and being an em
-     value against a vh-driven --wm, the amount it hung by changed with the
-     viewport, so the offset was inconsistent as well as present.
-
-     The note above still applies to anyone tuning this: `left` places WHAT's
-     START, and the gap to WE is set by WHAT's WIDTH against WE's fixed 1.55em
-     (the font-size and letter-spacing below are the controls for that). So
-     holding this at 0 costs the composition nothing - the separation was never
-     coming from here.
-
-     This is also what the 560px breakpoint already did, for the same reason a
-     half-clipped word reads as a rendering bug. It is now the behaviour at
-     every width, and that override is redundant but harmless. */
-  left: 0;
+  left: -0.40em;
   top: 0.38em;
   /* TOP of the stack, so the light serif crosses over the heavy blue WE rather
      than disappearing under it. Under the old outline treatment this ordering
@@ -5670,7 +5668,8 @@ main {
 
      --accent-2-INK, not the raw --accent-2. This distinction is load-bearing
      now that the word is solid: --accent-2 measures 2.68:1 on white and the
-     palette reserves it for decoration, never letterforms. WHAT is a word a sighted reader has to read, so it takes the
+     palette reserves it for decoration — the corner dot and ring — never
+     letterforms. WHAT is a word a sighted reader has to read, so it takes the
      ink value at 4.93:1, which clears AA for body text and far exceeds the 3:1
      large-display type needs.
 
@@ -6236,6 +6235,7 @@ main {
   /* WHAT stops bleeding off-screen at phone widths — a half-clipped word reads
      as a rendering bug rather than a deliberate crop. */
   .services__w--what { left: 0; }
+  .services__ring { display: none; }
 }
 
 /* Reduced motion: the glass, the layered wordmark and the white ground all
@@ -8849,150 +8849,4 @@ main {
 
 @media (max-width: 40rem) {
   #process .section-title { max-width: 20ch; }
-}
-
-/* ==========================================================================
-   PRELOADER — wordmark-to-hero reveal
-   ==========================================================================
-   The intro: MED / gap / SHIELD is set centred on the deep ground. A 16:9
-   box opens between the two halves, the hero clip plays inside it, then the
-   box and the clip expand to fill the frame and land exactly on .hero__media.
-
-   Sizing is driven by two custom properties written by preloader.js:
-     --pl-box-w   the 16:9 gap width, computed from the wordmark's cap height
-     --pl-x/--pl-y the translate that carries the small box onto the hero rect
-
-   FAIL-VISIBLE, like the hero reveal above: none of these classes is in the
-   HTML. A no-JS or JS-error page renders the hero at its final state and the
-   .preloader element stays display:none, because .preloader is only shown
-   once html.pl-on is set from script. ========================================= */
-
-.preloader {
-  display: none;
-}
-
-html.pl-on .preloader {
-  display: grid;
-  position: fixed;
-  inset: 0;
-  z-index: 200;          /* over .site-header (z-index 100) */
-  place-items: center;
-  background: var(--surface-deep);
-}
-
-/* The scroll lock. Applied to <html> AND <body> so a phone's overscroll
-   chain cannot pull the page while the intro runs. padding-right is written
-   by script to the measured scrollbar width, so locking does not shift the
-   layout sideways under the loader. */
-html.pl-lock,
-html.pl-lock body {
-  overflow: hidden;
-  overscroll-behavior: none;
-  touch-action: none;
-}
-
-/* The wordmark row. Baseline-aligned so the gap box sits on the same optical
-   line as the letters rather than being centred against their full em box. */
-.preloader__mark {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  /* Full width so the two equal-basis halves have room to balance about the
-     gap; without it the row shrink-wraps the text and the symmetry is lost. */
-  width: 100%;
-  gap: 0;
-  margin: 0;
-  font-family: var(--font-display);
-  font-weight: 700;
-  /* clamp rather than a raw vw: at 320px the three-part row would otherwise
-     grow wider than the frame once the 16:9 gap opens between the halves. */
-  font-size: clamp(2.2rem, 9vw, 7rem);
-  line-height: 0.9;
-  letter-spacing: -0.02em;
-  text-transform: uppercase;
-  white-space: nowrap;
-}
-
-/* The two halves carry the logo's own break: MED blue, SHIELD teal — the same
-   seam the mark already makes, which is why the gap opens here.
-
-   flex: 1 0 auto with equal basis is what keeps the GAP's centre pinned to the
-   centre of the frame. MED (3 glyphs) and SHIELD (6) are very different widths,
-   so if the halves are sized to their content the box between them sits well
-   right of centre — and because the box is a flex item, its own left edge then
-   slides as it widens, which makes the final translate a moving target. Giving
-   both halves the same flex basis makes the row symmetrical about the gap, so
-   the clip's centre and the viewport's centre coincide and the landing
-   translate is a straight, stable delta. MED is pushed to its inner edge and
-   SHIELD to its own, so the word still reads as one unit. */
-
-   NOT the verbatim brand values. This wordmark is large type sitting directly
-   on --surface-deep, where raw #0050A0 measures 1.6:1 and raw #20B0A8 2.6:1 —
-   both fail outright. These are the palette's purpose-built "as text on navy"
-   tokens: 6.5:1 and 10.6:1 respectively, same hues. */
-.preloader__half {
-  display: inline-flex;
-  flex: 1 0 0;
-}
-.preloader__half--med    { justify-content: flex-end; }
-.preloader__half--shield { justify-content: flex-start; }
-.preloader__half--med    { color: var(--accent-ink-on-deep, #4DA3FF); }
-.preloader__half--shield { color: var(--accent-2-on-deep, #5CE0D9); }
-
-/* Per-letter mask. Each letter slides up from below its own clip box, so the
-   wordmark assembles rather than fading in as a block. */
-.preloader__letter {
-  display: inline-block;
-  overflow: hidden;
-  vertical-align: top;
-}
-.preloader__letter > span {
-  display: inline-block;
-  transform: translateY(110%);
-  will-change: transform;
-}
-
-/* The gap. Width animates 0 → --pl-box-w → full frame; the box is the thing
-   that pushes MED and SHIELD apart, so nothing else needs repositioning. */
-.preloader__box {
-  position: relative;
-  width: 0;
-  height: 1em;           /* cap-height reference; script reads this to size 16:9 */
-  flex: 0 0 auto;
-  overflow: hidden;
-  will-change: width;
-}
-
-/* The clip itself, absolutely placed inside the gap so the box's
-   overflow:hidden actually clips it — while the gap is narrow the video is
-   cropped from its middle rather than being squashed (object-fit: cover on a
-   box whose width is animating).
-
-   It is centred with GSAP xPercent/yPercent rather than a CSS
-   translate(-50%,-50%): GSAP REPLACES the transform property wholesale when it
-   tweens x/y, so a translate written here is silently dropped on the first
-   frame of the expansion and the clip lands off-centre by half its own width.
-   xPercent/yPercent compose with x/y inside GSAP's own matrix, which is the
-   only way the centring and the travel survive together. */
-.preloader__media {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: var(--pl-media-w, 100%);
-  height: var(--pl-media-h, 100%);
-  will-change: width, height, transform;
-}
-
-.preloader__video {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
-}
-
-/* Reduced motion: no growth, no expansion — the loader is not shown at all.
-   preloader.js checks the same query and skips straight to the hero, so this
-   rule is only the belt to that braces. */
-@media (prefers-reduced-motion: reduce) {
-  html.pl-on .preloader { display: none; }
 }

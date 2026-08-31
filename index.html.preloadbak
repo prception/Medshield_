@@ -46,40 +46,6 @@
 
 <a class="skip-link" href="#main">Skip to content</a>
 
-<!-- PRELOADER — the wordmark-to-hero reveal.
-
-     MED and SHIELD are two halves of one word with an empty box between them.
-     The box opens to 16:9, the hero clip plays inside it, then box and clip
-     expand until the clip lands exactly on .hero__media and the loader lifts.
-     The gap falls at the logo's own blue/teal seam, not at an arbitrary point.
-
-     aria-hidden + inert: this is a decorative restatement of the brand already
-     announced by .brand in the header. A screen reader should land on the skip
-     link and the H1, never inside a splash that removes itself after 4 seconds.
-
-     It is NOT hidden here. .preloader is display:none in the stylesheet until
-     preloader.js sets html.pl-on, so a no-JS or JS-error page never sees it and
-     goes straight to the hero at its final state.
-
-     The <video> carries no <source> in the markup — preloader.js promotes
-     data-src only when it has decided the intro will actually run, so a
-     returning visitor within the session never fetches the clip a second time. -->
-<div class="preloader" id="preloader" aria-hidden="true" inert>
-  <p class="preloader__mark">
-    <span class="preloader__half preloader__half--med" data-pl-word="Med"></span>
-    <span class="preloader__box" id="preloader-box">
-      <span class="preloader__media" id="preloader-media">
-        <video class="preloader__video" id="preloader-video"
-               muted playsinline autoplay loop preload="auto"
-               tabindex="-1" disablepictureinpicture
-               data-src="assets/videos/hero-loop.mp4"></video>
-      </span>
-    </span>
-    <span class="preloader__half preloader__half--shield" data-pl-word="Shield"></span>
-  </p>
-</div>
-
-
 <!-- Transparent overlay bar sitting ON the hero video: brand left, a bare
      hamburger right, and NOTHING else at any breakpoint. The navigation links
      are not removed - they live in the overlay menu below, which is now the
@@ -544,6 +510,10 @@
        clamp() against vh for that reason — a rem-based scale would overflow a
        short laptop viewport. No data-bar-ink: the ground is pure white. -->
   <section class="services" id="services" aria-labelledby="services-h">
+
+    <!-- Two marks in the top-left corner, as in the reference. Decorative. -->
+    <span class="services__dot" aria-hidden="true"></span>
+    <span class="services__ring" aria-hidden="true"></span>
 
     <div class="services__inner">
 
@@ -1937,18 +1907,13 @@
 })();
 </script>
 
-<!-- GSAP is hoisted ABOVE hero.js because preloader.js needs it present at
-     DOMContentLoaded. Both are `defer`, so they execute in document order:
-     gsap → preloader → hero. If GSAP ever fails to load, preloader.js takes
-     its no-GSAP bail-out path, releases the hero gate and removes itself. -->
-<script src="js/vendor/gsap.min.js" defer></script>
-<script src="js/preloader.js" defer></script>
 <script src="js/hero.js" defer></script>
 
 <!-- Sections 03 and 04. Self-hosted like every other asset here — no CDN, in
      keeping with the no-build-step, no-CDN rule the stylesheet states. All are
      plain scripts, so `defer` keeps them in order ahead of the section files,
      each of which guards on window.gsap and bails out cleanly. -->
+<script src="js/vendor/gsap.min.js" defer></script>
 <script src="js/vendor/ScrollTrigger.min.js" defer></script>
 <script src="js/doubts.js" defer></script>
 <script src="js/services.js" defer></script>

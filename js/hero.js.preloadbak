@@ -211,33 +211,10 @@
       });
     }
 
-    /* The reveal is additionally gated behind the preloader when one is
-       running. Without this the entrance would play UNDERNEATH the loader and
-       be over by the time the loader lifted, so the hero would arrive already
-       at rest instead of animating in as the video expands.
-
-       preloader.js publishes window.__preloaderGate and ALWAYS resolves it —
-       including on its own failure paths. When that file is absent the gate is
-       undefined and gated() falls through to calling reveal() directly, which
-       is the original behaviour unchanged. */
-    function gated(fn) {
-      var gate = window.__preloaderGate;
-      if (gate && typeof gate.then === 'function') {
-        gate.then(fn, fn);   // resolve OR reject must both release the hero
-      } else {
-        fn();
-      }
-    }
-
     if (document.fonts && document.fonts.ready) {
-      document.fonts.ready.then(function () { gated(reveal); });
+      document.fonts.ready.then(reveal);
     }
-    // Hard floor — never leave it hidden. Still gated: the floor exists for a
-    // font that never settles, not to punch through the intro.
-    window.setTimeout(function () { gated(reveal); }, 900);
-    // Absolute floor, ungated. If the preloader promise somehow never settles
-    // the hero must still appear; 7000ms matches the preloader's own failsafe.
-    window.setTimeout(reveal, 7000);
+    window.setTimeout(reveal, 900); // hard floor — never leave it hidden
   }
 
   /* --- 2b. Character split ------------------------------------------------ */

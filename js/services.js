@@ -355,10 +355,27 @@
     do_:  0.85
   };
 
-  /* WHAT gets the slower scrub as well, so its later arrival is a lag and not
-     just a longer distance covered at the same rate. 0.45 against 0.3 is a mild
-     version of the reference's 0.6/0.3 split. */
-  var SCRUB = { what: 0.45, we: 0.3, do_: 0.3 };
+  /* ONE scrub value for all three words, and it is deliberate.
+
+     This used to be graded — 0.45 for WHAT against 0.3 for WE/DO, a mild
+     version of the reference's 0.6/0.3 split — to make WHAT's later arrival
+     read as a lag rather than only as a longer distance. That grading is what
+     broke the left edge.
+
+     `scrub: n` is a SMOOTHING lag, not an easing: each word chases the scroll
+     position over n seconds. Different values therefore mean the words are
+     still catching up at DIFFERENT rates after the scroll stops, so the lockup
+     settles in stages and its left edge — WHAT's W, the widest travel and the
+     slowest chase — creeps into place last and lands at a different moment
+     every time depending on how abruptly the reader stopped scrolling. Flick
+     the wheel and it never visibly settles at all.
+
+     The parallax is still there: it comes from TRAVEL above (1.15 against
+     0.85), which is a difference in DISTANCE covered over the same scroll
+     range. That is the grading actually wanted. With a shared scrub all three
+     reach x:0 on the same frame, so the left edge is in the same place every
+     time the section is at rest. */
+  var SCRUB = { what: 0.3, we: 0.3, do_: 0.3 };
 
   /* DOM order is WHAT, WE, DO. */
   var KEYS = ['what', 'we', 'do_'];
@@ -393,7 +410,26 @@
              resolve before the words are on screen. Same reason the cards use a
              rect watcher rather than a start position. */
           start: 'top bottom',
-          end: 'bottom top',
+          /* 'top top', NOT 'bottom top'.
+
+             This is the other half of the inconsistent-left-edge bug. The
+             section is locked to 100vh, so 'bottom top' — the section's bottom
+             edge reaching the viewport top — is only reached once the section
+             has scrolled ENTIRELY past. The words therefore hit x:0 at the
+             exact moment the wordmark leaves the screen, and at every position
+             where the section is actually being READ the tween sits around
+             half done: all three words parked to the right of where the
+             stylesheet puts them, by an amount that changes with every pixel
+             of scroll. The lockup never had a resting left edge to be
+             consistent about.
+
+             Ending at 'top top' — the section's own top reaching the viewport
+             top, which for a 100vh section is exactly when it fills the
+             screen — means the travel is spent by the time the reader is
+             looking at it, and the words hold at their CSS position for the
+             whole time the section is in view. Scrolling back up still
+             reverses it, which is the point of scrubbing. */
+          end: 'top top',
           scrub: SCRUB[key]
         }
       }
