@@ -204,35 +204,6 @@
   var TRAVEL_VH = 0.55;
   var TAIL_VH = 0.25;
 
-  /* THE SETTLE — the beat before anything moves.
-
-     The pin starts at 'bottom bottom', i.e. when the END of #process reaches
-     the bottom of the fold. That was written when the section was TALLER than
-     the viewport, so the reader had already scrolled through the whole stage
-     list before the pin could engage, and the composition had genuinely been
-     standing still for a while by then (the "no opening pause" note further
-     down rests on exactly that assumption).
-
-     It no longer holds. #process is now one viewport tall, so 'bottom bottom'
-     resolves to the same scroll position as 'top top': the pin engages the
-     instant the section arrives, .is-morphing goes on ~44px later, and the
-     section header starts fading before the reader has had a chance to read
-     the words "One case, five stages" at all. The transition ran on arrival
-     rather than on departure.
-
-     SETTLE_VH puts the missing beat back as real scroll distance. It is added
-     to the pin's budget and consumed by an empty leading tween (see the settle
-     hold in build()), so for this stretch the section is pinned, fully opaque
-     and completely static — the reader reads the heading and watches the
-     marquee run, exactly as if it were an ordinary section — and only then
-     does the close begin.
-
-     Pinned rather than simply starting the pin later: the marquee has to keep
-     running and the section has to stay put while the reader takes it in, and
-     a later start would let the section scroll up and out of the fold before
-     the morph could take hold of it. */
-  var SETTLE_VH = 0.6;
-
   /* THE REVEAL BUG, AND THE FIX.
 
      pinDistance() (TRAVEL_VH + TAIL_VH, ~0.95 viewports) is the ENTIRE scroll
@@ -331,11 +302,8 @@
 
   function isCompact() { return window.innerWidth < 700; }
 
-  /* The settle is part of the pin's budget: it is scroll the reader spends
-     with the section held still, so .p2c must reserve it like any other pinned
-     distance or the pin would run past the spacer it is standing on. */
   function pinDistance() {
-    return Math.round(window.innerHeight * (SETTLE_VH + TRAVEL_VH + TAIL_VH));
+    return Math.round(window.innerHeight * (TRAVEL_VH + TAIL_VH));
   }
 
   /* How far #case-studies is pulled up from the resting position .p2c's
@@ -346,30 +314,8 @@
      pixel. Clamped at 0 so a future retune that sets REVEAL_VH >= the pin's
      own budget degrades to "no pull" instead of pushing case-studies up past
      its own trigger point. */
-  /* THE SETTLE IS NOT PART OF THE REVEAL'S GEOMETRY.
-
-     `distance` is the pin's whole budget, and the settle is now inside it —
-     but the settle is scroll during which NOTHING moves, so Case studies must
-     not be pulled up through it. Left uncorrected the pull grew by the
-     settle's full height and dragged Case studies up with it: by the time the
-     object landed, the section had already scrolled a fifth of a viewport past
-     the top of the fold, which is the opposite of the arrival the REVEAL_VH
-     note above is protecting.
-
-     Subtracting the settle here measures the pull from the moment the close
-     actually begins rather than from the pin's first pixel, so Case studies
-     rests exactly where it did before the settle existed and the reveal keeps
-     the timing that note describes.
-
-     Passed in rather than read from SETTLE_VH directly, because only the
-     desktop path budgets a settle. buildCompact() computes its own `dist`
-     that never contained one, so subtracting SETTLE_VH there would pull Case
-     studies up through scroll the compact pin does not have — it lengthened
-     the compact spacer by six tenths of a viewport of dead scroll. Callers
-     that budget no settle simply pass nothing. */
-  function revealPull(distance, settleVh) {
-    var moving = distance - Math.round(window.innerHeight * (settleVh || 0));
-    return Math.max(0, moving - Math.round(window.innerHeight * REVEAL_VH));
+  function revealPull(distance) {
+    return Math.max(0, distance - Math.round(window.innerHeight * REVEAL_VH));
   }
 
   /* ---- the CONTAINMENT solve -------------------------------------------
@@ -823,7 +769,7 @@
        spare — a resting-position correction, not a travel. */
     var dist = pinDistance();
     section.style.height = dist + 'px';
-    section.style.marginBottom = (-revealPull(dist, SETTLE_VH)) + 'px';
+    section.style.marginBottom = (-revealPull(dist)) + 'px';
 
     tl = gsap.timeline({
       scrollTrigger: {
@@ -966,29 +912,10 @@
        So phase one is the original inward logic unchanged; the only thing the
        phase split alters is WHEN it happens relative to the travel, never
        where it closes to. */
-    /* THE SETTLE'S SPAN, in the timeline's own units.
-
-       The whole timeline is written in units where 1 is the travel span, so
-       the settle — which is measured in viewports, like TRAVEL_VH — has to be
-       converted into the same currency before it can be used as an offset.
-       SETTLE_VH / TRAVEL_VH is that conversion, exactly as TAIL_SPAN converts
-       TAIL_VH a few lines above.
-
-       Everything downstream is already expressed relative to CLOSE_IN, so
-       giving CLOSE_IN a non-zero value is all it takes to push the entire
-       choreography back by the settle: the close, the wash, the caption, the
-       travel and the copy reveal all shift with it, and their durations and
-       relative spacing are untouched. */
-    var SETTLE_SPAN = SETTLE_VH / TRAVEL_VH;
-
-    /* The close no longer starts on the pin's first pixel — it starts after
-       the settle. See SETTLE_VH at the top of this file: the section is one
-       viewport tall now, so the pin engages the moment it arrives and the old
-       'the frame arrives already still' assumption (the note where the opening
-       pause used to be) is no longer true. The settle is what makes it true
-       again, by holding the section still and fully opaque for its duration
-       before anything begins to move. */
-    var CLOSE_IN = SETTLE_SPAN;
+    /* Starts immediately. See the note where the opening pause used to be:
+       the frame arrives already still, so there is nothing to settle and the
+       close begins on the first pixel of the pin. */
+    var CLOSE_IN = 0;
     /* THE CLOSE'S SHARE OF THE TIMELINE — most of it, and deliberately widened.
 
        CLOSE_IN 0.18 -> CLOSE_END 0.92 is ~55% of the WHOLE pin (was ~46%),
@@ -1001,7 +928,7 @@
 
        0.92 puts the end of the close at ~68% of the pin, which is where the
        small final downward movement begins. */
-    var CLOSE_END = SETTLE_SPAN + 0.92;
+    var CLOSE_END = 0.92;
     /* Declared here rather than beside the copy fades that use it: the phase
        two tween below needs it immediately, and a `var` assigned further down
        would be hoisted-but-undefined at that point, giving it a NaN duration. */
@@ -1018,18 +945,11 @@
        three-quarters of the tail still to scroll, and nothing moved for that
        whole stretch. 0.8 keeps a short beat at the very end for the landing
        to settle into while leaving no long frozen run before it. */
-    /* (1 - CLOSE_END) was the run from the close's end to the timeline's
-       nominal 1. With both shifted by the settle that distance is now
-       (SETTLE_SPAN + 1) - CLOSE_END. Named once here because three separate
-       tweens below derive their durations and offsets from it, and an
-       un-shifted copy left in any of them would silently shorten phase two by
-       the settle's whole length. */
-    var PHASE_TWO = (SETTLE_SPAN + 1) - CLOSE_END;
-    var TRAVEL_END = CLOSE_END + PHASE_TWO + TAIL_SPAN * 0.8;
+    var TRAVEL_END = CLOSE_END + (1 - CLOSE_END) + TAIL_SPAN * 0.8;
     /* The timeline's own final position — moved up here (it used to only be
        declared much later, beside the copy reveal) because the settle tween
        below now needs it directly. See the note there for why. */
-    var END = SETTLE_SPAN + 1 + TAIL_SPAN;
+    var END = 1 + TAIL_SPAN;
 
     tl.to(source, {
       clipPath: function () {
@@ -1203,7 +1123,7 @@
 
          THIS TWEEN ONLY CARRIES THE OBJECT TO 90% OF ITS DESTINATION — see
          the settle below. The remaining tenth is a separate, slower beat. */
-      duration: (PHASE_TWO + TAIL_SPAN * 0.8) * 0.72,
+      duration: ((1 - CLOSE_END) + TAIL_SPAN * 0.8) * 0.72,
       ease: 'none'
     }, CLOSE_END);
 
@@ -1232,7 +1152,7 @@
         var t = travel();
         return t ? (t.originX + 'px ' + t.originY + 'px') : '50% 50%';
       },
-      duration: (PHASE_TWO + TAIL_SPAN * 0.8) * 0.28,
+      duration: ((1 - CLOSE_END) + TAIL_SPAN * 0.8) * 0.28,
       /* LINEAR, not eased — this is scrubbed, so an eased .to() does not just
          shape how the settle FEELS, it decouples the camera's position from
          the scrollbar for this whole stretch: scroll maps linearly to
@@ -1246,7 +1166,7 @@
          centred on the destination card while tracking scroll directly is
          the point of this tween, so it has to be none here too. */
       ease: 'none'
-    }, CLOSE_END + (PHASE_TWO + TAIL_SPAN * 0.8) * 0.72);
+    }, CLOSE_END + ((1 - CLOSE_END) + TAIL_SPAN * 0.8) * 0.72);
 
     /* --- NO RISE ------------------------------------------------------
        There used to be a tween here pulling .cases__rise up from a large
@@ -1380,7 +1300,7 @@
        and ordinary scrolling resumes into Case studies' own content below.
        Without it the pin would release the instant the travel finished,
        cutting the settle short. */
-    tl.to({}, { duration: TAIL_SPAN }, SETTLE_SPAN + 1);
+    tl.to({}, { duration: TAIL_SPAN }, 1);
 
     /* --- the landing, at the very end ------------------------------------
        The composition is now sitting exactly in the destination card's box.

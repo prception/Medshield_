@@ -1742,9 +1742,115 @@
 })();
 
 /* ---------------------------------------------------------------------------
-   Scroll-inset panel - REMOVED
+   Scroll-inset panels — the ground retreats from both sides
    ---------------------------------------------------------------------------
-   The contact section used to have its panel width scrubbed on scroll, so its
-   side gutters opened as the section crossed the viewport. That animation has
-   been removed along with the --cta-p variable it wrote; the section is now a
-   static full-width band styled entirely in CSS. Nothing replaces it here. */
+   Used by the "Request a proposal" contact section. Its inner panel starts
+   full-bleed and its side gutters open as the section crosses the viewport,
+   so the colour appears to retreat from both edges at once.
+
+   Scrubbed by writing --cta-p (0 full-bleed -> 1 fully inset) on the SECTION;
+   all the geometry lives in CSS, this only supplies the number. Adding a
+   third one is a markup + CSS job — put the selector in SELECTOR below and
+   nothing here needs to change.
+
+   Contract with the stylesheet: --cta-p is DECLARED as 1, so the inset state
+   is what renders when this never runs — no JS, a throw above, or reduced
+   motion. That is the same fallback shape as the reveal pass, and it is why
+   this module is safe to bail out of at any point.
+
+   Progress is measured against each section's own travel rather than a fixed
+   pixel budget, so it reads the same on a laptop and a tall desktop. A panel
+   finishes insetting once its top has risen to the SETTLE line, which puts
+   the movement in the approach — it is settled by the time you are reading
+   the headline, not still sliding under it. */
+(function () {
+  var SELECTOR = '.contact';
+
+  var sections = document.querySelectorAll(SELECTOR);
+  if (!sections.length) return;
+
+  var reduce = window.matchMedia('(prefers-reduced-motion: reduce)');
+  if (reduce.matches || !('IntersectionObserver' in window)) return;
+
+  /* Where the inset completes, as a fraction of viewport height measured
+     against the section's TOP edge.
+
+     0.55 (top edge at mid-screen) finished the move during the approach —
+     by the time the section filled the screen it had been settled for a
+     while, so scrolling through it showed nothing moving and read as if the
+     effect were not there at all. These are tall sections: the top edge
+     leaves the viewport long before you have finished reading them.
+
+     0.0 instead runs the inset across the entire approach, completing only
+     when the section's top edge reaches the top of the screen — i.e. exactly
+     when the section has finished taking over the viewport. The movement is
+     then still resolving while you are looking at the section, which is the
+     point of the effect. */
+  var SETTLE = 0;
+
+  /* The sections currently on screen. Both panels can be visible at once —
+     they are adjacent — so this is a set, not a single flag, and the scroll
+     listener is attached while it is non-empty rather than per section. */
+  var visible = [];
+  var queued = false;
+
+  function clamp01(n) { return n < 0 ? 0 : n > 1 ? 1 : n; }
+
+  function paint() {
+    queued = false;
+    var vh = window.innerHeight || document.documentElement.clientHeight;
+    var travel = vh * (1 - SETTLE);
+
+    for (var i = 0; i < visible.length; i++) {
+      var el = visible[i];
+      /* top === vh -> section's top edge at the bottom of the screen -> 0
+         top === vh * SETTLE -> settle line -> 1
+         Above the settle line it pins at 1 rather than reversing, so
+         scrolling further down never un-insets the panel. */
+      var p = travel > 0 ? clamp01((vh - el.getBoundingClientRect().top) / travel) : 1;
+      el.style.setProperty('--cta-p', p.toFixed(4));
+    }
+  }
+
+  function onScroll() {
+    if (queued) return;
+    queued = true;
+    requestAnimationFrame(paint);
+  }
+
+  /* Only listen while at least one panel is actually on screen — these are
+     the last sections on the page, so for most of the scroll there is
+     nothing to do. */
+  var io = new IntersectionObserver(function (entries) {
+    entries.forEach(function (entry) {
+      var at = visible.indexOf(entry.target);
+      if (entry.isIntersecting && at === -1) visible.push(entry.target);
+      else if (!entry.isIntersecting && at !== -1) visible.splice(at, 1);
+    });
+
+    if (visible.length) {
+      window.addEventListener('scroll', onScroll, { passive: true });
+      paint();
+    } else {
+      window.removeEventListener('scroll', onScroll);
+    }
+  });
+
+  for (var i = 0; i < sections.length; i++) io.observe(sections[i]);
+  window.addEventListener('resize', function () {
+    if (visible.length) onScroll();
+  }, { passive: true });
+
+  /* A mid-session switch to reduced motion drops the scrub and leaves the
+     panels in their final state, matching the declared CSS value. */
+  var stop = function () {
+    if (!reduce.matches) return;
+    io.disconnect();
+    window.removeEventListener('scroll', onScroll);
+    visible.length = 0;
+    for (var i = 0; i < sections.length; i++) {
+      sections[i].style.removeProperty('--cta-p');
+    }
+  };
+  if (reduce.addEventListener) reduce.addEventListener('change', stop);
+})();

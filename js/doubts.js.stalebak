@@ -656,38 +656,7 @@
            light — a second heavy lag on top would read as the section
            lagging behind the page rather than moving with it. */
         scrub: 0.5,
-        invalidateOnRefresh: true,
-
-        /* THE STAGE STANDS DOWN ONCE IT IS PAST.
-
-           pinType:'fixed' parks the stage at the pin's end offset on release
-           (position:relative + translateY of the whole pin distance), which is
-           correct — the finished composition belongs at the bottom of its own
-           track. But the cover's negative margin (see the overlap block near
-           the end of this file) pulls everything after it UP by a viewport and
-           a half, so the parked box still reaches ~400px into the Process
-           section's scroll range while Services and Process paint over it.
-
-           That is invisible during ordinary scrolling, because both of those
-           sections are opaque. It is NOT invisible during the process->cases
-           morph: #process.is-morphing is deliberately transparent and its
-           camera's clip closes inward from the left and right edges, so the
-           strips the clip vacates had nothing behind them but this parked
-           stage — and the About stats band inside it showed through as a
-           navy panel with 'ISO 45001' and '24/7 Medical desk' floating in the
-           corners.
-
-           visibility rather than display: the stage's box must stay exactly
-           where it is (its height is part of the layout the pin spacer was
-           measured against, and doubts.js re-measures on refresh), so it is
-           taken out of PAINT only. Restored the moment the trigger is entered
-           again from below, so scrolling back up finds the composition intact.
-
-           Set on the stage rather than the section: .doubts is also the
-           theme-ground observer's measurement box, and hiding that would
-           change what the header reads for its ink. */
-        onLeave: function () { stage.style.visibility = 'hidden'; },
-        onEnterBack: function () { stage.style.visibility = ''; }
+        invalidateOnRefresh: true
       }
     });
 

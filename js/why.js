@@ -2,20 +2,20 @@
    MedShield — why.js
    The automatic card carousel in section 07, "Why MedShield".
 
-   Five cards live in one flex track inside a clipped viewport that is exactly
-   three cards wide (one card wide on mobile). Every ~3.2s the track slides
+   Nine cards live in one flex track inside a clipped viewport that is exactly
+   three cards wide (one card wide on mobile). Every ~1.2s the track slides
    left by one card-step; the moment it lands, the card that just left the
    frame is moved to the END of the track and the track is snapped back to
    x:0 with the tween's own state — no visible jump, because at that instant
    the layout after the move is pixel-identical to the layout before it.
 
    That rotate-and-reset is the whole trick, and it is why the sequence is a
-   genuine infinite loop rather than five slides and a rewind:
+   genuine infinite loop rather than a fixed run and a rewind:
 
-     01 02 03  ->  02 03 04  ->  03 04 05  ->  04 05 01  ->  05 01 02  ->  ...
+     01 02 03  ->  02 03 04  ->  ...  ->  08 09 01  ->  09 01 02  ->  ...
 
    Each card is a single DOM node throughout. Nothing is cloned, so a card is
-   never on screen twice and the content of the five cards is never touched.
+   never on screen twice and the content of the cards is never touched.
 
    ---------------------------------------------------------------------------
    DESIGN NOTES
@@ -60,8 +60,8 @@
 
   if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
 
-  var DURATION = 1.05;                       /* 1050ms — inside the 900-1200 band */
-  var HOLD     = 3.2;                        /* seconds of stillness between steps */
+  var DURATION = 0.82;                       /* 820ms — the slide itself */
+  var HOLD     = 1.2;                        /* seconds of stillness between steps */
 
   /* --- the easing curve --------------------------------------------------
      cubic-bezier(0.76, 0, 0.24, 1) — a deep symmetric in-out. GSAP core does

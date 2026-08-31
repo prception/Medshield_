@@ -1412,186 +1412,16 @@
          No data-bar-ink here: the panel is a LIGHT ground, so the header keeps
          its dark ink over it. It carried the marker while the panel was navy. -->
     <div class="contact__panel">
+      <div class="shell contact__inner">
 
-      <!-- Two halves, edge to edge. No .shell here on purpose: the shell's
-           --site-margin gutter is what used to hold the picture off the panel
-           edge and make it read as an inset card. The reference has the image
-           bleeding fully into its half, so the gutter is applied to the FORM
-           side only (see .contact__form-col padding) and the image side gets
-           none at all. -->
-      <div class="contact__inner">
+        <div class="contact__intro">
+          <p class="eyebrow">Request a proposal</p>
+          <h2 class="contact__title" id="contact-h">Your next medical case is already at sea</h2>
+          <p class="contact__lede">
+            Send us your fleet profile and we will come back with a coverage proposal
+            and an indicative annual medical welfare budget.
+          </p>
 
-        <!-- Left half: photograph with the intro copy over it, as in the
-             reference - the picture carries a heading and a short statement in
-             its lower half rather than being a bare image.
-
-             A portrait-format vessel at sea, sourced for this column: the
-             previous shots were landscape interiors that lost their subject
-             when cropped to a tall half-screen. -->
-        <div class="contact__media">
-          <img class="contact__mediaImg"
-               src="assets/contact-vessel.jpg"
-               alt="" width="1400" height="2100" loading="lazy" decoding="async">
-
-          <!-- Scrim, not a filter on the <img>: a filter would dim the type
-               sitting on top of it too. A gradient rather than a flat wash, so
-               the dark end is where the words are and the top of the frame
-               stays a photograph. -->
-          <div class="contact__scrim" aria-hidden="true"></div>
-
-          <div class="contact__mediaCopy">
-            <p class="contact__mediaEyebrow">MedShield Care</p>
-            <p class="contact__mediaTitle">Care that follows your crew.</p>
-            <p class="contact__mediaBody">
-              Medical cover shouldn't stop at the gangway. Wherever your vessels
-              sail, one team manages the case, the hospital and the bill.
-            </p>
-          </div>
-        </div>
-
-        <!-- Right half: the statement and the fields. -->
-        <div class="contact__form-col">
-
-          <div class="contact__head">
-            <p class="eyebrow">Request a proposal</p>
-            <h2 class="contact__title" id="contact-h">Your next medical case is already at sea</h2>
-            <p class="contact__lede">
-              Send us your fleet profile and we will come back with a coverage proposal
-              and an indicative annual medical welfare budget.
-            </p>
-          </div>
-
-          <!-- Rebuilt from scratch. The previous version used a floating
-               label that sat inside the input and animated upward on focus;
-               this one has no motion at all. Every label is a plain static
-               <label> above its control, always visible, never moving - so
-               the field name is readable before, during and after typing,
-               and there is no transition to run. -->
-          <form class="cform" id="proposal-form" novalidate>
-
-            <div class="cform__row">
-              <div class="cform__field">
-                <label class="cform__label" for="f-name">Name</label>
-                <input class="cform__input" type="text" id="f-name" name="name"
-                       autocomplete="name" required aria-describedby="e-name">
-                <p class="cform__error" id="e-name" hidden></p>
-              </div>
-
-              <div class="cform__field">
-                <label class="cform__label" for="f-company">Company</label>
-                <input class="cform__input" type="text" id="f-company" name="company"
-                       autocomplete="organization" required aria-describedby="e-company">
-                <p class="cform__error" id="e-company" hidden></p>
-              </div>
-            </div>
-
-            <div class="cform__row">
-              <div class="cform__field">
-                <label class="cform__label" for="f-email">Work email</label>
-                <input class="cform__input" type="email" id="f-email" name="email"
-                       autocomplete="email" required aria-describedby="e-email">
-                <p class="cform__error" id="e-email" hidden></p>
-              </div>
-
-              <div class="cform__field">
-                <label class="cform__label" for="f-current">
-                  Current arrangement <span class="cform__opt">(optional)</span>
-                </label>
-                <select class="cform__input cform__select" id="f-current" name="current">
-                  <option value="">Select&#8230;</option>
-                  <option>In-house</option>
-                  <option>Another provider</option>
-                  <option>None yet</option>
-                </select>
-              </div>
-            </div>
-
-            <div class="cform__row">
-              <div class="cform__field">
-                <label class="cform__label" for="f-fleet">Fleet size</label>
-                <select class="cform__input cform__select" id="f-fleet" name="fleet"
-                        required aria-describedby="e-fleet">
-                  <option value="">Select&#8230;</option>
-                  <option>1&#8211;5</option>
-                  <option>6&#8211;20</option>
-                  <option>21&#8211;50</option>
-                  <option>50+</option>
-                </select>
-                <p class="cform__error" id="e-fleet" hidden></p>
-              </div>
-
-              <div class="cform__field">
-                <label class="cform__label" for="f-vessel">Vessel type</label>
-                <select class="cform__input cform__select" id="f-vessel" name="vessel"
-                        required aria-describedby="e-vessel">
-                  <option value="">Select&#8230;</option>
-                  <option>Cruise</option>
-                  <option>Cargo</option>
-                  <option>Offshore</option>
-                  <option>Yacht</option>
-                  <option>Mixed</option>
-                </select>
-                <p class="cform__error" id="e-vessel" hidden></p>
-              </div>
-            </div>
-
-
-            <fieldset class="cform__checks">
-              <legend class="cform__label">Interested in <span class="cform__opt">(optional)</span></legend>
-              <div class="cform__checkRow">
-                <label class="cform__check">
-                  <input type="checkbox" name="interest" value="Claims management">
-                  <span>Claims</span>
-                </label>
-                <label class="cform__check">
-                  <input type="checkbox" name="interest" value="Claims advisory &amp; legal">
-                  <span>Advisory</span>
-                </label>
-                <label class="cform__check">
-                  <input type="checkbox" name="interest" value="Medical welfare budgeting">
-                  <span>Budgeting</span>
-                </label>
-                <label class="cform__check">
-                  <input type="checkbox" name="interest" value="Telemedicine">
-                  <span>Telemedicine</span>
-                </label>
-              </div>
-            </fieldset>
-
-            <div class="cform__field">
-              <label class="cform__label" for="f-message">
-                Anything else to share? <span class="cform__opt">(optional)</span>
-              </label>
-              <textarea class="cform__input cform__textarea" id="f-message"
-                        name="message" rows="3"></textarea>
-            </div>
-
-            <!-- Honeypot: not a CAPTCHA. Hidden from users and assistive tech. -->
-            <div class="hp" aria-hidden="true">
-              <label for="f-role">Do not fill this in</label>
-              <input type="text" id="f-role" name="role" tabindex="-1" autocomplete="off">
-            </div>
-
-            <div class="cform__send">
-              <button class="cform__btn" type="submit">
-                Send <span aria-hidden="true">&#8594;</span>
-              </button>
-            </div>
-
-            <p class="cform__foot">
-              We use these details to prepare your proposal. No newsletter, no list.
-            </p>
-          </form>
-
-          <!-- Success state replaces the form in place. No redirect. -->
-          <div class="success" id="form-success" hidden tabindex="-1" role="status">
-            <p class="success__mark" aria-hidden="true">&#10003;</p>
-            <h3 class="success__title">Received.</h3>
-            <p class="success__body">A case manager will reply within one business day.</p>
-          </div>
-
-          <!-- Kept: the one block someone with a live casualty needs. Placed
-               after the fields so it cannot be mistaken for part of them. -->
           <aside class="emergency" aria-labelledby="emergency-h">
             <h3 class="emergency__title" id="emergency-h">Medical emergency at sea right now?</h3>
             <p class="emergency__body">
@@ -1603,6 +1433,143 @@
               This number is not yet published. It must ring a monitored line before launch.
             </p>
           </aside>
+        </div>
+
+        <div class="contact__formwrap">
+
+          <!-- Underline fields, no boxes, matching the reference. The <label>
+               is kept on every control rather than being replaced by a
+               placeholder: the reference leans on placeholder-as-label, which
+               leaves a screen reader with an unnamed input and wipes the field
+               name the moment you type. Ours renders in the same position and
+               at the same weight, then rises out of the way on focus/fill, so
+               it reads identically and still names the field. -->
+          <form class="form" id="proposal-form" novalidate>
+
+            <div class="field">
+              <input type="text" id="f-name" name="name" autocomplete="name" required
+                     placeholder=" " aria-describedby="e-name">
+              <label for="f-name">Name</label>
+              <p class="field__error" id="e-name" hidden></p>
+            </div>
+
+            <div class="field">
+              <input type="text" id="f-company" name="company" autocomplete="organization" required
+                     placeholder=" " aria-describedby="e-company">
+              <label for="f-company">Company</label>
+              <p class="field__error" id="e-company" hidden></p>
+            </div>
+
+            <div class="field">
+              <input type="email" id="f-email" name="email" autocomplete="email" required
+                     placeholder=" " aria-describedby="e-email">
+              <label for="f-email">Work email</label>
+              <p class="field__error" id="e-email" hidden></p>
+            </div>
+
+            <!-- Selects carry a permanent label: there is no empty state to
+                 float back down into once a value is chosen. -->
+            <div class="field field--select">
+              <label for="f-fleet">Fleet size</label>
+              <select id="f-fleet" name="fleet" required aria-describedby="e-fleet">
+                <option value="">Select…</option>
+                <option>1–5</option>
+                <option>6–20</option>
+                <option>21–50</option>
+                <option>50+</option>
+              </select>
+              <p class="field__error" id="e-fleet" hidden></p>
+            </div>
+
+            <div class="field field--select">
+              <label for="f-vessel">Vessel type</label>
+              <select id="f-vessel" name="vessel" required aria-describedby="e-vessel">
+                <option value="">Select…</option>
+                <option>Cruise</option>
+                <option>Cargo</option>
+                <option>Offshore</option>
+                <option>Yacht</option>
+                <option>Mixed</option>
+              </select>
+              <p class="field__error" id="e-vessel" hidden></p>
+            </div>
+
+            <!-- Field 6 of the seven CONTENT.md specifies. Optional on
+                 purpose: it flags displacement (they already pay someone) vs.
+                 first purchase, which changes how the proposal is written,
+                 without making the visitor disclose a supplier to get a
+                 quote. -->
+            <div class="field field--select">
+              <label for="f-current">Current arrangement <span class="field__opt">(optional)</span></label>
+              <select id="f-current" name="current">
+                <option value="">Select…</option>
+                <option>In-house</option>
+                <option>Another provider</option>
+                <option>None yet</option>
+              </select>
+            </div>
+
+            <!-- The reference's inline "select all that apply" row, carrying
+                 our four actual revenue lines in the order section 05 uses.
+                 Claims leads deliberately: CONTENT.md notes that leading with
+                 telemedicine confirms the visitor's wrong assumption that
+                 MedShield is another remote-doctor service. Optional – it
+                 routes the enquiry, it does not qualify it. -->
+            <fieldset class="checks">
+              <legend class="checks__legend">Interested in (optional)</legend>
+              <div class="checks__row">
+                <!-- Visible labels are the short forms so the four sit on ONE
+                     line; the submitted value keeps the full service name. -->
+                <label class="check">
+                  <input type="checkbox" name="interest" value="Claims management">
+                  <span>Claims</span>
+                </label>
+                <label class="check">
+                  <input type="checkbox" name="interest" value="Claims advisory &amp; legal">
+                  <span>Advisory</span>
+                </label>
+                <label class="check">
+                  <input type="checkbox" name="interest" value="Medical welfare budgeting">
+                  <span>Budgeting</span>
+                </label>
+                <label class="check">
+                  <input type="checkbox" name="interest" value="Telemedicine">
+                  <span>Telemedicine</span>
+                </label>
+              </div>
+            </fieldset>
+
+            <div class="field">
+              <textarea id="f-message" name="message" rows="3" placeholder=" "></textarea>
+              <label for="f-message">Anything else to share? <span class="field__opt">(optional)</span></label>
+            </div>
+
+            <!-- Honeypot: not a CAPTCHA. Hidden from users and assistive tech. -->
+            <div class="hp" aria-hidden="true">
+              <label for="f-role">Do not fill this in</label>
+              <input type="text" id="f-role" name="role" tabindex="-1" autocomplete="off">
+            </div>
+
+            <!-- The reference ends on a bare right-aligned "SEND ↗" rather than
+                 a filled button. Kept as a real <button> so it stays keyboard
+                 and screen-reader operable. -->
+            <div class="form__send">
+              <button class="send" type="submit">
+                Send <span class="send__arrow" aria-hidden="true">&#8599;</span>
+              </button>
+            </div>
+
+            <p class="form__foot">
+              We use these details to prepare your proposal. No newsletter, no list.
+            </p>
+          </form>
+
+          <!-- Success state replaces the form in place. No redirect. -->
+          <div class="success" id="form-success" hidden tabindex="-1" role="status">
+            <p class="success__mark" aria-hidden="true">✓</p>
+            <h3 class="success__title">Received.</h3>
+            <p class="success__body">A case manager will reply within one business day.</p>
+          </div>
 
         </div>
       </div>

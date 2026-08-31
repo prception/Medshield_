@@ -2496,83 +2496,197 @@ main {
 
 /* --- 10 Contact --------------------------------------------------------- */
 
-/* =========================================================================
-   11 - Contact + form
-   =========================================================================
-   A plain two-half block: photograph on the left, form on the right.
+/* The "Request a proposal" section uses the same scroll-inset mechanic as the
+   closing CTA band (section 09, where the full rationale is written down):
+   the tinted ground is an inner PANEL, and as the section scrolls into view
+   its side gutters open from 0 to --cta-inset-max while the corners round, so
+   the colour reads as retreating from both edges at once.
 
-   The scroll-scrubbed inset that used to wrap this section has been removed
-   entirely - no --cta-p, no animated width, no rounding, and no JS driving
-   it. The panel is a static full-width band, so what you see on load is what
-   you see at every scroll position. */
+   --cta-p is the shared scrub variable, declared 1 here for the same reason —
+   no JS, a throw, or reduced motion all render the finished inset state.
+
+   The panel is the deep navy ground rather than the page colour, because a
+   panel painted the same colour as what it sits on has nothing to retreat
+   FROM — the inset would run and show nothing. */
 .contact {
-  padding-block: 0;
-  background: var(--surface-page);
-  /* At least one viewport tall. dvh rather than vh so a mobile browser's
-     collapsing address bar does not leave the section short or overshooting
-     as the toolbar hides; vh is the fallback for anything without dvh.
+  --cta-p: 1;
+  /* Deliberately wider than --site-margin, unlike the other inset panels:
+     this one is meant to sit in from the page edge as a distinctly smaller
+     block, not to line up with the site gutter. */
+  --cta-inset-max: clamp(1.5rem, 0.5rem + 5vw, 7rem);
+  /* On a wide monitor the inset alone would leave the panel enormous, so the
+     settled panel is also capped. This is a WIDTH, not a max-width, because
+     the scrub has to be able to drive it — see .contact__panel. */
+  --cta-width-max: 1240px;
+  /* Deliberately tighter than --section-y. The panel is a coloured block
+     with its own generous internal padding, so the section padding is only
+     the gap to the neighbouring bands — doubling the full section rhythm on
+     top of the panel's own is what pushed this section past a laptop
+     viewport.
 
-     min-height rather than a fixed height: pinned hard, anything that made
-     the form taller than the viewport - every field showing a validation
-     error, a 200% browser zoom - was clipped with no way to reach it. This
-     way the section fills the screen normally and grows only when its content
-     genuinely needs more room. */
-  min-height: 100vh;
-  min-height: 100dvh;
+     Expressed against viewport HEIGHT, not width: the whole point is that
+     the section fits in the viewport, and a vw-based clamp gives a short
+     wide laptop (1366x768) the same generous padding as a tall one. The
+     1.25rem floor is what clears a 720px screen; the max holds a sensible
+     rhythm on a large display. */
+  padding-block: clamp(1.25rem, 3.5vh, 3.25rem);
+  /* The ground the panel retreats to reveal. The panel is deep again, so a
+     light page ground gives the inset all the contrast it needs. */
+  background: var(--surface-page);
 }
 
 .contact__panel {
-  /* Full width, no inset, no radius, nothing animated. */
-  width: 100%;
-  /* Fills the section so the grid inside has a height to divide - without
-     this the panel would size to its content and the photograph would have
-     nothing to stretch against. Not a fixed height, so a taller-than-viewport
-     form grows the panel with it. */
-  min-height: inherit;
-  padding: 0;
-  overflow: hidden;
+  /* The scrub animates WIDTH, not margin-inline.
+     An earlier version animated margin-inline and capped the panel with
+     max-width. That silently killed the effect on any viewport wide enough
+     for the cap to bind: max-width won, the panel sat at a fixed 1240px, and
+     the animated margins had nothing left to give. The gutters never moved
+     even though --cta-p was scrubbing correctly the whole time.
 
-  /* A light teal gradient, by request.
+     Driving width instead keeps the two cooperating. The cap is interpolated
+     by --cta-p as well, running from the full section width at 0 to
+     --cta-width-max at 1. Capping with a flat min() instead would clamp the
+     panel to 1240px from the very first frame on a wide monitor, so it would
+     start already-inset and only the last part of the travel would show.
 
-     The ink ramp below is NAVY, not white, and that is forced by the ground
-     rather than a style choice: on this teal, pure white measures between
-     2.1:1 and 3.0:1 depending on where you sample the gradient - it fails the
-     4.5:1 AA minimum everywhere, and this panel is almost entirely type and
-     form labels. --surface-deep on the same teal measures 5.7:1 to 8.0:1 and
-     passes throughout. So the panel goes light and the type goes dark, which
-     is the only combination of "lighter teal" that stays legible.
+     The inner min() matters: below the cap width, (100% - 1240px) is
+     NEGATIVE, and subtracting it made the panel grow wider than its section
+     as --cta-p rose. max-width then pinned it flat and the effect vanished
+     between roughly 900px and 1240px. Clamping the interpolated term at 0
+     keeps those viewports on the plain "full width minus inset" path.
+     margin-inline:auto centres whatever the width resolves to. */
+  width: calc(
+    (100% - var(--cta-p) * max(100% - var(--cta-width-max), 0px))
+    - var(--cta-p) * 2 * var(--cta-inset-max)
+  );
+  /* Never wider than the section, whatever the interpolation yields. */
+  max-width: 100%;
+  margin-inline: auto;
+  /* Height-aware for the same reason as the section padding above: the
+     constraint being solved is vertical fit, so the breathing room scales
+     with the viewport's height rather than its width. Tuned so the whole
+     section clears a 768px-tall laptop, which the previous 4.75rem cap did
+     not — the section came to 1043px and only fitted a 1080p screen. */
+  padding-block: clamp(1.5rem, 4vh, 3rem);
+  /* No padding-inline: the .shell inside supplies it. A second gutter here
+     would push the copy off the column the rest of the page aligns to. */
+  /* Square, like the reference — the panel reads as a field of colour, not
+     as a card. --cta-p still drives it so the corners stay honest if the
+     radius is ever reintroduced. */
+  border-radius: calc(var(--cta-p) * 0px);
+  /* The brand teal itself — the same --accent-2 the proof figures, service
+     rules and step numbers use, here as a full ground.
 
-     A gentle vertical ramp rather than a flat fill, so the panel has some
-     depth against the photograph beside it. Both stops are close together -
-     this reads as one colour with light falling across it, not as two. */
+     ⚠ ACCESSIBILITY EXCEPTION — WHITE ON BRAND TEAL, BY REQUEST.
+     The ground is now a gradient (see `background` below) rather than a flat
+     #20B0A8, so the figures here describe its LIGHTEST end — the worst case,
+     at the top-left. The deep end under the form measures around 5.5:1 and
+     clears AA on its own.
+     Pure white measures 2.68:1 on #20B0A8, against a 4.5:1 WCAG AA minimum
+     for body text and 3:1 for large text and UI boundaries. Nothing in this
+     panel meets AA. The colour system marks raw --accent-2 decoration-only
+     and forbids it under type for exactly this reason, and BRIEF.md targets
+     a 40-65 audience reading on phones and locked-down corporate screens.
+
+     This is a deliberate client decision, recorded here rather than hidden:
+     the panel colour was chosen first and the type follows it. Two ways to
+     reach AA if it is ever revisited — darken the ground to #04413E (white
+     11.1:1, full ink ramp legible), or keep this ground and use navy ink
+     (--surface-deep, 6.33:1).
+
+     Given the exception, everything is pushed to the maximum available
+     contrast: PURE white, not --text-on-deep (2.59:1), and no dimmer tiers
+     at all — --text-on-deep-secondary is 1.84:1 and -muted 1.29:1 here, so
+     a three-tier ink ramp would be illegible. Hierarchy is carried by weight
+     and size only. Rules are solid white rather than a veil for the same
+     reason: any alpha below 1.0 drops them under 2.5:1.
+
+     Everything inside paints with the --pnl-* variables below rather than
+     naming a ramp directly, so the section can be re-grounded from here. */
+  /* Not a flat fill of raw teal. A flat #20B0A8 panel reads as a solid slab
+     of one hue with nothing behind it, and the white type sits on it at a
+     uniform 2.68:1 with no relief anywhere.
+
+     The ramp is deliberately NAVY-DOMINANT rather than teal-dominant. Teal
+     survives only as the top-left corner where the eyebrow and title sit —
+     the brand note the section opens on — and the panel then travels through
+     a teal-navy blend into --surface-deep-hi and --surface-deep itself, so
+     the body of the block belongs to the same navy family as the header, the
+     hero overlay and the closing band rather than standing apart as a teal
+     slab. Roughly the last two thirds of the panel, including every form
+     control, is navy.
+
+     Every stop is on the straight line between --accent-2 and
+     --surface-deep, which is what keeps the transition subtle: it is one
+     colour draining toward another already in the system, not two colours
+     meeting. #1A8E96 and #0F5F74 are that mix at about a third and two
+     thirds; #063E63 sits just under --surface-deep-hi.
+
+     The ink improves the whole way down. White is 2.68:1 on the teal corner,
+     past 4.5:1 by the midpoint and around 15:1 on the navy end, so the
+     fields, their underlines and the small print all land on the legible
+     half of the panel.
+
+     The radial is the soft top-left lift, low-alpha so it reads as light
+     falling across the panel rather than as a second colour. --accent-2
+     stays the final fallback so a browser that chokes on the stack gets the
+     old flat ground rather than nothing. */
   background: var(--accent-2);
   background:
-    linear-gradient(160deg,
-      #39C7BD 0%,
-      #24B3AA 45%,
-      #17A099 100%);
+    radial-gradient(110% 95% at 4% 0%,
+      rgba(255, 255, 255, 0.09) 0%,
+      rgba(255, 255, 255, 0) 55%),
+    linear-gradient(152deg,
+      var(--accent-2) 0%,
+      #1A8E96 22%,
+      #0F5F74 46%,
+      #063E63 72%,
+      var(--surface-deep) 100%);
 
-  /* --- Panel ink, resolved once -------------------------------------
-     Navy on teal, not white on teal - see the contrast note above. Unlike the
-     old white-on-teal ramp, this one can carry real tiers: the secondary and
-     muted steps below still clear 4.5:1, so hierarchy is available again
-     rather than everything being forced to one weight. */
-  --pnl-ink:        #001D3B;
-  --pnl-ink-2:      #06294D;
-  --pnl-ink-muted:  #0A3557;
-  --pnl-accent:     #00293F;
-  /* A true red that reads against teal; the old white error state was
-     invisible the moment the fields stopped being dark. */
-  --pnl-error:      #7A0B22;
-  --pnl-warning:    #5A2A00;
-  --pnl-warning-bg: rgba(255, 255, 255, 0.30);
-  --pnl-rule:       rgba(0, 29, 59, 0.35);
-  --pnl-veil:       rgba(0, 29, 59, 0.14);
-  /* The ground behind an autofilled control - the fields are dark navy now,
-     so Chrome's opaque bar must be too. */
-  --pnl-autofill:   #0B2E4E;
+  /* --- Panel ink, resolved once ---------------------------------------
+     One tier only. See the exception note above for why the secondary and
+     muted ramps are not used on this ground. */
+  --pnl-ink:        #FFFFFF;
+  --pnl-ink-2:      #FFFFFF;
+  --pnl-ink-muted:  #FFFFFF;
+  --pnl-accent:     #FFFFFF;
+  /* Status colours are white too: --error-on-deep is 1.07:1 here and
+     --warning-on-deep 1.24:1, so both would be invisible. The error text
+     keeps its "↑" prefix and the emergency block its left rule, so neither
+     relies on hue alone to be recognised. */
+  --pnl-error:      #FFFFFF;
+  --pnl-warning:    #FFFFFF;
+  /* Transparent, not a white veil: a veil lightens the ground under the
+     emergency copy and drops white from 2.68:1 to 2.25:1 — worse where it
+     matters most. The block is separated by its border alone. */
+  --pnl-warning-bg: transparent;
+  --pnl-rule:       #FFFFFF;
+  --pnl-veil:       rgba(255, 255, 255, 0.22);
+  /* Stands in for "the panel ground behind this control" in two places: the
+     opaque bar Chrome paints over an autofilled input, and the dot punched
+     out of a checked checkbox. Both sit in the FORM, which the navy-dominant
+     gradient reaches well before its teal corner — so this is navy now.
+     Left at teal it flashed a bright teal bar across an otherwise navy
+     field on autofill, and put a teal pip inside every checked box.
+     --surface-deep-alt rather than --surface-deep so it reads as a shade
+     against the ground instead of a hole in it. */
+  --pnl-autofill:   var(--surface-deep-alt);
 
   color: var(--pnl-ink-2);
+  will-change: width;
+}
+
+/* Below the tablet breakpoint the gutters are only a few pixels wide — too
+   small to read as movement, and holding them shifts the copy off the flush
+   left edge. Full-bleed instead, matching the closing band. */
+@media (max-width: 859px) {
+  .contact { --cta-inset-max: 0px; }
+  .contact__panel { border-radius: 0; will-change: auto; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .contact { --cta-p: 1 !important; }
+  .contact__panel { will-change: auto; }
 }
 
 /* No measure cap of its own. .shell is full-bleed on --site-margin site-wide
@@ -2586,193 +2700,75 @@ main {
    the section's left edge trying and failing to match the hero's. */
 .contact__inner {
   display: grid;
-  /* No gap and no .shell gutter. The two halves meet flush down the middle
-     so the photograph can run all the way to the centre line on one side and
-     the panel edge on the other, which is what makes it read as half the
-     composition rather than as a picture placed on a coloured panel. The
-     form half supplies its own padding instead. */
-  gap: 0;
+  gap: clamp(2rem, 1rem + 3.5vw, 3.5rem);
 }
-/* The grid fills the panel, so both halves have a box to work in rather than
-   sizing to their own content. */
-.contact__inner { min-height: inherit; }
-
-/* --- Stacked (below the two-column breakpoint) --------------------------
-   One column, and the rows must be sized explicitly. Left implicit, the form
-   row's height:100% resolved against an auto row and collapsed the picture
-   to nothing - the photograph vanished entirely on a phone.
-
-   The image takes a fixed share of the viewport and the form takes the rest,
-   scrolling within it. That keeps the section exactly 100dvh on a phone with
-   the picture still present, rather than letting one half win. */
-
-
-/* Touch targets. The tightened control padding above is sized for a pointer;
-   on a touch device the height goes back so the fields stay tappable. This is
-   deliberately NOT inside the max-width block - a touch laptop should get it
-   too. */
-@media (pointer: coarse) {
-  .cform__input { padding: 0.55rem 0.75rem; }
-  .cform__check input { width: 1.1rem; height: 1.1rem; }
-  .cform__btn { padding: 0.7rem 1.5rem; }
-}
-
 @media (min-width: 900px) {
-  /* Even halves, as in the reference. */
-  .contact__inner { grid-template-columns: 1fr 1fr; align-items: stretch; }
+  /* Reference layout: statement left, form right, roughly even columns.
+     Centred rather than bottom-aligned: with the copy scaled down, end
+     alignment left a tall band of empty navy above the intro while the
+     form ran past it. Centring distributes that slack to both ends so the
+     panel reads as a filled block. */
+  .contact__inner {
+    /* The left column is a photograph now, not a run of copy, so it takes
+       marginally more of the row than the form does: a picture narrower than
+       the fields beside it reads as an inset thumbnail rather than as the
+       ground the statement sits on. */
+    grid-template-columns: 1.12fr 1fr;
+    align-items: center;
+  }
 }
 
-/* --- Left half: the photograph, full bleed ------------------------------
-   No border-radius and no inset: the image fills its half of the panel
-   completely, top to bottom and out to the panel edge. */
-.contact__media {
+/* No eyebrow override here: the global .eyebrow is already --accent-2-ink,
+   which is exactly what --pnl-accent resolves to on this panel. The rule
+   that used to sit here restated the inherited value. */
+
+/* The global .eyebrow is --accent-2-ink, which is teal ON teal here and
+   measured 1.84:1 — a clear fail. On this panel it takes the panel ink and
+   keeps its identity through the uppercase/letterspaced treatment instead. */
+.contact__head .eyebrow { color: var(--pnl-accent); }
+
+/* --- Left column: the photograph ----------------------------------------
+   Just a picture now. The scrim and the overlaid copy that used to sit here
+   have gone with the statement, which moved to the form column to match the
+   reference — so there is no type over the image and nothing to protect its
+   legibility from. */
+.contact__intro {
   position: relative;
   overflow: hidden;
-  /* Fills its grid cell. The section is a fixed 100dvh now, so the cell has a
-     real height and the photograph simply takes all of it. min-height is the
-     floor for the stacked layout, where the image takes a share of the
-     viewport rather than a share of a row. */
-  height: 100%;
-  min-height: 0;
+  border-radius: var(--radius);
+  /* A floor, so the frame does not collapse when the columns stack on narrow
+     viewports. On wide screens the row height is set by the form beside it
+     and the stretch below lets the picture fill that. */
+  min-height: clamp(20rem, 46vh, 34rem);
+}
+@media (min-width: 900px) {
+  /* Overrides the grid's align-items:center so the photograph runs the full
+     height of the row — a full-bleed panel of image, as in the reference,
+     rather than a card floating in the middle of the column. */
+  .contact__intro { align-self: stretch; }
 }
 
-/* The copy sits in the lower half of the picture, as in the reference. */
-.contact__media {
-  display: flex;
-  align-items: flex-end;
-  isolation: isolate;
-}
-
-.contact__mediaImg {
+.contact__introImg {
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
-  z-index: 0;
-  /* Cover, so the half-panel frame crops the photograph rather than
-     distorting it at whatever aspect the row resolves to. */
+  /* Cover, so the frame crops rather than distorts at whatever aspect the
+     row resolves to. */
   object-fit: cover;
-  /* The vessel sits centre-frame in a tall portrait original, so a plain
-     centre crop holds it at every column aspect. */
-  object-position: 50% 45%;
+  object-position: 52% 42%;
 }
 
-/* Dark at the bottom where the words are, clear at the top so the photograph
-   still reads as one. Deep navy rather than black, to stay in the same colour
-   family as the panel beside it. */
-.contact__scrim {
-  position: absolute;
-  inset: 0;
-  z-index: 1;
-  background: linear-gradient(to top,
-    rgba(0, 19, 37, 0.94) 0%,
-    rgba(0, 19, 37, 0.82) 30%,
-    rgba(0, 19, 37, 0.45) 60%,
-    rgba(0, 19, 37, 0.12) 100%);
-}
-
-.contact__mediaCopy {
-  position: relative;
-  z-index: 2;
-  width: 100%;
-  padding: clamp(1.25rem, 0.75rem + 2vw, 2.75rem);
-  color: #FFFFFF;
-}
-.contact__mediaEyebrow {
-  font-size: 0.6875rem;
-  font-weight: 700;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--accent-2-on-deep, #6FE3D9);
-  margin-bottom: 0.5rem;
-}
-.contact__mediaTitle {
-  /* The display note of the section. Fraunces, matching the other statement
-     headings on the page. */
-  font-family: var(--font-display, inherit);
-  font-size: clamp(1.35rem, 1rem + 1.6vw, 2.1rem);
-  font-weight: 600;
-  line-height: 1.15;
-  letter-spacing: -0.01em;
-  margin-bottom: 0.6rem;
-  max-width: 16ch;
-}
-.contact__mediaBody {
-  font-size: var(--t-micro);
-  line-height: 1.55;
-  color: rgba(255, 255, 255, 0.88);
-  max-width: 40ch;
-}
-
-/* --- Right half: the form column ----------------------------------------
-   This is where the panel's gutter lives now that .shell has gone. Generous
-   and asymmetric on purpose: the copy needs to clear the centre line where
-   the photograph ends, and the panel edge on the other side. */
-.contact__form-col {
-  /* Tightened from the previous clamp: the section is a fixed 100dvh now, so
-     every rem of padding is a rem the fields do not get. */
-  padding: clamp(1.25rem, 0.5rem + 2.2vw, 2.75rem);
-  /* The fields would otherwise run to whatever width the half gives them,
-     which on a large monitor is far past a comfortable measure. */
-  max-width: 40rem;
-  min-width: 0;
-
-  /* Centred in its half rather than stretched: the form is shorter than the
-     viewport in the normal case, and pinning it to the top left a band of
-     empty ground under the emergency block.
-
-     No overflow/scroll container here any more. The section grows past one
-     screen when the form genuinely needs it (validation errors on every
-     field, or a large browser zoom), which is what the earlier fixed-height
-     version clipped. */
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-}
-/* --- Short viewports -----------------------------------------------------
-   A 768px- or 720px-tall laptop is ~100-160px short of fitting the form once
-   the section is pinned to 100dvh. Rather than compress every screen down to
-   the worst case, the last of the slack is taken back only where it is
-   actually needed - a height query, not a width one, because this is a
-   vertical budget problem.
-
-   Everything here is spacing and the lede. No control shrinks below a
-   comfortable target and no field is hidden. */
-@media (min-width: 900px) and (max-height: 820px) {
-  .contact__form-col { padding: 0.9rem 1.5rem; }
-  .contact__head { margin-bottom: var(--s-3); }
-  .contact__title { font-size: clamp(1.35rem, 1rem + 1.1vw, 1.8rem); }
-  /* The lede repeats what the headline and the fields already establish, so
-     on a screen this short it is the first thing to go rather than squeezing
-     the controls people have to hit. */
-  .contact__lede { display: none; }
-  .cform { gap: 0.5rem; }
-  .cform__row { gap: 0.5rem var(--s-4); }
-  .cform__input { padding: 0.45rem 0.75rem; }
-  .cform__textarea { min-height: 2.5rem; }
-  .contact__form-col .emergency { margin-top: var(--s-3); padding: 0.6rem 0.75rem; }
-  /* Build-time guidance for the team, not information the visitor needs. */
-  .contact__form-col .emergency__note { display: none; }
-}
-
-
-
-
-.contact__head { margin-bottom: var(--s-4); }
-
-/* The global .eyebrow is --accent-2-ink - teal, and this panel's gradient is
-   teal at exactly the corner where the eyebrow sits, measuring 1.84:1. It
-   takes the panel ink instead and keeps its identity through the uppercase
-   letterspaced treatment. */
-.contact__head .eyebrow { color: var(--pnl-ink); }
+/* --- The statement, now heading the form column -------------------------
+   The reference holds its headline in the top-left of the right-hand panel,
+   above the body copy, so that is where this sits. */
+.contact__head { margin-bottom: var(--s-5); }
 
 /* The reference runs this headline at 74px. Held well below that per the
    brief — clinical, not a poster — while still being the largest thing in
    the panel and clearly the statement the form answers to. */
 .contact__title {
-  /* One step down from --t-h2. The section is height-constrained now, and the
-     headline was the single largest consumer of that budget. */
-  font-size: clamp(1.5rem, 1.1rem + 1.4vw, 2.25rem);
+  font-size: var(--t-h2);
   font-weight: 700;
   line-height: 1.14;
   letter-spacing: -0.015em;
@@ -2781,7 +2777,7 @@ main {
   max-width: 17ch;
 }
 .contact__lede {
-  font-size: var(--t-micro);
+  font-size: var(--t-small);
   color: var(--pnl-ink-2);
   max-width: 42ch;
   margin-bottom: var(--s-5);
@@ -2813,7 +2809,7 @@ main {
   max-width: none;
 }
 .emergency__title {
-  font-size: var(--t-micro);
+  font-size: var(--t-small);
   font-weight: 700;
   color: var(--pnl-warning);
   margin-bottom: var(--s-2);
@@ -3144,280 +3140,6 @@ main {
 .send:focus-visible {
   outline: 2px solid var(--focus);
   outline-offset: 3px;
-}
-
-/* =========================================================================
-   Contact form (.cform) - rebuilt, homepage only
-   =========================================================================
-   Deliberately a separate namespace from the .field/.form rules above, which
-   contact.html still uses. Nothing here touches those.
-
-   The difference that matters: there is NO floating label and no transition
-   anywhere in this block. The old fields animated their label from inside
-   the input up to a caption position on focus. Here every label is a static
-   caption sitting above its control, always at the same size in the same
-   place, so the field name never moves and never disappears behind a value.
-   Hover and focus change colour only - state, not motion. */
-/* --s-3 rather than --s-4: eight rows multiply any gap, and this quarter-rem
-   per row is a large part of what lets the whole form clear a 768px laptop
-   without the column needing to scroll. */
-.cform { display: flex; flex-direction: column; gap: var(--s-3); }
-
-/* Two fields per line where they are naturally short and related, one per
-   line otherwise. Collapses to a single column on narrow screens. */
-.cform__row {
-  display: grid;
-  gap: var(--s-3) var(--s-4);
-}
-@media (min-width: 560px) {
-  .cform__row { grid-template-columns: 1fr 1fr; }
-}
-
-.cform__field { display: flex; flex-direction: column; min-width: 0; }
-
-/* The static caption. Small and letterspaced so it reads as a field name
-   rather than as body copy, but never uppercase-only at a size that would
-   hurt - it stays legible for the 40-65 audience the brief names. */
-.cform__label {
-  /* 11px. These are short uppercase field names, not reading copy, and the
-     letterspacing keeps them legible at this size. */
-  font-size: 0.6875rem;
-  font-weight: 600;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--pnl-ink-2);
-  line-height: 1.3;
-  margin-bottom: 0.2rem;
-  /* fieldset legends do not inherit flex/block layout reliably; this keeps
-     the legend caption sitting on its own line like every other label. */
-  display: block;
-  padding: 0;
-}
-/* Pinned off rather than left to inherit. A global `transition: all` reaches
-   these labels; there is nothing here for it to animate today, but this is the
-   one property that would silently bring the floating-label motion back if a
-   future rule ever set a transform or a font-size on a focused label. */
-.cform__label { transition: none; }
-
-.cform__opt {
-  /* Never break onto its own line - it is a qualifier on the field name, and
-     wrapped it reads as a second label. */
-  white-space: nowrap;
-  letter-spacing: 0;
-  text-transform: none;
-  font-weight: 400;
-  opacity: 0.85;
-}
-
-/* Filled controls rather than the bare underlines the old form used. On the
-   navy end of the panel a soft white wash reads as a real input affordance,
-   which an underline alone does not once the fields are this dense. */
-.cform__input {
-  width: 100%;
-  font-family: inherit;
-  /* 13px rather than --t-small's 14px. Still comfortably above the 12px floor
-     the type scale sets for input text. */
-  font-size: 0.8125rem;
-  /* Dark navy fields on the light teal, by request - not the white boxes
-     this had. The inversion works in the panel's favour: white type on
-     #0B2E4E measures about 13:1, and the dark control reads clearly as an
-     input against a light ground without needing a border to define it. */
-  color: #FFFFFF;
-  background: #0B2E4E;
-  border: 1px solid rgba(0, 29, 59, 0.25);
-  border-radius: var(--radius);
-  /* Sized down to fit the 100dvh section without the column scrolling. Each
-     field costs its input plus its label, so a few px off the control here is
-     multiplied by seven rows. 0.4rem of vertical padding on a 13px control
-     lands at ~33px - below the 44px touch guideline but this is a pointer-led
-     B2B form, and the mobile block below puts the height back for touch. */
-  padding: 0.4rem 0.7rem;
-  line-height: 1.35;
-  /* Colour only - no transform, no size change. */
-  transition: background-color 0.16s ease, border-color 0.16s ease;
-}
-.cform__input::placeholder { color: rgba(255, 255, 255, 0.55); }
-
-.cform__input:hover { background: #11395E; }
-/* Focus lifts the field slightly and takes a white edge, which is the
-   strongest boundary available against both the dark control and the light
-   ground around it. */
-.cform__input:focus {
-  outline: none;
-  background: #11395E;
-  border-color: #FFFFFF;
-}
-.cform__input:focus-visible {
-  outline: 2px solid var(--focus);
-  outline-offset: 2px;
-}
-
-.cform__textarea { min-height: 2.4rem; resize: vertical; line-height: 1.45; }
-
-/* Native select arrow removed and redrawn, so the control matches the text
-   inputs instead of rendering as an OS widget on the panel. */
-.cform__select {
-  appearance: none;
-  -webkit-appearance: none;
-  padding-right: 2rem;
-  /* White arrow: the select is a dark navy box again. */
-  background-image:
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%23ffffff' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 0.85rem center;
-  cursor: pointer;
-}
-/* The dropdown list itself is painted by the OS, not the panel, so its
-   options need an explicit dark ground - left alone they render as white
-   text on white on several platforms. */
-.cform__select option { background: #0B2E4E; color: #FFFFFF; }
-
-/* Chrome paints an opaque bar over an autofilled input. Push the panel's own
-   navy back into it so the field does not flash a pale block. */
-.cform__input:-webkit-autofill,
-.cform__input:-webkit-autofill:hover,
-.cform__input:-webkit-autofill:focus {
-  -webkit-text-fill-color: #FFFFFF;
-  -webkit-box-shadow: 0 0 0 100px var(--pnl-autofill) inset;
-  caret-color: #FFFFFF;
-}
-
-/* --- Checkboxes --------------------------------------------------------- */
-.cform__checks { border: 0; padding: 0; margin: 0; min-width: 0; }
-.cform__checkRow {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.45rem 1.1rem;
-}
-.cform__check {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-  font-size: 0.8125rem;
-  color: var(--pnl-ink-2);
-  cursor: pointer;
-}
-.cform__check input {
-  width: 0.95rem;
-  height: 0.95rem;
-  /* Navy fill when checked, matching the fields rather than disappearing
-     into the light ground. */
-  accent-color: #0B2E4E;
-  cursor: pointer;
-  flex: none;
-}
-
-/* --- Errors ------------------------------------------------------------- */
-/* Keeps the arrow prefix: on this panel the error colour resolves to plain
-   white (see the panel contrast note), so hue alone cannot mark a field as
-   invalid and the glyph carries it. */
-.cform__error {
-  font-size: var(--t-micro);
-  color: var(--pnl-error);
-  margin-top: 0.4rem;
-}
-.cform__error::before { content: "\2191 "; }
-/* A light red, so the border reads against the DARK field it outlines. The
-   error message below it uses --pnl-error, a deep red for the light ground.
-   The "^" prefix stays, so the state is never carried by colour alone. */
-.cform__input[aria-invalid="true"] { border-color: #FF8A9B; border-width: 2px; }
-
-/* --- Send --------------------------------------------------------------- */
-.cform__send { display: block; margin-top: var(--s-2); }
-
-/* The pill from the reference. Solid white on the navy end of the panel is
-   around 15:1 - correctly the loudest thing in the section. */
-.cform__btn {
-  appearance: none;
-  border: 0;
-  /* A full-width bar in the darkest ink on the panel, matching the
-     reference's black Submit. Square, not a pill: the reference's button is a
-     rectangle spanning the form, and that is what anchors the column. Against
-     the light teal it is now the strongest contrast in the section. */
-  width: 100%;
-  justify-content: center;
-  background: #001325;
-  color: #FFFFFF;
-  border-radius: var(--radius);
-  padding: 0.75rem 1.4rem;
-  font-family: inherit;
-  font-size: var(--t-micro);
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  transition: background-color 0.16s ease;
-}
-.cform__btn:hover { background: #000000; }
-.cform__btn:focus-visible { outline: 2px solid var(--focus); outline-offset: 3px; }
-
-.cform__foot {
-  font-size: var(--t-micro);
-  color: var(--pnl-ink-muted);
-  margin-top: var(--s-2);
-}
-
-/* The emergency block sits under the rebuilt form. The top margin is a real
-   break so it cannot read as the last row of the fields. */
-/* Compacted for the height budget: the note about the number not yet being
-   published is build-time guidance, not something the reader needs, so it is
-   the one line that gives way. The call-to-action itself is untouched. */
-.contact__form-col .emergency {
-  margin-top: var(--s-4);
-  max-width: none;
-  padding: var(--s-3);
-}
-.contact__form-col .emergency__title { margin-bottom: 0.2rem; }
-.contact__form-col .emergency__body  { margin-bottom: 0.3rem; }
-.contact__form-col .emergency__note  { padding-top: 0.3rem; }
-
-/* Stacked layout overrides. Placed after the .cform base rules rather than
-   beside the other contact layout CSS: several of these (the checkbox grid,
-   the row columns) target the same selectors at the same specificity, so they
-   only win by coming later in the file. */
-@media (max-width: 899px) {
-  /* The image gives up height to the form here. 32dvh left the form only
-     ~574px of an 844px screen and it still had 1020px of content, so the
-     picture takes a smaller share and the fields get the rest. */
-  /* Taller than the 15dvh this was: the picture carries the intro copy now,
-     and at 15dvh the words were clipped by the top of the band. */
-  .contact__inner { grid-template-rows: 18dvh minmax(0, 1fr); }
-  /* The body line is the part that does not fit a short band on a phone. The
-     eyebrow and the statement carry the message on their own. */
-  .contact__mediaBody { display: none; }
-  .contact__mediaTitle {
-    max-width: none;
-    margin-bottom: 0;
-    font-size: clamp(1.15rem, 0.9rem + 1.8vw, 1.5rem);
-  }
-  .contact__mediaCopy { padding: 0.9rem 1rem; }
-  .contact__mediaEyebrow { margin-bottom: 0.25rem; }
-
-  /* Stacked, the column is narrow, so the paired rows collapse to one field
-     per line and the form is at its tallest exactly where the viewport is
-     shortest. Everything below claws that back. */
-  .contact__form-col { padding: 0.8rem 1rem; }
-  .contact__head { margin-bottom: var(--s-3); }
-  .contact__title { font-size: clamp(1.25rem, 1rem + 2.4vw, 1.6rem); }
-  /* The headline and the fields already say what this is. */
-  .contact__lede { display: none; }
-  .cform { gap: 0.5rem; }
-  .cform__row { gap: 0.5rem 0.6rem; }
-  /* Keep the paired rows paired on a phone rather than letting them collapse
-     to one field per line. Three rows recovered outright, which is most of
-     what the stacked layout was over by. The columns are narrow but these are
-     short values - a name, a company, a select - not prose. */
-  .cform__row { grid-template-columns: 1fr 1fr; }
-  /* The four interest checkboxes go to a 2x2 grid: as a flex-wrap row they
-     broke 3 + 1 and wasted a line. */
-  .cform__checkRow { display: grid; grid-template-columns: 1fr 1fr; gap: 0.4rem 0.6rem; }
-  .cform__textarea { min-height: 2rem; }
-  .contact__form-col .emergency { margin-top: var(--s-3); padding: 0.6rem 0.7rem; }
-  /* Build-time guidance for the team, not for the visitor. */
-  .contact__form-col .emergency__note { display: none; }
 }
 
 /* Honeypot — off-screen rather than display:none, which some bots detect.

@@ -2508,69 +2508,51 @@ main {
 .contact {
   padding-block: 0;
   background: var(--surface-page);
-  /* At least one viewport tall. dvh rather than vh so a mobile browser's
+  /* Exactly one viewport tall. dvh rather than vh so a mobile browser's
      collapsing address bar does not leave the section short or overshooting
-     as the toolbar hides; vh is the fallback for anything without dvh.
-
-     min-height rather than a fixed height: pinned hard, anything that made
-     the form taller than the viewport - every field showing a validation
-     error, a 200% browser zoom - was clipped with no way to reach it. This
-     way the section fills the screen normally and grows only when its content
-     genuinely needs more room. */
-  min-height: 100vh;
-  min-height: 100dvh;
+     as the toolbar hides; vh is the fallback for anything without dvh. */
+  height: 100vh;
+  height: 100dvh;
+  /* The panel inside is the scroll container when the form cannot fit (see
+     .contact__form-col), so the section itself never spills into the band
+     below it. */
+  overflow: hidden;
 }
 
 .contact__panel {
   /* Full width, no inset, no radius, nothing animated. */
   width: 100%;
-  /* Fills the section so the grid inside has a height to divide - without
-     this the panel would size to its content and the photograph would have
-     nothing to stretch against. Not a fixed height, so a taller-than-viewport
-     form grows the panel with it. */
-  min-height: inherit;
+  /* Fills the 100dvh section so the grid inside has a definite height to
+     divide - without this the panel would size to its content again and the
+     photograph would have nothing to stretch against. */
+  height: 100%;
   padding: 0;
   overflow: hidden;
 
-  /* A light teal gradient, by request.
+  /* A FLAT ground, matching the reference: the form half is one solid block
+     of colour with white boxed inputs on it, not a gradient.
 
-     The ink ramp below is NAVY, not white, and that is forced by the ground
-     rather than a style choice: on this teal, pure white measures between
-     2.1:1 and 3.0:1 depending on where you sample the gradient - it fails the
-     4.5:1 AA minimum everywhere, and this panel is almost entirely type and
-     form labels. --surface-deep on the same teal measures 5.7:1 to 8.0:1 and
-     passes throughout. So the panel goes light and the type goes dark, which
-     is the only combination of "lighter teal" that stays legible.
+     --surface-deep rather than the brand teal. The reference uses a single
+     saturated brand colour, but ours is #20B0A8, on which pure white measures
+     2.68:1 - under the 4.5:1 AA minimum, and this panel is now almost
+     entirely type and form controls. The navy carries the same brand family
+     at 15:1 for white, so the flat treatment the reference is after arrives
+     without putting every label and field name under the threshold. */
+  background: var(--surface-deep);
 
-     A gentle vertical ramp rather than a flat fill, so the panel has some
-     depth against the photograph beside it. Both stops are close together -
-     this reads as one colour with light falling across it, not as two. */
-  background: var(--accent-2);
-  background:
-    linear-gradient(160deg,
-      #39C7BD 0%,
-      #24B3AA 45%,
-      #17A099 100%);
-
-  /* --- Panel ink, resolved once -------------------------------------
-     Navy on teal, not white on teal - see the contrast note above. Unlike the
-     old white-on-teal ramp, this one can carry real tiers: the secondary and
-     muted steps below still clear 4.5:1, so hierarchy is available again
-     rather than everything being forced to one weight. */
-  --pnl-ink:        #001D3B;
-  --pnl-ink-2:      #06294D;
-  --pnl-ink-muted:  #0A3557;
-  --pnl-accent:     #00293F;
-  /* A true red that reads against teal; the old white error state was
-     invisible the moment the fields stopped being dark. */
-  --pnl-error:      #7A0B22;
-  --pnl-warning:    #5A2A00;
-  --pnl-warning-bg: rgba(255, 255, 255, 0.30);
-  --pnl-rule:       rgba(0, 29, 59, 0.35);
-  --pnl-veil:       rgba(0, 29, 59, 0.14);
-  /* The ground behind an autofilled control - the fields are dark navy now,
-     so Chrome's opaque bar must be too. */
-  --pnl-autofill:   #0B2E4E;
+  /* --- Panel ink, resolved once ------------------------------------- */
+  --pnl-ink:        #FFFFFF;
+  --pnl-ink-2:      #FFFFFF;
+  --pnl-ink-muted:  #FFFFFF;
+  --pnl-accent:     #FFFFFF;
+  --pnl-error:      #FFFFFF;
+  --pnl-warning:    #FFFFFF;
+  --pnl-warning-bg: transparent;
+  --pnl-rule:       #FFFFFF;
+  --pnl-veil:       rgba(255, 255, 255, 0.22);
+  /* Stands in for "the panel ground behind this control" where Chrome paints
+     an opaque autofill bar. Navy, because the form sits on the navy end. */
+  --pnl-autofill:   var(--surface-deep-alt);
 
   color: var(--pnl-ink-2);
 }
@@ -2593,9 +2575,9 @@ main {
      form half supplies its own padding instead. */
   gap: 0;
 }
-/* The grid fills the panel, so both halves have a box to work in rather than
-   sizing to their own content. */
-.contact__inner { min-height: inherit; }
+/* The grid fills the panel's full height, so both halves have a definite box
+   to work in rather than sizing to their own content. */
+.contact__inner { height: 100%; }
 
 /* --- Stacked (below the two-column breakpoint) --------------------------
    One column, and the rows must be sized explicitly. Left implicit, the form
@@ -2636,72 +2618,17 @@ main {
   min-height: 0;
 }
 
-/* The copy sits in the lower half of the picture, as in the reference. */
-.contact__media {
-  display: flex;
-  align-items: flex-end;
-  isolation: isolate;
-}
-
 .contact__mediaImg {
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
-  z-index: 0;
   /* Cover, so the half-panel frame crops the photograph rather than
      distorting it at whatever aspect the row resolves to. */
   object-fit: cover;
-  /* The vessel sits centre-frame in a tall portrait original, so a plain
-     centre crop holds it at every column aspect. */
-  object-position: 50% 45%;
-}
-
-/* Dark at the bottom where the words are, clear at the top so the photograph
-   still reads as one. Deep navy rather than black, to stay in the same colour
-   family as the panel beside it. */
-.contact__scrim {
-  position: absolute;
-  inset: 0;
-  z-index: 1;
-  background: linear-gradient(to top,
-    rgba(0, 19, 37, 0.94) 0%,
-    rgba(0, 19, 37, 0.82) 30%,
-    rgba(0, 19, 37, 0.45) 60%,
-    rgba(0, 19, 37, 0.12) 100%);
-}
-
-.contact__mediaCopy {
-  position: relative;
-  z-index: 2;
-  width: 100%;
-  padding: clamp(1.25rem, 0.75rem + 2vw, 2.75rem);
-  color: #FFFFFF;
-}
-.contact__mediaEyebrow {
-  font-size: 0.6875rem;
-  font-weight: 700;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--accent-2-on-deep, #6FE3D9);
-  margin-bottom: 0.5rem;
-}
-.contact__mediaTitle {
-  /* The display note of the section. Fraunces, matching the other statement
-     headings on the page. */
-  font-family: var(--font-display, inherit);
-  font-size: clamp(1.35rem, 1rem + 1.6vw, 2.1rem);
-  font-weight: 600;
-  line-height: 1.15;
-  letter-spacing: -0.01em;
-  margin-bottom: 0.6rem;
-  max-width: 16ch;
-}
-.contact__mediaBody {
-  font-size: var(--t-micro);
-  line-height: 1.55;
-  color: rgba(255, 255, 255, 0.88);
-  max-width: 40ch;
+  /* Framed for the standing figure: centred horizontally, biased up so the
+     head and shoulders stay in frame when the column is tall and narrow. */
+  object-position: 50% 32%;
 }
 
 /* --- Right half: the form column ----------------------------------------
@@ -2717,17 +2644,21 @@ main {
   max-width: 40rem;
   min-width: 0;
 
-  /* Centred in its half rather than stretched: the form is shorter than the
-     viewport in the normal case, and pinning it to the top left a band of
-     empty ground under the emergency block.
+  /* The form is the one part that can exceed a short viewport - seven fields
+     plus the emergency block do not compress indefinitely. Rather than let it
+     push the section past 100dvh, the COLUMN scrolls: the split stays exactly
+     one screen tall and the photograph stays fully visible while the fields
+     move under the cursor.
 
-     No overflow/scroll container here any more. The section grows past one
-     screen when the form genuinely needs it (validation errors on every
-     field, or a large browser zoom), which is what the earlier fixed-height
-     version clipped. */
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
+     min-height:0 is what makes this work inside a grid cell - without it the
+     cell floors at its content height and overflow never engages. */
+  height: 100%;
+  min-height: 0;
+  overflow-y: auto;
+  /* Momentum scrolling on iOS, and a scrollbar that suits the dark ground. */
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.35) transparent;
 }
 /* --- Short viewports -----------------------------------------------------
    A 768px- or 720px-tall laptop is ~100-160px short of fitting the form once
@@ -2755,6 +2686,13 @@ main {
   .contact__form-col .emergency__note { display: none; }
 }
 
+/* WebKit equivalent of the scrollbar-color above. */
+.contact__form-col::-webkit-scrollbar { width: 8px; }
+.contact__form-col::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.32);
+  border-radius: 999px;
+}
+.contact__form-col::-webkit-scrollbar-track { background: transparent; }
 
 
 
@@ -3218,13 +3156,12 @@ main {
   /* 13px rather than --t-small's 14px. Still comfortably above the 12px floor
      the type scale sets for input text. */
   font-size: 0.8125rem;
-  /* Dark navy fields on the light teal, by request - not the white boxes
-     this had. The inversion works in the panel's favour: white type on
-     #0B2E4E measures about 13:1, and the dark control reads clearly as an
-     input against a light ground without needing a border to define it. */
-  color: #FFFFFF;
-  background: #0B2E4E;
-  border: 1px solid rgba(0, 29, 59, 0.25);
+  /* Solid white fields with dark text, like the reference - not the tinted
+     translucent boxes this had. On a flat ground a white field is the whole
+     affordance, so it needs no border of its own. */
+  color: var(--surface-deep);
+  background: #FFFFFF;
+  border: 1px solid transparent;
   border-radius: var(--radius);
   /* Sized down to fit the 100dvh section without the column scrolling. Each
      field costs its input plus its label, so a few px off the control here is
@@ -3236,16 +3173,15 @@ main {
   /* Colour only - no transform, no size change. */
   transition: background-color 0.16s ease, border-color 0.16s ease;
 }
-.cform__input::placeholder { color: rgba(255, 255, 255, 0.55); }
+.cform__input::placeholder { color: rgba(0, 29, 59, 0.45); }
 
-.cform__input:hover { background: #11395E; }
-/* Focus lifts the field slightly and takes a white edge, which is the
-   strongest boundary available against both the dark control and the light
-   ground around it. */
+.cform__input:hover { background: #F2F6F8; }
+/* The focus ring is a visible border on the field itself, since a white box
+   on a dark ground has no edge of its own to brighten. */
 .cform__input:focus {
   outline: none;
-  background: #11395E;
-  border-color: #FFFFFF;
+  background: #FFFFFF;
+  border-color: var(--accent-2);
 }
 .cform__input:focus-visible {
   outline: 2px solid var(--focus);
@@ -3260,9 +3196,9 @@ main {
   appearance: none;
   -webkit-appearance: none;
   padding-right: 2rem;
-  /* White arrow: the select is a dark navy box again. */
+  /* Navy arrow: the select is a white box now, not a translucent one. */
   background-image:
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%23ffffff' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%23001D3B' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: right 0.85rem center;
   cursor: pointer;
@@ -3270,16 +3206,16 @@ main {
 /* The dropdown list itself is painted by the OS, not the panel, so its
    options need an explicit dark ground - left alone they render as white
    text on white on several platforms. */
-.cform__select option { background: #0B2E4E; color: #FFFFFF; }
+.cform__select option { background: #FFFFFF; color: var(--surface-deep); }
 
 /* Chrome paints an opaque bar over an autofilled input. Push the panel's own
    navy back into it so the field does not flash a pale block. */
 .cform__input:-webkit-autofill,
 .cform__input:-webkit-autofill:hover,
 .cform__input:-webkit-autofill:focus {
-  -webkit-text-fill-color: #FFFFFF;
-  -webkit-box-shadow: 0 0 0 100px var(--pnl-autofill) inset;
-  caret-color: #FFFFFF;
+  -webkit-text-fill-color: var(--surface-deep);
+  -webkit-box-shadow: 0 0 0 100px #FFFFFF inset;
+  caret-color: var(--surface-deep);
 }
 
 /* --- Checkboxes --------------------------------------------------------- */
@@ -3300,9 +3236,7 @@ main {
 .cform__check input {
   width: 0.95rem;
   height: 0.95rem;
-  /* Navy fill when checked, matching the fields rather than disappearing
-     into the light ground. */
-  accent-color: #0B2E4E;
+  accent-color: #FFFFFF;
   cursor: pointer;
   flex: none;
 }
@@ -3317,10 +3251,11 @@ main {
   margin-top: 0.4rem;
 }
 .cform__error::before { content: "\2191 "; }
-/* A light red, so the border reads against the DARK field it outlines. The
-   error message below it uses --pnl-error, a deep red for the light ground.
-   The "^" prefix stays, so the state is never carried by colour alone. */
-.cform__input[aria-invalid="true"] { border-color: #FF8A9B; border-width: 2px; }
+/* --pnl-error resolves to white on this panel, which was invisible once the
+   fields themselves became white boxes. A real red border is needed against a
+   white ground; the "^" prefix on the message stays, so the state is never
+   carried by colour alone. */
+.cform__input[aria-invalid="true"] { border-color: #C2334D; border-width: 2px; }
 
 /* --- Send --------------------------------------------------------------- */
 .cform__send { display: block; margin-top: var(--s-2); }
@@ -3332,8 +3267,7 @@ main {
   border: 0;
   /* A full-width bar in the darkest ink on the panel, matching the
      reference's black Submit. Square, not a pill: the reference's button is a
-     rectangle spanning the form, and that is what anchors the column. Against
-     the light teal it is now the strongest contrast in the section. */
+     rectangle spanning the form, and that is what anchors the column. */
   width: 100%;
   justify-content: center;
   background: #001325;
@@ -3382,19 +3316,7 @@ main {
   /* The image gives up height to the form here. 32dvh left the form only
      ~574px of an 844px screen and it still had 1020px of content, so the
      picture takes a smaller share and the fields get the rest. */
-  /* Taller than the 15dvh this was: the picture carries the intro copy now,
-     and at 15dvh the words were clipped by the top of the band. */
-  .contact__inner { grid-template-rows: 18dvh minmax(0, 1fr); }
-  /* The body line is the part that does not fit a short band on a phone. The
-     eyebrow and the statement carry the message on their own. */
-  .contact__mediaBody { display: none; }
-  .contact__mediaTitle {
-    max-width: none;
-    margin-bottom: 0;
-    font-size: clamp(1.15rem, 0.9rem + 1.8vw, 1.5rem);
-  }
-  .contact__mediaCopy { padding: 0.9rem 1rem; }
-  .contact__mediaEyebrow { margin-bottom: 0.25rem; }
+  .contact__inner { grid-template-rows: 15dvh minmax(0, 1fr); }
 
   /* Stacked, the column is narrow, so the paired rows collapse to one field
      per line and the form is at its tallest exactly where the viewport is

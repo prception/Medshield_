@@ -588,26 +588,11 @@ textarea:focus-visible,
 
 /* --- Utilities ---------------------------------------------------------- */
 
-/* ONE LEFT EDGE FOR THE WHOLE PAGE.
-
-   The hero and the header both opt out of any centred column and run
-   full-bleed on --site-margin, so the logo and the giant headline start at
-   the same inset. Every other section used to centre a 1200px box instead,
-   which on a 1440 screen put its heading at ~160px against the hero's 42px —
-   the page visibly stepped inwards the moment you scrolled off the hero.
-
-   So .shell now IS the site margin: full width, no auto centring, the same
-   --site-margin the hero uses. Section headings therefore share the hero's
-   left edge at every viewport, which is the whole point.
-
-   Where a block genuinely needs a reading measure it caps its own text
-   (max-width in ch on the element itself), not the container — capping the
-   container is what re-introduces the centred column and the step. */
 .shell {
   width: 100%;
-  max-width: none;
-  margin-inline: 0;
-  padding-inline: var(--site-margin);
+  max-width: var(--shell);
+  margin-inline: auto;
+  padding-inline: clamp(1.15rem, 0.6rem + 2.4vw, 2.5rem);
 }
 
 .visually-hidden {
@@ -2496,283 +2481,234 @@ main {
 
 /* --- 10 Contact --------------------------------------------------------- */
 
-/* =========================================================================
-   11 - Contact + form
-   =========================================================================
-   A plain two-half block: photograph on the left, form on the right.
+/* The "Request a proposal" section uses the same scroll-inset mechanic as the
+   closing CTA band (section 09, where the full rationale is written down):
+   the tinted ground is an inner PANEL, and as the section scrolls into view
+   its side gutters open from 0 to --cta-inset-max while the corners round, so
+   the colour reads as retreating from both edges at once.
 
-   The scroll-scrubbed inset that used to wrap this section has been removed
-   entirely - no --cta-p, no animated width, no rounding, and no JS driving
-   it. The panel is a static full-width band, so what you see on load is what
-   you see at every scroll position. */
+   --cta-p is the shared scrub variable, declared 1 here for the same reason —
+   no JS, a throw, or reduced motion all render the finished inset state.
+
+   The panel is the deep navy ground rather than the page colour, because a
+   panel painted the same colour as what it sits on has nothing to retreat
+   FROM — the inset would run and show nothing. */
 .contact {
-  padding-block: 0;
-  background: var(--surface-page);
-  /* At least one viewport tall. dvh rather than vh so a mobile browser's
-     collapsing address bar does not leave the section short or overshooting
-     as the toolbar hides; vh is the fallback for anything without dvh.
+  --cta-p: 1;
+  /* Deliberately wider than --site-margin, unlike the other inset panels:
+     this one is meant to sit in from the page edge as a distinctly smaller
+     block, not to line up with the site gutter. */
+  --cta-inset-max: clamp(1.5rem, 0.5rem + 5vw, 7rem);
+  /* On a wide monitor the inset alone would leave the panel enormous, so the
+     settled panel is also capped. This is a WIDTH, not a max-width, because
+     the scrub has to be able to drive it — see .contact__panel. */
+  --cta-width-max: 1240px;
+  /* Deliberately tighter than --section-y. The panel is a coloured block
+     with its own generous internal padding, so the section padding is only
+     the gap to the neighbouring bands — doubling the full section rhythm on
+     top of the panel's own is what pushed this section past a laptop
+     viewport.
 
-     min-height rather than a fixed height: pinned hard, anything that made
-     the form taller than the viewport - every field showing a validation
-     error, a 200% browser zoom - was clipped with no way to reach it. This
-     way the section fills the screen normally and grows only when its content
-     genuinely needs more room. */
-  min-height: 100vh;
-  min-height: 100dvh;
+     Expressed against viewport HEIGHT, not width: the whole point is that
+     the section fits in the viewport, and a vw-based clamp gives a short
+     wide laptop (1366x768) the same generous padding as a tall one. The
+     1.25rem floor is what clears a 720px screen; the max holds a sensible
+     rhythm on a large display. */
+  padding-block: clamp(1.25rem, 3.5vh, 3.25rem);
+  /* The ground the panel retreats to reveal. The panel is deep again, so a
+     light page ground gives the inset all the contrast it needs. */
+  background: var(--surface-page);
 }
 
 .contact__panel {
-  /* Full width, no inset, no radius, nothing animated. */
-  width: 100%;
-  /* Fills the section so the grid inside has a height to divide - without
-     this the panel would size to its content and the photograph would have
-     nothing to stretch against. Not a fixed height, so a taller-than-viewport
-     form grows the panel with it. */
-  min-height: inherit;
-  padding: 0;
-  overflow: hidden;
+  /* The scrub animates WIDTH, not margin-inline.
+     An earlier version animated margin-inline and capped the panel with
+     max-width. That silently killed the effect on any viewport wide enough
+     for the cap to bind: max-width won, the panel sat at a fixed 1240px, and
+     the animated margins had nothing left to give. The gutters never moved
+     even though --cta-p was scrubbing correctly the whole time.
 
-  /* A light teal gradient, by request.
+     Driving width instead keeps the two cooperating. The cap is interpolated
+     by --cta-p as well, running from the full section width at 0 to
+     --cta-width-max at 1. Capping with a flat min() instead would clamp the
+     panel to 1240px from the very first frame on a wide monitor, so it would
+     start already-inset and only the last part of the travel would show.
 
-     The ink ramp below is NAVY, not white, and that is forced by the ground
-     rather than a style choice: on this teal, pure white measures between
-     2.1:1 and 3.0:1 depending on where you sample the gradient - it fails the
-     4.5:1 AA minimum everywhere, and this panel is almost entirely type and
-     form labels. --surface-deep on the same teal measures 5.7:1 to 8.0:1 and
-     passes throughout. So the panel goes light and the type goes dark, which
-     is the only combination of "lighter teal" that stays legible.
+     The inner min() matters: below the cap width, (100% - 1240px) is
+     NEGATIVE, and subtracting it made the panel grow wider than its section
+     as --cta-p rose. max-width then pinned it flat and the effect vanished
+     between roughly 900px and 1240px. Clamping the interpolated term at 0
+     keeps those viewports on the plain "full width minus inset" path.
+     margin-inline:auto centres whatever the width resolves to. */
+  width: calc(
+    (100% - var(--cta-p) * max(100% - var(--cta-width-max), 0px))
+    - var(--cta-p) * 2 * var(--cta-inset-max)
+  );
+  /* Never wider than the section, whatever the interpolation yields. */
+  max-width: 100%;
+  margin-inline: auto;
+  /* Height-aware for the same reason as the section padding above: the
+     constraint being solved is vertical fit, so the breathing room scales
+     with the viewport's height rather than its width. Tuned so the whole
+     section clears a 768px-tall laptop, which the previous 4.75rem cap did
+     not — the section came to 1043px and only fitted a 1080p screen. */
+  padding-block: clamp(1.5rem, 4vh, 3rem);
+  /* No padding-inline: the .shell inside supplies it. A second gutter here
+     would push the copy off the column the rest of the page aligns to. */
+  /* Square, like the reference — the panel reads as a field of colour, not
+     as a card. --cta-p still drives it so the corners stay honest if the
+     radius is ever reintroduced. */
+  border-radius: calc(var(--cta-p) * 0px);
+  /* The brand teal itself — the same --accent-2 the proof figures, service
+     rules and step numbers use, here as a full ground.
 
-     A gentle vertical ramp rather than a flat fill, so the panel has some
-     depth against the photograph beside it. Both stops are close together -
-     this reads as one colour with light falling across it, not as two. */
+     ⚠ ACCESSIBILITY EXCEPTION — WHITE ON BRAND TEAL, BY REQUEST.
+     The ground is now a gradient (see `background` below) rather than a flat
+     #20B0A8, so the figures here describe its LIGHTEST end — the worst case,
+     at the top-left. The deep end under the form measures around 5.5:1 and
+     clears AA on its own.
+     Pure white measures 2.68:1 on #20B0A8, against a 4.5:1 WCAG AA minimum
+     for body text and 3:1 for large text and UI boundaries. Nothing in this
+     panel meets AA. The colour system marks raw --accent-2 decoration-only
+     and forbids it under type for exactly this reason, and BRIEF.md targets
+     a 40-65 audience reading on phones and locked-down corporate screens.
+
+     This is a deliberate client decision, recorded here rather than hidden:
+     the panel colour was chosen first and the type follows it. Two ways to
+     reach AA if it is ever revisited — darken the ground to #04413E (white
+     11.1:1, full ink ramp legible), or keep this ground and use navy ink
+     (--surface-deep, 6.33:1).
+
+     Given the exception, everything is pushed to the maximum available
+     contrast: PURE white, not --text-on-deep (2.59:1), and no dimmer tiers
+     at all — --text-on-deep-secondary is 1.84:1 and -muted 1.29:1 here, so
+     a three-tier ink ramp would be illegible. Hierarchy is carried by weight
+     and size only. Rules are solid white rather than a veil for the same
+     reason: any alpha below 1.0 drops them under 2.5:1.
+
+     Everything inside paints with the --pnl-* variables below rather than
+     naming a ramp directly, so the section can be re-grounded from here. */
+  /* Not a flat fill of raw teal. A flat #20B0A8 panel reads as a solid slab
+     of one hue with nothing behind it, and the white type sits on it at a
+     uniform 2.68:1 with no relief anywhere.
+
+     The ramp is deliberately NAVY-DOMINANT rather than teal-dominant. Teal
+     survives only as the top-left corner where the eyebrow and title sit —
+     the brand note the section opens on — and the panel then travels through
+     a teal-navy blend into --surface-deep-hi and --surface-deep itself, so
+     the body of the block belongs to the same navy family as the header, the
+     hero overlay and the closing band rather than standing apart as a teal
+     slab. Roughly the last two thirds of the panel, including every form
+     control, is navy.
+
+     Every stop is on the straight line between --accent-2 and
+     --surface-deep, which is what keeps the transition subtle: it is one
+     colour draining toward another already in the system, not two colours
+     meeting. #1A8E96 and #0F5F74 are that mix at about a third and two
+     thirds; #063E63 sits just under --surface-deep-hi.
+
+     The ink improves the whole way down. White is 2.68:1 on the teal corner,
+     past 4.5:1 by the midpoint and around 15:1 on the navy end, so the
+     fields, their underlines and the small print all land on the legible
+     half of the panel.
+
+     The radial is the soft top-left lift, low-alpha so it reads as light
+     falling across the panel rather than as a second colour. --accent-2
+     stays the final fallback so a browser that chokes on the stack gets the
+     old flat ground rather than nothing. */
   background: var(--accent-2);
   background:
-    linear-gradient(160deg,
-      #39C7BD 0%,
-      #24B3AA 45%,
-      #17A099 100%);
+    radial-gradient(110% 95% at 4% 0%,
+      rgba(255, 255, 255, 0.09) 0%,
+      rgba(255, 255, 255, 0) 55%),
+    linear-gradient(152deg,
+      var(--accent-2) 0%,
+      #1A8E96 22%,
+      #0F5F74 46%,
+      #063E63 72%,
+      var(--surface-deep) 100%);
 
-  /* --- Panel ink, resolved once -------------------------------------
-     Navy on teal, not white on teal - see the contrast note above. Unlike the
-     old white-on-teal ramp, this one can carry real tiers: the secondary and
-     muted steps below still clear 4.5:1, so hierarchy is available again
-     rather than everything being forced to one weight. */
-  --pnl-ink:        #001D3B;
-  --pnl-ink-2:      #06294D;
-  --pnl-ink-muted:  #0A3557;
-  --pnl-accent:     #00293F;
-  /* A true red that reads against teal; the old white error state was
-     invisible the moment the fields stopped being dark. */
-  --pnl-error:      #7A0B22;
-  --pnl-warning:    #5A2A00;
-  --pnl-warning-bg: rgba(255, 255, 255, 0.30);
-  --pnl-rule:       rgba(0, 29, 59, 0.35);
-  --pnl-veil:       rgba(0, 29, 59, 0.14);
-  /* The ground behind an autofilled control - the fields are dark navy now,
-     so Chrome's opaque bar must be too. */
-  --pnl-autofill:   #0B2E4E;
+  /* --- Panel ink, resolved once ---------------------------------------
+     One tier only. See the exception note above for why the secondary and
+     muted ramps are not used on this ground. */
+  --pnl-ink:        #FFFFFF;
+  --pnl-ink-2:      #FFFFFF;
+  --pnl-ink-muted:  #FFFFFF;
+  --pnl-accent:     #FFFFFF;
+  /* Status colours are white too: --error-on-deep is 1.07:1 here and
+     --warning-on-deep 1.24:1, so both would be invisible. The error text
+     keeps its "↑" prefix and the emergency block its left rule, so neither
+     relies on hue alone to be recognised. */
+  --pnl-error:      #FFFFFF;
+  --pnl-warning:    #FFFFFF;
+  /* Transparent, not a white veil: a veil lightens the ground under the
+     emergency copy and drops white from 2.68:1 to 2.25:1 — worse where it
+     matters most. The block is separated by its border alone. */
+  --pnl-warning-bg: transparent;
+  --pnl-rule:       #FFFFFF;
+  --pnl-veil:       rgba(255, 255, 255, 0.22);
+  /* Stands in for "the panel ground behind this control" in two places: the
+     opaque bar Chrome paints over an autofilled input, and the dot punched
+     out of a checked checkbox. Both sit in the FORM, which the navy-dominant
+     gradient reaches well before its teal corner — so this is navy now.
+     Left at teal it flashed a bright teal bar across an otherwise navy
+     field on autofill, and put a teal pip inside every checked box.
+     --surface-deep-alt rather than --surface-deep so it reads as a shade
+     against the ground instead of a hole in it. */
+  --pnl-autofill:   var(--surface-deep-alt);
 
   color: var(--pnl-ink-2);
+  will-change: width;
 }
 
-/* No measure cap of its own. .shell is full-bleed on --site-margin site-wide
-   now, so the intro starts on the panel's own gutter — the same relationship
-   to its container that every other section's heading has to the page. The
-   old 1020px centred cap added a second inset on top of the panel's, which
-   made this the one heading that stepped further right than everything else.
+/* Below the tablet breakpoint the gutters are only a few pixels wide — too
+   small to read as movement, and holding them shifts the copy off the flush
+   left edge. Full-bleed instead, matching the closing band. */
+@media (max-width: 859px) {
+  .contact { --cta-inset-max: 0px; }
+  .contact__panel { border-radius: 0; will-change: auto; }
+}
 
-   The panel itself stays inset from the page edge: it is a field of colour,
-   deliberately a smaller block, and that inset is the composition — it is not
-   the section's left edge trying and failing to match the hero's. */
+@media (prefers-reduced-motion: reduce) {
+  .contact { --cta-p: 1 !important; }
+  .contact__panel { will-change: auto; }
+}
+
+/* Narrower than the page --shell. The panel is already inset from both
+   edges, so letting the content run to the full 1200px site measure would
+   put the copy hard against the panel's own edges and undo the smaller
+   block. Overrides the .shell max-width this element also carries. */
 .contact__inner {
   display: grid;
-  /* No gap and no .shell gutter. The two halves meet flush down the middle
-     so the photograph can run all the way to the centre line on one side and
-     the panel edge on the other, which is what makes it read as half the
-     composition rather than as a picture placed on a coloured panel. The
-     form half supplies its own padding instead. */
-  gap: 0;
+  gap: clamp(2rem, 1rem + 3.5vw, 3.5rem);
+  max-width: 1020px;
 }
-/* The grid fills the panel, so both halves have a box to work in rather than
-   sizing to their own content. */
-.contact__inner { min-height: inherit; }
-
-/* --- Stacked (below the two-column breakpoint) --------------------------
-   One column, and the rows must be sized explicitly. Left implicit, the form
-   row's height:100% resolved against an auto row and collapsed the picture
-   to nothing - the photograph vanished entirely on a phone.
-
-   The image takes a fixed share of the viewport and the form takes the rest,
-   scrolling within it. That keeps the section exactly 100dvh on a phone with
-   the picture still present, rather than letting one half win. */
-
-
-/* Touch targets. The tightened control padding above is sized for a pointer;
-   on a touch device the height goes back so the fields stay tappable. This is
-   deliberately NOT inside the max-width block - a touch laptop should get it
-   too. */
-@media (pointer: coarse) {
-  .cform__input { padding: 0.55rem 0.75rem; }
-  .cform__check input { width: 1.1rem; height: 1.1rem; }
-  .cform__btn { padding: 0.7rem 1.5rem; }
-}
-
 @media (min-width: 900px) {
-  /* Even halves, as in the reference. */
-  .contact__inner { grid-template-columns: 1fr 1fr; align-items: stretch; }
+  /* Reference layout: statement left, form right, roughly even columns.
+     Centred rather than bottom-aligned: with the copy scaled down, end
+     alignment left a tall band of empty navy above the intro while the
+     form ran past it. Centring distributes that slack to both ends so the
+     panel reads as a filled block. */
+  .contact__inner {
+    grid-template-columns: 1fr 1.05fr;
+    align-items: center;
+  }
 }
 
-/* --- Left half: the photograph, full bleed ------------------------------
-   No border-radius and no inset: the image fills its half of the panel
-   completely, top to bottom and out to the panel edge. */
-.contact__media {
-  position: relative;
-  overflow: hidden;
-  /* Fills its grid cell. The section is a fixed 100dvh now, so the cell has a
-     real height and the photograph simply takes all of it. min-height is the
-     floor for the stacked layout, where the image takes a share of the
-     viewport rather than a share of a row. */
-  height: 100%;
-  min-height: 0;
-}
+/* No eyebrow override here: the global .eyebrow is already --accent-2-ink,
+   which is exactly what --pnl-accent resolves to on this panel. The rule
+   that used to sit here restated the inherited value. */
 
-/* The copy sits in the lower half of the picture, as in the reference. */
-.contact__media {
-  display: flex;
-  align-items: flex-end;
-  isolation: isolate;
-}
-
-.contact__mediaImg {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  z-index: 0;
-  /* Cover, so the half-panel frame crops the photograph rather than
-     distorting it at whatever aspect the row resolves to. */
-  object-fit: cover;
-  /* The vessel sits centre-frame in a tall portrait original, so a plain
-     centre crop holds it at every column aspect. */
-  object-position: 50% 45%;
-}
-
-/* Dark at the bottom where the words are, clear at the top so the photograph
-   still reads as one. Deep navy rather than black, to stay in the same colour
-   family as the panel beside it. */
-.contact__scrim {
-  position: absolute;
-  inset: 0;
-  z-index: 1;
-  background: linear-gradient(to top,
-    rgba(0, 19, 37, 0.94) 0%,
-    rgba(0, 19, 37, 0.82) 30%,
-    rgba(0, 19, 37, 0.45) 60%,
-    rgba(0, 19, 37, 0.12) 100%);
-}
-
-.contact__mediaCopy {
-  position: relative;
-  z-index: 2;
-  width: 100%;
-  padding: clamp(1.25rem, 0.75rem + 2vw, 2.75rem);
-  color: #FFFFFF;
-}
-.contact__mediaEyebrow {
-  font-size: 0.6875rem;
-  font-weight: 700;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--accent-2-on-deep, #6FE3D9);
-  margin-bottom: 0.5rem;
-}
-.contact__mediaTitle {
-  /* The display note of the section. Fraunces, matching the other statement
-     headings on the page. */
-  font-family: var(--font-display, inherit);
-  font-size: clamp(1.35rem, 1rem + 1.6vw, 2.1rem);
-  font-weight: 600;
-  line-height: 1.15;
-  letter-spacing: -0.01em;
-  margin-bottom: 0.6rem;
-  max-width: 16ch;
-}
-.contact__mediaBody {
-  font-size: var(--t-micro);
-  line-height: 1.55;
-  color: rgba(255, 255, 255, 0.88);
-  max-width: 40ch;
-}
-
-/* --- Right half: the form column ----------------------------------------
-   This is where the panel's gutter lives now that .shell has gone. Generous
-   and asymmetric on purpose: the copy needs to clear the centre line where
-   the photograph ends, and the panel edge on the other side. */
-.contact__form-col {
-  /* Tightened from the previous clamp: the section is a fixed 100dvh now, so
-     every rem of padding is a rem the fields do not get. */
-  padding: clamp(1.25rem, 0.5rem + 2.2vw, 2.75rem);
-  /* The fields would otherwise run to whatever width the half gives them,
-     which on a large monitor is far past a comfortable measure. */
-  max-width: 40rem;
-  min-width: 0;
-
-  /* Centred in its half rather than stretched: the form is shorter than the
-     viewport in the normal case, and pinning it to the top left a band of
-     empty ground under the emergency block.
-
-     No overflow/scroll container here any more. The section grows past one
-     screen when the form genuinely needs it (validation errors on every
-     field, or a large browser zoom), which is what the earlier fixed-height
-     version clipped. */
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-}
-/* --- Short viewports -----------------------------------------------------
-   A 768px- or 720px-tall laptop is ~100-160px short of fitting the form once
-   the section is pinned to 100dvh. Rather than compress every screen down to
-   the worst case, the last of the slack is taken back only where it is
-   actually needed - a height query, not a width one, because this is a
-   vertical budget problem.
-
-   Everything here is spacing and the lede. No control shrinks below a
-   comfortable target and no field is hidden. */
-@media (min-width: 900px) and (max-height: 820px) {
-  .contact__form-col { padding: 0.9rem 1.5rem; }
-  .contact__head { margin-bottom: var(--s-3); }
-  .contact__title { font-size: clamp(1.35rem, 1rem + 1.1vw, 1.8rem); }
-  /* The lede repeats what the headline and the fields already establish, so
-     on a screen this short it is the first thing to go rather than squeezing
-     the controls people have to hit. */
-  .contact__lede { display: none; }
-  .cform { gap: 0.5rem; }
-  .cform__row { gap: 0.5rem var(--s-4); }
-  .cform__input { padding: 0.45rem 0.75rem; }
-  .cform__textarea { min-height: 2.5rem; }
-  .contact__form-col .emergency { margin-top: var(--s-3); padding: 0.6rem 0.75rem; }
-  /* Build-time guidance for the team, not information the visitor needs. */
-  .contact__form-col .emergency__note { display: none; }
-}
-
-
-
-
-.contact__head { margin-bottom: var(--s-4); }
-
-/* The global .eyebrow is --accent-2-ink - teal, and this panel's gradient is
-   teal at exactly the corner where the eyebrow sits, measuring 1.84:1. It
-   takes the panel ink instead and keeps its identity through the uppercase
-   letterspaced treatment. */
-.contact__head .eyebrow { color: var(--pnl-ink); }
+/* The global .eyebrow is --accent-2-ink, which is teal ON teal here and
+   measured 1.84:1 — a clear fail. On this panel it takes the panel ink and
+   keeps its identity through the uppercase/letterspaced treatment instead. */
+.contact__intro .eyebrow { color: var(--pnl-accent); }
 
 /* The reference runs this headline at 74px. Held well below that per the
    brief — clinical, not a poster — while still being the largest thing in
    the panel and clearly the statement the form answers to. */
 .contact__title {
-  /* One step down from --t-h2. The section is height-constrained now, and the
-     headline was the single largest consumer of that budget. */
-  font-size: clamp(1.5rem, 1.1rem + 1.4vw, 2.25rem);
+  font-size: var(--t-h2);
   font-weight: 700;
   line-height: 1.14;
   letter-spacing: -0.015em;
@@ -2781,7 +2717,7 @@ main {
   max-width: 17ch;
 }
 .contact__lede {
-  font-size: var(--t-micro);
+  font-size: var(--t-small);
   color: var(--pnl-ink-2);
   max-width: 42ch;
   margin-bottom: var(--s-5);
@@ -2803,17 +2739,8 @@ main {
   padding: var(--s-4);
   max-width: 42ch;
 }
-
-/* Sits under the form now rather than beside it. The top margin is a real
-   break, not a gap: this block must not read as the last row of the fields.
-   The measure cap is dropped because it is spanning the whole form column
-   here, where 42ch would leave it looking like an orphaned card. */
-.contact__formwrap .emergency {
-  margin-top: var(--s-5);
-  max-width: none;
-}
 .emergency__title {
-  font-size: var(--t-micro);
+  font-size: var(--t-small);
   font-weight: 700;
   color: var(--pnl-warning);
   margin-bottom: var(--s-2);
@@ -3101,323 +3028,34 @@ main {
 .check:hover input:not(:checked) { border-color: var(--pnl-ink-muted); }
 
 /* --- Send ---------------------------------------------------------------
-   A pill, matching the reference's small rounded button rather than the bare
-   text link this used to be. Left-aligned for the same reason: the reference
-   sits its button on the left edge of the panel, under the statement, not
-   flushed to the right margin.
-
-   Still a real <button> — the chrome is restyled, not swapped for an <a>. */
-.form__send { display: flex; justify-content: flex-start; }
+   The reference ends on a bare right-aligned text link, not a filled
+   button. Kept as a real <button> for keyboard and AT operability, with the
+   button chrome stripped rather than swapped for an <a>. */
+.form__send { display: flex; justify-content: flex-end; }
 
 .send {
   appearance: none;
+  background: none;
   border: 0;
-  /* Solid white on the navy end of the panel, which is where the button
-     lands. This is the one filled element in the section, so it is also the
-     only place the ink/ground relationship inverts: navy type on white
-     measures around 15:1, comfortably the strongest contrast in the panel
-     and correctly the loudest thing in it. */
-  background: var(--pnl-ink);
-  color: var(--surface-deep);
-  /* Fully rounded, capsule-style, like the reference. A large px value
-     rather than 50% so the shape stays a pill as the label's width changes
-     instead of turning into an ellipse. */
-  border-radius: 999px;
-  padding: 0.7rem 1.4rem;
+  padding: 0.3rem 0;
   font-family: inherit;
   font-size: var(--t-micro);
   font-weight: 700;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
+  color: var(--pnl-accent);
   cursor: pointer;
   display: inline-flex;
   align-items: center;
-  gap: 0.5rem;
-  transition: background 0.16s ease, gap 0.16s ease, transform 0.16s ease;
+  gap: 0.45rem;
+  transition: color 0.16s ease, gap 0.16s ease;
 }
 .send__arrow { transition: transform 0.16s ease; }
-/* Hover lifts the gap and the arrow rather than changing the fill much: on a
-   solid white pill there is nowhere brighter to go, so the feedback is
-   motion, not colour. */
-.send:hover { gap: 0.8rem; transform: translateY(-1px); }
+.send:hover { color: var(--pnl-ink); gap: 0.7rem; }
 .send:hover .send__arrow { transform: translate(2px, -2px); }
 .send:focus-visible {
   outline: 2px solid var(--focus);
   outline-offset: 3px;
-}
-
-/* =========================================================================
-   Contact form (.cform) - rebuilt, homepage only
-   =========================================================================
-   Deliberately a separate namespace from the .field/.form rules above, which
-   contact.html still uses. Nothing here touches those.
-
-   The difference that matters: there is NO floating label and no transition
-   anywhere in this block. The old fields animated their label from inside
-   the input up to a caption position on focus. Here every label is a static
-   caption sitting above its control, always at the same size in the same
-   place, so the field name never moves and never disappears behind a value.
-   Hover and focus change colour only - state, not motion. */
-/* --s-3 rather than --s-4: eight rows multiply any gap, and this quarter-rem
-   per row is a large part of what lets the whole form clear a 768px laptop
-   without the column needing to scroll. */
-.cform { display: flex; flex-direction: column; gap: var(--s-3); }
-
-/* Two fields per line where they are naturally short and related, one per
-   line otherwise. Collapses to a single column on narrow screens. */
-.cform__row {
-  display: grid;
-  gap: var(--s-3) var(--s-4);
-}
-@media (min-width: 560px) {
-  .cform__row { grid-template-columns: 1fr 1fr; }
-}
-
-.cform__field { display: flex; flex-direction: column; min-width: 0; }
-
-/* The static caption. Small and letterspaced so it reads as a field name
-   rather than as body copy, but never uppercase-only at a size that would
-   hurt - it stays legible for the 40-65 audience the brief names. */
-.cform__label {
-  /* 11px. These are short uppercase field names, not reading copy, and the
-     letterspacing keeps them legible at this size. */
-  font-size: 0.6875rem;
-  font-weight: 600;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--pnl-ink-2);
-  line-height: 1.3;
-  margin-bottom: 0.2rem;
-  /* fieldset legends do not inherit flex/block layout reliably; this keeps
-     the legend caption sitting on its own line like every other label. */
-  display: block;
-  padding: 0;
-}
-/* Pinned off rather than left to inherit. A global `transition: all` reaches
-   these labels; there is nothing here for it to animate today, but this is the
-   one property that would silently bring the floating-label motion back if a
-   future rule ever set a transform or a font-size on a focused label. */
-.cform__label { transition: none; }
-
-.cform__opt {
-  /* Never break onto its own line - it is a qualifier on the field name, and
-     wrapped it reads as a second label. */
-  white-space: nowrap;
-  letter-spacing: 0;
-  text-transform: none;
-  font-weight: 400;
-  opacity: 0.85;
-}
-
-/* Filled controls rather than the bare underlines the old form used. On the
-   navy end of the panel a soft white wash reads as a real input affordance,
-   which an underline alone does not once the fields are this dense. */
-.cform__input {
-  width: 100%;
-  font-family: inherit;
-  /* 13px rather than --t-small's 14px. Still comfortably above the 12px floor
-     the type scale sets for input text. */
-  font-size: 0.8125rem;
-  /* Dark navy fields on the light teal, by request - not the white boxes
-     this had. The inversion works in the panel's favour: white type on
-     #0B2E4E measures about 13:1, and the dark control reads clearly as an
-     input against a light ground without needing a border to define it. */
-  color: #FFFFFF;
-  background: #0B2E4E;
-  border: 1px solid rgba(0, 29, 59, 0.25);
-  border-radius: var(--radius);
-  /* Sized down to fit the 100dvh section without the column scrolling. Each
-     field costs its input plus its label, so a few px off the control here is
-     multiplied by seven rows. 0.4rem of vertical padding on a 13px control
-     lands at ~33px - below the 44px touch guideline but this is a pointer-led
-     B2B form, and the mobile block below puts the height back for touch. */
-  padding: 0.4rem 0.7rem;
-  line-height: 1.35;
-  /* Colour only - no transform, no size change. */
-  transition: background-color 0.16s ease, border-color 0.16s ease;
-}
-.cform__input::placeholder { color: rgba(255, 255, 255, 0.55); }
-
-.cform__input:hover { background: #11395E; }
-/* Focus lifts the field slightly and takes a white edge, which is the
-   strongest boundary available against both the dark control and the light
-   ground around it. */
-.cform__input:focus {
-  outline: none;
-  background: #11395E;
-  border-color: #FFFFFF;
-}
-.cform__input:focus-visible {
-  outline: 2px solid var(--focus);
-  outline-offset: 2px;
-}
-
-.cform__textarea { min-height: 2.4rem; resize: vertical; line-height: 1.45; }
-
-/* Native select arrow removed and redrawn, so the control matches the text
-   inputs instead of rendering as an OS widget on the panel. */
-.cform__select {
-  appearance: none;
-  -webkit-appearance: none;
-  padding-right: 2rem;
-  /* White arrow: the select is a dark navy box again. */
-  background-image:
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%23ffffff' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 0.85rem center;
-  cursor: pointer;
-}
-/* The dropdown list itself is painted by the OS, not the panel, so its
-   options need an explicit dark ground - left alone they render as white
-   text on white on several platforms. */
-.cform__select option { background: #0B2E4E; color: #FFFFFF; }
-
-/* Chrome paints an opaque bar over an autofilled input. Push the panel's own
-   navy back into it so the field does not flash a pale block. */
-.cform__input:-webkit-autofill,
-.cform__input:-webkit-autofill:hover,
-.cform__input:-webkit-autofill:focus {
-  -webkit-text-fill-color: #FFFFFF;
-  -webkit-box-shadow: 0 0 0 100px var(--pnl-autofill) inset;
-  caret-color: #FFFFFF;
-}
-
-/* --- Checkboxes --------------------------------------------------------- */
-.cform__checks { border: 0; padding: 0; margin: 0; min-width: 0; }
-.cform__checkRow {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.45rem 1.1rem;
-}
-.cform__check {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-  font-size: 0.8125rem;
-  color: var(--pnl-ink-2);
-  cursor: pointer;
-}
-.cform__check input {
-  width: 0.95rem;
-  height: 0.95rem;
-  /* Navy fill when checked, matching the fields rather than disappearing
-     into the light ground. */
-  accent-color: #0B2E4E;
-  cursor: pointer;
-  flex: none;
-}
-
-/* --- Errors ------------------------------------------------------------- */
-/* Keeps the arrow prefix: on this panel the error colour resolves to plain
-   white (see the panel contrast note), so hue alone cannot mark a field as
-   invalid and the glyph carries it. */
-.cform__error {
-  font-size: var(--t-micro);
-  color: var(--pnl-error);
-  margin-top: 0.4rem;
-}
-.cform__error::before { content: "\2191 "; }
-/* A light red, so the border reads against the DARK field it outlines. The
-   error message below it uses --pnl-error, a deep red for the light ground.
-   The "^" prefix stays, so the state is never carried by colour alone. */
-.cform__input[aria-invalid="true"] { border-color: #FF8A9B; border-width: 2px; }
-
-/* --- Send --------------------------------------------------------------- */
-.cform__send { display: block; margin-top: var(--s-2); }
-
-/* The pill from the reference. Solid white on the navy end of the panel is
-   around 15:1 - correctly the loudest thing in the section. */
-.cform__btn {
-  appearance: none;
-  border: 0;
-  /* A full-width bar in the darkest ink on the panel, matching the
-     reference's black Submit. Square, not a pill: the reference's button is a
-     rectangle spanning the form, and that is what anchors the column. Against
-     the light teal it is now the strongest contrast in the section. */
-  width: 100%;
-  justify-content: center;
-  background: #001325;
-  color: #FFFFFF;
-  border-radius: var(--radius);
-  padding: 0.75rem 1.4rem;
-  font-family: inherit;
-  font-size: var(--t-micro);
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  transition: background-color 0.16s ease;
-}
-.cform__btn:hover { background: #000000; }
-.cform__btn:focus-visible { outline: 2px solid var(--focus); outline-offset: 3px; }
-
-.cform__foot {
-  font-size: var(--t-micro);
-  color: var(--pnl-ink-muted);
-  margin-top: var(--s-2);
-}
-
-/* The emergency block sits under the rebuilt form. The top margin is a real
-   break so it cannot read as the last row of the fields. */
-/* Compacted for the height budget: the note about the number not yet being
-   published is build-time guidance, not something the reader needs, so it is
-   the one line that gives way. The call-to-action itself is untouched. */
-.contact__form-col .emergency {
-  margin-top: var(--s-4);
-  max-width: none;
-  padding: var(--s-3);
-}
-.contact__form-col .emergency__title { margin-bottom: 0.2rem; }
-.contact__form-col .emergency__body  { margin-bottom: 0.3rem; }
-.contact__form-col .emergency__note  { padding-top: 0.3rem; }
-
-/* Stacked layout overrides. Placed after the .cform base rules rather than
-   beside the other contact layout CSS: several of these (the checkbox grid,
-   the row columns) target the same selectors at the same specificity, so they
-   only win by coming later in the file. */
-@media (max-width: 899px) {
-  /* The image gives up height to the form here. 32dvh left the form only
-     ~574px of an 844px screen and it still had 1020px of content, so the
-     picture takes a smaller share and the fields get the rest. */
-  /* Taller than the 15dvh this was: the picture carries the intro copy now,
-     and at 15dvh the words were clipped by the top of the band. */
-  .contact__inner { grid-template-rows: 18dvh minmax(0, 1fr); }
-  /* The body line is the part that does not fit a short band on a phone. The
-     eyebrow and the statement carry the message on their own. */
-  .contact__mediaBody { display: none; }
-  .contact__mediaTitle {
-    max-width: none;
-    margin-bottom: 0;
-    font-size: clamp(1.15rem, 0.9rem + 1.8vw, 1.5rem);
-  }
-  .contact__mediaCopy { padding: 0.9rem 1rem; }
-  .contact__mediaEyebrow { margin-bottom: 0.25rem; }
-
-  /* Stacked, the column is narrow, so the paired rows collapse to one field
-     per line and the form is at its tallest exactly where the viewport is
-     shortest. Everything below claws that back. */
-  .contact__form-col { padding: 0.8rem 1rem; }
-  .contact__head { margin-bottom: var(--s-3); }
-  .contact__title { font-size: clamp(1.25rem, 1rem + 2.4vw, 1.6rem); }
-  /* The headline and the fields already say what this is. */
-  .contact__lede { display: none; }
-  .cform { gap: 0.5rem; }
-  .cform__row { gap: 0.5rem 0.6rem; }
-  /* Keep the paired rows paired on a phone rather than letting them collapse
-     to one field per line. Three rows recovered outright, which is most of
-     what the stacked layout was over by. The columns are narrow but these are
-     short values - a name, a company, a select - not prose. */
-  .cform__row { grid-template-columns: 1fr 1fr; }
-  /* The four interest checkboxes go to a 2x2 grid: as a flex-wrap row they
-     broke 3 + 1 and wasted a line. */
-  .cform__checkRow { display: grid; grid-template-columns: 1fr 1fr; gap: 0.4rem 0.6rem; }
-  .cform__textarea { min-height: 2rem; }
-  .contact__form-col .emergency { margin-top: var(--s-3); padding: 0.6rem 0.7rem; }
-  /* Build-time guidance for the team, not for the visitor. */
-  .contact__form-col .emergency__note { display: none; }
 }
 
 /* Honeypot — off-screen rather than display:none, which some bots detect.
@@ -3429,15 +3067,7 @@ main {
   overflow: hidden;
 }
 
-/* The send row is a filled pill now rather than a text link, so it needs
-   real space above it to read as the end of the fields, and the foot note
-   needs clearing from the button's rounded edge. */
-.form__send { margin-top: var(--s-3); }
-.form__foot {
-  font-size: var(--t-micro);
-  color: var(--pnl-ink-muted);
-  margin-top: var(--s-3);
-}
+.form__foot { font-size: var(--t-micro); color: var(--pnl-ink-muted); }
 
 /* Success state — replaces the form in place. No redirect, no alert. */
 .success {
@@ -3785,14 +3415,11 @@ main {
    The shell's own padding-inline is subtracted before scaling, otherwise the
    mark is sized against the viewport while it is laid out inside the narrower
    content box, and it overhangs by exactly that padding at every width below
-   the cap. That gutter is --site-margin now that .shell runs full-bleed, so
-   the subtraction tracks the same token the layout uses — with the old
-   hard-coded clamp still here the mark was sized for a wider box than it
-   actually sits in and ran off the right edge. */
+   the cap. */
 .site-footer__wordmark {
   font-family: var(--font-display);
   font-size: min(
-    calc(0.108 * (100vw - 2 * var(--site-margin))),
+    calc(0.108 * (100vw - 2 * clamp(1.15rem, 0.6rem + 2.4vw, 2.5rem))),
     120px
   );
   line-height: 0.86;
@@ -3980,89 +3607,25 @@ main {
 @media (min-width: 1000px) { .doubts__grid { grid-template-columns: repeat(3, 1fr); } }
 
 .doubt {
-  padding: 0;
+  padding: var(--s-5);
   background: var(--surface-raised);
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  overflow: clip;
-}
-
-/* Each card now opens on its own photograph, with the 01-06 numeral sitting
-   ON the picture in the top-left corner rather than above it as a label. The
-   numeral moved inside .doubt__media for that reason: it is positioned
-   against the image's box, so it stays pinned to the picture's corner at
-   every card width without a second measurement.
-
-   aspect-ratio, not a height: the six sources are all 3:2, and pinning the
-   ratio means every card in a row crops to exactly the same picture height
-   whatever its copy does underneath. */
-.doubt__media {
-  position: relative;
-  margin: 0;
-  aspect-ratio: 3 / 2;
-  overflow: clip;
-  background: var(--surface-sunken, rgba(10, 22, 40, 0.06));
-}
-.doubt__media img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
 }
 .doubt__num {
-  position: absolute;
-  top: var(--s-3);
-  left: var(--s-3);
-  display: grid;
-  place-items: center;
-  /* A ring, not a plain numeral: the picture underneath is busy and a bare
-     figure disappeared into whichever part of the photograph it landed on.
-     The disc is the deep ground the type needs to survive six different
-     images. */
-  width: 2.25rem;
-  height: 2.25rem;
-  border-radius: 50%;
-  border: 1px solid rgba(32, 176, 168, 0.75);
-  background: rgba(6, 20, 38, 0.62);
-  backdrop-filter: blur(3px);
   font-family: var(--font-display);
   font-size: var(--t-small);
   font-weight: 700;
-  letter-spacing: 0.06em;
-  color: #7FE3DC;
-  margin: 0;
-}
-/* .doubt__title now carries the SHORT statement ("3:00 AM. No VHF range.") and
-   .doubt__body the teal question beneath it. The elements kept their names
-   because the DOM order — heading then paragraph — still reads correctly to a
-   screen reader and to the no-JS document; only what each one says changed. */
-.doubt__title {
-  font-size: var(--t-body);
-  font-weight: 600;
-  line-height: 1.35;
-  margin: 0;
-  padding: var(--s-4) var(--s-4) 0;
-  text-wrap: balance;
-}
-/* The question is set off from the statement by a short teal rule, which is
-   the reference's device for it: the rule reads as the turn from what
-   happened to what is being asked. */
-.doubt__body {
+  letter-spacing: 0.1em;
   color: var(--accent-2-ink);
-  font-size: var(--t-small);
-  font-weight: 600;
-  max-width: none;
-  margin: 0;
-  padding: var(--s-3) var(--s-4) var(--s-4);
-  position: relative;
+  margin-bottom: var(--s-3);
 }
-.doubt__body::before {
-  content: "";
-  display: block;
-  width: 1.5rem;
-  border-top: 2px solid var(--accent-2);
-  margin-bottom: var(--s-2);
+.doubt__title {
+  font-size: var(--t-h3);
+  font-weight: 700;
+  margin-bottom: var(--s-3);
 }
+.doubt__body { color: var(--text-secondary); max-width: 46ch; }
 
 /* --- The central image -------------------------------------------------- */
 
@@ -4232,13 +3795,7 @@ main {
        expansion has nothing to work with — at 1080px the cards could travel
        only 60px and the picture came out barely wider than a postcard.
        Pulling the block in buys that travel back on both sides. */
-    /* Widened from 820px: every card now carries a photograph, and at the old
-       measure the pictures came out as postage stamps. The push allowance the
-       state-3 expansion needs is still preserved — it is measured live from
-       the room left between the outermost card and the frame's edge (see
-       js/doubts.js), so a wider block simply trades some of that travel for
-       legible pictures rather than breaking the expansion. */
-    max-width: 1080px;
+    max-width: 820px;
     margin-inline: auto;
     column-gap: var(--s-3);
   }
@@ -4272,8 +3829,7 @@ main {
      a truncated sentence is worse than a smaller one. The type steps down
      instead, which keeps every card's text complete and readable. */
   .doubts--live .doubt { font-size: 0.875rem; }
-  .doubts--live .doubt__title { font-size: 0.95rem; }
-  .doubts--live .doubt__body { line-height: 1.4; }
+  .doubts--live .doubt__body { line-height: 1.45; }
 }
 
 /* On the fill the cards are OUTLINES, not filled boxes: a hairline border and
@@ -4286,59 +3842,42 @@ main {
    for dark ink on a pale ground and disappears entirely against the fill. */
 .doubts--live .doubt {
   display: flex;
-  /* Picture, statement, question — the DOM order, unchanged. The old live
-     card inverted the stack (copy up top, title on the floor) because it had
-     only two runs of type to balance; with a photograph leading the card
-     there is nothing left to invert, and the picture must sit at the top edge
-     for the six cards to read as one set. */
+  /* Body copy at the top, title anchored to the bottom edge — the order is
+     inverted from the static card, where the title leads. Reading order in
+     the DOM is unchanged (num, title, body); only the visual order flips, so
+     screen readers and the no-JS document still get title-then-body. */
   flex-direction: column;
-  padding: 0;
-  background: rgba(6, 22, 44, 0.42);
-  border: 1px solid rgba(250, 251, 253, 0.22);
-  border-radius: var(--radius);
-  overflow: clip;
+  padding: var(--s-4);
+  background: transparent;
+  border: 1px solid rgba(250, 251, 253, 0.28);
+  border-radius: 0;
   font-size: 0.95rem;
   color: var(--text-on-deep);
 }
-/* The picture is the card's own top edge — no inset, so it meets the border
-   the way the reference's do. Slightly shorter than the static 3:2 because
-   the pinned stage has a fixed height to spend and the copy underneath must
-   still clear it. */
-.doubts--live .doubt__media {
-  aspect-ratio: 16 / 9;
-  background: rgba(4, 16, 32, 0.6);
-}
-.doubts--live .doubt__num {
-  width: 2rem;
-  height: 2rem;
-  top: var(--s-2);
-  left: var(--s-2);
-  font-size: 0.72rem;
-}
 .doubts--live .doubt__title {
-  font-size: 1rem;
-  font-weight: 600;
-  line-height: 1.3;
-  padding: var(--s-3) var(--s-3) 0;
-  /* `auto` pushes the statement-and-question block to the card's floor
-     whatever the picture leaves, so the six questions still land on a common
-     line across a row. */
+  order: 3;
+  font-size: 1.05rem;
+  /* `auto` pushes the title to the card's bottom edge whatever the body's
+     length, so the six titles sit on a common baseline across a row even
+     though the copy above them does not. The padding keeps a minimum gap on
+     the cards whose copy nearly fills the box. */
   margin-top: auto;
+  padding-top: var(--s-5);
   margin-bottom: 0;
   color: var(--text-on-deep);
 }
-/* On the deep fill the ink token goes muddy — the raw brand teal is the
-   legible one against navy, which is what the reference uses. */
-.doubts--live .doubt__body {
-  max-width: none;
-  font-size: 0.82rem;
-  padding: var(--s-2) var(--s-3) var(--s-3);
-  color: #4FD5CC;
+/* The 01-06 numerals: kept, but quietened to a label so the two lines of copy
+   and the title carry the card. --accent-2-ink is a dark-ground teal and goes
+   muddy here, so the numeral takes the same white at reduced alpha. */
+.doubts--live .doubt__num {
+  order: 1;
+  margin-bottom: var(--s-3);
+  color: rgba(250, 251, 253, 0.55);
 }
-.doubts--live .doubt__body::before {
-  width: 1.25rem;
-  margin-bottom: var(--s-1);
-  border-top-color: rgba(79, 213, 204, 0.85);
+.doubts--live .doubt__body {
+  order: 2;
+  max-width: none;
+  color: var(--text-on-deep);
 }
 
 /* Below the 3-column breakpoint the composition ADAPTS rather than shrinking
@@ -4403,11 +3942,7 @@ main {
        custom property computes to the empty string — the JS fallback would
        then be carrying the real value and the two would drift apart again,
        which is exactly what reading it was meant to prevent. */
-    /* Lowered from 460px: each card now carries its own photograph, so the two
-       card blocks are roughly twice the height they were and the band that
-       sits between them has to give the difference back — at the old cap the
-       bottom row was pushed clean off the pinned stage. */
-    --doubts-cap: 250px;
+    --doubts-cap: 460px;
     /* --doubts-band is the reserved row's height. js/doubts.js sets it to 0
        while the picture is switched off, so the two card blocks close up
        instead of leaving an empty gap where nothing is drawn; with the
@@ -4435,13 +3970,8 @@ main {
      999px, where it is far too small beside a 305px card — the range is nearly
      three times as wide at one end as the other, so one fixed size cannot serve
      it. The clamp tracks the column width the cards actually get. */
-  .doubts--live .doubt { padding: 0; }
-  /* Wider crop than the desktop 16:9: height is what the pinned stage is
-     short of at this size, and cropping the picture costs less than shrinking
-     the type under it. */
-  .doubts--live .doubt__media { aspect-ratio: 2 / 1; }
+  .doubts--live .doubt { padding: var(--s-3) var(--s-2); }
   .doubts--live .doubt__title {
-    padding: var(--s-2) var(--s-2) 0;
     font-size: clamp(0.8rem, 0.66rem + 0.62vw, 1.05rem);
     line-height: 1.25;
     margin-bottom: 0;
@@ -4455,25 +3985,10 @@ main {
     overflow-wrap: break-word;
   }
   .doubts--live .doubt__num {
-    width: 1.6rem;
-    height: 1.6rem;
-    top: var(--s-1);
-    left: var(--s-1);
-    font-size: clamp(0.62rem, 0.58rem + 0.2vw, 0.74rem);
-    margin-bottom: 0;
+    font-size: clamp(0.7rem, 0.64rem + 0.26vw, 0.82rem);
+    margin-bottom: var(--s-1);
   }
-  /* The body is no longer hidden at this size: it now holds the QUESTION —
-     four or five words, and the point of the card. What used to be dropped
-     here was the long explanatory paragraph, which no longer exists. */
-  .doubts--live .doubt__body {
-    display: block;
-    font-size: clamp(0.7rem, 0.62rem + 0.35vw, 0.86rem);
-    padding: var(--s-1) var(--s-2) var(--s-2);
-  }
-  .doubts--live .doubt__body::before {
-    width: 1rem;
-    margin-bottom: 2px;
-  }
+  .doubts--live .doubt__body { display: none; }
 
   /* The picture is nudged onto the band's OWN centre line.
 
@@ -4528,7 +4043,7 @@ main {
   /* The band is sized off the frame, and the frame is narrow here — the 460px
      cap never binds at this width, so the picture is already proportional. It
      only needs to stop competing with four rows of cards for the viewport. */
-  .doubts--live .doubts__grid { --doubts-cap: 240px; }
+  .doubts--live .doubts__grid { --doubts-cap: 380px; }
 }
 
 /* --- Tablets: the body copy comes back -----------------------------------
@@ -4546,25 +4061,29 @@ main {
    because it cut sentences mid-word — these cards are a summary beside a
    picture, and the full text is one breakpoint away. */
 @media (min-width: 768px) and (max-width: 999px) {
-  /* The statement and question are short enough to show whole at this size —
-     the three-line clamp that used to live here belonged to the old
-     paragraph-length body and would now cut nothing. */
-  .doubts--live .doubt__title {
-    padding: var(--s-3) var(--s-3) 0;
-    font-size: 0.92rem;
-  }
+  .doubts--live .doubt { padding: var(--s-4) var(--s-3); }
   .doubts--live .doubt__body {
-    font-size: 0.8rem;
-    line-height: 1.35;
-    padding: var(--s-2) var(--s-3) var(--s-3);
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+    line-clamp: 3;
+    overflow: hidden;
+    font-size: 0.82rem;
+    line-height: 1.4;
+    margin-bottom: 0;
+    max-width: none;
+  }
+  /* The card reverts to the desktop stack — body first, title anchored to the
+     bottom edge — now that there is a body to stack. The phone layout has only
+     a title, so it needs no ordering at all. */
+  .doubts--live .doubt__title {
+    margin-top: auto;
+    padding-top: var(--s-4);
   }
   /* Raised from 460px: with the section's widest compact viewports the old cap
      froze the picture at 271px of band from 600px up, so the image stopped
      growing exactly where the layout had most to give it. */
-  /* Lowered from 620px for the same reason as the compact cap above: the
-     cards are picture-height now and the band cannot have the room it used
-     to. */
-  .doubts--live .doubts__grid { --doubts-cap: 300px; }
+  .doubts--live .doubts__grid { --doubts-cap: 620px; }
 }
 
 /* --- Landscape phones ----------------------------------------------------
@@ -4584,22 +4103,10 @@ main {
     grid-template-rows: auto 0px auto;
     row-gap: var(--s-1);
   }
-  .doubts--live .doubt { padding: 0; }
-  /* Height is the binding constraint here, and the card's picture is the
-     tallest thing in it — so the picture is what goes, not the question. The
-     numeral moves back into the flow above the statement so the card still
-     carries its 01-06. */
-  .doubts--live .doubt__media { display: none; }
-  .doubts--live .doubt__title {
-    font-size: 0.78rem;
-    line-height: 1.2;
-    padding: var(--s-2) var(--s-2) 0;
-  }
-  .doubts--live .doubt__body {
-    font-size: 0.7rem;
-    padding: 2px var(--s-2) var(--s-2);
-  }
-  .doubts--live .doubt__body::before { display: none; }
+  .doubts--live .doubt { padding: var(--s-2); }
+  .doubts--live .doubt__title { font-size: 0.78rem; line-height: 1.2; }
+  .doubts--live .doubt__num { font-size: 0.66rem; margin-bottom: 0; }
+  .doubts--live .doubt__body { display: none; }
 }
 
 /* Short viewports (laptops at 720p, and any browser with a lot of chrome)
@@ -4609,20 +4116,13 @@ main {
   /* Same reasoning as the block above: shrink the type, never clamp it. A
      clamp here cut the body mid-sentence behind an ellipsis on any laptop at
      720p, which is a large share of real viewers. */
-  .doubts--live .doubt { padding: 0; font-size: 0.82rem; }
-  /* The picture gives up height first — it is the one part of the card that
-     can be cropped without losing a word. */
-  .doubts--live .doubt__media { aspect-ratio: 2 / 1; }
-  .doubts--live .doubt__title {
-    font-size: 0.9rem;
-    padding: var(--s-2) var(--s-3) 0;
-  }
-  .doubts--live .doubt__body {
-    font-size: 0.76rem;
-    line-height: 1.35;
-    padding: var(--s-1) var(--s-3) var(--s-2);
-  }
-  .doubts--live .doubt__body::before { margin-bottom: 2px; }
+  .doubts--live .doubt { padding: var(--s-3); font-size: 0.82rem; }
+  .doubts--live .doubt__body { line-height: 1.4; }
+  /* The body-above-title stack is taller than the old title-above-body one,
+     so the gap that separates them is the first thing to give on a short
+     viewport — before the copy itself gets clamped any further. */
+  .doubts--live .doubt__title { padding-top: var(--s-3); font-size: 1rem; }
+  .doubts--live .doubt__num { margin-bottom: var(--s-2); }
   .doubts--live .doubts__grid { gap: var(--s-4); }
 }
 
@@ -4738,12 +4238,9 @@ main {
      already inside a .shell - without this the resting prose ran the full
      width of the viewport while the section above it stayed on the measure. */
   width: 100%;
-  /* Matches .shell exactly — full-bleed on the site margin — because this
-     block is the only thing in the section that is NOT inside a .shell, and
-     it has to land on the same left edge as the frame above it. */
-  max-width: none;
-  margin-inline: 0;
-  padding-inline: var(--site-margin);
+  max-width: var(--shell);
+  margin-inline: auto;
+  padding-inline: clamp(1.15rem, 0.6rem + 2.4vw, 2.5rem);
   margin-top: var(--s-6);
   color: inherit;
 }
@@ -4907,13 +4404,7 @@ main {
      it is full-bleed — without it the eyebrow sat behind the wordmark. The
      bottom is smaller: the stats band is ruled off and needs no more room
      under it than the rule implies. */
-  /* The inline value is --site-margin, not an inset of its own: this overlay
-     goes full-bleed, so its eyebrow and headline are reading as a section
-     heading on the page and have to start on the same left edge as every
-     other one. The old 5vw clamp put them ~80px in at 1600 against the
-     page's 46px. Block padding is unrelated and stays as it was — the top
-     value clears the fixed header, the bottom answers the stats rule. */
-  padding: clamp(5rem, 13vh, 8rem) var(--site-margin)
+  padding: clamp(5rem, 13vh, 8rem) clamp(1.5rem, 5vw, 5.5rem)
            clamp(2rem, 5vh, 3.5rem);
   box-sizing: border-box;
 }
@@ -5331,16 +4822,14 @@ main {
      sits above it. */
   min-height: 100vh;
   min-height: 100lvh;
-  /* Full-bleed on the site margin like .shell, so the wordmark lockup and the
-     lede start from the page's one left edge rather than a centred column. */
-  max-width: none;
-  margin-inline: 0;
+  max-width: var(--shell);
+  margin-inline: auto;
   /* The top value is now the ONLY thing setting how high the wordmark sits
      (align-content is `start` below), so it is tightened from 4vh/2.75rem —
      every pixel taken off here lifts the mark by the same amount. It keeps a
      floor so the words never collide with the corner dot and ring, which are
      positioned against the section at a comparable offset. */
-  padding: clamp(0.85rem, 2.4vh, 1.75rem) var(--site-margin) clamp(1rem, 3vh, 2rem);
+  padding: clamp(0.85rem, 2.4vh, 1.75rem) var(--s-5) clamp(1rem, 3vh, 2rem);
   display: grid;
   grid-template-rows: auto auto;
   /* `start`, not `center`: the pair sits UP against the top padding rather than
@@ -5603,12 +5092,7 @@ main {
 .services__aside {
   position: absolute;
   top: 0;
-  /* The site margin, not 0. This block is positioned against the section,
-     which carries no gutter of its own, so an inset of 0 put the paragraph
-     hard on the bezel while every other edge on the page respected
-     --site-margin. Mirroring the margin here gives the section a right edge
-     that answers the left one the wordmark starts from. */
-  right: var(--site-margin);
+  right: 0;
   z-index: 4;
   max-width: 24ch;
   /* The block is right-aligned in the composition, but its CONTENTS are
@@ -6144,15 +5628,25 @@ main {
 
 /* --- 1. THE HEADER. Ordinary flow. Never pinned, never animated. --------
 
-   SET HARD LEFT, ON THE PAGE'S ONE LEFT EDGE.
+   SET HARD LEFT, OFF THE PAGE GRID.
 
-   .shell is now full-bleed on --site-margin site-wide (see .shell), so this
-   heading already starts on the hero's left edge and needs no override of its
-   own; the type and the card strip below share that edge and the composition
-   reads as one left-aligned block. Only the section's own bottom rhythm is
-   set here. */
+   Every other section on the site centres its .shell in a max-width column,
+   which puts the heading a long way in from the screen's left edge on a wide
+   monitor. The reference this section is built to does the opposite: the
+   display line starts at the same short inset the band's first card does, so
+   the type and the strip share one left edge and the whole composition reads
+   as a single left-aligned block rather than a centred heading sitting above
+   a full-bleed band.
+
+   Done by overriding .shell's own centring rather than by removing the class
+   from the markup: .shell also carries the responsive gutter, and that is the
+   part worth keeping — it is what stops the heading touching the bezel on a
+   phone. So max-width and the auto margins go, the gutter stays, and on a
+   1440 screen the heading now starts ~40px from the edge instead of ~160px. */
 
 .process__header {
+  max-width: none;
+  margin-inline: 0;
   padding-bottom: var(--s-7);
 }
 .process__eyebrow { margin-bottom: var(--s-4); }
@@ -6278,7 +5772,7 @@ main {
      cycle length is measured from. A margin would sit outside that and the
      wrap would drift by one gutter per lap. The right side gets nothing: the
      strip is meant to run off that edge. */
-  padding: 0 0 0 var(--site-margin);
+  padding: 0 0 0 clamp(1.15rem, 0.6rem + 2.4vw, 2.5rem);
   display: flex;
   flex-wrap: nowrap;
   gap: var(--s-4);
@@ -6321,15 +5815,14 @@ main {
      vh term so it scales with the fold it has to sit in, and a vw term so a
      phone shows one card plus a slice of the next.
 
-     The vh term scales the card with the fold it sits in; the rem cap is what
-     actually binds on most desktop screens and is therefore the real size
-     control. Kept deliberately smaller than the space available: the band is
-     seated at the section's foot and does NOT need to fill the fold — a
-     smaller plate with more air above it reads as a strip passing along the
-     bottom of the section, which is the intent, rather than as a wall of
-     pictures. More cards are on screen at once at this size, which also makes
-     the leftward motion easier to read. */
-  width: min(19rem, calc(52vh * 4 / 5), 66vw);
+     The vh term is the one that matters here. The band is seated at the
+     section's foot and the section is exactly one viewport, so whatever the
+     cards do not claim becomes a void between the heading and the pictures —
+     and that void is then inside the rectangle the hand-off folds inward,
+     which is what makes the close read as mostly empty ground. At 68vh the
+     gap on a 1180-tall tablet was still 465px; 78vh closes most of it while
+     leaving the heading its own air. */
+  width: min(25rem, calc(78vh * 4 / 5), 72vw);
   aspect-ratio: 4 / 5;
   border-radius: var(--radius-lg);
   overflow: hidden;
@@ -6468,18 +5961,7 @@ main {
    rather than four crowded ones. */
 @media (max-width: 699.98px) {
   .process__card {
-    /* A vh TERM IS NEEDED HERE TOO.
-
-       This override had only a rem and a vw cap, so on a tall phone the card
-       could not grow into the fold at all — and because the band is seated at
-       the section's foot with the section held to one viewport, everything the
-       card did not claim became a void between the heading and the pictures.
-       Measured on a 390x844 screen: a 340px band under a 290px gap.
-
-       The vh term lets the plate use the space it is sitting in, the same way
-       the desktop rule does; the vw cap still keeps one card plus a slice of
-       the next on screen, which is what makes the band read as running. */
-    width: min(17rem, calc(52vh * 4 / 5), 74vw);
+    width: min(17rem, 74vw);
   }
   .process__cardCopy { padding: var(--s-4); }
 }
@@ -7247,28 +6729,15 @@ main {
 }
 
 
-/* THE INNER BLOCK NOW SPANS THE WHOLE PLATE, not just its foot.
-
-   It used to carry margin-top:auto and hold every line in one bottom-pinned
-   stack. That was correct only while the process camera was physically inside
-   the frame supplying an image for the upper two-thirds — the moment it was
-   not (morph torn down, page loaded part-way down, JS off, or simply scrolled
-   past) the plate read as a tall empty navy rectangle with a paragraph at the
-   bottom.
-
-   So the block fills the frame and justifies its two groups to the ends
-   instead: .case__head at the top, .case__foot at the bottom. The middle is
-   still open air — the camera's landing zone is unchanged — but the frame is
-   now composed at both ends whether or not anything ever lands in it. */
 .case--featured .case__inner {
   position: relative;
   padding: var(--s-6) var(--s-5);
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
-  gap: var(--s-5);
-  flex: 1;
-  min-height: 0;
+  gap: var(--s-3);
+  /* Copy sits at the foot of the frame, so the upper area stays open for the
+     arriving camera's own image to occupy. */
+  margin-top: auto;
 }
 
 /* Generous padding at the tall sizes: on a plate this deep the previous
@@ -7276,54 +6745,8 @@ main {
    card read as cramped rather than composed. */
 @media (min-width: 1040px) {
   .case--featured .case__inner {
-    padding: var(--s-6) var(--s-6) var(--s-6);
-    gap: var(--s-5);
-  }
-}
-
-/* The two groups keep their own internal rhythm; the space between THEM is
-   what the plate's height opens up. */
-.case--featured .case__head,
-.case--featured .case__foot {
-  display: flex;
-  flex-direction: column;
-  gap: var(--s-3);
-}
-@media (min-width: 1040px) {
-  .case--featured .case__foot { gap: var(--s-4); }
-}
-.case--featured .case__head { gap: var(--s-2); }
-
-/* The head group's own hairline: it sits on open ground at the top of the
-   plate with nothing under it, so a rule under the scope line gives it an
-   edge to sit on and stops it reading as two orphaned words. */
-.case--featured .case__head {
-  padding-bottom: var(--s-3);
-  border-bottom: 1px solid var(--hairline-on-deep);
-}
-
-/* The head group lands over the TOP of the arriving photograph, which the
-   foot scrim deliberately does not reach. It carries a short scrim of its
-   own — bleeding out past the inner block's padding so it meets the frame
-   edges — for the same reason the foot copy has one: the image underneath is
-   of unknown brightness. */
-.case--featured .case__head::before {
-  content: "";
-  position: absolute;
-  inset: calc(var(--s-6) * -1) calc(var(--s-5) * -1) auto;
-  height: 14rem;
-  background: linear-gradient(
-    to bottom,
-    rgba(var(--rgb-deep), 0.92) 0%,
-    rgba(var(--rgb-deep), 0.72) 45%,
-    rgba(var(--rgb-deep), 0) 100%
-  );
-  pointer-events: none;
-  z-index: -1;
-}
-@media (min-width: 1040px) {
-  .case--featured .case__head::before {
-    inset: calc(var(--s-6) * -1) calc(var(--s-6) * -1) auto;
+    padding: var(--s-7) var(--s-6) var(--s-6);
+    gap: var(--s-4);
   }
 }
 
@@ -7335,60 +6758,19 @@ main {
 .case--featured .case__inner::before {
   content: "";
   position: absolute;
-  /* Anchored to the FOOT of the plate, not to the whole inner block.
-
-     The inner block now spans the full frame (see above), so the old
-     `inset: -7rem 0 0` would have laid the scrim over the entire card and
-     flattened the arriving image behind a wash of navy. It is pinned to the
-     bottom instead and given a fixed depth, which is the region the foot copy
-     actually occupies — the same ground it always had, now measured from the
-     edge it belongs to. */
-  inset: auto 0 0;
-  height: 62%;
-  min-height: 22rem;
+  /* Reaches further above the copy than the frame's own padding, so on the
+     taller plate the text still has a ground that fades out well clear of the
+     arriving image rather than ending in a hard edge behind it. */
+  inset: -7rem 0 0;
   background: linear-gradient(
     to top,
-    rgba(var(--rgb-deep), 0.97) 0%,
-    rgba(var(--rgb-deep), 0.93) 38%,
-    rgba(var(--rgb-deep), 0.62) 70%,
+    rgba(var(--rgb-deep), 0.96) 0%,
+    rgba(var(--rgb-deep), 0.88) 55%,
     rgba(var(--rgb-deep), 0) 100%
   );
   pointer-events: none;
 }
 .case--featured .case__inner > * { position: relative; z-index: 1; }
-
-/* THE PLATE'S IMAGE LAYER.
-
-   Fills the card behind everything, under both scrims and all copy. It is the
-   card's own composition — not the camera's — so it is what the reader is
-   looking at once the camera has stood down, and it is what keeps the middle
-   of a 92vh plate from being empty.
-
-   Held invisible until .cases--landed so that during the morph the only image
-   on screen is still the one travelling inside the camera. Without JS the
-   awaiting class is never added at all, so it simply shows. */
-.case__plate {
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-  overflow: hidden;
-  border-radius: inherit;
-}
-.case__plate img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  object-position: center 38%;
-  display: block;
-}
-.cases--awaiting .case__plate { opacity: 0; }
-.cases--awaiting.cases--landed .case__plate {
-  opacity: 1;
-  transition: opacity 260ms ease;
-}
-@media (prefers-reduced-motion: reduce) {
-  .cases--awaiting.cases--landed .case__plate { transition: none; }
-}
 
 .case--featured .case__num {
   color: var(--accent-2-on-deep);
@@ -7404,16 +6786,14 @@ main {
 }
 .case--featured .case__title {
   color: var(--text-on-deep);
-  /* Set larger than the 1.05rem it used to be. With the copy now justified to
-     the two ends of the frame, the foot group has to hold its own end of a
-     very tall plate; at the old size it read as a caption floating under a
-     lot of nothing. Fluid, so it grows with the plate rather than fixing one
-     size against a height that is bound to the viewport. */
-  font-size: clamp(1.05rem, 0.86rem + 0.62vw, 1.45rem);
+  /* Reduced from --t-h3. In the reference the plate's own copy is small and
+     set on one or two quiet lines — the plate's weight comes from its size
+     and its ground, not from the type inside it. */
+  font-size: 1.05rem;
   font-weight: 500;
-  line-height: 1.3;
+  line-height: 1.35;
   letter-spacing: -0.01em;
-  max-width: 26ch;
+  max-width: 30ch;
   margin: 0;
 }
 .case--featured .case__figure {
@@ -7450,12 +6830,7 @@ main {
   justify-content: center;
   gap: var(--s-3);
   padding: var(--s-4) var(--s-5);
-  /* Opaque-ish navy rather than a white wash: the bar now sits over the
-     plate's own photograph, and a translucent white simply picked up whatever
-     was behind it and left the label barely readable. */
-  background: rgba(var(--rgb-deep), 0.86);
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
+  background: rgba(255, 255, 255, 0.14);
   border-top: 1px solid var(--hairline-on-deep);
   color: var(--text-on-deep);
   text-decoration: none;
@@ -7465,7 +6840,7 @@ main {
   text-transform: uppercase;
   transition: background 200ms ease;
 }
-.case__cta:hover { background: rgba(var(--rgb-deep), 0.95); }
+.case__cta:hover { background: rgba(255, 255, 255, 0.22); }
 .case__cta:focus-visible {
   outline: 2px solid var(--accent-2-on-deep);
   outline-offset: -3px;

@@ -1421,32 +1421,15 @@
            none at all. -->
       <div class="contact__inner">
 
-        <!-- Left half: photograph with the intro copy over it, as in the
-             reference - the picture carries a heading and a short statement in
-             its lower half rather than being a bare image.
-
-             A portrait-format vessel at sea, sourced for this column: the
-             previous shots were landscape interiors that lost their subject
-             when cropped to a tall half-screen. -->
+        <!-- Left half: photograph, full bleed. -->
         <div class="contact__media">
+          <!-- A standing figure rather than the desk scene that was here: this
+               column is now a tall half-screen crop, and a wide interior shot
+               loses its subject to the sides at that aspect. This one also
+               states the problem the form answers - a casualty at sea. -->
           <img class="contact__mediaImg"
-               src="assets/contact-vessel.jpg"
-               alt="" width="1400" height="2100" loading="lazy" decoding="async">
-
-          <!-- Scrim, not a filter on the <img>: a filter would dim the type
-               sitting on top of it too. A gradient rather than a flat wash, so
-               the dark end is where the words are and the top of the frame
-               stays a photograph. -->
-          <div class="contact__scrim" aria-hidden="true"></div>
-
-          <div class="contact__mediaCopy">
-            <p class="contact__mediaEyebrow">MedShield Care</p>
-            <p class="contact__mediaTitle">Care that follows your crew.</p>
-            <p class="contact__mediaBody">
-              Medical cover shouldn't stop at the gangway. Wherever your vessels
-              sail, one team manages the case, the hospital and the bill.
-            </p>
-          </div>
+               src="assets/problems/prob2.png"
+               alt="" width="1536" height="1024" loading="lazy" decoding="async">
         </div>
 
         <!-- Right half: the statement and the fields. -->
