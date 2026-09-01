@@ -741,6 +741,23 @@ textarea:focus-visible,
 /* Hidden state — set by hero.js when the user scrolls DOWN past the top. */
 .site-header.is-hidden { transform: translateY(-100%); }
 
+/* Brand hidden once the page leaves the hero — set by hero.js past STUCK_AT.
+
+   The logo belongs to the hero composition; below it the bar carries the
+   hamburger alone. Faded rather than display:none so the mark dissolves on
+   the way out and back in at the top, and so the anchor keeps its box: it
+   stays focusable as the "back to top" control, and pointer-events are only
+   dropped while it is invisible so an unseen mark cannot swallow clicks. */
+.site-header.is-scrolled .brand {
+  opacity: 0;
+  pointer-events: none;
+}
+/* Keyboard users still need it: focusing the anchor brings the mark back. */
+.site-header.is-scrolled .brand:focus-visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
 /* Ink inversion over light sections.
 
    The bar carries NO background at any scroll position, so once the pale
@@ -779,8 +796,11 @@ textarea:focus-visible,
   color: var(--text-on-deep);
 }
 
-.brand,
 .nav-toggle { transition: color 0.3s ease; }
+/* The brand also fades on scroll (see .is-scrolled above), so its transition
+   carries opacity alongside the ink colour — declared here, after that rule,
+   because this block would otherwise reset it to colour alone. */
+.brand { transition: color 0.3s ease, opacity 0.35s ease; }
 .nav-toggle__line { transition: transform 0.5s cubic-bezier(0.7, 0, 0.3, 1), background-color 0.3s ease; }
 
 /* The mark is never recoloured. assets/M2.png IS the logo — mark and wordmark
@@ -8902,7 +8922,7 @@ html.pl-on .preloader {
   inset: 0;
   z-index: 200;          /* over .site-header (z-index 100) */
   place-items: center;
-  /* The loader IS the navy cover, and preloader.js punches a hole in it with a
+  /* The loader IS the cover, and preloader.js punches a hole in it with a
      clip-path so the hero's video shows through the gap.
 
      Two earlier attempts put the cover on .hero::before instead, so the hero
@@ -8910,8 +8930,13 @@ html.pl-on .preloader {
      sits at z-index -1 inside .hero's isolate, so a cover at 0 paints above a
      media the gap can never reach, and a cover at -1 paints behind it and is
      invisible. Covering from up here sidesteps the hero's stacking context
-     entirely — this element is fixed, at z-index 200, above everything. */
-  background: var(--surface-deep);
+     entirely — this element is fixed, at z-index 200, above everything.
+
+     White, matching the page's own ground rather than the hero's navy. Note
+     the consequence this was chosen with: the intro no longer dissolves into
+     the hero's dark video, it cuts from white to it. The cover's fade at the
+     end of the timeline is what softens that. */
+  background: var(--surface-page);
   /* The wordmark must not eat clicks once it has faded but before it is
      removed, and nothing in here is interactive in the first place. */
   pointer-events: none;
@@ -8978,23 +9003,32 @@ html.pl-lock body {
 /* The two halves carry the logo's own break: MED blue, SHIELD teal — the same
    seam the mark already makes, which is why the gap opens here.
 
-   NOT the verbatim brand values. This wordmark is large type sitting directly
-   on --surface-deep, where raw #0050A0 measures 1.6:1 and raw #20B0A8 2.6:1 —
-   both fail outright. These are the palette's purpose-built "as text on navy"
-   tokens: 6.5:1 and 10.6:1 respectively, same hues. */
+   The ground is now --surface-page (white), so these are the palette's
+   ON-PAGE text tokens, not the on-navy ones. That swap is required, not
+   cosmetic: --accent-2-on-deep (#5CE0D9) is tuned to carry on navy and
+   measures about 1.5:1 on white — effectively invisible. --accent is the
+   brand blue verbatim at 7.9:1 here, and --accent-2-ink is the palette's
+   teal-as-text value at 4.8:1. Raw brand teal (#20B0A8) is 2.6:1 on this
+   ground and is documented in the palette as decoration only, never type. */
 .preloader__half {
   position: absolute;
   top: 50%;
   transform: translateY(-50%);
   display: inline-flex;
 }
+/* The 0.08em gutters keep the type off the video's edges. Anchored flush at
+   right:100%/left:100% the glyphs sit hard against the frame — fine while the
+   gap is a cap-height slot inside the word, but once it grows into the mini
+   player the D and the S read as if they are touching it. */
 .preloader__half--med {
   right: 100%;            /* hangs off the gap's left edge  */
-  color: var(--accent-ink-on-deep, #4DA3FF);
+  padding-right: 0.08em;
+  color: var(--accent, #0050A0);
 }
 .preloader__half--shield {
   left: 100%;             /* hangs off the gap's right edge */
-  color: var(--accent-2-on-deep, #5CE0D9);
+  padding-left: 0.08em;
+  color: var(--accent-2-ink, #077E77);
 }
 
 /* Per-letter mask. Each letter slides up from below its own clip box, so the

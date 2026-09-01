@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<title>Contact - Request a Proposal | MedShield</title>
+<meta name="description" content="Request a proposal from MedShield: telemedicine, hospital coordination, claims and compliance for cruise lines, shipping companies and offshore operators. India, Singapore, UAE.">
+
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="MedShield">
+<meta property="og:title" content="Contact - MedShield">
+<meta property="og:description" content="Request a proposal, or reach MedShield's offices in Chennai, Singapore and Dubai.">
+<meta property="og:image" content="assets/og-card.png">
+<meta name="theme-color" content="#0A2A43">
+
+<link rel="icon" href="assets/favicon-32.png" sizes="32x32">
+<link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/inner.css">
+</head>
+<body>
+
+<a class="skip-link" href="#main">Skip to content</a>
+
+<header class="site-header" id="site-header">
+  <div class="site-header__inner">
+    <a class="brand" href="index.html" aria-label="MedShield - home">
+      <img class="brand__mark" src="assets/M2.png" alt="" width="3682" height="930" decoding="async">
+    </a>
+    <button class="nav-toggle" id="nav-toggle" type="button"
+            aria-expanded="false" aria-controls="site-nav" aria-label="Open menu">
+      <span class="nav-toggle__bars" aria-hidden="true">
+        <span class="nav-toggle__line"></span>
+        <span class="nav-toggle__line"></span>
+        <span class="nav-toggle__line"></span>
+      </span>
+    </button>
+  </div>
+</header>
+
+<nav class="site-menu" id="site-nav" aria-label="Primary" hidden>
+  <div class="site-menu__inner">
+    <ul class="site-menu__list">
+      <li><a href="index.html">Home</a></li>
+      <li><a href="services.html">Services</a></li>
+      <li><a href="case-studies.html">Case Studies</a></li>
+      <li><a href="about.html">About</a></li>
+      <li><a href="contact.html" aria-current="page">Contact</a></li>
+    </ul>
+    <p class="site-menu__meta">
+      <span>India</span>
+      <span>Singapore</span>
+      <span>UAE</span>
+    </p>
+  </div>
+</nav>
+<div class="nav-scrim" id="nav-scrim" hidden></div>
+
+<main id="main">
+  <!-- 1-2. Hero: breadcrumb, title and lede, vertically centred in the band -->
+  <section class="c-hero" aria-labelledby="contact-h">
+    <div class="shell c-hero__inner">
+
+      <nav class="crumb" aria-label="Breadcrumb">
+        <ol class="crumb__list">
+          <li><a href="index.html">Home</a></li>
+          <li aria-current="page">Contact</li>
+        </ol>
+      </nav>
+
+      <div class="c-intro__wrap">
+        <div class="c-intro__main">
+          <h1 class="c-intro__title" id="contact-h">Contact us</h1>
+        </div>
+        <div class="c-intro__aside">
+          <p class="c-intro__lede">
+            Do you have a question, or would you like a coverage proposal for your
+            fleet? Our case managers are ready to help. Send us your fleet profile
+            and we will come back with an indicative annual medical welfare budget.
+          </p>
+          <a class="c-intro__cta" href="#contact-form">Fill in our contact form</a>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- 3. Get in touch - form left, contact channels right -->
+  <section class="git" id="contact-form" aria-labelledby="git-h">
+    <div class="shell git__inner">
+      <h2 class="git__title" id="git-h">Get in touch</h2>
+
+      <div class="git__cols">
+
+        <div class="git__formcol">
+          <h3 class="git__sub">Send a message</h3>
+          <p class="git__lede">
+            Send us your fleet profile and we will come back with a coverage
+            proposal and an indicative annual medical welfare budget.
+          </p>
+
+          <form class="cform" id="proposal-form" novalidate>
+            <div class="cform__grid">
+
+              <div class="cfield">
+                <input type="text" id="f-name" name="name" autocomplete="name" required
+                       placeholder=" " aria-describedby="e-name">
+                <label for="f-name">Name</label>
+                <p class="cfield__error" id="e-name" hidden></p>
+              </div>
+
+              <div class="cfield">
+                <input type="email" id="f-email" name="email" autocomplete="email" required
+                       placeholder=" " aria-describedby="e-email">
+                <label for="f-email">Work e-mail</label>
+                <p class="cfield__error" id="e-email" hidden></p>
+              </div>
+
+              <div class="cfield">
+                <input type="text" id="f-company" name="company" autocomplete="organization" required
+                       placeholder=" " aria-describedby="e-company">
+                <label for="f-company">Company</label>
+                <p class="cfield__error" id="e-company" hidden></p>
+              </div>
+
+              <div class="cfield">
+                <input type="tel" id="f-phone" name="phone" autocomplete="tel" placeholder=" ">
+                <label for="f-phone">Phone number</label>
+              </div>
+
+              <div class="cfield cfield--select">
+                <select id="f-topic" name="topic" required aria-describedby="e-topic">
+                  <option value="">Interested in</option>
+                  <option>Claims management</option>
+                  <option>Claims advisory &amp; legal</option>
+                  <option>Medical welfare budgeting</option>
+                  <option>Telemedicine</option>
+                  <option>General enquiry</option>
+                </select>
+                <p class="cfield__error" id="e-topic" hidden></p>
+              </div>
+
+              <div class="cfield cfield--select">
+                <select id="f-fleet" name="fleet" required aria-describedby="e-fleet">
+                  <option value="">Fleet size</option>
+                  <option>1&ndash;5</option>
+                  <option>6&ndash;20</option>
+                  <option>21&ndash;50</option>
+                  <option>50+</option>
+                </select>
+                <p class="cfield__error" id="e-fleet" hidden></p>
+              </div>
+
+              <div class="cfield cfield--full">
+                <textarea id="f-message" name="message" rows="3" placeholder=" "></textarea>
+                <label for="f-message">Message</label>
+              </div>
+
+            </div>
+
+            <div class="hp" aria-hidden="true">
+              <label for="f-role">Do not fill this in</label>
+              <input type="text" id="f-role" name="role" tabindex="-1" autocomplete="off">
+            </div>
+
+            <button class="cbtn" type="submit">
+              <span aria-hidden="true">&#8594;</span> Submit
+            </button>
+          </form>
+
+          <div class="success" id="form-success" hidden tabindex="-1" role="status">
+            <p class="success__mark" aria-hidden="true">&#10003;</p>
+            <h3 class="success__title">Received.</h3>
+            <p class="success__body">A case manager will reply within one business day.</p>
+          </div>
+        </div>
+
+        <div class="git__infocol">
+
+          <div class="git-item">
+            <h3 class="git-item__title">Call us</h3>
+            <p class="git-item__body">
+              Our case managers in Chennai answer during Indian business hours.
+            </p>
+            <p class="git-item__link">
+              <span class="git-item__ico" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6.5 3h3l2 5-2.5 1.5a12 12 0 0 0 5.5 5.5L16 12.5l5 2v3a2 2 0 0 1-2.2 2A16.5 16.5 0 0 1 4 6.2 2 2 0 0 1 6 4z"/></svg>
+              </span>
+              <a href="tel:+914435949210">+91 44 3594 9210</a>
+            </p>
+            <p class="git-item__link">
+              <span class="git-item__ico" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="7" y="2.5" width="10" height="19" rx="2"/><path d="M11 18.5h2"/></svg>
+              </span>
+              <a href="tel:+919840603936">+91 98406 03936</a>
+            </p>
+          </div>
+
+          <div class="git-item">
+            <h3 class="git-item__title">E-mail us</h3>
+            <p class="git-item__body">
+              For proposals, claims and anything about your fleet.
+            </p>
+            <p class="git-item__link">
+              <span class="git-item__ico" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2.5" y="4.5" width="19" height="15" rx="2"/><path d="m3 6 9 6 9-6"/></svg>
+              </span>
+              <a href="mailto:info@medshield.in">info@medshield.in</a>
+            </p>
+            <p class="git-item__link">
+              <span class="git-item__ico" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2.5" y="4.5" width="19" height="15" rx="2"/><path d="m3 6 9 6 9-6"/></svg>
+              </span>
+              <a href="mailto:ds@medshield.in">ds@medshield.in</a>
+            </p>
+          </div>
+
+          <div class="git-item">
+            <h3 class="git-item__title">Visit us</h3>
+            <p class="git-item__body">
+              Headquarters in Chennai, with regional offices in Singapore and the UAE.
+            </p>
+            <p class="git-item__link">
+              <span class="git-item__ico" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 21s7-5.6 7-11a7 7 0 1 0-14 0c0 5.4 7 11 7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>
+              </span>
+              <span class="confirm">[CONFIRM: street address]</span>
+            </p>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 4. FAQ -->
+  <section class="faq" aria-labelledby="faq-h">
+    <div class="shell faq__inner">
+      <div class="faq__head">
+        <p class="eyebrow">FAQ</p>
+        <h2 class="faq__title" id="faq-h">Frequently asked questions.</h2>
+      </div>
+
+      <div class="faq__list">
+        <div class="faq__intro">
+          <h3 class="faq__introtitle">How fast do you respond?</h3>
+          <p class="faq__introbody">
+            A case manager replies to every proposal request within one business
+            day. For a medical emergency at sea, do not use the form -
+            call <span class="confirm">[CONFIRM: 24/7 number]</span>, answered
+            by a coordinator at any hour.
+          </p>
+        </div>
+
+        <details class="faq__item">
+          <summary>Do you cover vessels outside India, Singapore and the UAE?</summary>
+          <div class="faq__answer"><p><span class="confirm">[CONFIRM: answer]</span></p></div>
+        </details>
+
+        <details class="faq__item">
+          <summary>Can you take over claims that are already in progress?</summary>
+          <div class="faq__answer"><p><span class="confirm">[CONFIRM: answer]</span></p></div>
+        </details>
+
+        <details class="faq__item">
+          <summary>What does an annual medical welfare budget include?</summary>
+          <div class="faq__answer"><p><span class="confirm">[CONFIRM: answer]</span></p></div>
+        </details>
+
+        <details class="faq__item">
+          <summary>How is telemedicine delivered to a vessel at sea?</summary>
+          <div class="faq__answer"><p><span class="confirm">[CONFIRM: answer]</span></p></div>
+        </details>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="site-footer">
+  <div class="site-footer__deep-probe" aria-hidden="true"></div>
+  <div class="shell">
+    <div class="site-footer__main">
+      <div class="site-footer__top">
+        <div class="site-footer__statement">
+          <p class="site-footer__claim">
+            MedShield manages crew medical claims for owners who treat seafarer
+            health as seriously as the vessel itself.
+          </p>
+          <p class="site-footer__cap site-footer__cap--left">Get in touch</p>
+          <a class="site-footer__email" href="contact.html">Request a proposal</a>
+          <p class="site-footer__offices">
+            <strong>Chennai, India</strong> - HQ
+            <span aria-hidden="true">&middot;</span> <strong>Singapore</strong>
+            <span aria-hidden="true">&middot;</span> <strong>Dubai, UAE</strong>
+          </p>
+        </div>
+
+        <nav class="site-footer__links" aria-label="Footer navigation">
+          <p class="site-footer__cap" id="ft-nav">Navigation</p>
+          <ul aria-labelledby="ft-nav">
+            <li><a class="site-footer__link" href="index.html">Home</a></li>
+            <li><a class="site-footer__link" href="about.html">About</a></li>
+            <li><a class="site-footer__link" href="services.html">Services</a></li>
+            <li><a class="site-footer__link" href="case-studies.html">Case studies</a></li>
+            <li><a class="site-footer__link" href="contact.html">Contact</a></li>
+          </ul>
+        </nav>
+
+        <nav class="site-footer__links" aria-label="Footer services">
+          <p class="site-footer__cap" id="ft-svc">Services</p>
+          <ul aria-labelledby="ft-svc">
+            <li><a class="site-footer__link" href="services.html#claims">Claims management</a></li>
+            <li><a class="site-footer__link" href="services.html#advisory">Claims advisory</a></li>
+            <li><a class="site-footer__link" href="services.html#budgeting">Welfare budgeting</a></li>
+            <li><a class="site-footer__link" href="services.html#telemedicine">Telemedicine</a></li>
+          </ul>
+        </nav>
+      </div>
+
+      <div class="site-footer__bottom">
+        <p class="site-footer__wordmark" aria-hidden="true">MEDSHIELD<span>&reg;</span></p>
+        <div class="site-footer__legal">
+          <p>&copy; 2026 MedShield. All rights reserved.</p>
+          <p class="site-footer__pending">
+            Privacy Policy and Terms of Service pending - not linked until the
+            pages exist.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<script src="js/nav.js" defer></script>
+<script>
+(function () {
+  'use strict';
+  var form    = document.getElementById('proposal-form');
+  var success = document.getElementById('form-success');
+  if (!form || !success) return;
+
+  var MESSAGES = {
+    name:    'Enter your name',
+    company: 'Enter your company name',
+    email:   'Enter a work email address',
+    topic:   'Choose what you are interested in',
+    fleet:   'Choose a fleet size'
+  };
+
+  function errorNode(field) { return document.getElementById('e-' + field); }
+
+  function showError(input, message) {
+    var node = errorNode(input.name);
+    input.setAttribute('aria-invalid', 'true');
+    if (node) { node.textContent = message; node.hidden = false; }
+  }
+
+  function clearError(input) {
+    var node = errorNode(input.name);
+    input.removeAttribute('aria-invalid');
+    if (node) { node.textContent = ''; node.hidden = true; }
+  }
+
+  function validate(input) {
+    var value = (input.value || '').trim();
+    if (!value) return MESSAGES[input.name] || 'This field is required';
+    if (input.name === 'email' && !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(value)) {
+      return MESSAGES.email;
+    }
+    return null;
+  }
+
+  var required = Array.prototype.slice.call(form.querySelectorAll('[required]'));
+
+  required.forEach(function (input) {
+    input.addEventListener('blur', function () {
+      var message = validate(input);
+      if (message) { showError(input, message); } else { clearError(input); }
+    });
+    input.addEventListener('input',  function () { clearError(input); });
+    input.addEventListener('change', function () { clearError(input); });
+  });
+
+  form.addEventListener('submit', function (event) {
+    event.preventDefault();
+    var firstBad = null;
+
+    required.forEach(function (input) {
+      var message = validate(input);
+      if (message) {
+        showError(input, message);
+        if (!firstBad) firstBad = input;
+      } else {
+        clearError(input);
+      }
+    });
+
+    if (firstBad) { firstBad.focus(); return; }
+
+    var trap = form.querySelector('[name="role"]');
+    var isBot = trap && trap.value !== '';
+
+    if (!isBot) {
+      // TODO: wire to endpoint - POST new FormData(form) to the MedShield inbox / CRM.
+    }
+
+    form.hidden = true;
+    success.hidden = false;
+    success.focus();
+  });
+})();
+</script>
+</body>
+</html>

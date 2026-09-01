@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
@@ -18,6 +18,11 @@
 <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
 <link rel="stylesheet" href="css/style.css">
 <link rel="stylesheet" href="css/inner.css">
+<link rel="stylesheet" href="css/about.css">
+
+<!-- Scroll reveal. NOT deferred, by contract: the script adds html.ab-anim at
+     parse time so the hidden-state CSS never applies before it can run. -->
+<script src="js/about-reveal.js"></script>
 </head>
 <body>
 
@@ -58,117 +63,170 @@
 <div class="nav-scrim" id="nav-scrim" hidden></div>
 
 <main id="main">
+  <!-- 1-2. Hero: breadcrumb, title and lede, vertically centred in the band -->
+  <section class="c-hero" aria-labelledby="contact-h">
+    <div class="shell c-hero__inner">
 
-  <section class="contact" id="contact" aria-labelledby="contact-h" style="padding-top: calc(5.25rem + var(--s-7));">
-    <div class="contact__panel">
-      <div class="shell contact__inner">
+      <nav class="crumb" aria-label="Breadcrumb">
+        <ol class="crumb__list">
+          <li><a href="index.html">Home</a></li>
+          <li aria-current="page">Contact</li>
+        </ol>
+      </nav>
 
-        <div class="contact__intro">
-          <p class="eyebrow">Request a proposal</p>
-          <h2 class="contact__title" id="contact-h">Your next medical case is already at sea</h2>
-          <p class="contact__lede">
-            Send us your fleet profile and we will come back with a coverage proposal
-            and an indicative annual medical welfare budget.
-          </p>
-
-          <aside class="emergency" aria-labelledby="emergency-h">
-            <h3 class="emergency__title" id="emergency-h">Medical emergency at sea right now?</h3>
-            <p class="emergency__body">
-              Do not use this form. Call
-              <strong class="confirm">[CONFIRM: 24/7 number]</strong>
-              - answered by a coordinator, any hour.
-            </p>
-            <p class="emergency__note">
-              This number is not yet published. It must ring a monitored line before launch.
-            </p>
-          </aside>
+      <div class="c-intro__wrap">
+        <div class="c-intro__main">
+          <h1 class="c-intro__title" id="contact-h">Contact us</h1>
         </div>
+        <div class="c-intro__aside">
+          <p class="c-intro__lede">
+            Do you have a question, or would you like a coverage proposal for your
+            fleet? Our case managers are ready to help. Send us your fleet profile
+            and we will come back with an indicative annual medical welfare budget.
+          </p>
+          <a class="c-intro__cta" href="#contact-form">Fill in our contact form</a>
+        </div>
+      </div>
 
-        <div class="contact__formwrap">
 
-          <form class="form" id="proposal-form" novalidate>
+    </div>
+  </section>
 
-            <div class="field">
-              <input type="text" id="f-name" name="name" autocomplete="name" required
-                     placeholder=" " aria-describedby="e-name">
-              <label for="f-name">Name</label>
-              <p class="field__error" id="e-name" hidden></p>
+  <!-- 3. Contact - the homepage's contact composition, reused verbatim except
+       for the left column, which carries the contact information here rather
+       than the homepage's "request a proposal" links. -->
+  <section class="contact" id="contact-form" aria-labelledby="git-h">
+    <div class="contact__panel">
+      <div class="contact__inner">
+
+        <h2 class="contact__title" id="git-h" data-ab-reveal>
+          <span class="contact__line contact__line--1">
+            <span class="contact__lineText">Ready to take</span>
+          </span>
+          <span class="contact__line contact__line--2">
+            <span class="contact__lineText" style="--reveal-delay:0.12s">The first</span>
+          </span>
+          <span class="contact__line contact__line--3">
+            <span class="contact__lineText" style="--reveal-delay:0.24s">Step?</span>
+          </span>
+        </h2>
+
+        <div class="contact__band">
+
+          <!-- Left: contact information, set at the form's own label size so
+               the two columns read as one field of type. -->
+          <div class="contact__aside">
+
+            <div class="cinfo">
+              <p class="cinfo__label">Call us</p>
+              <p class="cinfo__value">
+                <a href="tel:+914435949210">+91 44 3594 9210</a>
+              </p>
+              <p class="cinfo__value">
+                <a href="tel:+919840603936">+91 98406 03936</a>
+              </p>
             </div>
 
-            <div class="field">
-              <input type="text" id="f-company" name="company" autocomplete="organization" required
-                     placeholder=" " aria-describedby="e-company">
-              <label for="f-company">Company</label>
-              <p class="field__error" id="e-company" hidden></p>
+            <div class="cinfo">
+              <p class="cinfo__label">E-mail us</p>
+              <p class="cinfo__value">
+                <a href="mailto:info@medshield.in">info@medshield.in</a>
+              </p>
+              <p class="cinfo__value">
+                <a href="mailto:ds@medshield.in">ds@medshield.in</a>
+              </p>
             </div>
 
-            <div class="field">
-              <input type="email" id="f-email" name="email" autocomplete="email" required
-                     placeholder=" " aria-describedby="e-email">
-              <label for="f-email">Work email</label>
-              <p class="field__error" id="e-email" hidden></p>
+            <div class="cinfo">
+              <p class="cinfo__label">Visit us</p>
+              <p class="cinfo__value">Chennai, India &ndash; headquarters</p>
+              <p class="cinfo__value">Singapore <span aria-hidden="true">&middot;</span> Dubai, UAE</p>
+              <p class="cinfo__value">Full office addresses on request</p>
             </div>
 
-            <div class="field field--select">
-              <label for="f-fleet">Fleet size</label>
-              <select id="f-fleet" name="fleet" required aria-describedby="e-fleet">
-                <option value="">Select&hellip;</option>
-                <option>1&ndash;5</option>
-                <option>6&ndash;20</option>
-                <option>21&ndash;50</option>
-                <option>50+</option>
-              </select>
-              <p class="field__error" id="e-fleet" hidden></p>
-            </div>
+            <aside class="contact__alert" aria-labelledby="emergency-h">
+              <h3 class="contact__alertTitle" id="emergency-h">Medical emergency at sea right now?</h3>
+              <p class="contact__alertBody">
+                Do not use this form. Call
+                <strong><a href="tel:+919840603936">+91 98406 03936</a></strong>
+                &ndash; answered by a coordinator.
+              </p>
+            </aside>
+          </div>
 
-            <div class="field field--select">
-              <label for="f-vessel">Vessel type</label>
-              <select id="f-vessel" name="vessel" required aria-describedby="e-vessel">
-                <option value="">Select&hellip;</option>
-                <option>Cruise</option>
-                <option>Cargo</option>
-                <option>Offshore</option>
-                <option>Yacht</option>
-                <option>Mixed</option>
-              </select>
-              <p class="field__error" id="e-vessel" hidden></p>
-            </div>
+          <form class="cform" id="proposal-form" novalidate>
 
-            <div class="field field--select">
-              <label for="f-current">Current arrangement <span class="field__opt">(optional)</span></label>
-              <select id="f-current" name="current">
-                <option value="">Select&hellip;</option>
-                <option>In-house</option>
-                <option>Another provider</option>
-                <option>None yet</option>
-              </select>
-            </div>
-
-            <fieldset class="checks">
-              <legend class="checks__legend">Interested in (optional)</legend>
-              <div class="checks__row">
-                <label class="check">
-                  <input type="checkbox" name="interest" value="Claims management">
-                  <span>Claims</span>
-                </label>
-                <label class="check">
-                  <input type="checkbox" name="interest" value="Claims advisory &amp; legal">
-                  <span>Advisory</span>
-                </label>
-                <label class="check">
-                  <input type="checkbox" name="interest" value="Medical welfare budgeting">
-                  <span>Budgeting</span>
-                </label>
-                <label class="check">
-                  <input type="checkbox" name="interest" value="Telemedicine">
-                  <span>Telemedicine</span>
-                </label>
+            <div class="cform__row">
+              <div class="cform__field">
+                <label class="cform__label" for="f-name">Your name</label>
+                <input class="cform__input" type="text" id="f-name" name="name"
+                       autocomplete="name" required aria-describedby="e-name">
+                <p class="cform__error" id="e-name" hidden></p>
               </div>
-            </fieldset>
 
-            <div class="field">
-              <textarea id="f-message" name="message" rows="3" placeholder=" "></textarea>
-              <label for="f-message">Anything else to share? <span class="field__opt">(optional)</span></label>
+              <div class="cform__field">
+                <label class="cform__label" for="f-company">Company</label>
+                <input class="cform__input" type="text" id="f-company" name="company"
+                       autocomplete="organization" required aria-describedby="e-company">
+                <p class="cform__error" id="e-company" hidden></p>
+              </div>
+            </div>
+
+            <div class="cform__row">
+              <div class="cform__field">
+                <label class="cform__label" for="f-email">Work email</label>
+                <input class="cform__input" type="email" id="f-email" name="email"
+                       autocomplete="email" required aria-describedby="e-email">
+                <p class="cform__error" id="e-email" hidden></p>
+              </div>
+
+              <div class="cform__field">
+                <label class="cform__label" for="f-fleet">Fleet size</label>
+                <select class="cform__input cform__select" id="f-fleet" name="fleet"
+                        required aria-describedby="e-fleet">
+                  <option value="">Select&#8230;</option>
+                  <option>1&#8211;5</option>
+                  <option>6&#8211;20</option>
+                  <option>21&#8211;50</option>
+                  <option>50+</option>
+                </select>
+                <p class="cform__error" id="e-fleet" hidden></p>
+              </div>
+            </div>
+
+            <div class="cform__row">
+              <div class="cform__field">
+                <label class="cform__label" for="f-vessel">Vessel type</label>
+                <select class="cform__input cform__select" id="f-vessel" name="vessel"
+                        required aria-describedby="e-vessel">
+                  <option value="">Select&#8230;</option>
+                  <option>Cruise</option>
+                  <option>Cargo</option>
+                  <option>Offshore</option>
+                  <option>Yacht</option>
+                  <option>Mixed</option>
+                </select>
+                <p class="cform__error" id="e-vessel" hidden></p>
+              </div>
+
+              <div class="cform__field">
+                <label class="cform__label" for="f-current">
+                  Current arrangement <span class="cform__opt">(optional)</span>
+                </label>
+                <select class="cform__input cform__select" id="f-current" name="current">
+                  <option value="">Select&#8230;</option>
+                  <option>In-house</option>
+                  <option>Another provider</option>
+                  <option>None yet</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="cform__field">
+              <label class="cform__label" for="f-message">
+                Fleet details <span class="cform__opt">(optional)</span>
+              </label>
+              <input class="cform__input" type="text" id="f-message" name="message">
             </div>
 
             <div class="hp" aria-hidden="true">
@@ -176,13 +234,12 @@
               <input type="text" id="f-role" name="role" tabindex="-1" autocomplete="off">
             </div>
 
-            <div class="form__send">
-              <button class="send" type="submit">
-                Send <span class="send__arrow" aria-hidden="true">&#8599;</span>
-              </button>
-            </div>
+            <button class="cform__send" type="submit">
+              <span class="cform__sendLabel">Contact</span>
+              <span class="cform__dot" aria-hidden="true"></span>
+            </button>
 
-            <p class="form__foot">
+            <p class="cform__foot">
               We use these details to prepare your proposal. No newsletter, no list.
             </p>
           </form>
@@ -198,34 +255,71 @@
     </div>
   </section>
 
-  <!-- Offices -->
-  <section class="inner-section" aria-labelledby="offices-h">
-    <div class="shell">
-      <header class="inner-section__head">
-        <p class="eyebrow">Our offices</p>
-        <h2 class="section-title" id="offices-h">Reach us directly</h2>
-      </header>
-      <div class="contact-offices">
-        <div class="office-card">
-          <p class="office-card__tag">Headquarters</p>
-          <p class="office-card__city">Chennai, India</p>
-          <p class="office-card__meta">
-            Medshield Maritime Healthcare India Private Limited<br>
-            Tel: <a href="tel:+914435949210">+91 44 3594 9210</a><br>
-            Mobile: <a href="tel:+919840603936">+91 98406 03936</a><br>
-            Email: <a href="mailto:info@medshield.in">info@medshield.in</a>
+  <!-- 4. FAQ -->
+  <section class="faq" aria-labelledby="faq-h">
+    <div class="shell faq__inner">
+      <div class="faq__head">
+        <p class="eyebrow">FAQ</p>
+        <h2 class="faq__title" id="faq-h">Frequently asked questions.</h2>
+      </div>
+
+      <div class="faq__list">
+        <div class="faq__intro">
+          <h3 class="faq__introtitle">How fast do you respond?</h3>
+          <p class="faq__introbody">
+            A case manager replies to every proposal request within one business
+            day. For a medical emergency at sea, do not use the form -
+            call <a href="tel:+919840603936">+91 98406 03936</a>, answered
+            by a coordinator.
           </p>
         </div>
-        <div class="office-card">
-          <p class="office-card__tag">Regional office</p>
-          <p class="office-card__city">Singapore</p>
-          <p class="office-card__meta">Address <span class="confirm">[CONFIRM]</span></p>
-        </div>
-        <div class="office-card">
-          <p class="office-card__tag">Regional office</p>
-          <p class="office-card__city">Dubai, UAE</p>
-          <p class="office-card__meta">Address <span class="confirm">[CONFIRM]</span></p>
-        </div>
+
+        <details class="faq__item">
+          <summary>Do you cover vessels outside India, Singapore and the UAE?</summary>
+          <div class="faq__answer">
+            <p>We operate from 45+ locations across India, with offices in Singapore
+              and the UAE, and a partner network of 1,800+ hospitals, clinics, labs,
+              pharmacies and rehabilitation providers. Telemedicine reaches your crew
+              wherever the vessel is, so a case can begin at sea regardless of
+              position and be handed to a treating facility on arrival. Outside that
+              network we coordinate with local providers at the nearest port of call.</p>
+          </div>
+        </details>
+
+        <details class="faq__item">
+          <summary>Can you take over claims that are already in progress?</summary>
+          <div class="faq__answer">
+            <p>Every case is assigned a dedicated Case Management Specialist who acts
+              as the single liaison between owner, agent, crew member and hospital, and
+              who monitors the case against its timelines. Our SME panel then reviews the
+              medical position and the treatment plan, which is the same first step
+              whether a case starts with us or reaches us part-way through. Talk to us
+              about the case and we will tell you what we can pick up.</p>
+          </div>
+        </details>
+
+        <details class="faq__item">
+          <summary>What does an annual medical welfare budget include?</summary>
+          <div class="faq__answer">
+            <p>We begin with a needs assessment of your current provisions, then build
+              the budget around them: preventive care and health monitoring, contingency
+              for medical evacuation and emergencies, and telemedicine and onboard
+              medical staffing costs. Data-driven forecasting covers the contingencies,
+              and the framework is checked against the maritime health regulations that
+              apply to your fleet.</p>
+          </div>
+        </details>
+
+        <details class="faq__item">
+          <summary>How is telemedicine delivered to a vessel at sea?</summary>
+          <div class="faq__answer">
+            <p>Your vessel is connected to licensed doctors and specialists around the
+              clock, for anything from a routine consultation to urgent care. Video-enabled
+              consultations and wearable diagnostic devices let the onboard team work
+              directly with shore-based clinicians, which resolves cases early and reduces
+              costly evacuations and port diversions.</p>
+          </div>
+        </details>
       </div>
     </div>
   </section>
@@ -299,8 +393,8 @@
     name:    'Enter your name',
     company: 'Enter your company name',
     email:   'Enter a work email address',
-    fleet:   'Choose a fleet size',
-    vessel:  'Choose a vessel type'
+    topic:   'Choose what you are interested in',
+    fleet:   'Choose a fleet size'
   };
 
   function errorNode(field) { return document.getElementById('e-' + field); }
@@ -366,5 +460,24 @@
   });
 })();
 </script>
+
+<!-- Floating controls, bottom-right. The WhatsApp pill sits directly above the
+     back-to-top square; both reveal together once the hero has scrolled past. -->
+<a class="wa-float" id="wa-float"
+   href="https://wa.me/00000000000?text=Hi%20MedShield%20-%20I%27d%20like%20to%20talk%20about%20crew%20medical%20cover."
+   target="_blank" rel="noopener" aria-label="Chat with MedShield on WhatsApp">
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+    <path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38a9.87 9.87 0 0 0 4.74 1.21h.01c5.46 0 9.9-4.45 9.9-9.91 0-2.65-1.03-5.14-2.9-7.01A9.82 9.82 0 0 0 12.04 2Zm0 18.15h-.01a8.2 8.2 0 0 1-4.19-1.15l-.3-.18-3.12.82.83-3.04-.2-.31a8.18 8.18 0 0 1-1.26-4.38c0-4.54 3.7-8.23 8.25-8.23 2.2 0 4.27.86 5.82 2.42a8.18 8.18 0 0 1 2.41 5.82c0 4.54-3.7 8.23-8.23 8.23Zm4.52-6.16c-.25-.12-1.47-.72-1.69-.81-.23-.08-.39-.12-.56.13-.16.24-.64.8-.79.97-.14.16-.29.19-.54.06-.25-.12-1.05-.39-1.99-1.23-.74-.66-1.23-1.47-1.38-1.72-.14-.25-.01-.38.11-.5.11-.11.25-.29.37-.43.13-.15.17-.25.25-.41.08-.17.04-.31-.02-.43-.06-.12-.56-1.34-.76-1.84-.2-.48-.4-.42-.56-.43h-.47c-.17 0-.43.06-.66.31-.22.25-.87.85-.87 2.07s.89 2.4 1.02 2.56c.12.17 1.75 2.67 4.23 3.74.59.26 1.05.41 1.41.52.59.19 1.13.16 1.56.1.47-.07 1.47-.6 1.67-1.18.21-.58.21-1.07.15-1.18-.06-.11-.22-.17-.47-.29Z"/>
+  </svg>
+</a>
+
+<button type="button" class="to-top-fill" id="to-top" aria-label="Back to top">
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+       stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    <path d="M12 19V5"/><path d="m5 12 7-7 7 7"/>
+  </svg>
+</button>
+
+<script src="js/floating-controls.js" defer></script>
 </body>
 </html>

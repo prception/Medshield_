@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
@@ -21,7 +21,7 @@
 <link rel="stylesheet" href="css/services-hero.css">
 
 <!-- Services-hero FOUC gate. Must run BEFORE first paint, so it is inline and
-     in the head â€” a defer'd script executes after the page has already
+     in the head — a defer'd script executes after the page has already
      painted, which would show the un-split headline for a frame before
      hiding it. Adds the class only when the hero will actually animate; the
      matching conditions are re-checked in js/services-hero.js, which removes
@@ -41,7 +41,7 @@
        range is computed relative to that offset and comes out NEGATIVE
        (start -1500, end -540 for a 1500px restore). Scroll position 0 then
        sits past the end of that range, so the scrub pins itself at 100% and
-       the image layer keeps a permanent 20% offset â€” the band of bare ground
+       the image layer keeps a permanent 20% offset — the band of bare ground
        under the header. No later refresh() can undo it, because by then the
        damage is in the recorded start/end.
 
@@ -113,7 +113,7 @@
        The visible rows are decorative duplicates: they are chopped into
        per-character spans by the split engine, which would make a screen
        reader announce them letter by letter. So the rows are aria-hidden and
-       a single visually-hidden <h1> carries the real heading text â€” exactly
+       a single visually-hidden <h1> carries the real heading text — exactly
        what the reference does, and the reason .u-sr-only exists there.
 
        data-fouc-prevent marks what must stay invisible until fonts are ready
@@ -174,17 +174,17 @@
   </section>
 
   <!-- ======================================================================
-       CTA TEXT â€” the bridge between the hero and the service detail
+       CTA TEXT — the bridge between the hero and the service detail
        ======================================================================
        The reference's .cta_text_section, measured off the live site at
        1900px wide:
 
-         h2      52px / 50.232px Â· 600 Â· uppercase   (same face and size as
+         h2      52px / 50.232px · 600 · uppercase   (same face and size as
                                                       the halves headings, so
                                                       the two read as one
                                                       typographic system)
-         lede    18px / 27px Â· regular Â· muted grey
-         button  16px Â· 600 Â· uppercase Â· accent, with a diagonal arrow
+         lede    18px / 27px · regular · muted grey
+         button  16px · 600 · uppercase · accent, with a diagonal arrow
          gaps    32px between heading, lede and button
 
        It sets up the section that follows: the halves list answers "who are
@@ -218,7 +218,7 @@
   </section>
 
   <!-- ======================================================================
-       SERVICES â€” "it depends who you are in the case"
+       SERVICES — "it depends who you are in the case"
        ======================================================================
        Layout and motion copied from the reference build
        (rioproperty.co.za/services, its .services_halves_section), measured off
@@ -233,7 +233,7 @@
          - items ALTERNATE: the reference does this at runtime by setting
            order:-1 on the image wrapper of every even item, which is why the
            alternation is invisible in its static HTML. Here it is a CSS class
-           (.halves__item--flip) â€” same result, no JS required, and it still
+           (.halves__item--flip) — same result, no JS required, and it still
            works if scripting fails.
 
        Counter-parallax: the text moves 10 -> -10 while the image moves
@@ -246,7 +246,7 @@
          data-anim-scroll="lines"  subheading, per-line rise
          data-anim-scroll="fade"   the list block
        Unlike the hero's load animations these are scroll-triggered, and they
-       replay when scrolled back to â€” matching the reference's
+       replay when scrolled back to — matching the reference's
        toggleActions:"none play none reset". -->
   <section class="halves" aria-labelledby="halves-h">
     <h2 class="visually-hidden" id="halves-h">What we do, service by service</h2>
@@ -276,7 +276,7 @@
       </div>
 
       <div class="halves__imageWrap">
-        <img class="halves__image" src="assets/services/claims.jpg" alt="A crew member working on the wet deck of a tanker at sea."
+        <img class="halves__image" src="assets/services/claims.jpg" alt="Rows of archived paper case files stacked on a shelf."
              loading="lazy" decoding="async" width="1600" height="1067"
              data-parallax="trigger" data-parallax-start="-20"
              data-parallax-end="15" data-parallax-disable="tablet">
@@ -309,7 +309,7 @@
       </div>
 
       <div class="halves__imageWrap">
-        <img class="halves__image" src="assets/services/advisory.jpg" alt="A lawyer on the telephone reviewing case papers in an office."
+        <img class="halves__image" src="assets/services/advisory.jpg" alt="A hand signing a document, photographed in monochrome."
              loading="lazy" decoding="async" width="1600" height="1067"
              data-parallax="trigger" data-parallax-start="-20"
              data-parallax-end="15" data-parallax-disable="tablet">
@@ -342,7 +342,7 @@
       </div>
 
       <div class="halves__imageWrap">
-        <img class="halves__image" src="assets/services/budgeting.jpg" alt="A budget worksheet of forecast costs being reviewed line by line."
+        <img class="halves__image" src="assets/services/budgeting.jpg" alt="A calculator, printed forms and charts on a desk."
              loading="lazy" decoding="async" width="1600" height="1067"
              data-parallax="trigger" data-parallax-start="-20"
              data-parallax-end="15" data-parallax-disable="tablet">
@@ -375,7 +375,7 @@
       </div>
 
       <div class="halves__imageWrap">
-        <img class="halves__image" src="assets/services/telemedicine.jpg" alt="A clinician in a headset consulting a patient by video call and taking notes."
+        <img class="halves__image" src="assets/services/telemedicine.jpg" alt="A clinician on the telephone holding a patient note."
              loading="lazy" decoding="async" width="1600" height="1067"
              data-parallax="trigger" data-parallax-start="-20"
              data-parallax-end="15" data-parallax-disable="tablet">
@@ -387,7 +387,7 @@
 
 
   <!-- ======================================================================
-       HOW WE PROTECT THE CLAIM â€” accordion
+       HOW WE PROTECT THE CLAIM — accordion
        ======================================================================
        The reference's .accordion_services_section, measured off the live
        site at 1900px wide:
@@ -398,7 +398,7 @@
                     col 5-7   the heading
                     col 9-11  the disclosure content
                     col 12    the plus/minus toggle
-         h3         32px / 37.44px Â· 600 Â· uppercase
+         h3         32px / 37.44px · 600 · uppercase
          body       16px / 24px
          divider    1px rule above every row, with a brand-coloured highlight
                     that wipes across on hover and stays while open
@@ -408,7 +408,7 @@
        lifted from the inline <style> block it ships. No height measuring,
        so it animates correctly whatever the content length.
 
-       ACCESSIBILITY â€” this differs from the reference deliberately. The
+       ACCESSIBILITY — this differs from the reference deliberately. The
        reference toggles a data attribute on a <button> with no ARIA at all.
        Here each row is a real <button> carrying aria-expanded and
        aria-controls, and the panel is a labelled region, so the state is
@@ -614,162 +614,72 @@
     </div>
   </section>
 
-  <!-- ======================================================================
-       ALSO AVAILABLE â€” OHS and medico-legal
-       ======================================================================
-       Built on the reference's .laws_home_grid pattern (its homepage), which
-       is the closest thing it has to a peer-cards block: a grid whose 1px
-       GAP is the only separator, with a background layer showing through the
-       gaps as hairlines. Measured off the live site:
-
-         grid      1px column gap, 0 row gap, cards on #FFFEFC
-         card      padding 32px 18px
-         body      16px / 24px
-         hairline  a 1px rule inside each card, above its foot
-
-       Its 3 columns become 2 here, because there are two services. The
-       services page has no equivalent section in the reference (it goes
-       accordion -> CTA -> contact form), so this adapts an existing pattern
-       rather than inventing one.
-
-       Its animation stack, reproduced:
-         mask-diagonal  the backing layer wipes in from the top-left corner
-         scaleX         the wrapper and each card's inner rule draw outward
-         lines          the card text rises line by line -->
-  <section class="laws" aria-labelledby="laws-h">
-    <div class="laws__head">
-      <p class="laws__eyebrow">Also available</p>
-      <h2 class="laws__title" id="laws-h" data-anim-scroll="words" data-split="words">Occupational health &amp; safety, and medico-legal services</h2>
-    </div>
-
-    <div class="laws__outer">
-      <!-- The layer that shows through the 1px gaps. It carries the diagonal
-           wipe, so the hairlines draw themselves in from the corner. -->
-      <div class="laws__bg" data-anim-scroll="mask-diagonal" aria-hidden="true"></div>
-
-      <div class="laws__grid" data-anim-scroll="children-fade">
-        <div class="laws__card" data-anim-target>
-          <span class="laws__hi" aria-hidden="true"></span>
-          <div class="laws__inner">
-            <h3 class="laws__cardH" data-anim-scroll="lines" data-split="lines">Occupational Health &amp; Safety</h3>
-            <p class="laws__p" data-anim-scroll="lines" data-split="lines">Maritime
-              safety audits, PEME-related audits and vessel-specific audits
-              &mdash; focused on preventing workplace injury and ensuring
-              compliance with international safety standards.</p>
-          </div>
-          <div class="laws__rule" data-anim-scroll="scaleX" aria-hidden="true"></div>
+  <!-- OHS + Medico-legal -->
+  <section class="inner-section inner-section--sunken" aria-labelledby="ohs-h">
+    <div class="shell">
+      <header class="inner-section__head">
+        <p class="eyebrow">Also available</p>
+        <h2 class="section-title" id="ohs-h">Occupational health &amp; safety, and medico-legal services</h2>
+      </header>
+      <div class="layers">
+        <div class="layer-card">
+          <h3>Occupational Health &amp; Safety (OHS)</h3>
+          <p>Maritime safety audits, PEME-related audits and vessel-specific audits - focused on preventing workplace injury and ensuring compliance with international safety standards.</p>
         </div>
-
-        <div class="laws__card" data-anim-target>
-          <span class="laws__hi" aria-hidden="true"></span>
-          <div class="laws__inner">
-            <h3 class="laws__cardH" data-anim-scroll="lines" data-split="lines">Medico-Legal Services</h3>
-            <p class="laws__p" data-anim-scroll="lines" data-split="lines">Combining
-              medical and legal expertise: advice on injury claims, maritime
-              regulations and dispute resolution &mdash; protecting clients
-              from legal risk while upholding standards of care.</p>
-          </div>
-          <div class="laws__rule" data-anim-scroll="scaleX" aria-hidden="true"></div>
+        <div class="layer-card">
+          <h3>Medico-Legal Services</h3>
+          <p>Combining medical and legal expertise: advice on injury claims, maritime regulations and dispute resolution, protecting clients from legal risk while upholding standards of care.</p>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- ======================================================================
-       HOW A CASE RUNS â€” auto-advancing pairs over a full-bleed image
-       ======================================================================
-       Layout follows the supplied reference: a photographic background with
-       text sitting at the BOTTOM LEFT and BOTTOM RIGHT, and dot indicators
-       centred beneath. The eight steps are shown two at a time, so the pair
-       reads as "this happens, then this" and the section advances through
-       four slides on its own.
-
-       Timing: 5s per slide, paused while the pointer is over the section and
-       whenever the section is off-screen, so it is never advancing where it
-       cannot be seen. Dots are real buttons, so the sequence is operable
-       rather than only decorative.
-
-       Motion vocabulary is the page's own: the outgoing pair fades and drops,
-       the incoming pair rises, and the background holds a slow scale so the
-       image is never static behind changing text. -->
-  <section class="proc" id="process" aria-labelledby="proc-h"
-           data-proc data-proc-interval="5000">
-    <div class="proc__bg" data-parallax="trigger"
-         data-parallax-start="-8" data-parallax-end="8"
-         data-parallax-disable="tablet">
-      <img class="proc__img" src="assets/services/process-bg.jpg" alt=""
-           loading="lazy" decoding="async" width="2000" height="1200">
-      <span class="proc__scrim" aria-hidden="true"></span>
-    </div>
-
-    <div class="proc__inner">
-      <div class="proc__head">
-        <p class="proc__eyebrow">How it works</p>
-        <h2 class="proc__title" id="proc-h" data-anim-scroll="words" data-split="words">One case, eight steps, one point of contact</h2>
-      </div>
-
-      <div class="proc__stage" data-proc-stage>
-        <div class="proc__slide is-active" data-proc-slide="0">
-          <div class="proc__col proc__col--left">
-            <span class="proc__num">01</span>
-            <h3 class="proc__h">The case opens</h3>
-            <p class="proc__p">A seafarer needs medical support. One number, answered at any hour.</p>
-          </div>
-          <div class="proc__col proc__col--right">
-            <span class="proc__num">02</span>
-            <h3 class="proc__h">A dedicated CMS is assigned</h3>
-            <p class="proc__p">One named Case Management Specialist becomes the single liaison between employer, agent, hospital and patient.</p>
-          </div>
-        </div>
-        <div class="proc__slide" data-proc-slide="1" aria-hidden="true">
-          <div class="proc__col proc__col--left">
-            <span class="proc__num">03</span>
-            <h3 class="proc__h">Our SME panel reviews</h3>
-            <p class="proc__p">Specialists assess urgency, complexity and treatment options &mdash; decisions backed by expertise, not guesswork.</p>
-          </div>
-          <div class="proc__col proc__col--right">
-            <span class="proc__num">04</span>
-            <h3 class="proc__h">Hospital selection, scored</h3>
-            <p class="proc__p">A multi-parameter index ranks facilities on expertise, success rate, cost, accessibility and accreditation.</p>
-          </div>
-        </div>
-        <div class="proc__slide" data-proc-slide="2" aria-hidden="true">
-          <div class="proc__col proc__col--left">
-            <span class="proc__num">05</span>
-            <h3 class="proc__h">Treatment plan approved</h3>
-            <p class="proc__p">Plan, expected outcome and financial estimate agreed with the employer before treatment begins.</p>
-          </div>
-          <div class="proc__col proc__col--right">
-            <span class="proc__num">06</span>
-            <h3 class="proc__h">International payment handled</h3>
-            <p class="proc__p">The hospital is paid directly, documented and compliant with global financial regulations &mdash; no crew member out of pocket.</p>
-          </div>
-        </div>
-        <div class="proc__slide" data-proc-slide="3" aria-hidden="true">
-          <div class="proc__col proc__col--left">
-            <span class="proc__num">07</span>
-            <h3 class="proc__h">Recovery monitored</h3>
-            <p class="proc__p">Oversight continues through rehabilitation and follow-up, with the employer updated throughout.</p>
-          </div>
-          <div class="proc__col proc__col--right">
-            <span class="proc__num">08</span>
-            <h3 class="proc__h">Fitness report &amp; dashboard</h3>
-            <p class="proc__p">A treating doctor&rsquo;s fitness-to-work report, plus real-time updates and analytics on one secure dashboard.</p>
-          </div>
-        </div>
-      </div>
-
-      <div class="proc__dots" role="group" aria-label="Case steps">
-        <button class="proc__dot is-active" type="button" data-proc-dot="0" aria-label="Step pair 1 of 4" aria-current="true"></button><button class="proc__dot" type="button" data-proc-dot="1" aria-label="Step pair 2 of 4"></button><button class="proc__dot" type="button" data-proc-dot="2" aria-label="Step pair 3 of 4"></button><button class="proc__dot" type="button" data-proc-dot="3" aria-label="Step pair 4 of 4"></button>
-      </div>
+  <!-- How a case runs -->
+  <section class="inner-section" id="process" aria-labelledby="process-h">
+    <div class="shell">
+      <header class="inner-section__head">
+        <p class="eyebrow">How it works</p>
+        <h2 class="section-title" id="process-h"><span class="nb">One case, eight steps,</span><br><span class="nb">one point of contact</span></h2>
+      </header>
+      <ol class="process-compact">
+        <li class="process-compact__item">
+          <span class="process-compact__num">01</span>
+          <div><h4>The case opens</h4><p>A seafarer needs medical support. One number, answered at any hour.</p></div>
+        </li>
+        <li class="process-compact__item">
+          <span class="process-compact__num">02</span>
+          <div><h4>A dedicated CMS is assigned</h4><p>One named Case Management Specialist becomes the single liaison between employer, agent, hospital and patient.</p></div>
+        </li>
+        <li class="process-compact__item">
+          <span class="process-compact__num">03</span>
+          <div><h4>Our SME panel reviews</h4><p>Specialists assess urgency, complexity and treatment options, including cost-effective and high-quality care alternatives - decisions backed by expertise, not guesswork.</p></div>
+        </li>
+        <li class="process-compact__item">
+          <span class="process-compact__num">04</span>
+          <div><h4>Hospital selection, scored</h4><p>A multi-parameter index ranks facilities on expertise, success rate, cost, accessibility and accreditation. The shortlist is shared with the employer for final selection, or decided per your mandate.</p></div>
+        </li>
+        <li class="process-compact__item">
+          <span class="process-compact__num">05</span>
+          <div><h4>Treatment plan approved</h4><p>Plan, expected outcome and financial estimate agreed with the employer before treatment begins.</p></div>
+        </li>
+        <li class="process-compact__item">
+          <span class="process-compact__num">06</span>
+          <div><h4>International payment handled</h4><p>The hospital is paid directly, documented and compliant with global financial regulations - no crew member out of pocket.</p></div>
+        </li>
+        <li class="process-compact__item">
+          <span class="process-compact__num">07</span>
+          <div><h4>Recovery monitored</h4><p>Oversight continues through rehabilitation and follow-up, with the employer updated throughout.</p></div>
+        </li>
+        <li class="process-compact__item">
+          <span class="process-compact__num">08</span>
+          <div><h4>Fitness report &amp; dashboard</h4><p>A treating doctor's fitness-to-work report, plus real-time updates, full record-keeping and analytics/reporting on one secure dashboard.</p></div>
+        </li>
+      </ol>
     </div>
   </section>
 
-  <!-- Road ahead â€” HIDDEN.
-       Kept in the markup rather than deleted so the copy is not lost, but
-       `hidden` keeps it out of the layout AND out of the accessibility tree.
-       Delete this wrapper comment and the hidden attribute to restore it. -->
-  <section class="inner-section inner-section--sunken" aria-labelledby="road-h" hidden>
+  <!-- Road ahead -->
+  <section class="inner-section inner-section--sunken" aria-labelledby="road-h">
     <div class="shell">
       <header class="inner-section__head">
         <p class="eyebrow">The road ahead</p>
@@ -801,50 +711,11 @@
     </div>
   </section>
 
-  <!-- ======================================================================
-       CLOSING CTA
-       ======================================================================
-       Built on the reference's final .cta_text_section, measured live at
-       1900px:
-
-         ground   near-white, NOT a filled colour band
-         h2       52px / 50.232px - 600 - uppercase
-         sub      24px / 36px - uppercase - brand colour
-         body     18px / 27px - muted grey
-         layout   two columns, 8 and 4 of 12, 16px gutter
-         gaps     32px between heading, subheading and the two-column row
-
-       Shape of the copy follows the reference too: a flat statement as the
-       heading, the "and here is why" line beneath it, then the explanation
-       and the link set off to the right. -->
-  <section class="close-cta" aria-labelledby="close-cta-h">
-    <div class="close-cta__inner">
-      <h2 class="close-cta__h" id="close-cta-h"
-          data-anim-scroll="words" data-split="words">We don&rsquo;t publish our (hundreds of) case outcomes.</h2>
-
-      <div class="close-cta__bottom">
-        <div class="close-cta__left">
-          <p class="close-cta__sub" data-anim-scroll="lines" data-split="lines">Every
-            case is confidential, and that&rsquo;s the point.</p>
-        </div>
-
-        <div class="close-cta__right">
-          <p class="close-cta__body" data-anim-scroll="lines" data-split="lines">Numbers
-            are easy to publish. Crew medical files are not. Tell us your fleet
-            profile and the cases you are carrying, and we&rsquo;ll show you
-            exactly how we would handle them.</p>
-
-          <div class="close-cta__ctaWrap" data-anim-scroll="fade">
-            <a class="close-cta__link" href="contact.html">Get in touch
-              <svg class="close-cta__arrow" viewBox="0 0 24 24" fill="none"
-                   width="16" height="16" aria-hidden="true">
-                <path d="M7.05 16.95 16.95 7.05M16.95 7.05H7.05M16.95 7.05v9.9"
-                      stroke="currentColor" stroke-width="1.5"/>
-              </svg>
-            </a>
-          </div>
-        </div>
-      </div>
+  <section class="simple-cta">
+    <div class="shell">
+      <h2>Let's take the next case</h2>
+      <p>Send us your fleet profile and we'll come back with a proposal.</p>
+      <a class="btn btn--onDeep" href="contact.html">Request a proposal</a>
     </div>
   </section>
 
@@ -912,31 +783,12 @@
 <script src="js/nav.js" defer></script>
 
 <!-- Services hero motion. GSAP + ScrollTrigger are the same self-hosted
-     vendor copies the homepage uses â€” no CDN, no build step. Both are
+     vendor copies the homepage uses — no CDN, no build step. Both are
      `defer`, so they run in document order ahead of services-hero.js, which
      guards on window.gsap and bails out cleanly (leaving the hero fully
      visible) if either failed to load. -->
 <script src="js/vendor/gsap.min.js" defer></script>
 <script src="js/vendor/ScrollTrigger.min.js" defer></script>
 <script src="js/services-hero.js" defer></script>
-
-<!-- Floating controls, bottom-right. The WhatsApp pill sits directly above the
-     back-to-top square; both reveal together once the hero has scrolled past. -->
-<a class="wa-float" id="wa-float"
-   href="https://wa.me/00000000000?text=Hi%20MedShield%20-%20I%27d%20like%20to%20talk%20about%20crew%20medical%20cover."
-   target="_blank" rel="noopener" aria-label="Chat with MedShield on WhatsApp">
-  <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-    <path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38a9.87 9.87 0 0 0 4.74 1.21h.01c5.46 0 9.9-4.45 9.9-9.91 0-2.65-1.03-5.14-2.9-7.01A9.82 9.82 0 0 0 12.04 2Zm0 18.15h-.01a8.2 8.2 0 0 1-4.19-1.15l-.3-.18-3.12.82.83-3.04-.2-.31a8.18 8.18 0 0 1-1.26-4.38c0-4.54 3.7-8.23 8.25-8.23 2.2 0 4.27.86 5.82 2.42a8.18 8.18 0 0 1 2.41 5.82c0 4.54-3.7 8.23-8.23 8.23Zm4.52-6.16c-.25-.12-1.47-.72-1.69-.81-.23-.08-.39-.12-.56.13-.16.24-.64.8-.79.97-.14.16-.29.19-.54.06-.25-.12-1.05-.39-1.99-1.23-.74-.66-1.23-1.47-1.38-1.72-.14-.25-.01-.38.11-.5.11-.11.25-.29.37-.43.13-.15.17-.25.25-.41.08-.17.04-.31-.02-.43-.06-.12-.56-1.34-.76-1.84-.2-.48-.4-.42-.56-.43h-.47c-.17 0-.43.06-.66.31-.22.25-.87.85-.87 2.07s.89 2.4 1.02 2.56c.12.17 1.75 2.67 4.23 3.74.59.26 1.05.41 1.41.52.59.19 1.13.16 1.56.1.47-.07 1.47-.6 1.67-1.18.21-.58.21-1.07.15-1.18-.06-.11-.22-.17-.47-.29Z"/>
-  </svg>
-</a>
-
-<button type="button" class="to-top-fill" id="to-top" aria-label="Back to top">
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-       stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-    <path d="M12 19V5"/><path d="m5 12 7-7 7 7"/>
-  </svg>
-</button>
-
-<script src="js/floating-controls.js" defer></script>
 </body>
 </html>

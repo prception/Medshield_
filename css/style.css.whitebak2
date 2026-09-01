@@ -741,6 +741,23 @@ textarea:focus-visible,
 /* Hidden state — set by hero.js when the user scrolls DOWN past the top. */
 .site-header.is-hidden { transform: translateY(-100%); }
 
+/* Brand hidden once the page leaves the hero — set by hero.js past STUCK_AT.
+
+   The logo belongs to the hero composition; below it the bar carries the
+   hamburger alone. Faded rather than display:none so the mark dissolves on
+   the way out and back in at the top, and so the anchor keeps its box: it
+   stays focusable as the "back to top" control, and pointer-events are only
+   dropped while it is invisible so an unseen mark cannot swallow clicks. */
+.site-header.is-scrolled .brand {
+  opacity: 0;
+  pointer-events: none;
+}
+/* Keyboard users still need it: focusing the anchor brings the mark back. */
+.site-header.is-scrolled .brand:focus-visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
 /* Ink inversion over light sections.
 
    The bar carries NO background at any scroll position, so once the pale
@@ -779,8 +796,11 @@ textarea:focus-visible,
   color: var(--text-on-deep);
 }
 
-.brand,
 .nav-toggle { transition: color 0.3s ease; }
+/* The brand also fades on scroll (see .is-scrolled above), so its transition
+   carries opacity alongside the ink colour — declared here, after that rule,
+   because this block would otherwise reset it to colour alone. */
+.brand { transition: color 0.3s ease, opacity 0.35s ease; }
 .nav-toggle__line { transition: transform 0.5s cubic-bezier(0.7, 0, 0.3, 1), background-color 0.3s ease; }
 
 /* The mark is never recoloured. assets/M2.png IS the logo — mark and wordmark
@@ -2499,12 +2519,16 @@ main {
 /* =========================================================================
    11 - Contact + form
    =========================================================================
-   A plain two-half block: photograph on the left, form on the right.
+   Rebuilt to the reference contact block. One panel, no photograph half.
+   The composition is: an oversized staggered statement across the top, a
+   hairline rule closing it, then a bottom band with the secondary links on
+   the left and the form on the right.
 
-   The scroll-scrubbed inset that used to wrap this section has been removed
-   entirely - no --cta-p, no animated width, no rounding, and no JS driving
-   it. The panel is a static full-width band, so what you see on load is what
-   you see at every scroll position. */
+   Height is the governing constraint. The section keeps the 100dvh floor it
+   already had, and everything inside is budgeted against it: the statement
+   is capped well below the reference's poster scale and the whole panel is a
+   flex column with the band pinned to the bottom, so the type takes the
+   slack and the form never spills. */
 .contact {
   padding-block: 0;
   background: var(--surface-page);
@@ -2514,47 +2538,22 @@ main {
 
      min-height rather than a fixed height: pinned hard, anything that made
      the form taller than the viewport - every field showing a validation
-     error, a 200% browser zoom - was clipped with no way to reach it. This
-     way the section fills the screen normally and grows only when its content
-     genuinely needs more room. */
+     error, a 200% browser zoom - was clipped with no way to reach it. */
   min-height: 100vh;
   min-height: 100dvh;
-}
-
-/* A little more room than a bare viewport on a real screen: the form half was
-   running tight against its own padding and the photograph beside it had no
-   breathing space above and below the two text blocks it carries. The extra
-   12dvh goes to both halves at once - the panel inherits it, the picture
-   stretches into it, and the fields get their vertical rhythm back. Desktop
-   only: stacked on a phone the section is already a full screen of content
-   and any extra height just pushes the submit button off it. */
-@media (min-width: 900px) {
-  .contact {
-    min-height: 112vh;
-    min-height: 112dvh;
-  }
+  display: flex;
 }
 
 .contact__panel {
-  /* Full width, no inset, no radius, nothing animated. */
   width: 100%;
-  /* Fills the section so the grid inside has a height to divide - without
-     this the panel would size to its content and the photograph would have
-     nothing to stretch against. Not a fixed height, so a taller-than-viewport
-     form grows the panel with it. */
   min-height: inherit;
   padding: 0;
-  overflow: hidden;
 
-  /* Plain white, by request. No gradient and no tint - the form half is a
-     white page beside the photograph, and every mark on it is dark. */
-  background: #FFFFFF;
+  /* Warm off-white, matching the reference's paper ground rather than a
+     clinical pure white. Everything on it is dark. */
+  background: #FBF9F5;
 
-  /* --- Panel ink, resolved once -------------------------------------
-     A white ground gives the widest ramp this panel has had: every tier below
-     clears AA comfortably, so hierarchy comes from colour as well as weight.
-     --pnl-ink is the page's own navy, so the section matches the rest of the
-     site's body copy rather than inventing a second near-black. */
+  /* --- Panel ink, resolved once ------------------------------------- */
   --pnl-ink:        var(--surface-deep);
   --pnl-ink-2:      #123252;
   --pnl-ink-muted:  #4A5C6E;
@@ -2562,338 +2561,322 @@ main {
   --pnl-error:      #A3132E;
   --pnl-warning:    #6B3200;
   --pnl-warning-bg: #FFF8EE;
-  --pnl-rule:       rgba(0, 29, 59, 0.18);
+  --pnl-rule:       rgba(0, 29, 59, 0.22);
   --pnl-veil:       rgba(0, 29, 59, 0.06);
-  /* Chrome's opaque autofill bar has to match the white field under it. */
-  --pnl-autofill:   #FFFFFF;
+  --pnl-autofill:   #FBF9F5;
 
   color: var(--pnl-ink-2);
+
+  display: flex;
 }
 
-/* No measure cap of its own. .shell is full-bleed on --site-margin site-wide
-   now, so the intro starts on the panel's own gutter — the same relationship
-   to its container that every other section's heading has to the page. The
-   old 1020px centred cap added a second inset on top of the panel's, which
-   made this the one heading that stepped further right than everything else.
-
-   The panel itself stays inset from the page edge: it is a field of colour,
-   deliberately a smaller block, and that inset is the composition — it is not
-   the section's left edge trying and failing to match the hero's. */
+/* The one gutter in the section. The statement and the band share it, which
+   is what makes the hairline under the statement run the full measure and
+   the links line up under the first character of the headline. */
 .contact__inner {
-  display: grid;
-  /* No gap and no .shell gutter. The two halves meet flush down the middle
-     so the photograph can run all the way to the centre line on one side and
-     the panel edge on the other, which is what makes it read as half the
-     composition rather than as a picture placed on a coloured panel. The
-     form half supplies its own padding instead. */
-  gap: 0;
-}
-/* The grid fills the panel, so both halves have a box to work in rather than
-   sizing to their own content. */
-.contact__inner { min-height: inherit; }
+  width: 100%;
+  min-height: inherit;
+  /* Less at the bottom than the top: the foot note under the send row is
+     small print and was being clipped against the section edge, and the
+     statement needs the headroom more than the band needs the footroom. */
+  padding: clamp(1rem, 0.5rem + 1.6vh, 2rem) var(--site-margin)
+           clamp(0.75rem, 0.4rem + 1.2vh, 1.5rem);
 
-/* --- Stacked (below the two-column breakpoint) --------------------------
-   One column, and the rows must be sized explicitly. Left implicit, the form
-   row's height:100% resolved against an auto row and collapsed the picture
-   to nothing - the photograph vanished entirely on a phone.
-
-   The image takes a fixed share of the viewport and the form takes the rest,
-   scrolling within it. That keeps the section exactly 100dvh on a phone with
-   the picture still present, rather than letting one half win. */
-
-
-/* Touch targets. The tightened control padding above is sized for a pointer;
-   on a touch device the height goes back so the fields stay tappable. This is
-   deliberately NOT inside the max-width block - a touch laptop should get it
-   too. */
-@media (pointer: coarse) {
-  .cform__input { padding: 0.55rem 0.75rem; }
-  .cform__check input { width: 1.1rem; height: 1.1rem; }
-  .cform__btn { padding: 0.7rem 1.5rem; }
-}
-
-@media (min-width: 900px) {
-  /* Even halves, as in the reference. */
-  .contact__inner { grid-template-columns: 1fr 1fr; align-items: stretch; }
-}
-
-/* --- Left half: the photograph, full bleed ------------------------------
-   No border-radius and no inset: the image fills its half of the panel
-   completely, top to bottom and out to the panel edge. */
-.contact__media {
-  position: relative;
-  overflow: hidden;
-  /* Fills its grid cell. The section is a fixed 100dvh now, so the cell has a
-     real height and the photograph simply takes all of it. min-height is the
-     floor for the stacked layout, where the image takes a share of the
-     viewport rather than a share of a row. */
-  height: 100%;
-  min-height: 0;
-}
-
-/* Two text blocks now - the intro pinned to the top of the frame and the
-   emergency notice to the bottom. space-between puts the picture's clear
-   middle between them. */
-.contact__media {
+  /* Statement on top, band pinned to the bottom, the slack between them.
+     This is what keeps the whole thing inside the section height no matter
+     how the type resolves. */
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  isolation: isolate;
-  /* space-between alone pins both blocks hard to the top and bottom edges of
-     the frame, which read as stuck to the panel rather than placed in the
-     picture. Padding on the flex container itself pulls them both inward
-     toward the vessel - the intro drops down from the top, the emergency
-     notice lifts up from the bottom - without touching either block's own
-     internal spacing. Scales with the frame, so it stays proportional as the
-     section grows. */
-  padding-block: clamp(1.5rem, 0.5rem + 4vh, 5rem);
+  gap: clamp(0.5rem, 0.25rem + 0.8vh, 1.25rem);
 }
 
-.contact__mediaImg {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  z-index: 0;
-  /* Cover, so the half-panel frame crops the photograph rather than
-     distorting it at whatever aspect the row resolves to. */
-  object-fit: cover;
-  /* The vessel sits centre-frame in a tall portrait original, so a plain
-     centre crop holds it at every column aspect. */
-  object-position: 50% 45%;
+/* The band is the fixed cost: its content is a form and a phone number and
+   neither may be clipped. It gets its natural height and refuses to shrink;
+   the statement above takes whatever is left. That inversion - type absorbs
+   the slack, controls do not - is what keeps the section exactly one
+   viewport tall at every screen height without ever cutting a field off. */
+.contact__band { flex: none; }
+/* The title keeps its own tight leading - the three lines are one
+   typographic block, not three things spread down a column. It takes the
+   slack by sitting at the TOP of the space the band leaves it, and the
+   .contact__inner space-between puts the leftover air between the two. */
+.contact__title { flex: 0 1 auto; min-height: 0; }
+
+/* --- The statement -------------------------------------------------------
+   Three staggered lines, each pushed further right than the last, as in the
+   reference. Held deliberately smaller than the reference's poster setting -
+   this is a section heading in a page of clinical copy, not a cover - and
+   capped in px as well as vw so a wide monitor cannot run it away. */
+.contact__title {
+  font-family: var(--font-display);
+  /* Up from 300. The hairline weight read as delicate against a form full of
+     600-weight field labels; 500 gives the statement the presence to hold
+     the top of the section without tipping into the poster weight the brief
+     rules out. */
+  font-weight: 500;
+  /* The cap IS the height budget - see the flex note below. Raised again now
+     the weight is heavier and the lines need to carry it, but still short of
+     the reference's ~180px so three lines plus the band clear a 720px
+     laptop. */
+  /* Sized so line 1 fills the panel the way the reference's does - measured,
+     not guessed: at the previous 9.6vw it spanned 62% of the panel against
+     the reference's ~95%. The vw term does the work; the rem cap only stops
+     an ultrawide monitor running away with it. */
+  font-size: clamp(2.75rem, 0.5rem + 11.6vw, 13rem);
+  /* Under 1, so the lines nest into each other's shoulders as they do in the
+     reference rather than sitting in separate bands. This is what pays for
+     the size above: three lines this large only fit the section height at a
+     leading this tight. */
+  line-height: 0.92;
+  /* Barely negative. The heavy negative tracking was pulling the words into
+     a condensed block; the reference's statement runs WIDE, its letters at
+     close to normal width, and that width is most of what gives it presence
+     across the panel. */
+  letter-spacing: -0.015em;
+  color: var(--pnl-ink);
+  /* No text-transform. The lines are sentence-case in the markup - a capital
+     opening each one - and a lowercase transform here would flatten those
+     capitals straight back out. */
+  margin: 0;
+
+  display: flex;
+  flex-direction: column;
 }
 
-/* Dark at the bottom where the words are, clear at the top so the photograph
-   still reads as one. Deep navy rather than black, to stay in the same colour
-   family as the panel beside it. */
-/* Dark at both ends where the type sits, clear through the middle so the
-   vessel still reads as a photograph. Deep navy rather than black, to stay in
-   the same colour family as the rest of the page. */
-.contact__scrim {
-  position: absolute;
-  inset: 0;
-  z-index: 1;
-  background: linear-gradient(to bottom,
-    rgba(0, 19, 37, 0.92) 0%,
-    rgba(0, 19, 37, 0.72) 22%,
-    rgba(0, 19, 37, 0.20) 45%,
-    rgba(0, 19, 37, 0.42) 62%,
-    rgba(0, 19, 37, 0.88) 84%,
-    rgba(0, 19, 37, 0.95) 100%);
+/* Each line gets its own hairline underneath, which is the reference's
+   defining move: the rules run the full width and the words sit on them. */
+.contact__line {
+  display: block;
+  /* The mask. The words inside start below this box and slide up into it, so
+     the clip edge is what they appear to stand up off. The rule that used to
+     sit on this edge is gone by request - the clip is invisible now, but it
+     is still what makes the rise read as rising rather than sliding. */
+  overflow: hidden;
+  /* The mask has to clear the GLYPHS, not the line box. At a sub-1
+     line-height the box is shorter than the type, so a mask sized to it
+     shaved the capitals off the top and the descenders off the bottom.
+
+     Padding opens the mask top and bottom; the equal negative margins pull
+     the neighbouring lines back over it, so that room costs nothing in the
+     section's height budget and the visible gap between lines stays exactly
+     what line-height says it is. Both halves are em, so all three gaps stay
+     identical at every size. */
+  padding-top: 0.24em;
+  padding-bottom: 0.22em;
+  margin-top: -0.24em;
+  margin-bottom: -0.22em;
+}
+/* The stagger. Percentages rather than ch so the indents scale with the
+   column instead of with the font. */
+/* The stagger, matched to the reference: line 2 sits almost flush with line
+   1 and only line 3 steps decisively right. Percentages, so the indents
+   track the panel rather than the font. */
+.contact__line--2 { padding-left: 3%; }
+.contact__line--3 { padding-left: 30%; }
+
+/* The negative margins above cancel the mask padding BETWEEN lines, which is
+   what keeps the gaps even. On the last line there is no next line to pull
+   up, so that cancellation just tucks the title box inside its own
+   descenders and the "p" of "Step?" hangs over the form below. It keeps its
+   room. */
+.contact__line:last-child { margin-bottom: 0; }
+
+/* The part that actually moves. Block, so translating it moves the whole
+   line, and a touch of bottom padding so descenders (the "y" in ready, the
+   "p" in step) are not shaved by the mask's edge at rest. */
+.contact__lineText {
+  display: block;
+  /* The horizontal stretch. The statement's presence in the reference comes
+     from letters that are wider than they are tall, and at a fixed height
+     budget that can only come from the horizontal axis.
+
+     Anchored left so the stretch grows the line out toward the right edge
+     rather than pushing it off both sides and breaking the stagger's left
+     alignment. */
+  transform-origin: left center;
+  transform: scaleX(var(--stretch, 1.12));
+  /* scaleX on an inline-level box would be ignored; block is what makes the
+     line a transformable box in the first place (set above). */
 }
 
-.contact__mediaTop {
-  position: relative;
-  z-index: 2;
-  width: 100%;
-  padding: clamp(1.25rem, 0.75rem + 2vw, 2.75rem);
-  /* Dropped further down the frame than the container's own inset takes it.
-     The intro is the block that reads first, and sitting nearer the vessel's
-     bow rather than up in the corner is what gives it that. vh-based so it
-     tracks the frame height instead of pinning to one screen size. */
-  padding-top: clamp(2rem, 0.5rem + 7vh, 7rem);
-  color: #FFFFFF;
+/* --- The rise ------------------------------------------------------------
+   The <h2> carries [data-reveal] and is the only thing the observer watches;
+   the three lines move off ITS .is-in. See the markup note for why the hook
+   is not on the spans themselves.
+
+   The generic [data-reveal] fade-up has to be cancelled on the h2: that
+   default fades and slides the whole element, which would drag the masks
+   along with their contents and undo the effect. The h2 stays put and only
+   its inner spans move. */
+.reveal-on .contact__title[data-reveal] {
+  opacity: 1;
+  transform: none;
+  transition: none;
 }
 
-/* Bottom-left of the picture. Constrained rather than full-bleed so it reads
-   as a notice sitting in the corner, not as a second caption bar. */
-.contact__mediaAlert {
-  position: relative;
-  z-index: 2;
-  margin: clamp(1.25rem, 0.75rem + 2vw, 2.75rem);
+/* The moving part. 110% rather than 100%: the descender padding on
+   .contact__lineText leaves the glyphs sitting slightly proud of the box, and
+   a flat 100% left their tails showing above the mask edge at rest.
+
+   No opacity ramp - the mask is doing the reveal, and a fade on top of it
+   reads as a smudge rather than as type standing up.
+
+   Only inside .reveal-on, so with no JS the lines render in place. */
+.reveal-on .contact__title[data-reveal] .contact__lineText {
+  /* The stretch has to be restated here. transform is a single property:
+     declaring translateY alone would drop the scaleX entirely and the lines
+     would snap narrow the moment the reveal took over. */
+  transform: scaleX(var(--stretch, 1.18)) translateY(110%);
+  /* Slower than the page default 1s: this is the largest type on the site
+     and it needs the extra beat to read as deliberate rather than snapped. */
+  transition: transform 1.15s cubic-bezier(0.16, 1, 0.3, 1);
+  transition-delay: var(--reveal-delay, 0s);
+}
+.reveal-on .contact__title[data-reveal].is-in .contact__lineText {
+  /* Rests at the stretch, not at none - "none" would reset the scaleX too. */
+  transform: scaleX(var(--stretch, 1.18));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal-on .contact__title[data-reveal] .contact__lineText {
+    transform: scaleX(var(--stretch, 1.18));
+    transition: none;
+  }
+}
+
+/* --- Bottom band: links left, form right -------------------------------- */
+.contact__band {
+  display: grid;
+  gap: clamp(1.5rem, 0.5rem + 3vw, 4rem);
+  /* Top-aligned, not bottom: bottom-aligned, the short left column floated
+     down away from the form and left a hole under the statement. Aligned to
+     the top the two halves read as one row, and the left column's own
+     margin-top:auto on the alert still pins the emergency notice low. */
+  align-items: stretch;
+}
+/* The stretch factor is per-breakpoint. On a wide panel the unstretched line
+   leaves plenty of headroom and can take a large factor; on a phone it
+   already spans 82% of the panel unstretched, so the same factor would run
+   the words off the screen edge. Measured at each size, not scaled by rule. */
+@media (min-width: 900px) {
+  .contact__title { --stretch: 1.32; }
+}
+
+@media (min-width: 900px) {
+  .contact__band {
+    /* The form is the wider half, as in the reference, and it sits hard
+       right against the panel gutter. */
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.35fr);
+  }
+}
+
+/* --- Left: eyebrow, links, emergency ------------------------------------ */
+.contact__aside {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.55rem;
+}
+
+.contact__eyebrow {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--pnl-accent);
+  margin: 0 0 0.15rem;
+}
+
+/* Underlined, uppercase, arrow-suffixed - the reference's secondary links.
+   The underline is the border rather than text-decoration so the offset is
+   stable and the hover can move it. */
+.contact__link {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--pnl-ink);
+  text-decoration: none;
+  padding-bottom: 0.3rem;
+  border-bottom: 1px solid var(--pnl-rule);
+  transition: border-color 0.16s ease, color 0.16s ease;
+}
+.contact__link:hover { color: var(--pnl-accent); border-bottom-color: var(--pnl-accent); }
+.contact__link:focus-visible { outline: 2px solid var(--focus); outline-offset: 3px; }
+
+/* Distinct from the links on purpose: someone with a live casualty must not
+   read this as another navigation item. */
+.contact__alert {
+  /* Pushed to the foot of the left column so it sits level with the send row
+     opposite it, which is where the reference puts its heaviest left-hand
+     element. */
+  margin-top: auto;
   max-width: 34rem;
-  padding: 0.85rem 1rem;
-  color: #FFFFFF;
-  /* A veil plus a left rule, the same identity the block had on the form
-     side: it must not read as more marketing copy. The amber rule survives
-     the move because it is the one non-white mark on this picture. */
-  background: rgba(0, 19, 37, 0.62);
-  backdrop-filter: blur(3px);
-  border-left: 3px solid #F5B95C;
+  padding: 0.6rem 0.85rem;
+  background: var(--pnl-warning-bg);
+  border-left: 3px solid #B26A00;
   border-radius: var(--radius);
 }
 .contact__alertTitle {
   font-size: var(--t-micro);
   font-weight: 700;
-  color: #F5B95C;
-  margin-bottom: 0.3rem;
+  color: var(--pnl-warning);
+  margin-bottom: 0.25rem;
 }
 .contact__alertBody {
   font-size: var(--t-micro);
   line-height: 1.5;
-  color: #FFFFFF;
-}
-/* The [CONFIRM: ...] marker keeps its build-time highlight, but on this dark
-   ground it needs light ink rather than the dark-on-yellow it uses on paper. */
-.contact__mediaAlert .confirm {
-  background: rgba(245, 185, 92, 0.22);
-  color: #FFD9A0;
-  border-color: rgba(245, 185, 92, 0.55);
-}
-.contact__mediaEyebrow {
-  font-size: 0.75rem;
-  font-weight: 700;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--accent-2-on-deep, #6FE3D9);
-  margin-bottom: 0.5rem;
-}
-.contact__mediaTitle {
-  /* The display note of the section. Fraunces, matching the other statement
-     headings on the page. */
-  font-family: var(--font-display, inherit);
-  /* Up from a 1.35-2.1rem ramp: this is the section's display note and it was
-     reading smaller than the form headline opposite it. */
-  font-size: clamp(1.6rem, 1.1rem + 2.1vw, 2.7rem);
-  font-weight: 600;
-  line-height: 1.12;
-  letter-spacing: -0.01em;
-  margin-bottom: 0.75rem;
-  max-width: 16ch;
-}
-.contact__mediaBody {
-  /* One step up from --t-micro so it holds its own under the larger title. */
-  font-size: 0.9375rem;
-  line-height: 1.55;
-  color: rgba(255, 255, 255, 0.88);
-  max-width: 40ch;
+  color: var(--pnl-ink);
 }
 
-/* --- Right half: the form column ----------------------------------------
-   This is where the panel's gutter lives now that .shell has gone. Generous
-   and asymmetric on purpose: the copy needs to clear the centre line where
-   the photograph ends, and the panel edge on the other side. */
-.contact__form-col {
-  /* Tightened from the previous clamp: the section is a fixed 100dvh now, so
-     every rem of padding is a rem the fields do not get. */
-  padding: clamp(1.25rem, 0.5rem + 2.2vw, 2.75rem);
-  /* The fields would otherwise run to whatever width the half gives them,
-     which on a large monitor is far past a comfortable measure. */
-  max-width: 40rem;
-  min-width: 0;
-
-  /* Centred in its half rather than stretched: the form is shorter than the
-     viewport in the normal case, and pinning it to the top left a band of
-     empty ground under the emergency block.
-
-     No overflow/scroll container here any more. The section grows past one
-     screen when the form genuinely needs it (validation errors on every
-     field, or a large browser zoom), which is what the earlier fixed-height
-     version clipped. */
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-}
 /* --- Short viewports -----------------------------------------------------
-   A 768px- or 720px-tall laptop is ~100-160px short of fitting the form once
-   the section is pinned to 100dvh. Rather than compress every screen down to
-   the worst case, the last of the slack is taken back only where it is
-   actually needed - a height query, not a width one, because this is a
-   vertical budget problem.
-
-   Everything here is spacing and the lede. No control shrinks below a
-   comfortable target and no field is hidden. */
-/* Threshold lowered from 820px alongside the section's taller floor: at
-   112dvh a 780-820px screen now has the room it was previously being
-   compressed for, so the squeeze starts only below that. */
-@media (min-width: 900px) and (max-height: 760px) {
-  /* The inward pull is a luxury of a tall frame; on a short screen the two
-     blocks need the edges back. */
-  .contact__media { padding-block: 0.75rem; }
-  /* The larger intro and its drop are both a tall-frame luxury. */
-  .contact__mediaTop { padding-top: clamp(1.25rem, 0.75rem + 2vw, 2.75rem); }
-  .contact__mediaTitle { font-size: clamp(1.5rem, 1.1rem + 1.4vw, 2rem); }
-  .contact__form-col { padding: 0.9rem 1.5rem; }
-  .contact__head { margin-bottom: var(--s-3); }
-  .contact__title { font-size: clamp(1.35rem, 1rem + 1.1vw, 1.8rem); }
-  /* The lede repeats what the headline and the fields already establish, so
-     on a screen this short it is the first thing to go rather than squeezing
-     the controls people have to hit. */
-  .contact__lede { display: none; }
-  .cform { gap: 0.5rem; }
-  .cform__row { gap: 0.5rem var(--s-4); }
-  .cform__input { padding: 0.45rem 0.75rem; }
-  .cform__textarea { min-height: 2.5rem; }
+   A 720px-tall laptop is the worst case. Rather than compress every screen
+   to it, the slack is taken back only where it is needed - a height query,
+   not a width one, because this is a vertical budget problem. Nothing here
+   hides a field or drops a control below a comfortable target. */
+@media (min-width: 900px) and (max-height: 800px) {
+  .contact__inner { padding-block: 1.25rem; gap: 1rem; }
+  /* Raised from a 4rem cap: with the rules and the spread they needed gone,
+     a 720-800px screen has real slack here and the statement no longer has
+     to give it all back. The band below is flex:none, so this can only ever
+     take room the form is not using. */
+  /* Still a step down from the full-height setting - three lines this large
+     genuinely do not fit 720px alongside the band - but nowhere near the old
+     cap, which left line 1 spanning 41% of the panel against the 73% it gets
+     on a tall screen. */
+  .contact__title { font-size: clamp(2.25rem, 0.75rem + 7vw, 7rem); }
+  /* Larger than the tall-screen factor, since the size cap above holds this
+     breakpoint's line 1 narrow and stretching is the only way to widen it
+     that costs no height - but capped well short of what would fill the
+     panel. Past roughly 1.5 the letterforms stop reading as extended and
+     start reading as distorted, and a squashed headline is worse than a
+     narrow one. */
+  .contact__title { --stretch: 1.45; }
+  .contact__aside { gap: 0.4rem; }
+  .contact__alert { margin-top: 0.25rem; padding: 0.5rem 0.75rem; }
+  .cform { gap: 0.45rem; }
+  .cform__row { gap: 0.45rem clamp(1rem, 2vw, 2rem); }
 }
 
-
-
-
-.contact__head { margin-bottom: var(--s-4); }
-
-/* The global .eyebrow is --accent-2-ink - teal, and this panel's gradient is
-   teal at exactly the corner where the eyebrow sits, measuring 1.84:1. It
-   takes the panel ink instead and keeps its identity through the uppercase
-   letterspaced treatment. */
-/* Back to the teal accent now the ground is white. This was forced to plain
-   ink while the panel was dark/teal, where the brand teal failed against its
-   own background; --accent-2-ink is the text-safe teal and measures 4.8:1
-   here, so the eyebrow reads as a brand mark again. */
-.contact__head .eyebrow { color: var(--pnl-accent); }
-
-/* The reference runs this headline at 74px. Held well below that per the
-   brief — clinical, not a poster — while still being the largest thing in
-   the panel and clearly the statement the form answers to. */
-.contact__title {
-  /* One step down from --t-h2. The section is height-constrained now, and the
-     headline was the single largest consumer of that budget. */
-  font-size: clamp(1.5rem, 1.1rem + 1.4vw, 2.25rem);
-  font-weight: 700;
-  line-height: 1.14;
-  letter-spacing: -0.015em;
-  color: var(--pnl-ink);
-  margin-bottom: var(--s-3);
-  max-width: 17ch;
-}
-.contact__lede {
-  font-size: var(--t-micro);
-  color: var(--pnl-ink-2);
-  max-width: 42ch;
-  margin-bottom: var(--s-5);
+/* --- Stacked ------------------------------------------------------------
+   Below the two-column breakpoint the band becomes one column: links first,
+   then the form. The section drops its viewport floor here - a phone cannot
+   fit this composition in 100dvh without shrinking the controls, and a
+   scrolling section is better than an unusable one. */
+@media (max-width: 899px) {
+  .contact { min-height: 0; }
+  .contact__inner { min-height: 0; }
+  /* Barely any. Stacked, line 1 already spans ~82% of a narrow panel before
+     any stretch, so there is almost no room to widen into. */
+  .contact__title { --stretch: 1.04; }
+  .contact__line--2 { padding-left: 4%; }
+  .contact__line--3 { padding-left: 18%; }
 }
 
-/* Emergency block — visually distinct from the form on purpose. Someone
-   with a live casualty must not read this as another marketing panel.
-
-   On the teal panel the block sits on a white veil rather than the amber
-   --warning-bg: that pale amber against saturated teal is a muddy clash,
-   and the veil separates the block just as clearly. The warning identity is
-   carried by the dark-amber rule and title, which measure 4.7:1 on the teal
-   and 8.1:1 on the veil. */
-.emergency {
-  background: var(--pnl-warning-bg);
-  border: 1px solid var(--pnl-warning);
-  border-left: 3px solid var(--pnl-warning);
-  border-radius: var(--radius);
-  padding: var(--s-4);
-  max-width: 42ch;
-}
-
-/* Sits under the form now rather than beside it. The top margin is a real
-   break, not a gap: this block must not read as the last row of the fields.
-   The measure cap is dropped because it is spanning the whole form column
-   here, where 42ch would leave it looking like an orphaned card. */
-.contact__formwrap .emergency {
-  margin-top: var(--s-5);
-  max-width: none;
-}
-.emergency__title {
-  font-size: var(--t-micro);
-  font-weight: 700;
-  color: var(--pnl-warning);
-  margin-bottom: var(--s-2);
-}
-.emergency__body {
-  color: var(--pnl-ink);
-  font-size: var(--t-micro);
-  margin-bottom: var(--s-2);
-}
-.emergency__note {
-  font-size: var(--t-micro);
-  color: var(--pnl-ink-muted);
-  border-top: 1px solid rgba(var(--rgb-deep), 0.25);
-  padding-top: var(--s-2);
-}
+/* The legacy .contact__head / .contact__lede / .contact__media rules are
+   gone with the photograph half they belonged to. */
 
 /* --- Form --------------------------------------------------------------- */
 
@@ -3408,37 +3391,59 @@ main {
   padding-bottom: calc(0.45rem - 1px);
 }
 
-/* --- Send --------------------------------------------------------------- */
-.cform__send { display: block; margin-top: var(--s-2); }
-
-/* The pill from the reference. Solid white on the navy end of the panel is
-   around 15:1 - correctly the loudest thing in the section. */
-.cform__btn {
+/* --- Send ----------------------------------------------------------------
+   The reference's submit row: the label sits left on a rule that spans the
+   form, and a filled dot sits hard right on the same line. The whole row is
+   the button, so the hit target is the full width rather than the dot alone
+   - which is also what keeps it above the touch guideline despite reading as
+   a bare line of type. */
+.cform__send {
   appearance: none;
   border: 0;
-  /* A full-width bar in the darkest ink on the panel, matching the
-     reference's black Submit. Square, not a pill: the reference's button is a
-     rectangle spanning the form, and that is what anchors the column. Against
-     the light teal it is now the strongest contrast in the section. */
+  background: transparent;
   width: 100%;
-  justify-content: center;
-  background: #001325;
-  color: #FFFFFF;
-  border-radius: var(--radius);
-  padding: 0.75rem 1.4rem;
-  font-family: inherit;
-  font-size: var(--t-micro);
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  margin-top: 0.35rem;
+  padding: 0.5rem 0 0.55rem;
+  border-bottom: 1px solid var(--pnl-ink);
+  border-radius: 0;
   cursor: pointer;
-  display: inline-flex;
+  font-family: inherit;
+
+  display: flex;
   align-items: center;
-  gap: 0.5rem;
-  transition: background-color 0.16s ease;
+  justify-content: space-between;
+  gap: 1rem;
+  transition: border-color 0.16s ease, color 0.16s ease;
 }
-.cform__btn:hover { background: #000000; }
-.cform__btn:focus-visible { outline: 2px solid var(--focus); outline-offset: 3px; }
+/* The page's floating action buttons sit over the panel's right gutter, and
+   the dot was landing underneath them. Padding on the right of the row keeps
+   the dot clear of them while the rule still runs the full form width. */
+@media (min-width: 900px) {
+  .cform__send { padding-right: 4.5rem; }
+}
+.cform__sendLabel {
+  /* The one sentence-case, non-letterspaced label in the form: it is the
+     action, and the reference sets it as plain type rather than a caps
+     button label. */
+  font-size: 1rem;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  color: var(--pnl-ink);
+  transition: transform 0.16s ease;
+}
+.cform__dot {
+  flex: none;
+  width: 0.6rem;
+  height: 0.6rem;
+  border-radius: 50%;
+  background: var(--pnl-ink);
+  transition: transform 0.16s ease, background-color 0.16s ease;
+}
+/* Feedback is motion and weight, not colour: on a bare rule there is no fill
+   to brighten. */
+.cform__send:hover .cform__sendLabel { transform: translateX(2px); }
+.cform__send:hover .cform__dot { transform: scale(1.35); }
+.cform__send:focus-visible { outline: 2px solid var(--focus); outline-offset: 4px; }
 
 .cform__foot {
   font-size: var(--t-micro);
@@ -3446,60 +3451,18 @@ main {
   margin-top: var(--s-2);
 }
 
-/* The emergency block sits under the rebuilt form. The top margin is a real
-   break so it cannot read as the last row of the fields. */
-/* The emergency block lives on the photograph now (.contact__mediaAlert), not
-   in the form column. Its old rules here are gone with it. */
 
 /* Stacked layout overrides. Placed after the .cform base rules rather than
-   beside the other contact layout CSS: several of these (the checkbox grid,
-   the row columns) target the same selectors at the same specificity, so they
-   only win by coming later in the file. */
+   beside the other contact layout CSS: the row-column rule targets the same
+   selector at the same specificity, so it only wins by coming later. */
 @media (max-width: 899px) {
-  /* The image gives up height to the form here. 32dvh left the form only
-     ~574px of an 844px screen and it still had 1020px of content, so the
-     picture takes a smaller share and the fields get the rest. */
-  /* Taller than the 15dvh this was: the picture carries the intro copy now,
-     and at 15dvh the words were clipped by the top of the band. */
-  /* The picture carries TWO blocks now - the intro and the emergency notice -
-     so it needs real height on a phone. 18dvh clipped the alert. */
-  .contact__inner { grid-template-rows: 30dvh minmax(0, 1fr); }
-  /* 30dvh is already tight for two blocks - no inward padding to spare. */
-  .contact__media { padding-block: 0; }
-  /* Tighter alert on a narrow column so it does not run to the screen edge. */
-  .contact__mediaAlert { margin: 0.75rem; padding: 0.6rem 0.7rem; max-width: none; }
-  /* The body line is the part that does not fit a short band on a phone. The
-     eyebrow and the statement carry the message on their own. */
-  .contact__mediaBody { display: none; }
-  .contact__mediaTitle {
-    max-width: none;
-    margin-bottom: 0;
-    font-size: clamp(1.15rem, 0.9rem + 1.8vw, 1.5rem);
-  }
-  /* Explicit padding-top: the desktop rule sets that longhand separately,
-     and a shorthand alone in a later block still needs to state it to win. */
-  .contact__mediaTop { padding: 0.9rem 1rem; padding-top: 0.9rem; }
-  .contact__mediaEyebrow { margin-bottom: 0.25rem; }
-
-  /* Stacked, the column is narrow, so the paired rows collapse to one field
-     per line and the form is at its tallest exactly where the viewport is
-     shortest. Everything below claws that back. */
-  .contact__form-col { padding: 0.8rem 1rem; }
-  .contact__head { margin-bottom: var(--s-3); }
-  .contact__title { font-size: clamp(1.25rem, 1rem + 2.4vw, 1.6rem); }
-  /* The headline and the fields already say what this is. */
-  .contact__lede { display: none; }
-  .cform { gap: 0.5rem; }
-  .cform__row { gap: 0.5rem 0.6rem; }
+  .cform { gap: 0.55rem; }
   /* Keep the paired rows paired on a phone rather than letting them collapse
-     to one field per line. Three rows recovered outright, which is most of
-     what the stacked layout was over by. The columns are narrow but these are
-     short values - a name, a company, a select - not prose. */
-  .cform__row { grid-template-columns: 1fr 1fr; }
-  /* The four interest checkboxes go to a 2x2 grid: as a flex-wrap row they
-     broke 3 + 1 and wasted a line. */
-  .cform__checkRow { display: grid; grid-template-columns: 1fr 1fr; gap: 0.4rem 0.6rem; }
-  .cform__textarea { min-height: 2rem; }
+     to one field per line. Three rows recovered outright. The columns are
+     narrow but these are short values - a name, a company, a select - not
+     prose. */
+  .cform__row { grid-template-columns: 1fr 1fr; gap: 0.55rem 0.6rem; }
+  .cform__sendLabel { font-size: 0.9375rem; }
 }
 
 /* Honeypot — off-screen rather than display:none, which some bots detect.
@@ -8902,7 +8865,7 @@ html.pl-on .preloader {
   inset: 0;
   z-index: 200;          /* over .site-header (z-index 100) */
   place-items: center;
-  /* The loader IS the navy cover, and preloader.js punches a hole in it with a
+  /* The loader IS the cover, and preloader.js punches a hole in it with a
      clip-path so the hero's video shows through the gap.
 
      Two earlier attempts put the cover on .hero::before instead, so the hero
@@ -8910,8 +8873,13 @@ html.pl-on .preloader {
      sits at z-index -1 inside .hero's isolate, so a cover at 0 paints above a
      media the gap can never reach, and a cover at -1 paints behind it and is
      invisible. Covering from up here sidesteps the hero's stacking context
-     entirely — this element is fixed, at z-index 200, above everything. */
-  background: var(--surface-deep);
+     entirely — this element is fixed, at z-index 200, above everything.
+
+     White, matching the page's own ground rather than the hero's navy. Note
+     the consequence this was chosen with: the intro no longer dissolves into
+     the hero's dark video, it cuts from white to it. The cover's fade at the
+     end of the timeline is what softens that. */
+  background: var(--surface-page);
   /* The wordmark must not eat clicks once it has faded but before it is
      removed, and nothing in here is interactive in the first place. */
   pointer-events: none;
@@ -8978,23 +8946,32 @@ html.pl-lock body {
 /* The two halves carry the logo's own break: MED blue, SHIELD teal — the same
    seam the mark already makes, which is why the gap opens here.
 
-   NOT the verbatim brand values. This wordmark is large type sitting directly
-   on --surface-deep, where raw #0050A0 measures 1.6:1 and raw #20B0A8 2.6:1 —
-   both fail outright. These are the palette's purpose-built "as text on navy"
-   tokens: 6.5:1 and 10.6:1 respectively, same hues. */
+   The ground is now --surface-page (white), so these are the palette's
+   ON-PAGE text tokens, not the on-navy ones. That swap is required, not
+   cosmetic: --accent-2-on-deep (#5CE0D9) is tuned to carry on navy and
+   measures about 1.5:1 on white — effectively invisible. --accent is the
+   brand blue verbatim at 7.9:1 here, and --accent-2-ink is the palette's
+   teal-as-text value at 4.8:1. Raw brand teal (#20B0A8) is 2.6:1 on this
+   ground and is documented in the palette as decoration only, never type. */
 .preloader__half {
   position: absolute;
   top: 50%;
   transform: translateY(-50%);
   display: inline-flex;
 }
+/* The 0.08em gutters keep the type off the video's edges. Anchored flush at
+   right:100%/left:100% the glyphs sit hard against the frame — fine while the
+   gap is a cap-height slot inside the word, but once it grows into the mini
+   player the D and the S read as if they are touching it. */
 .preloader__half--med {
   right: 100%;            /* hangs off the gap's left edge  */
-  color: var(--accent-ink-on-deep, #4DA3FF);
+  padding-right: 0.08em;
+  color: var(--accent, #0050A0);
 }
 .preloader__half--shield {
   left: 100%;             /* hangs off the gap's right edge */
-  color: var(--accent-2-on-deep, #5CE0D9);
+  padding-left: 0.08em;
+  color: var(--accent-2-ink, #077E77);
 }
 
 /* Per-letter mask. Each letter slides up from below its own clip box, so the

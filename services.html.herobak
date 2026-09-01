@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<title>Services - MedShield Maritime Healthcare &amp; Claims Management</title>
+<meta name="description" content="Claims management, claims advisory and legal, medical welfare budgeting, telemedicine, occupational health and safety, and medico-legal services - for cruise lines, shipping companies and offshore operators.">
+
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="MedShield">
+<meta property="og:title" content="Services - MedShield">
+<meta property="og:description" content="Claims management, claims advisory, welfare budgeting, telemedicine and more - full detail on every MedShield service.">
+<meta property="og:image" content="assets/og-card.png">
+<meta name="theme-color" content="#0A2A43">
+
+<link rel="icon" href="assets/favicon-32.png" sizes="32x32">
+<link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/inner.css">
+</head>
+<body>
+
+<a class="skip-link" href="#main">Skip to content</a>
+
+<header class="site-header" id="site-header">
+  <div class="site-header__inner">
+    <a class="brand" href="index.html" aria-label="MedShield - home">
+      <img class="brand__mark" src="assets/M2.png" alt="" width="3682" height="930" decoding="async">
+    </a>
+    <button class="nav-toggle" id="nav-toggle" type="button"
+            aria-expanded="false" aria-controls="site-nav" aria-label="Open menu">
+      <span class="nav-toggle__bars" aria-hidden="true">
+        <span class="nav-toggle__line"></span>
+        <span class="nav-toggle__line"></span>
+        <span class="nav-toggle__line"></span>
+      </span>
+    </button>
+  </div>
+</header>
+
+<nav class="site-menu" id="site-nav" aria-label="Primary" hidden>
+  <div class="site-menu__inner">
+    <ul class="site-menu__list">
+      <li><a href="index.html">Home</a></li>
+      <li><a href="services.html" aria-current="page">Services</a></li>
+      <li><a href="case-studies.html">Case Studies</a></li>
+      <li><a href="about.html">About</a></li>
+      <li><a href="contact.html">Contact</a></li>
+    </ul>
+    <p class="site-menu__meta">
+      <span>India</span>
+      <span>Singapore</span>
+      <span>UAE</span>
+    </p>
+  </div>
+</nav>
+<div class="nav-scrim" id="nav-scrim" hidden></div>
+
+<main id="main">
+
+  <section class="page-hero">
+    <div class="shell">
+      <p class="eyebrow">What we do</p>
+      <h1 class="page-hero__title">Every service runs on the same two layers</h1>
+      <p class="page-hero__lede">
+        A verified provider network, and an independent medical team that
+        decides how the network gets used. The network is the
+        infrastructure; the decisions are the service.
+      </p>
+      <a class="btn btn--onDeep" href="contact.html" style="margin-top: var(--s-6);">Request a proposal</a>
+    </div>
+  </section>
+
+  <!-- Claims management -->
+  <section class="inner-section" id="claims" aria-labelledby="claims-h">
+    <div class="shell">
+      <div class="svc-detail">
+        <div>
+          <p class="svc-detail__num">01 &mdash; Claims management</p>
+          <h3 id="claims-h">A claim documented from the first hour, so it settles instead of being disputed</h3>
+          <p class="svc-detail__get">You get: end-to-end handling from incident to settlement.</p>
+          <p class="svc-detail__body">
+            Full lifecycle handling of health, disability and life claims -
+            incident documentation, evidence collection, employer negotiation
+            and final settlement. Covers crew injury, illness, and lifestyle
+            and mental health conditions - each handled against maritime law
+            and international compliance standards, with a focus on fraud
+            prevention, policy compliance and dispute mitigation.
+          </p>
+          <a class="svc-detail__cta" href="contact.html">Ask about claims management &rarr;</a>
+        </div>
+        <div class="svc-pillars">
+          <div class="svc-pillar">
+            <h4>Industry expertise</h4>
+            <p>In-depth understanding of maritime laws, contractual frameworks and global compliance standards - every claim handled with legal precision.</p>
+          </div>
+          <div class="svc-pillar">
+            <h4>End-to-end management</h4>
+            <p>Incident documentation, evidence collection, employer negotiation, final settlement - one team, start to finish.</p>
+          </div>
+          <div class="svc-pillar">
+            <h4>Tailored solutions</h4>
+            <p>No two claims are identical - strategies are customised to the case, not templated.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Claims advisory & legal -->
+  <section class="inner-section inner-section--sunken" id="advisory" aria-labelledby="advisory-h">
+    <div class="shell">
+      <div class="svc-detail">
+        <div>
+          <p class="svc-detail__num">02 &mdash; Claims advisory &amp; legal</p>
+          <h3 id="advisory-h">A defensible position before a case becomes a liability</h3>
+          <p class="svc-detail__get">You get: structured review, mediated resolution, and MLC/ILO alignment.</p>
+          <p class="svc-detail__body">
+            Structured review of the employer's obligations, medical records
+            and documentation; collaborative resolution between crew, employer
+            and agents; and alignment with MLC and ILO standards. Our
+            medico-legal team mediates disputes to fair resolution rather than
+            litigating them - and helps mitigate risk from fraudulent claims
+            and ambulance-chasing practices.
+          </p>
+          <a class="svc-detail__cta" href="contact.html">Ask about claims advisory &rarr;</a>
+        </div>
+        <div class="svc-pillars">
+          <div class="svc-pillar">
+            <h4>Medical &amp; health claims advisory</h4>
+            <p>Reviewing the employer's duty and obligation - not an insurance policy, so handled as employer responsibility, not a coverage dispute.</p>
+          </div>
+          <div class="svc-pillar">
+            <h4>Disability claims advisory</h4>
+            <p>Objective medical evaluation and fair advocacy, balancing claimant rights with employer and insurer responsibilities.</p>
+          </div>
+          <div class="svc-pillar">
+            <h4>Life claims advisory</h4>
+            <p>Beneficiary analysis and timely, confidential claims resolution.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Medical welfare budgeting -->
+  <section class="inner-section" id="budgeting" aria-labelledby="budgeting-h">
+    <div class="shell">
+      <div class="svc-detail">
+        <div>
+          <p class="svc-detail__num">03 &mdash; Medical welfare budgeting &amp; auditing</p>
+          <h3 id="budgeting-h">A crew medical spend you can forecast at budget time and defend at year end</h3>
+          <p class="svc-detail__get">You get: a budget built around real risk, not guesswork.</p>
+          <p class="svc-detail__body">
+            Needs assessment across your fleet, a budget designed around
+            preventive care, onboard medical staffing, evacuation contingency
+            and telemedicine costs, then data-driven forecasting to remove
+            financial surprise. Includes PEME and vessel-specific audits, and
+            is built to satisfy global maritime health regulation.
+          </p>
+          <a class="svc-detail__cta" href="contact.html">Ask about welfare budgeting &rarr;</a>
+        </div>
+        <div class="svc-pillars">
+          <div class="svc-pillar">
+            <h4>Comprehensive needs assessment</h4>
+            <p>Evaluating current healthcare provisions and identifying gaps across the fleet.</p>
+          </div>
+          <div class="svc-pillar">
+            <h4>Strategic budget design</h4>
+            <p>Preventive care, evacuation contingency, telemedicine and onboard staffing costs, all accounted for.</p>
+          </div>
+          <div class="svc-pillar">
+            <h4>Risk mitigation &amp; forecasting</h4>
+            <p>Data-driven insights and contingency budgeting, with a direct benefit to crew morale and retention.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Telemedicine -->
+  <section class="inner-section inner-section--sunken" id="telemedicine" aria-labelledby="tele-h">
+    <div class="shell">
+      <div class="svc-detail">
+        <div>
+          <p class="svc-detail__num">04 &mdash; Telemedicine</p>
+          <h3 id="tele-h">A doctor on the line before the master has to make a diversion call alone</h3>
+          <p class="svc-detail__get">You get: 24/7 access to licensed doctors and specialists.</p>
+          <p class="svc-detail__body">
+            Remote locations and extended periods at sea present unique
+            healthcare challenges. Our 24/7 telemedicine service - supported by
+            video consultation and wearable diagnostics - helps vessels avoid
+            unnecessary evacuations and port diversions, the single most
+            expensive outcome of an unmanaged case, while ensuring regulatory
+            compliance with maritime health standards.
+          </p>
+          <a class="svc-detail__cta" href="contact.html">Ask about telemedicine &rarr;</a>
+        </div>
+        <div class="svc-pillars">
+          <div class="svc-pillar">
+            <h4>24/7 licensed doctors</h4>
+            <p>Real-time consultation and remote diagnostics, any hour.</p>
+          </div>
+          <div class="svc-pillar">
+            <h4>Diversion avoidance</h4>
+            <p>Timely intervention reduces unnecessary evacuations and costly port diversions.</p>
+          </div>
+          <div class="svc-pillar">
+            <h4>Compliance built in</h4>
+            <p>Every consultation documented against maritime health standards.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Fraud prevention / safeguards -->
+  <section class="inner-section" aria-labelledby="safeguards-h">
+    <div class="shell">
+      <header class="inner-section__head">
+        <p class="eyebrow">How we protect the claim</p>
+        <h2 class="section-title" id="safeguards-h">Fraud prevention and cost safeguards</h2>
+        <p class="inner-section__lede">
+          Once a hospital learns an employer is paying, prices move. These are
+          the specific mechanisms that keep a claim honest.
+        </p>
+      </header>
+      <div class="safeguards-grid">
+        <div class="safeguard-card">
+          <h4>Field verification</h4>
+          <p>Local field agents, geo-tagged medical visit logs and time-stamped records - so a claim can be checked against what actually happened, not just what was billed.</p>
+        </div>
+        <div class="safeguard-card">
+          <h4>Tiered hospital empanelment</h4>
+          <p>A centralised provider-selection policy covering accreditation, emergency response time, treatment quality and pricing transparency - reviewed and audited periodically.</p>
+        </div>
+        <div class="safeguard-card">
+          <h4>Treatment-guideline library</h4>
+          <p>A standard treatment-guideline reference for the most common seafarer injuries and conditions, so proposed treatment can be checked against a known baseline.</p>
+        </div>
+        <div class="safeguard-card">
+          <h4>Cost-intelligence dashboard</h4>
+          <p>Treatment cost data by region and condition, pre-treatment cost estimates and approvals, and automated flags on cost deviation.</p>
+        </div>
+        <div class="safeguard-card">
+          <h4>Second opinions</h4>
+          <p>Where a proposed treatment is unusual for the region, our panel reviews it before it is approved.</p>
+        </div>
+        <div class="safeguard-card">
+          <h4>Single digital case record</h4>
+          <p>One platform instead of siloed PEME, ship and hospital records - nothing gets lost or contradicted between stakeholders.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- OHS + Medico-legal -->
+  <section class="inner-section inner-section--sunken" aria-labelledby="ohs-h">
+    <div class="shell">
+      <header class="inner-section__head">
+        <p class="eyebrow">Also available</p>
+        <h2 class="section-title" id="ohs-h">Occupational health &amp; safety, and medico-legal services</h2>
+      </header>
+      <div class="layers">
+        <div class="layer-card">
+          <h3>Occupational Health &amp; Safety (OHS)</h3>
+          <p>Maritime safety audits, PEME-related audits and vessel-specific audits - focused on preventing workplace injury and ensuring compliance with international safety standards.</p>
+        </div>
+        <div class="layer-card">
+          <h3>Medico-Legal Services</h3>
+          <p>Combining medical and legal expertise: advice on injury claims, maritime regulations and dispute resolution, protecting clients from legal risk while upholding standards of care.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- How a case runs -->
+  <section class="inner-section" id="process" aria-labelledby="process-h">
+    <div class="shell">
+      <header class="inner-section__head">
+        <p class="eyebrow">How it works</p>
+        <h2 class="section-title" id="process-h"><span class="nb">One case, eight steps,</span><br><span class="nb">one point of contact</span></h2>
+      </header>
+      <ol class="process-compact">
+        <li class="process-compact__item">
+          <span class="process-compact__num">01</span>
+          <div><h4>The case opens</h4><p>A seafarer needs medical support. One number, answered at any hour.</p></div>
+        </li>
+        <li class="process-compact__item">
+          <span class="process-compact__num">02</span>
+          <div><h4>A dedicated CMS is assigned</h4><p>One named Case Management Specialist becomes the single liaison between employer, agent, hospital and patient.</p></div>
+        </li>
+        <li class="process-compact__item">
+          <span class="process-compact__num">03</span>
+          <div><h4>Our SME panel reviews</h4><p>Specialists assess urgency, complexity and treatment options, including cost-effective and high-quality care alternatives - decisions backed by expertise, not guesswork.</p></div>
+        </li>
+        <li class="process-compact__item">
+          <span class="process-compact__num">04</span>
+          <div><h4>Hospital selection, scored</h4><p>A multi-parameter index ranks facilities on expertise, success rate, cost, accessibility and accreditation. The shortlist is shared with the employer for final selection, or decided per your mandate.</p></div>
+        </li>
+        <li class="process-compact__item">
+          <span class="process-compact__num">05</span>
+          <div><h4>Treatment plan approved</h4><p>Plan, expected outcome and financial estimate agreed with the employer before treatment begins.</p></div>
+        </li>
+        <li class="process-compact__item">
+          <span class="process-compact__num">06</span>
+          <div><h4>International payment handled</h4><p>The hospital is paid directly, documented and compliant with global financial regulations - no crew member out of pocket.</p></div>
+        </li>
+        <li class="process-compact__item">
+          <span class="process-compact__num">07</span>
+          <div><h4>Recovery monitored</h4><p>Oversight continues through rehabilitation and follow-up, with the employer updated throughout.</p></div>
+        </li>
+        <li class="process-compact__item">
+          <span class="process-compact__num">08</span>
+          <div><h4>Fitness report &amp; dashboard</h4><p>A treating doctor's fitness-to-work report, plus real-time updates, full record-keeping and analytics/reporting on one secure dashboard.</p></div>
+        </li>
+      </ol>
+    </div>
+  </section>
+
+  <!-- Road ahead -->
+  <section class="inner-section inner-section--sunken" aria-labelledby="road-h">
+    <div class="shell">
+      <header class="inner-section__head">
+        <p class="eyebrow">The road ahead</p>
+        <h2 class="section-title" id="road-h">What's coming</h2>
+        <p class="inner-section__lede">Forward-looking initiatives, not yet live - shared here so you know what to expect.</p>
+      </header>
+      <div class="roadmap-grid">
+        <div class="roadmap-card">
+          <span class="roadmap-card__tag">Planned</span>
+          <h4>Global expansion</h4>
+          <p>Offices in Italy, USA and the UK, extending support for maritime clients worldwide.</p>
+        </div>
+        <div class="roadmap-card">
+          <span class="roadmap-card__tag">Planned</span>
+          <h4>Customised digital solutions</h4>
+          <p>Branded mobile applications tailored to each client, streamlining healthcare management.</p>
+        </div>
+        <div class="roadmap-card">
+          <span class="roadmap-card__tag">Planned</span>
+          <h4>Strategic growth in India</h4>
+          <p>10 PEME centres across key Indian cities for standardised pre-employment medical examinations.</p>
+        </div>
+        <div class="roadmap-card">
+          <span class="roadmap-card__tag">Planned</span>
+          <h4>Onboard healthcare integration</h4>
+          <p>Software installed in each client's ship clinic for real-time record-keeping and health monitoring.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="simple-cta">
+    <div class="shell">
+      <h2>Let's take the next case</h2>
+      <p>Send us your fleet profile and we'll come back with a proposal.</p>
+      <a class="btn btn--onDeep" href="contact.html">Request a proposal</a>
+    </div>
+  </section>
+
+</main>
+
+<footer class="site-footer">
+  <div class="site-footer__deep-probe" aria-hidden="true"></div>
+  <div class="shell">
+    <div class="site-footer__main">
+      <div class="site-footer__top">
+        <div class="site-footer__statement">
+          <p class="site-footer__claim">
+            MedShield manages crew medical claims for owners who treat seafarer
+            health as seriously as the vessel itself.
+          </p>
+          <p class="site-footer__cap site-footer__cap--left">Get in touch</p>
+          <a class="site-footer__email" href="contact.html">Request a proposal</a>
+          <p class="site-footer__offices">
+            <strong>Chennai, India</strong> - HQ
+            <span aria-hidden="true">&middot;</span> <strong>Singapore</strong>
+            <span aria-hidden="true">&middot;</span> <strong>Dubai, UAE</strong>
+          </p>
+        </div>
+
+        <nav class="site-footer__links" aria-label="Footer navigation">
+          <p class="site-footer__cap" id="ft-nav">Navigation</p>
+          <ul aria-labelledby="ft-nav">
+            <li><a class="site-footer__link" href="index.html">Home</a></li>
+            <li><a class="site-footer__link" href="about.html">About</a></li>
+            <li><a class="site-footer__link" href="services.html">Services</a></li>
+            <li><a class="site-footer__link" href="case-studies.html">Case studies</a></li>
+            <li><a class="site-footer__link" href="contact.html">Contact</a></li>
+          </ul>
+        </nav>
+
+        <nav class="site-footer__links" aria-label="Footer services">
+          <p class="site-footer__cap" id="ft-svc">Services</p>
+          <ul aria-labelledby="ft-svc">
+            <li><a class="site-footer__link" href="services.html#claims">Claims management</a></li>
+            <li><a class="site-footer__link" href="services.html#advisory">Claims advisory</a></li>
+            <li><a class="site-footer__link" href="services.html#budgeting">Welfare budgeting</a></li>
+            <li><a class="site-footer__link" href="services.html#telemedicine">Telemedicine</a></li>
+          </ul>
+        </nav>
+      </div>
+
+      <div class="site-footer__bottom">
+        <p class="site-footer__wordmark" aria-hidden="true">MEDSHIELD<span>&reg;</span></p>
+        <div class="site-footer__legal">
+          <p>&copy; 2026 MedShield. All rights reserved.</p>
+          <p class="site-footer__pending">
+            Privacy Policy and Terms of Service pending - not linked until the
+            pages exist.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<script src="js/nav.js" defer></script>
+</body>
+</html>

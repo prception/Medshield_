@@ -8902,31 +8902,8 @@ html.pl-on .preloader {
   inset: 0;
   z-index: 200;          /* over .site-header (z-index 100) */
   place-items: center;
-  /* The loader IS the navy cover, and preloader.js punches a hole in it with a
-     clip-path so the hero's video shows through the gap.
-
-     Two earlier attempts put the cover on .hero::before instead, so the hero
-     media could be clipped directly. Both failed on stacking: .hero__media
-     sits at z-index -1 inside .hero's isolate, so a cover at 0 paints above a
-     media the gap can never reach, and a cover at -1 paints behind it and is
-     invisible. Covering from up here sidesteps the hero's stacking context
-     entirely — this element is fixed, at z-index 200, above everything. */
   background: var(--surface-deep);
-  /* The wordmark must not eat clicks once it has faded but before it is
-     removed, and nothing in here is interactive in the first place. */
-  pointer-events: none;
 }
-
-
-/* The hero's own media layer is what expands. While the intro runs it is
-   clipped to the wordmark's gap by an inset() clip-path that preloader.js
-   animates open; the video underneath plays the whole time and is never
-   swapped, reloaded, or restarted.
-
-   It keeps its normal z-index of -1, BELOW the navy cover above. The cover is
-   what hides it; the clip-path is what lets it through. Lifting the media
-   above the cover instead (an earlier attempt used z-index:1) shows the video
-   full-bleed from the first frame and the gap never reads at all. */
 
 /* The scroll lock. Applied to <html> AND <body> so a phone's overscroll
    chain cannot pull the page while the intro runs. padding-right is written
@@ -9015,16 +8992,18 @@ html.pl-lock body {
   will-change: transform;
 }
 
-/* The gap. This element PAINTS NOTHING — it is a pure geometry reference.
-   preloader.js reads its rect each frame and writes the matching inset() into
-   the hero media's clip-path, so the hero's real video is what appears inside
-   it. Keeping the measurement in a laid-out element means the halves are still
-   pushed apart by normal layout as it widens. */
+/* The gap. Width and height animate 0 → 16:9 → the full hero rect. Because the
+   halves are anchored to its edges, widening it pushes them apart for free. */
 .preloader__box {
   position: relative;
   width: 0;
   height: 1em;           /* cap-height reference; script sizes 16:9 from this */
   flex: 0 0 auto;
+  /* NOT overflow:hidden. The two halves are children of this box and hang
+     outside it by design (right:100% / left:100%), so clipping here would hide
+     the wordmark entirely. The clipping the effect needs is on the media
+     wrapper instead, which is what actually has to be cropped while the gap is
+     narrow. */
   will-change: width, height;
 }
 
@@ -9039,7 +9018,24 @@ html.pl-lock body {
    frame of the expansion and the clip lands off-centre by half its own width.
    xPercent/yPercent compose with x/y inside GSAP's own matrix, which is the
    only way the centring and the travel survive together. */
+/* This is the element that clips: while the gap is narrow the clip inside is
+   cropped from its middle rather than squashed. */
+.preloader__media {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  overflow: hidden;
+  width: var(--pl-media-w, 100%);
+  height: var(--pl-media-h, 100%);
+  will-change: width, height, transform;
+}
 
+.preloader__video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
 
 /* Reduced motion: no growth, no expansion — the loader is not shown at all.
    preloader.js checks the same query and skips straight to the hero, so this

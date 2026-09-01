@@ -85,9 +85,6 @@
      Compensating padding for the scrollbar width, so locking does not shift
      the page sideways underneath the loader. */
   var locked = false;
-  /* Held so the pin can be removed again on unlock. */
-  var pinScroll = null;
-
   function lock() {
     if (locked) return;
     locked = true;
@@ -95,28 +92,6 @@
     if (sw > 0) root.style.paddingRight = sw + 'px';
     root.classList.add('pl-lock');
     window.scrollTo(0, 0);
-
-    /* PIN the scroll position, do not merely disable scrolling.
-
-       html{overflow:hidden} stops a USER scrolling, but it does not stop
-       programmatic movement: a restored scroll position that lands after this
-       runs, an anchor jump, or a focus() on something below the fold will all
-       still move the page. Measured: the document reached scrollY 300 midway
-       through the intro.
-
-       That matters because the hole is punched in viewport coordinates while
-       the video sits in the HERO. Once the page scrolls, the hero moves up and
-       the hole no longer aligns with it, so the expansion opens onto whatever
-       is beneath — the problem section appearing alongside the hero, which is
-       exactly the reported fault.
-
-       Re-asserting 0 on every scroll event keeps the two in register for the
-       whole intro. Passive listener: this only reads and re-sets scroll, it
-       never needs to cancel the event. */
-    pinScroll = function () {
-      if (window.scrollY !== 0) window.scrollTo(0, 0);
-    };
-    window.addEventListener('scroll', pinScroll, { passive: true });
   }
 
   function unlock() {
@@ -124,10 +99,6 @@
     locked = false;
     root.classList.remove('pl-lock');
     root.style.paddingRight = '';
-    if (pinScroll) {
-      window.removeEventListener('scroll', pinScroll);
-      pinScroll = null;
-    }
   }
 
   /* --- Teardown ------------------------------------------------------------

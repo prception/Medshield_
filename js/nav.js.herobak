@@ -105,17 +105,12 @@
   // inner pages have exactly one dark section (the hero), always at the top,
   // so a single boundary check replaces the homepage's per-section probing.
   if (header) {
-    // .page-hero is the standard inner-page dark hero. services.html uses
-    // .hero-svc instead (the full-bleed image hero), and contact.html .c-hero
-    // (a photograph under a navy scrim) — all dark in the same way, and all
-    // must switch the bar's ink identically. Without being listed here a hero
-    // is treated as "no dark hero" and the bar paints dark ink over the
-    // photograph from the first frame.
-    var pageHero = document.querySelector('.page-hero, .hero-svc, .c-hero');
+    var pageHero = document.querySelector('.page-hero');
     var ticking = false;
     function paint() {
       ticking = false;
-      // No dark hero on this page — the bar needs dark ink from the start.
+      // No dark .page-hero on this page (e.g. contact.html, whose top
+      // section is a light ground) — the bar needs dark ink from the start.
       if (!pageHero) { header.classList.add('is-on-light'); return; }
       var rect = pageHero.getBoundingClientRect();
       var stillOverDark = rect.bottom > 72;

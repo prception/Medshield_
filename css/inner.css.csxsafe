@@ -340,48 +340,10 @@
    is a 0.3s ease hover transition, which is what that page actually does. ------------ */
 
 /* 1. Breadcrumb */
-/* The hero is its own full band, with the breadcrumb, title and lede centred
-   in it as one group. The header is fixed, so its height is added as top
-   padding - otherwise the group centres against the viewport and sits high. */
-/* The photograph is the band. A navy scrim sits over it - the picture is a
-   bright sunset, and white type on it is unreadable without one - carrying
-   the same --surface-deep the rest of the site uses for dark grounds. */
-.c-hero {
-  position: relative;
-  min-height: 100vh;
-  display: flex;
-  align-items: center;
-  padding-block: var(--s-6);
-  background:
-    linear-gradient(
-      to right,
-      rgba(var(--rgb-deep), 0.92) 0%,
-      rgba(var(--rgb-deep), 0.78) 45%,
-      rgba(var(--rgb-deep), 0.55) 100%
-    ),
-    url("../assets/contact.png") center / cover no-repeat;
-  color: var(--text-on-deep);
+.crumb {
+  padding-block: calc(5.25rem + var(--s-5)) 0;
+  background: var(--surface-page);
 }
-.c-hero__inner { width: 100%; }
-
-/* On the dark ground every element in the hero switches to its on-deep token. */
-.c-hero .crumb__list { color: var(--text-on-deep-muted); }
-.c-hero .crumb__list a { color: var(--text-on-deep-secondary); }
-.c-hero .crumb__list a:hover { color: var(--accent-2-on-deep); }
-.c-hero .crumb__list li + li::before { color: var(--text-on-deep-muted); }
-.c-hero .crumb__list [aria-current="page"] { color: var(--text-on-deep); }
-.c-hero .c-intro__title { color: var(--text-on-deep); }
-.c-hero .c-intro__lede { color: var(--text-on-deep-secondary); }
-.c-hero .c-intro__cta {
-  color: var(--text-on-deep);
-  border-color: var(--text-on-deep);
-}
-.c-hero .c-intro__cta:hover {
-  color: var(--surface-deep);
-  background: var(--text-on-deep);
-}
-
-.crumb { margin-bottom: var(--s-6); }
 .crumb__list {
   display: flex;
   flex-wrap: wrap;
@@ -408,6 +370,7 @@
    The reference runs a 12-column flex grid and gives the title 5 columns with the
    supporting copy starting around column 8. Two columns of the same proportion
    reproduce that without importing a grid framework. */
+.c-intro { padding-block: var(--s-6) var(--s-8); background: var(--surface-page); }
 .c-intro__wrap {
   display: grid;
   grid-template-columns: 5fr 1fr 6fr;
@@ -418,11 +381,8 @@
 .c-intro__title {
   font-family: var(--font-display);
   font-weight: 700;
-  /* Larger than --t-hero: the title now sits on a full-bleed photograph rather
-     than a plain band, where the site's standard hero size reads undersized
-     against the picture. Same shape as the token, scaled up. */
-  font-size: clamp(3rem, 1.9rem + 4.9vw, 6.5rem);
-  line-height: 1.02;
+  font-size: var(--t-hero);
+  line-height: 1.1;
   letter-spacing: -0.01em;
   color: var(--accent-2-ink);
   /* Both columns share a top line, but the two type sizes have different
@@ -454,51 +414,196 @@
 }
 .c-intro__cta:hover { color: var(--text-on-deep); background: var(--link); }
 
-/* 3. Contact.
-   The section reuses the homepage's contact composition wholesale - the
-   staggered statement, the hairline band, .cform and its underline fields all
-   come from style.css. Only the left column differs, carrying the contact
-   information in place of the homepage's proposal links, set at the form's own
-   label size so both columns read as one field of type. */
-/* The homepage gives this section the whole viewport to itself and sets the
-   statement at poster scale. Here it shares the page with a hero and an FAQ,
-   each capped at 100vh, so the statement is held to a size that lets the whole
-   composition sit inside one screen. Scoped to this page only - the homepage
-   rule in style.css is untouched. */
-.contact { min-height: 100vh; }
-.contact .contact__title { font-size: clamp(2.6rem, 1.4rem + 5.4vw, 7.5rem); }
+/* 3. Get in touch.
+   One band holding the form on the left and the contact channels on the right,
+   as in the reference. Both sections below are height-capped to the viewport,
+   so the inner column scrolls rather than the band growing past 100vh. */
+.git {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  padding-block: var(--s-7);
+  background: var(--surface-page);
+}
+.git__inner { width: 100%; }
+.git__title {
+  font-family: var(--font-display);
+  font-size: var(--t-h1, var(--t-h2));
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: -0.01em;
+  color: var(--text-primary);
+  margin-bottom: var(--s-6);
+}
+/* Form column, then a hairline, then the channels - the reference's proportions. */
+.git__cols {
+  display: grid;
+  grid-template-columns: 1.35fr 1px 1fr;
+  gap: var(--s-7);
+  align-items: start;
+}
+.git__cols::before {
+  content: "";
+  grid-column: 2;
+  align-self: stretch;
+  background: var(--border);
+}
+.git__formcol { grid-column: 1; }
+.git__infocol { grid-column: 3; }
 
-.cinfo + .cinfo { margin-top: var(--s-4); }
-.cinfo__label {
-  font-size: var(--t-micro);
-  font-weight: 600;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  /* Teal, so the three labels separate from the values beneath them rather
-     than reading as one grey block. --accent-2-ink is the teal that is
-     measured for use as type on a light ground. */
-  color: var(--accent-2-ink);
+.git__sub {
+  font-family: var(--font-display);
+  font-size: var(--t-small);
+  font-weight: 700;
+  color: var(--text-primary);
   margin-bottom: var(--s-2);
 }
-.cinfo__value {
+.git__lede {
+  font-size: var(--t-micro);
+  line-height: 1.6;
+  color: var(--text-muted);
+  max-width: 52ch;
+  margin-bottom: var(--s-5);
+}
+
+/* --- Form ---------------------------------------------------------------
+   Underline fields, as in the reference: no box, just a rule under each one,
+   with the label floating up out of the way once the field has content. */
+.cform__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--s-5) var(--s-6);
+}
+.cfield { position: relative; }
+.cfield--full { grid-column: 1 / -1; }
+
+.cfield input,
+.cfield select,
+.cfield textarea {
+  width: 100%;
+  font: inherit;
   font-size: var(--t-small);
-  line-height: 1.55;
-  color: var(--pnl-ink-2);
+  color: var(--text-primary);
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid var(--border-strong);
+  border-radius: 0;
+  padding: 0.4rem 0 0.5rem;
+  transition: border-color 0.3s ease;
 }
-.cinfo__value a {
-  color: var(--pnl-ink);
-  /* The ink is already the panel's darkest; the extra weight and the firmer
-     rule are what make the numbers and addresses read darker beside the
-     lighter descriptive lines. */
-  font-weight: 600;
-  text-decoration: none;
-  border-bottom: 1px solid rgba(var(--rgb-deep), 0.55);
-  transition: color 0.3s ease, border-color 0.3s ease;
+.cfield textarea { min-height: 5.5rem; resize: vertical; }
+.cfield select { appearance: none; cursor: pointer; }
+/* The select carries its own caret, since appearance:none removes the native one. */
+.cfield--select::after {
+  content: "";
+  position: absolute;
+  right: 2px;
+  top: 0.85rem;
+  width: 0.4rem;
+  height: 0.4rem;
+  border-right: 1.5px solid var(--text-muted);
+  border-bottom: 1.5px solid var(--text-muted);
+  transform: rotate(45deg);
+  pointer-events: none;
 }
-.cinfo__value a:hover {
-  color: var(--accent-2-ink);
+.cfield input:focus,
+.cfield select:focus,
+.cfield textarea:focus {
+  outline: none;
   border-bottom-color: var(--accent-2-ink);
 }
+
+/* Floating label. The input carries placeholder=" " so :placeholder-shown is a
+   reliable "is empty" test; the label rides above once it is not. */
+.cfield label {
+  position: absolute;
+  left: 0;
+  top: 0.4rem;
+  font-size: var(--t-small);
+  color: var(--text-muted);
+  pointer-events: none;
+  transition: transform 0.3s ease, font-size 0.3s ease, color 0.3s ease;
+  transform-origin: 0 0;
+}
+.cfield input:focus + label,
+.cfield input:not(:placeholder-shown) + label,
+.cfield textarea:focus + label,
+.cfield textarea:not(:placeholder-shown) + label {
+  transform: translateY(-1.05rem) scale(0.8);
+  color: var(--accent-2-ink);
+}
+/* A select has no placeholder state, so its first option is the label instead. */
+.cfield--select select { color: var(--text-muted); }
+.cfield--select select:valid { color: var(--text-primary); }
+
+.cfield__error {
+  margin-top: var(--s-2);
+  font-size: var(--t-micro);
+  color: var(--pnl-warning, #B3541E);
+}
+.cfield input[aria-invalid="true"],
+.cfield select[aria-invalid="true"],
+.cfield textarea[aria-invalid="true"] { border-bottom-color: var(--pnl-warning, #B3541E); }
+
+.cbtn {
+  display: block;
+  margin-top: var(--s-5);
+  margin-left: auto;
+  width: auto;
+  font: inherit;
+  font-size: var(--t-micro);
+  font-weight: 600;
+  color: var(--text-on-deep);
+  background: var(--surface-deep);
+  border: 1px solid var(--surface-deep);
+  border-radius: 0;
+  padding: 0.7rem 1.2rem;
+  cursor: pointer;
+  transition: color 0.3s ease, background-color 0.3s ease;
+}
+.cbtn:hover { color: var(--surface-deep); background: transparent; }
+
+/* --- Contact channels ---------------------------------------------------- */
+.git-item + .git-item { margin-top: var(--s-6); }
+.git-item__title {
+  font-family: var(--font-display);
+  font-size: var(--t-small);
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: var(--s-2);
+}
+.git-item__body {
+  font-size: var(--t-micro);
+  line-height: 1.6;
+  color: var(--text-muted);
+  margin-bottom: var(--s-3);
+}
+.git-item__link {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  margin-top: var(--s-2);
+  font-size: var(--t-micro);
+  font-weight: 600;
+}
+/* The channel icons sit in a soft teal disc, as in the reference. */
+.git-item__ico {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 1.9rem;
+  height: 1.9rem;
+  border-radius: 50%;
+  background: rgba(32, 176, 168, 0.14);
+  color: var(--accent-2-ink);
+}
+.git-item__ico svg { width: 0.95rem; height: 0.95rem; }
+.git-item__link a {
+  color: var(--accent-2-ink);
+  text-decoration: none;
+  transition: color 0.3s ease;
+}
+.git-item__link a:hover { color: var(--link); }
 
 /* 4. FAQ.
    Heading on the left, the questions on the right - the reference's split. */
@@ -507,8 +612,7 @@
   display: flex;
   align-items: center;
   padding-block: var(--s-7);
-  /* White, matching the form panel above it, so the two run as one ground. */
-  background: #FFFFFF;
+  background: var(--surface-sunken);
 }
 .faq__inner {
   width: 100%;
@@ -590,15 +694,19 @@
 @media (max-width: 960px) {
   .c-intro__wrap { grid-template-columns: 1fr; gap: var(--s-5); }
   .c-intro__main, .c-intro__aside { grid-column: 1; }
-  /* Below this width the 100vh cap is dropped: the stacked FAQ cannot
-     honestly fit one screen, and clipping it would be worse. */
-  .faq { min-height: 0; display: block; }
+  /* Below this width the 100vh cap is dropped: a stacked form plus channels
+     cannot honestly fit one screen, and clipping them would be worse. */
+  .git, .faq { min-height: 0; display: block; }
+  .git__cols { grid-template-columns: 1fr; gap: var(--s-6); }
+  .git__cols::before { display: none; }
+  .git__formcol, .git__infocol { grid-column: 1; }
   .faq__inner { grid-template-columns: 1fr; gap: var(--s-5); }
   .faq__title { max-width: none; }
 }
 @media (max-width: 620px) {
   .crumb { padding-block: calc(5.25rem + var(--s-3)) 0; }
   .c-intro { padding-block: var(--s-5) var(--s-7); }
+  .cform__grid { grid-template-columns: 1fr; gap: var(--s-5); }
 }
 
 
@@ -622,17 +730,8 @@
    ========================================================================== */
 
 .csx {
-  /* 5.25rem is the fixed header's height, the same clearance .page-hero
-     reserves - without it the display line rides under the brand mark. */
-  padding-block: calc(5.25rem + var(--s-7)) var(--s-9);
+  padding-block: var(--s-8) var(--s-9);
   background: var(--surface-page);
-  /* The rows enter from 8vw to the RIGHT of their resting place, which widens
-     the document and puts a horizontal scrollbar on the page for as long as
-     any row is still travelling. Clipping here is what the services section
-     gets from its own overflow:hidden wrapper. clip rather than hidden: it
-     does not create a scroll container, so it cannot swallow the sticky
-     header or hijack anchor scrolling. */
-  overflow-x: clip;
 }
 
 /* --- Masthead ----------------------------------------------------------- */
@@ -812,6 +911,52 @@
 }
 .csx-case--invert .csx-case__figureNum { color: var(--accent-2-on-deep); }
 
+/* --- Load more ---------------------------------------------------------- */
+.csx__more {
+  display: flex;
+  justify-content: center;
+  margin-top: var(--s-6);
+}
+.csx__moreBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-5);
+  min-width: min(26rem, 100%);
+  padding: 0.7rem 0.7rem 0.7rem var(--s-5);
+  border: 0;
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--text-on-deep);
+  font-family: var(--font-body);
+  font-size: var(--t-small);
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 200ms ease;
+}
+.csx__moreBtn:hover { background: var(--accent-hover); }
+.csx__moreBtn:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 3px;
+  box-shadow: 0 0 0 6px var(--focus-halo);
+}
+/* The circular arrow badge riding at the pill's right end. */
+.csx__moreIcon {
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  background: var(--text-on-deep);
+  color: var(--accent);
+  flex: none;
+}
+.csx__moreIcon svg { width: 1rem; height: 1rem; }
+
+/* Rows revealed by the Load more control. Inert (and out of the tab order,
+   via the hidden attribute) until it is pressed. */
+.csx-case[hidden] { display: none; }
+
 /* --- Narrow ------------------------------------------------------------- */
 /* The two columns stack, and the photograph moves ABOVE the copy: on a phone
    the reference leads each card with its image. */
@@ -877,41 +1022,16 @@
    it is a much larger object, and a big card travelling a short distance
    reads as a jolt rather than an arrival. */
 
-/* THE SERVICES SECTION'S CARD ENTRANCE, reproduced.
-
-   js/services.js slides its four glass panes STRAIGHT IN FROM THE RIGHT on a
-   shared measured distance - 1.25s, power2.out, 0.14s apart - and the notes in
-   that file are explicit about why each value is what it is:
-
-     - a pure x-translation. No rotation, skew or scale: anything that turns
-       the pane as it lands reads as a swing rather than a slide.
-     - ONE distance shared by every card, not a per-card measurement. Per-card
-       distances over a shared duration give per-card speeds, which is a fan
-       opening rather than a row of parallel slides.
-     - power2.out over 1.25s rather than a faster power3. power3 spends ~80% of
-       its distance in the first third, so the card is home before the eye can
-       track it and the slide reads as a pop.
-
-   Reproduced in CSS rather than GSAP because this page does not load the
-   vendor bundle. cubic-bezier(0.22, 1, 0.36, 1) is the standard easeOutQuart
-   and is the closest stock curve to GSAP's power2.out; 1250ms and the 140ms
-   stagger are carried over verbatim (the stagger is set as --cx-d in
-   js/cases-reveal.js).
-
-   The travel is 8vw rather than a measured pixel distance: a case row is
-   full-bleed, so "off its own right edge" is a proportion of the viewport, and
-   a viewport unit keeps every row travelling the same distance at any width -
-   which is the shared-distance rule above, expressed in CSS. */
 .cx-anim .csx-case {
   opacity: 0;
-  transform: translateX(8vw);
+  transform: translateY(2.2rem);
 }
 .cx-anim .csx-case.is-in {
   opacity: 1;
   transform: none;
   transition:
-    opacity 900ms cubic-bezier(0.22, 1, 0.36, 1) var(--cx-d, 0ms),
-    transform 1250ms cubic-bezier(0.22, 1, 0.36, 1) var(--cx-d, 0ms);
+    opacity 720ms cubic-bezier(0.22, 0.61, 0.36, 1) var(--cx-d, 0ms),
+    transform 940ms cubic-bezier(0.22, 0.61, 0.36, 1) var(--cx-d, 0ms);
 }
 
 /* The photograph settles OUT of a slight overscale as the row lands. 1.08 is
@@ -927,7 +1047,7 @@
 }
 .cx-anim .csx-case.is-in .csx-case__media img {
   transform: none;
-  transition: transform 1400ms cubic-bezier(0.22, 1, 0.36, 1) var(--cx-d, 0ms);
+  transition: transform 1200ms cubic-bezier(0.22, 0.61, 0.36, 1) var(--cx-d, 0ms);
 }
 
 /* The copy lifts a beat AFTER the row it sits in, so the card arrives first
@@ -939,14 +1059,11 @@
 .cx-anim .csx-case.is-in .csx-case__body > * {
   opacity: 1;
   transform: none;
-  /* Chained after the pane has come to rest, the way services.js only sweeps
-     its sheen once the card has landed - copy still settling while the row is
-     mid-travel reads as a glitch on a moving surface. */
   transition:
-    opacity 620ms cubic-bezier(0.22, 1, 0.36, 1)
-      calc(var(--cx-d, 0ms) + 320ms),
-    transform 720ms cubic-bezier(0.22, 1, 0.36, 1)
-      calc(var(--cx-d, 0ms) + 320ms);
+    opacity 620ms cubic-bezier(0.22, 0.61, 0.36, 1)
+      calc(var(--cx-d, 0ms) + 90ms),
+    transform 720ms cubic-bezier(0.22, 0.61, 0.36, 1)
+      calc(var(--cx-d, 0ms) + 90ms);
 }
 /* The arrow is the last thing in, and it drifts in along its own diagonal -
    the same direction it points, and the same one it takes on hover. */
@@ -956,10 +1073,21 @@
 .cx-anim .csx-case.is-in .csx-case__arrow {
   transform: none;
   transition:
-    opacity 620ms cubic-bezier(0.22, 1, 0.36, 1)
-      calc(var(--cx-d, 0ms) + 440ms),
-    transform 700ms cubic-bezier(0.22, 1, 0.36, 1)
-      calc(var(--cx-d, 0ms) + 440ms);
+    opacity 620ms cubic-bezier(0.22, 0.61, 0.36, 1)
+      calc(var(--cx-d, 0ms) + 220ms),
+    transform 700ms cubic-bezier(0.22, 0.61, 0.36, 1)
+      calc(var(--cx-d, 0ms) + 220ms);
+}
+
+/* Rows added by Load more arrive immediately rather than waiting to be
+   scrolled to: the press IS the trigger, and re-observing them would leave a
+   gap of blank cards under the reader's thumb. cases-more.js adds this class
+   alongside unhiding them. */
+.cx-anim .csx-case.is-in--now,
+.cx-anim .csx-case.is-in--now .csx-case__body > *,
+.cx-anim .csx-case.is-in--now .csx-case__media img {
+  opacity: 1;
+  transform: none;
 }
 
 /* --- Reduced motion ------------------------------------------------------ */

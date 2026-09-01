@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
@@ -24,7 +24,7 @@
 
 <!-- The hero runs with no poster: the video itself is the first paint, so the
      hero ground shows through until enough of the clip has buffered to play.
-     Nothing is preloaded here â€” hero-poster.jpg still exists on disk, but only
+     Nothing is preloaded here — hero-poster.jpg still exists on disk, but only
      as the doubts section's photograph, not as hero first paint. -->
 
 <!-- The hero headline is set in Archivo at ~5.4vw. A swap after first paint at
@@ -34,7 +34,7 @@
 
 <!-- Fraunces was previously discovered inside the stylesheet, which was fine
      while it set only the small stat numerals. It now also sets the outlined
-     "WHAT" in section 04 at ~21vh â€” by far the largest glyphs on the page â€”
+     "WHAT" in section 04 at ~21vh — by far the largest glyphs on the page —
      where a font-display:swap late swap is a very visible reflow. -->
 <link rel="preload" as="font" type="font/woff2" href="assets/fonts/fraunces-latin-var.woff2" crossorigin>
 
@@ -46,13 +46,13 @@
 
 <a class="skip-link" href="#main">Skip to content</a>
 
-<!-- PRELOADER â€” the wordmark, and nothing else.
+<!-- PRELOADER — the wordmark, and nothing else.
 
      MED and SHIELD are two halves of one word with an empty gap between them.
      There is deliberately NO <video> in here: the thing that appears in the
      gap and then expands to fill the screen is the HERO'S OWN video element,
      which preloader.js clips into this box and then releases. That is what
-     makes the hand-off seamless â€” there is no second copy of the clip to
+     makes the hand-off seamless — there is no second copy of the clip to
      download, no swap between two elements, and no restart from frame 0 at the
      moment the loader lifts. The clip keeps playing, uninterrupted, and simply
      stops being clipped.
@@ -100,7 +100,7 @@
          the hamburger is a universally understood control. -->
     <button class="nav-toggle" id="nav-toggle" type="button"
             aria-expanded="false" aria-controls="site-nav" aria-label="Open menu">
-      <!-- Three bare lines and nothing else â€” no text label, matching the
+      <!-- Three bare lines and nothing else — no text label, matching the
            reference exactly. The middle line slides OUT sideways when open
            (the reference's translate(-150%)) rather than fading, so each line
            needs its own node inside a clipping box. -->
@@ -152,7 +152,7 @@
   <section class="hero" id="top" data-bar-ink="light">
 
     <!-- Media layer.
-         The video runs at every viewport width â€” phones fetch and play the
+         The video runs at every viewport width — phones fetch and play the
          same clip as desktop, so the <source> carries no media attribute.
          There is deliberately NO poster: the video is the only image the hero
          should ever show. Until it buffers, the hero ground shows through, so
@@ -169,7 +169,7 @@
            whatever frame the source ends on; hero.js instead crossfades B in
            UNDER A a moment before A's loop point and hands playback off, so
            the restart is masked by a dissolve rather than seen as a cut.
-           Both start with the source attached (see enableVideo in hero.js) â€”
+           Both start with the source attached (see enableVideo in hero.js) —
            only one is ever visible at a time via .is-active. -->
       <video class="hero__video hero__video--a is-active" id="hero-video"
              muted playsinline autoplay preload="auto"
@@ -177,7 +177,7 @@
         <source data-src="assets/videos/hero-loop.mp4" type="video/mp4">
       </video>
       <!-- Copy B is only needed at the crossfade, ~9.4s in. preload="metadata"
-           keeps it from racing copy A for bandwidth during first paint â€”
+           keeps it from racing copy A for bandwidth during first paint —
            with preload="auto" the page fetched the same clip twice up front,
            doubling the time before anything could play. hero.js calls load()
            on it once copy A is under way. -->
@@ -236,7 +236,7 @@
       <h1 class="hero__display">
         <span class="hero__row hero__row--a"><span class="hero__row-t">Expanding</span></span>
         <!-- Row 2 carries TWO elements pushed to opposite edges, exactly as
-             the reference sets "PROPERTY â€¦ KNOWS". That single split is what
+             the reference sets "PROPERTY … KNOWS". That single split is what
              stretches the block across the full frame; a one-element row here
              collapses the composition back to a left-aligned stack. -->
         <span class="hero__row hero__row--b hero__row--split">
@@ -247,7 +247,7 @@
 
       <!-- Band 2b. The SECOND display state.
 
-           Same three-row skeleton, same alignment tension as the H1 above â€”
+           Same three-row skeleton, same alignment tension as the H1 above —
            it occupies the identical grid row and is laid out on top of it, so
            the swap is a crossfade-in-place, not a reflow.
 
@@ -300,7 +300,7 @@
   <!-- Scroll-driven three-state composition. The section is the SCROLL TRACK
        (tall); .doubts__stage is the viewport-height frame that ScrollTrigger
        pins inside it. The theme-ground attributes stay on the outer section
-       so the ground handoff still measures an unpinned, real layout box â€”
+       so the ground handoff still measures an unpinned, real layout box —
        pinning the section itself would hand the observer a box that no longer
        describes what is painted. See js/doubts.js for the choreography.
 
@@ -311,18 +311,18 @@
            aria-labelledby="doubts-h">
     <div class="doubts__stage">
 
-      <!-- STATE 1 â€” split screen: the intro on the page ground at left, and a
+      <!-- STATE 1 — split screen: the intro on the page ground at left, and a
            FILLED panel at right. On scroll the panel slides left and grows
            until it fills the section, and the whole composition is built on
            top of it.
 
            The panel is a sibling of .doubts__frame, not a child of the shell,
            because it must bleed to the viewport's edge while the intro beside
-           it stays on the shell's measure â€” the same relationship the
+           it stays on the shell's measure — the same relationship the
            reference has. -->
       <!-- data-bar-ink="light" on the PANEL rather than on the section: the
            section's own ground is pale, but this gradient fill is deep navy
-           and grows to cover the whole stage, so it â€” not the section â€” is
+           and grows to cover the whole stage, so it — not the section — is
            what decides the header's ink here. isDeepUnderBar tests the
            panel's live left/right edges as it sweeps. -->
       <div class="doubts__panel" aria-hidden="true" data-bar-ink="light"></div>
@@ -348,12 +348,12 @@
             <p class="doubts__lede">
               Every crew medical case opens the same way: with doubt on the
               bridge and no one ashore who owns the answer. These six questions
-              decide what the case costs â€“ in hours, in money, and in outcome.
+              decide what the case costs – in hours, in money, and in outcome.
             </p>
           </header>
         </div>
 
-        <!-- STATES 2 &amp; 3 â€” the six cards and the central image. The cards
+        <!-- STATES 2 &amp; 3 — the six cards and the central image. The cards
              keep their list semantics; the grid places them in their FINAL
              (state 3) positions and GSAP transforms them back toward the
              centre for state 2, so the resting layout is the CSS one. -->
@@ -373,7 +373,7 @@
               <img src="assets/problems/prob2.png" alt="A seafarer clutching his chest on deck"
                    width="1536" height="1024" loading="lazy" decoding="async">
               <p class="doubt__num">02</p>
-              <p class="doubt__detail">Chest pain, or indigestion after a long watch? Nobody aboard is qualified to tell the difference â€“ and guessing wrong costs hours that matter.</p>
+              <p class="doubt__detail">Chest pain, or indigestion after a long watch? Nobody aboard is qualified to tell the difference – and guessing wrong costs hours that matter.</p>
             </figure>
             <h3 class="doubt__title">Chest pain. What is it?</h3>
             <p class="doubt__body">Is it serious?</p>
@@ -410,10 +410,10 @@
           </li>
           <li class="doubt" tabindex="0" data-doubt-slot="br">
             <figure class="doubt__media">
-              <img src="assets/problems/prob6.png" alt="A doctor and a shipâ€™s officer reviewing hospital options on a screen"
+              <img src="assets/problems/prob6.png" alt="A doctor and a ship’s officer reviewing hospital options on a screen"
                    width="1536" height="1024" loading="lazy" decoding="async">
               <p class="doubt__num">06</p>
-              <p class="doubt__detail">If the referral came from a vendor with a financial relationship rather than a clinical one, recovery takes longer and costs more â€“ and nobody ashore finds out until the invoice arrives.</p>
+              <p class="doubt__detail">If the referral came from a vendor with a financial relationship rather than a clinical one, recovery takes longer and costs more – and nobody ashore finds out until the invoice arrives.</p>
             </figure>
             <h3 class="doubt__title">Who chose<br>this hospital?</h3>
             <p class="doubt__body">And why?</p>
@@ -432,7 +432,7 @@
 
       </div>
 
-      <!-- THE PAYOFF LAYER â€” the About statement and the numbers, ON the
+      <!-- THE PAYOFF LAYER — the About statement and the numbers, ON the
            revealed photograph.
 
            This is the reference hero's composition: a display statement
@@ -441,7 +441,7 @@
            in a section of its own, because it is what the reveal is FOR:
            the picture opens and the claim is already standing on it.
 
-           Not aria-hidden, unlike the figure it sits in â€” this is real
+           Not aria-hidden, unlike the figure it sits in — this is real
            content, and it is the only place it appears on the page (the
            old #about-intro section and the proof stat columns were folded
            in here). The <figure> therefore drops its aria-hidden and the
@@ -485,7 +485,7 @@
           <a class="doubts__revealLink" href="about.html">Learn our story</a>
           </div>
 
-          <!-- The stats band: the reference's floor row â€” big figure,
+          <!-- The stats band: the reference's floor row — big figure,
                small label beside it, ruled off from the picture above. -->
           <dl class="doubts__stats">
             <div class="doubts__stat">
@@ -520,7 +520,7 @@
   <!-- REMOVED as a section of its own. Its eyebrow and display statement now
        live INSIDE the problem section's revealed photograph
        (.doubts__reveal in section 02), together with the numbers that used to
-       be the proof strip's two stat columns â€” the reference's composition,
+       be the proof strip's two stat columns — the reference's composition,
        where the claim and the figures stand ON the image rather than in a
        band underneath it. #about-intro-h moved with the heading, so any
        in-page link to it still resolves. -->
@@ -540,7 +540,7 @@
   <!-- 05 - Four services ........................................ -->
   <!-- Locked to exactly 100vh: the wordmark, the intro line and all four glass
        cards live inside one viewport. Everything below is sized in vh/vmin or
-       clamp() against vh for that reason â€” a rem-based scale would overflow a
+       clamp() against vh for that reason — a rem-based scale would overflow a
        short laptop viewport. No data-bar-ink: the ground is pure white. -->
   <section class="services" id="services" aria-labelledby="services-h">
 
@@ -598,7 +598,7 @@
 
            Copy is TRIMMED against the full section elsewhere on the page: at
            100vh a card can hold a promise and a scope line, not a paragraph.
-           The long-form descriptions are not deleted from the site â€” they are
+           The long-form descriptions are not deleted from the site — they are
            what the detail sections carry. Cards must not scroll internally. -->
       <ol class="services__grid">
         <li class="service" id="claims">
@@ -900,7 +900,7 @@
   <!-- 06b - The transition from "How a case runs" into "Case studies" ......
        A SPACER ONLY. It owns no content and no visuals whatsoever.
 
-       The thing that travels is not in here: it is #process's own .shell â€”
+       The thing that travels is not in here: it is #process's own .shell —
        the actual, visible composition with its heading and all eight cards.
        #process is what gets pinned, and that real element is what shrinks and
        drops into the featured case card. Nothing is cloned, restated or
@@ -936,7 +936,7 @@
          There used to be a large translateY tween here that pulled the whole
          Case studies composition up from below the fold. It is gone: Case
          studies sits in its own ordinary document position, immediately under
-         the pinned #process, from the moment the pin engages â€” see the
+         the pinned #process, from the moment the pin engages — see the
          removed riseDistance() note in process-to-cases.js. This wrapper now
          carries no transform at any point and is functionally a plain div.
          The reveal is done entirely by #process.is-morphing's clip opening
@@ -955,6 +955,11 @@
         </p>
         <!-- Both cases are anonymised (no vessel, company or individual named).
              Written sign-off is still required before publishing - see README. -->
+        <p class="cases__confirm">
+          <span class="confirm">[CONFIRM: client sign-off]</span>
+          Both cases are anonymised, but written clearance and confirmation of the
+          savings figures are required before this section goes live.
+        </p>
       </header>
 
       <!-- CENTRE - the featured case -------------------------------------- -->
@@ -964,13 +969,13 @@
            real process composition into. Its CONTENT (.case__reveal) is held
            back until that composition has actually landed here, so there is
            never a second featured card sitting underneath the incoming one to
-           cross-fade with â€” the frame the reader ends up looking at is the
+           cross-fade with — the frame the reader ends up looking at is the
            one that travelled. See the .cases--awaiting rules in style.css. -->
       <article class="case case--featured cases__featured">
         <!-- NO MEDIA PLATE. The featured card carries text only.
 
-             This card used to hold its own copy of assets/process/8.webp â€”
-             the same photograph the final process view already contains â€” so
+             This card used to hold its own copy of assets/process/8.webp —
+             the same photograph the final process view already contains — so
              throughout the morph there were two identical images on screen:
              the real one riding inside the shrinking camera, and this one
              sitting in the destination waiting for it. That is what made the
@@ -983,7 +988,7 @@
              figure and the disclosure. Those fade up once the camera has
              arrived, INSIDE the frame it is already occupying. -->
         <div class="case__reveal">
-        <!-- THE PLATE'S OWN IMAGE, restored â€” but gated, which is the part
+        <!-- THE PLATE'S OWN IMAGE, restored — but gated, which is the part
              that was missing before.
 
              The card used to hold this same photograph unconditionally, which
@@ -991,13 +996,13 @@
              one riding inside the shrinking camera, and this one waiting
              underneath) and made the transition read as two objects meeting.
              It was deleted for that reason, and the middle of the plate has
-             been empty ever since â€” because the camera does not stay: it goes
+             been empty ever since — because the camera does not stay: it goes
              to opacity 0 the moment it lands (is-camera-done, see
              process-to-cases.js), leaving a tall navy void between the head
              and foot copy for all ordinary scrolling afterwards.
 
              So the image comes back, held at opacity 0 until
-             .cases--landed â€” the same gate the plate's own ground already
+             .cases--landed — the same gate the plate's own ground already
              waits on. During the morph there is still exactly one image on
              screen (the camera's); at the frame the camera stands down, this
              one is already in place behind the copy. -->
@@ -1009,7 +1014,7 @@
 
                They used to sit in the same bottom-pinned block as everything
                else, which left the upper two-thirds of a 92vh frame completely
-               empty whenever the process camera was not sitting inside it â€”
+               empty whenever the process camera was not sitting inside it —
                after the morph is torn down, on a reload part-way down the
                page, or with JS off. Splitting the copy into a head group and a
                foot group means the plate is composed at both ends on its own,
@@ -1129,13 +1134,13 @@
   <!-- Editorial split: a fixed left rail (eyebrow, heading, the four support
        points, the "what we are not" answer), a fixed headline block top-right,
        and a three-up card carousel anchored to the LOWER-RIGHT quadrant. Only
-       the carousel moves â€” the rail and headline never translate. Card content
+       the carousel moves — the rail and headline never translate. Card content
        is unchanged from the previous five-across grid; only its layout,
        styling and motion are new. -->
   <section class="why" id="why" aria-labelledby="why-h">
     <div class="shell why__layout">
 
-      <!-- LEFT RAIL â€” fixed. Never animates. -->
+      <!-- LEFT RAIL — fixed. Never animates. -->
       <div class="why__rail">
         <p class="eyebrow">Why MedShield</p>
         <h2 class="why__rail-title" id="why-h">Why<br>us</h2>
@@ -1166,7 +1171,7 @@
         </aside>
       </div>
 
-      <!-- TOP RIGHT â€” fixed headline. Never animates. -->
+      <!-- TOP RIGHT — fixed headline. Never animates. -->
       <header class="why__head">
         <h2 class="why__display">What changes when you<br>bring <span class="why__display-brand">MedShield</span> onboard.</h2>
         <p class="why__lede">
@@ -1176,7 +1181,7 @@
         </p>
       </header>
 
-      <!-- BOTTOM RIGHT â€” the carousel. Three cards visible of nine, advancing
+      <!-- BOTTOM RIGHT — the carousel. Three cards visible of nine, advancing
            left on a loop. Cards 01-05 are the operational case for MedShield;
            06-09 are the business outcomes that follow from it, each written so
            the owner's benefit and the seafarer's benefit sit in the same card.
@@ -1506,8 +1511,8 @@
               <h3 class="contact__alertTitle" id="emergency-h">Medical emergency at sea right now?</h3>
               <p class="contact__alertBody">
                 Do not use this form. Call
-                <strong><a href="tel:+919840603936">+91 98406 03936</a></strong>
-                &ndash; answered by a coordinator.
+                <strong class="confirm">[CONFIRM: 24/7 number]</strong>
+                &ndash; answered by a coordinator, any hour.
               </p>
             </aside>
           </div>
@@ -1601,7 +1606,7 @@
                  button, so the hit target is the full width rather than the
                  dot alone. -->
             <button class="cform__send" type="submit">
-              <span class="cform__sendLabel">Contact</span>
+              <span class="cform__sendLabel">Contact me</span>
               <span class="cform__dot" aria-hidden="true"></span>
             </button>
 
@@ -1632,7 +1637,7 @@
      reference contributed only the arrangement.
 
      The reference opens with a "let's build something" CTA band. We do not
-     repeat that here â€” the contact form is the section directly above, so a
+     repeat that here — the contact form is the section directly above, so a
      second CTA would ask twice. The one-line invitation lives inside the
      statement block instead. -->
 <!-- The pale-to-blue transition is no longer a separate element: the footer
@@ -1642,7 +1647,7 @@
      BAR INK. data-bar-ink="light" therefore CANNOT sit on <footer> any more.
      hero.js decides the header's ink from the bounding rect of each marked
      element, and the footer's rect now includes the near-white top of the
-     lead-in â€” marking the whole footer "deep" would render the white wordmark
+     lead-in — marking the whole footer "deep" would render the white wordmark
      on a near-white ground, the exact bug the old split avoided. The marker
      moves to an empty child positioned over the genuinely dark region only
      (everything below the lead-in), so the ink still flips at the right
@@ -1663,13 +1668,13 @@
             health as seriously as the vessel itself.
           </p>
           <p class="site-footer__cap site-footer__cap--left">Get in touch</p>
-          <!-- Points at the form rather than a mailto, so an enquiry arrives
-               with the fleet details already attached. -->
+          <!-- Real email and phone are still [CONFIRM] in CONTENT.md, so this
+               points at the form rather than guessing an address. -->
           <a class="site-footer__email" href="#contact">Request a proposal</a>
           <p class="site-footer__offices">
-            <strong>Chennai, India</strong> â€“ HQ
-            <span aria-hidden="true">Â·</span> <strong>Singapore</strong>
-            <span aria-hidden="true">Â·</span> <strong>Dubai, UAE</strong>
+            <strong>Chennai, India</strong> – HQ
+            <span aria-hidden="true">·</span> <strong>Singapore</strong>
+            <span aria-hidden="true">·</span> <strong>Dubai, UAE</strong>
           </p>
         </div>
 
@@ -1701,12 +1706,12 @@
       <!-- Bottom band. The reference closes on a full-width SVG wordmark; ours
            is live text so it stays selectable, searchable and scalable. -->
       <div class="site-footer__bottom">
-        <p class="site-footer__wordmark" aria-hidden="true">MEDSHIELD<span>Â®</span></p>
+        <p class="site-footer__wordmark" aria-hidden="true">MEDSHIELD<span>®</span></p>
 
         <div class="site-footer__legal">
-          <p>Â© 2026 MedShield. All rights reserved.</p>
+          <p>© 2026 MedShield. All rights reserved.</p>
           <p class="site-footer__pending">
-            Privacy Policy and Terms of Service pending â€“ not linked until the
+            Privacy Policy and Terms of Service pending – not linked until the
             pages exist.
           </p>
         </div>
@@ -1733,7 +1738,80 @@
   </svg>
 </button>
 
-<script src="js/floating-controls.js" defer></script>
+<script>
+(function () {
+  'use strict';
+
+  var wa   = document.getElementById('wa-float');
+  var top  = document.getElementById('to-top');
+  var hero = document.querySelector('.hero');
+  if (!wa && !top) return;
+
+  function reveal(on) {
+    if (wa)  wa.classList.toggle('show', on);
+    if (top) top.classList.toggle('show', on);
+  }
+
+  // IntersectionObserver over a scroll listener: the browser does the work off
+  // the main thread, so this never fights the GSAP ScrollTriggers in 03/04.
+  if (hero && 'IntersectionObserver' in window) {
+    new IntersectionObserver(function (entries) {
+      reveal(!entries[0].isIntersecting);
+    }, { threshold: 0 }).observe(hero);
+  } else {
+    // No hero on the page, or a browser without IO: fall back to scroll depth.
+    var ticking = false;
+    window.addEventListener('scroll', function () {
+      if (ticking) return;
+      ticking = true;
+      window.requestAnimationFrame(function () {
+        ticking = false;
+        reveal(window.scrollY > window.innerHeight * 0.6);
+      });
+    }, { passive: true });
+  }
+
+  // Fill level. --p is a unitless number the stylesheet multiplies into a
+  // percentage, so the gradient stop tracks how far down the page we are.
+  if (top) {
+    var pTicking = false;
+
+    function paint() {
+      pTicking = false;
+      var max = document.documentElement.scrollHeight - window.innerHeight;
+      // A page shorter than the viewport has nothing to report — show it empty
+      // rather than dividing by zero and filling the square outright.
+      var p = max > 0 ? (window.scrollY / max) * 100 : 0;
+      top.style.setProperty('--p', Math.max(0, Math.min(100, p)).toFixed(1));
+    }
+
+    window.addEventListener('scroll', function () {
+      if (pTicking) return;
+      pTicking = true;
+      window.requestAnimationFrame(paint);
+    }, { passive: true });
+
+    // Sections 03/04 pin on scroll, so total height changes as they resolve.
+    window.addEventListener('resize', paint, { passive: true });
+    paint();
+
+    top.addEventListener('click', function () {
+      // hero.js runs a wheel-driven smooth-scroll engine on non-touch, non
+      // reduced-motion setups. Where it is active it owns the scroll position:
+      // a native smooth scrollTo fights its scroll listener and stalls partway,
+      // so hand it the target and let its own loop drive.
+      if (window.__medshieldScroll && window.__medshieldScroll.scrollTo) {
+        window.__medshieldScroll.scrollTo(0);
+        return;
+      }
+      // Engine absent (touch, or reduced motion): the browser handles it. The
+      // stylesheet already drops smooth behaviour under reduced motion.
+      var reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      window.scrollTo({ top: 0, behavior: reduced ? 'auto' : 'smooth' });
+    });
+  }
+})();
+</script>
 
 <script>
 (function () {
@@ -1837,7 +1915,7 @@
 
 <!-- GSAP is hoisted ABOVE hero.js because preloader.js needs it present at
      DOMContentLoaded. Both are `defer`, so they execute in document order:
-     gsap â†’ preloader â†’ hero. If GSAP ever fails to load, preloader.js takes
+     gsap → preloader → hero. If GSAP ever fails to load, preloader.js takes
      its no-GSAP bail-out path, releases the hero gate and removes itself. -->
 <!-- Smooth scroll, shared with the inner pages (js/smooth-scroll.js).
      Loads first: hero.js and nav.js both call window.__medshieldScroll. -->
@@ -1846,7 +1924,7 @@
 <script src="js/preloader.js" defer></script>
 <script src="js/hero.js" defer></script>
 
-<!-- Sections 03 and 04. Self-hosted like every other asset here â€” no CDN, in
+<!-- Sections 03 and 04. Self-hosted like every other asset here — no CDN, in
      keeping with the no-build-step, no-CDN rule the stylesheet states. All are
      plain scripts, so `defer` keeps them in order ahead of the section files,
      each of which guards on window.gsap and bails out cleanly. -->

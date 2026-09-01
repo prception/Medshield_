@@ -85,9 +85,6 @@
      Compensating padding for the scrollbar width, so locking does not shift
      the page sideways underneath the loader. */
   var locked = false;
-  /* Held so the pin can be removed again on unlock. */
-  var pinScroll = null;
-
   function lock() {
     if (locked) return;
     locked = true;
@@ -95,28 +92,6 @@
     if (sw > 0) root.style.paddingRight = sw + 'px';
     root.classList.add('pl-lock');
     window.scrollTo(0, 0);
-
-    /* PIN the scroll position, do not merely disable scrolling.
-
-       html{overflow:hidden} stops a USER scrolling, but it does not stop
-       programmatic movement: a restored scroll position that lands after this
-       runs, an anchor jump, or a focus() on something below the fold will all
-       still move the page. Measured: the document reached scrollY 300 midway
-       through the intro.
-
-       That matters because the hole is punched in viewport coordinates while
-       the video sits in the HERO. Once the page scrolls, the hero moves up and
-       the hole no longer aligns with it, so the expansion opens onto whatever
-       is beneath — the problem section appearing alongside the hero, which is
-       exactly the reported fault.
-
-       Re-asserting 0 on every scroll event keeps the two in register for the
-       whole intro. Passive listener: this only reads and re-sets scroll, it
-       never needs to cancel the event. */
-    pinScroll = function () {
-      if (window.scrollY !== 0) window.scrollTo(0, 0);
-    };
-    window.addEventListener('scroll', pinScroll, { passive: true });
   }
 
   function unlock() {
@@ -124,10 +99,6 @@
     locked = false;
     root.classList.remove('pl-lock');
     root.style.paddingRight = '';
-    if (pinScroll) {
-      window.removeEventListener('scroll', pinScroll);
-      pinScroll = null;
-    }
   }
 
   /* --- Teardown ------------------------------------------------------------
@@ -213,12 +184,12 @@
      small but unmistakable 16:9 player — a quarter of the frame's width, held
      for a beat — so the clip is legible as footage before it scales up.
 
-     Clamped against both axes: 16% of the width, but never more than 22% of the
+     Clamped against both axes: 25% of the width, but never more than 34% of the
      height once the 9/16 is applied, so it stays comfortably inside a short
      landscape phone as well as a tall portrait one. */
   function miniSize() {
-    var w = window.innerWidth * 0.16;
-    var maxH = window.innerHeight * 0.22;
+    var w = window.innerWidth * 0.25;
+    var maxH = window.innerHeight * 0.34;
     if (w * 9 / 16 > maxH) w = maxH * 16 / 9;
     /* Never smaller than the wordmark's own gap — on a narrow phone the
        cap-height slot can already be wider than a quarter of the screen, and
@@ -242,80 +213,12 @@
      gap's rect wound the other, which subtracts it. A plain inset() cannot do
      this — inset keeps what is INSIDE, and here everything outside the gap is
      what must stay painted. */
-  /* Which layout the hero videos currently carry — 'small' (sized onto the
-     hole) or 'full' (handed back to the stylesheet). Tracked so the reset is
-     written once on the transition rather than on every ticker frame. */
-  var lastFit = null;
-
-  /* Set by applyHole() when the hole reaches all four frame edges. */
-  var holeIsFull = false;
-
-  /* The box's offset from the frame centre, captured on the first frame. */
-  var slipPx = null;
-
   function applyHole() {
     var b = box.getBoundingClientRect();
     var w = window.innerWidth;
     var h = window.innerHeight;
 
-    /* Clamp the hole to the viewport.
-
-       The box is not centred on the frame — the row it sits in is shifted left
-       by half the difference between SHIELD and MED so the WORD reads centred
-       (see the centring block in run()). At full width that offset carries the
-       box past the edges: measured at 1440, it spanned -64 to 1376, leaving a
-       64px strip of cover un-punched down the right-hand side. The section
-       below the hero showed through that strip during the expansion, which is
-       exactly the leak this clamp closes.
-
-       Clamping only ever makes the hole reach the frame edge sooner; it cannot
-       shrink it, so the miniature and the expansion are untouched. */
-    var x1 = Math.max(0, b.left);
-    var x2 = Math.min(w, b.right);
-    var y1 = Math.max(0, b.top);
-    var y2 = Math.min(h, b.bottom);
-
-    /* A fully collapsed hole would produce a degenerate polygon; keep it valid. */
-    if (x2 < x1) x2 = x1;
-    if (y2 < y1) y2 = y1;
-
-    /* Snap the hole to the frame edges as it approaches them.
-
-       The box is centred on the WORD, not on the viewport, so at its full size
-       it reaches one edge before the other — measured at 1440 it spanned -64 to
-       1376, leaving a 64px strip of cover un-punched on the right through which
-       the section below the hero showed.
-
-       Inflating the box to compensate was the wrong fix: the video is sized to
-       the box while small, so a bigger box scaled and cropped the hero video.
-       Extending the HOLE instead leaves the box's geometry — and therefore the
-       video's — untouched.
-
-       The snap only applies in the last few per cent of the expansion, where
-       the hole is already essentially full-frame, so it cannot be seen as a
-       jump. */
-    /* The threshold is the box's own offset from the frame's centre, doubled:
-       because the box is centred on the WORD, its far edge lags the near one by
-       exactly twice that offset, so a smaller threshold always leaves a strip.
-
-       Captured ONCE, on the first call, rather than read live. Live it shrinks
-       as the box grows (the rect being measured is the thing moving), so by the
-       time it mattered the threshold had collapsed to near zero and the strip
-       reappeared — measured up to 194px of un-punched cover. */
-    if (slipPx === null) {
-      slipPx = Math.abs(w / 2 - (b.left + b.width / 2));
-    }
-    var edge = slipPx * 2 + 2;
-
-    if (x1 <= edge) x1 = 0;
-    if (x2 >= w - edge) x2 = w;
-    if (y1 <= edge) y1 = 0;
-    if (y2 >= h - edge) y2 = h;
-
-    /* True once nothing of the cover is left showing. The teardown waits on
-       this rather than on a timeline position, so the cover is never removed
-       while it is still visibly covering part of the frame. */
-    holeIsFull = (x1 === 0 && y1 === 0 && x2 === w && y2 === h);
+    var x1 = b.left, x2 = b.right, y1 = b.top, y2 = b.bottom;
 
     /* Outer ring clockwise, inner rect counter-clockwise. evenodd then treats
        the inner rect as a hole rather than as more filled area. */
@@ -324,128 +227,16 @@
       x1 + 'px ' + y1 + 'px, ' + x1 + 'px ' + y2 + 'px, ' + x2 + 'px ' + y2 + 'px, ' + x2 + 'px ' + y1 + 'px, ' + x1 + 'px ' + y1 + 'px)';
 
     pl.style.clipPath = poly;
-
-    /* SHOW THE WHOLE FRAME WHILE THE BOX IS SMALL.
-
-       The hole decides what is VISIBLE, but the <video> is laid out across the
-       whole viewport — so a small hole reveals the middle patch of a 1440px
-       frame rather than the shot itself.
-
-       object-fit alone does not fix this: 'contain' fits the video to its
-       ELEMENT, and the element is still full-viewport, so the hole goes on
-       cropping whatever sits in the middle. The video element has to be sized
-       and positioned to the HOLE. Then 'contain' letterboxes the entire frame
-       into exactly the rectangle the viewer can see.
-
-       Scaling .hero__media was also wrong (tried, reverted): it shrinks the
-       hole along with the video, so the rectangle stays the same size on screen
-       while the footage inside it gets smaller.
-
-       Past the threshold everything is handed back to the stylesheet, so the
-       video ends full-bleed at object-fit:cover — the hero's real resting state
-       and the crop the rest of the design is built around. */
-    var small = b.width < w * 0.72;
-    var vids = document.querySelectorAll('.hero__video');
-    var i, v;
-
-    if (small) {
-      var hm = heroMedia.getBoundingClientRect();
-      for (i = 0; i < vids.length; i++) {
-        v = vids[i];
-        v.style.position = 'absolute';
-        v.style.left   = (b.left - hm.left) + 'px';
-        v.style.top    = (b.top  - hm.top)  + 'px';
-        v.style.width  = b.width  + 'px';
-        v.style.height = b.height + 'px';
-        v.style.objectFit = 'contain';
-      }
-      lastFit = 'small';
-    } else if (lastFit !== 'full') {
-      lastFit = 'full';
-      for (i = 0; i < vids.length; i++) {
-        v = vids[i];
-        v.style.position = '';
-        v.style.left = '';
-        v.style.top = '';
-        v.style.width = '';
-        v.style.height = '';
-        v.style.objectFit = '';
-      }
-    }
   }
 
   function clearHole() {
     if (pl) pl.style.clipPath = '';
-    /* Hand the videos back to the stylesheet. applyHole() sizes and positions
-       them onto the hole while the box is small; if a failsafe tears the intro
-       down mid-run, those inline styles would otherwise leave the hero video
-       letterboxed in a small rectangle for good. */
-    var vids = document.querySelectorAll('.hero__video');
-    for (var i = 0; i < vids.length; i++) {
-      var v = vids[i];
-      v.style.position = '';
-      v.style.left = '';
-      v.style.top = '';
-      v.style.width = '';
-      v.style.height = '';
-      v.style.objectFit = '';
-    }
-    lastFit = null;
   }
 
-  /* The box's target size: exactly the viewport.
-
-     It must NOT be inflated to compensate for the box sitting off-centre. The
-     video is sized to this same box while it is small, so any overshoot scales
-     the hero video up and crops it — measured at 1440x900 an earlier version
-     grew the box to 1567x980, blowing the hero up ~9% and cutting the headline
-     off at the left edge.
-
-     The off-centre problem that inflation was solving is real, but it belongs
-     in applyHole(), which extends the HOLE to the frame edges without touching
-     the box's own geometry. */
+  /* The gap's target size at the end of the expansion: the viewport, so the
+     hole opens until nothing of the cover is left. */
   function fullSize() {
     return { w: window.innerWidth, h: window.innerHeight };
-  }
-
-  /* --- Waiting for actual playback -----------------------------------------
-     The miniature is the beat where the clip is meant to be READ as video, so
-     it must be moving by then — not parked on a first frame.
-
-     Measured before this gate: at the mini stage the hero video reported
-     readyState 1 (metadata only) and currentTime 0. The encode is ~6MB, and
-     although hero.js promotes the source immediately, the intro reached the
-     miniature well before enough had buffered to play. The small box showed a
-     frozen frame, which is exactly what it should not show.
-
-     So the timeline pauses before the mini beat and resumes on whichever comes
-     first: the video genuinely playing (readyState >= 3 AND currentTime
-     advancing), or a short ceiling. The ceiling matters — on a slow connection
-     the intro must not hang waiting for a clip that is still downloading, and a
-     still frame is a far better outcome than a stalled splash. */
-  function whenPlaying(cb) {
-    var done = false;
-    function go() {
-      if (done) return;
-      done = true;
-      window.clearInterval(iv);
-      window.clearTimeout(ceiling);
-      cb();
-    }
-
-    var v = document.getElementById('hero-video');
-    if (!v) { cb(); return; }
-
-    /* Poll rather than listen: 'playing' can fire before any frame is actually
-       presented, and currentTime advancing is the honest signal that the
-       decoder is running. */
-    var last = -1;
-    var iv = window.setInterval(function () {
-      if (v.readyState >= 3 && v.currentTime > 0 && v.currentTime !== last) go();
-      last = v.currentTime;
-    }, 50);
-
-    var ceiling = window.setTimeout(go, 1800);
   }
 
   /* --- Video ---------------------------------------------------------------
@@ -478,10 +269,6 @@
 
      expo.inOut throughout, as the reference uses — it holds the slow start and
      the long settle that make the expansion read as one continuous move. */
-  /* The pause between beats. One constant so the three stages stay evenly
-     spaced if it is tuned. */
-  var HOLD = 0.25;
-
   function run() {
     lock();
 
@@ -530,78 +317,66 @@
       yPercent: 110
     }, {
       yPercent: 0,
-      stagger: 0.015,
-      duration: 0.5,
+      stagger: 0.03,
+      duration: 1.1,
       ease: 'expo.out'
     });
 
-    /* THREE BEATS, NOT ONE MOVE.
+    /* THE WHOLE OPENING, AS ONE TWEEN.
 
-       1. the word lands          — hold
-       2. the rectangle forms     — hold
-       3. it expands to the frame
+       gap -> mini -> full frame, as three keyframes on a single tween rather
+       than three tweens in sequence. This is the fix for the stall in the
+       middle of the expansion, and the cause was two separate stops, measured
+       on a velocity trace:
 
-       Each stage completes and SETTLES before the next begins. That is the
-       point: the viewer should read "MEDSHIELD", then read the video sitting
-       inside it, then watch it take the screen — three things in sequence, not
-       one continuous swell.
+         1008-1133ms   px/s = 0     the gap tween finished and stood still
+                                    before the mini tween started
+         2041-2192ms   px/s ~ 20    the mini keyframe eased OUT to near-zero
+                                    before the full-frame move began
 
-       This is deliberately NOT the merged single tween that was here before.
-       That version existed to kill a stall, and it did — but a stall and a beat
-       are different things. A stall is motion decelerating to zero PART WAY
-       THROUGH a move, which reads as a hitch. A beat is a move that has
-       genuinely finished, held, and been followed by another. The eases below
-       therefore DO settle (that is what makes each stage land), and the pauses
-       between them are explicit rather than accidental.
+       Both come from easing, not only from the (now removed) explicit hold:
+       every *.inOut ease decelerates to a dead stop at its own end, so any
+       chain of them hesitates at each join no matter how the timings are
+       arranged. Keyframes on one tween share a single timeline, and the eases
+       below never end on an "out", so velocity is continuous from the first
+       frame to the last.
 
-       The thing to avoid is re-introducing the old fault: no *.inOut ease
-       spanning a join, and no leg that eases out into another leg with no hold
-       between them. Every stage here ends, waits, and the next starts fresh. */
-
-    /* --- Beat 1 tail: the word has landed. Hold it. --- */
-    tl.to({}, { duration: HOLD });
-
-    /* Gate: do not open the gap until the clip is actually running, so the
-       miniature shows moving footage rather than a frozen first frame. The
-       wordmark simply holds a moment longer while it buffers. */
-    tl.addPause(undefined, function () {
-      whenPlaying(function () { tl.resume(); });
-    });
-
-    /* --- Beat 2: the gap parts the word and becomes the mini player. ------
-       One tween, because the gap opening and the rectangle forming are the
-       same gesture — the box growing from a slit to a 16:9 frame. It settles
-       on expo.out so the rectangle arrives and stops cleanly. */
+       The wordmark still gets its moment — the gap holds its 16:9 shape while
+       the letters are still in place — but as a point the motion passes
+       through, not a state it settles into. */
     tl.to(box, {
-      width: function () { return miniSize().w; },
-      height: function () { return miniSize().h; },
-      duration: 0.7,
-      ease: 'expo.out'
-    });
-    tl.addLabel('mini');
-
-    /* --- Beat 2 tail: the miniature is readable. Hold it. --- */
-    tl.to({}, { duration: HOLD });
-
-    /* --- Beat 3: the expansion. -------------------------------------------
-       Starts from rest, which is correct here — it is the beginning of a new
-       move, not the middle of an interrupted one. power2.in so it builds from
-       the held miniature and carries the eye out to the full frame. */
-    tl.addLabel('expand');
-    tl.to(box, {
-      width: function () { return fullSize().w; },
-      height: function () { return fullSize().h; },
-      duration: 1.0,
-      ease: 'power2.in',
-      onComplete: function () {
-        /* One more frame so the ticker's applyHole() runs against the final
-           box rect before the cover goes; without it the hole can still be one
-           frame behind at the instant the cover is removed. */
-        applyHole();
-        gsap.set(pl, { autoAlpha: 0 });
-      }
+      keyframes: [
+        {
+          /* Parting the word. Starts gently so the letters are still settling
+             as the gap begins to open between them. */
+          width: g,
+          height: function () { return box.getBoundingClientRect().height; },
+          duration: 0.9,
+          ease: 'power1.in'
+        },
+        {
+          /* Out to the miniature, and straight on to full frame. Both legs are
+             ease:'none' — GSAP resets velocity to zero at the START of every
+             keyframe regardless of the ease named on it, so a 'power2.in' here
+             begins from rest and reads as a second stall (measured: 68 px/s
+             dropping to 30 px/s at the join). Linear legs keep the speed the
+             previous leg was carrying; the ACCELERATION across the whole move
+             comes from the leg durations instead — the same 
+             distance-per-second stepping up as each leg covers more ground in
+             less time. */
+          width: function () { return miniSize().w; },
+          height: function () { return miniSize().h; },
+          duration: 0.55,
+          ease: 'none'
+        },
+        {
+          width: function () { return fullSize().w; },
+          height: function () { return fullSize().h; },
+          duration: 1.5,
+          ease: 'none'
+        }
+      ]
     }, 'expand');
-
 
 
     /* The letters clear as the frame opens up — they would otherwise sit on
@@ -611,7 +386,7 @@
       stagger: 0.02,
       duration: 0.7,
       ease: 'expo.in'
-    }, 'expand');
+    }, 'expand+=1.75');
 
     /* Collapse the two halves as the gap takes over. The letters ride up out of
        view on their own, but their CONTAINERS keep their intrinsic width, and
@@ -624,7 +399,7 @@
       opacity: 0,
       duration: 0.5,
       ease: 'power2.in'
-    }, 'expand');
+    }, 'expand+=1.75');
 
     /* THE OVERLAP. The hero is released partway through the 1.7s expansion —
        while the video is still opening outward, not after it has stopped.
@@ -633,7 +408,7 @@
        at +1.15s. Those offsets already existed; all this does is start them at
        the right moment relative to the expansion.
 
-       0.62s into the 1.0s expansion. That is late enough for the video to be
+       2.35s of the 2.95s opening. That is late enough for the video to be
        carrying most of the frame, but still inside the final leg — measured at
        1440x900 the hole is ~1150px wide when this fires, so the hero's
        entrance genuinely overlaps the expansion rather than following it.
@@ -646,50 +421,17 @@
        across a white field. By 1.05s the video covers enough of the frame for
        white type to land on it. Re-check this if the cover colour changes
        again: it is tied to the contrast, not to the timing. */
-    tl.add(function () { releaseGate(); }, 'expand+=0.62');
+    tl.add(function () { releaseGate(); }, 'expand+=2.35');
 
     /* The cover dissolves as the hole reaches the frame edges, so the last
        sliver of navy fades rather than being cut away. By this point the hole
        is almost the whole viewport, so there is very little left to fade — it
        exists to take the hard edge off the final frame. */
-    /* The cover is REMOVED, not faded.
-
-       A fade here was the leak: autoAlpha tweens the whole element's opacity,
-       so for its entire duration the cover was semi-transparent EVERYWHERE —
-       not just inside the hole. The page below the hero showed through the
-       surround while the video was still expanding, which read as the second
-       section expanding too.
-
-       By the time the hole reaches the frame edges the cover has no visible
-       area left, so there is nothing to dissolve: cutting it is invisible, and
-       it cannot leak. Placed at the very end of the expansion rather than
-       overlapping it. */
-    /* Hide the cover only once the hole ACTUALLY covers the frame.
-
-       Not on a timeline position. The tween's own end and the frame on which
-       the box is finally measured at full size are not the same instant, and
-       hiding on the timeline removed the cover while the box was still only
-       1080-1415px wide (measured across runs) — so the whole page below was
-       exposed for the remainder of the expansion. That is the "second section
-       expanding" fault.
-
-       applyHole() sets a flag the moment the hole reaches every edge; this
-       waits for that flag, so the cover can never disappear early. The 1.2s
-       ceiling is a failsafe: if the flag never arrives the intro must still
-       end rather than leaving an opaque sheet over the page. */
-    /* Hide the cover in the expansion tween's own onComplete.
-
-       Not on a timeline position, and not by polling geometry. Both were raced:
-       the tween's nominal end and the frame on which the box is finally
-       rendered at full size are different instants, so the cover was being
-       removed while the box still measured 1080-1415px (of 1440) and the whole
-       page below showed through for the rest of the move. That is the "second
-       section expanding" fault.
-
-       onComplete fires after GSAP has written the tween's FINAL values, so the
-       box is genuinely at full size and applyHole() has punched the hole to
-       every edge before this runs. */
-    void 0;
+    tl.to(pl, {
+      autoAlpha: 0,
+      duration: 0.6,
+      ease: 'power2.out'
+    }, 'expand+=2.95');
   }
 
   /* --- Is the hero actually on screen? --------------------------------------

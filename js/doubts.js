@@ -138,7 +138,13 @@
      spread across the section: it is given to the reveal and to a hold after
      it (see REVEAL_HOLD below), so the earlier acts keep the pixel budget
      they were tuned against and the payoff gets the room it never had. */
-  var TRACK_VH = 4.4;
+  /* Trimmed 4.4 -> 3.8 to even out the page's pacing. At 4.4 this pin claimed
+     4.4 + 0.55 + 1 = 5.95 viewports of scroll while the Services section that
+     follows had only 1 (fixed 100vh, no pin), so the reader crawled through
+     this section and then shot past the next one. The reveal and the hold keep
+     their absolute pixel budget - REVEAL_HOLD_VH is untouched, and the 0.6vh
+     comes off the earlier acts, which had the most room to give. */
+  var TRACK_VH = 3.8;
 
   /* Scroll held on the FINISHED composition before the cover starts rising,
      in viewports. This is the part that actually fixes a fast scroll: an

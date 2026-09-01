@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
@@ -21,7 +21,7 @@
 <link rel="stylesheet" href="css/services-hero.css">
 
 <!-- Services-hero FOUC gate. Must run BEFORE first paint, so it is inline and
-     in the head â€” a defer'd script executes after the page has already
+     in the head — a defer'd script executes after the page has already
      painted, which would show the un-split headline for a frame before
      hiding it. Adds the class only when the hero will actually animate; the
      matching conditions are re-checked in js/services-hero.js, which removes
@@ -41,7 +41,7 @@
        range is computed relative to that offset and comes out NEGATIVE
        (start -1500, end -540 for a 1500px restore). Scroll position 0 then
        sits past the end of that range, so the scrub pins itself at 100% and
-       the image layer keeps a permanent 20% offset â€” the band of bare ground
+       the image layer keeps a permanent 20% offset — the band of bare ground
        under the header. No later refresh() can undo it, because by then the
        damage is in the recorded start/end.
 
@@ -113,7 +113,7 @@
        The visible rows are decorative duplicates: they are chopped into
        per-character spans by the split engine, which would make a screen
        reader announce them letter by letter. So the rows are aria-hidden and
-       a single visually-hidden <h1> carries the real heading text â€” exactly
+       a single visually-hidden <h1> carries the real heading text — exactly
        what the reference does, and the reason .u-sr-only exists there.
 
        data-fouc-prevent marks what must stay invisible until fonts are ready
@@ -174,17 +174,17 @@
   </section>
 
   <!-- ======================================================================
-       CTA TEXT â€” the bridge between the hero and the service detail
+       CTA TEXT — the bridge between the hero and the service detail
        ======================================================================
        The reference's .cta_text_section, measured off the live site at
        1900px wide:
 
-         h2      52px / 50.232px Â· 600 Â· uppercase   (same face and size as
+         h2      52px / 50.232px · 600 · uppercase   (same face and size as
                                                       the halves headings, so
                                                       the two read as one
                                                       typographic system)
-         lede    18px / 27px Â· regular Â· muted grey
-         button  16px Â· 600 Â· uppercase Â· accent, with a diagonal arrow
+         lede    18px / 27px · regular · muted grey
+         button  16px · 600 · uppercase · accent, with a diagonal arrow
          gaps    32px between heading, lede and button
 
        It sets up the section that follows: the halves list answers "who are
@@ -218,7 +218,7 @@
   </section>
 
   <!-- ======================================================================
-       SERVICES â€” "it depends who you are in the case"
+       SERVICES — "it depends who you are in the case"
        ======================================================================
        Layout and motion copied from the reference build
        (rioproperty.co.za/services, its .services_halves_section), measured off
@@ -233,7 +233,7 @@
          - items ALTERNATE: the reference does this at runtime by setting
            order:-1 on the image wrapper of every even item, which is why the
            alternation is invisible in its static HTML. Here it is a CSS class
-           (.halves__item--flip) â€” same result, no JS required, and it still
+           (.halves__item--flip) — same result, no JS required, and it still
            works if scripting fails.
 
        Counter-parallax: the text moves 10 -> -10 while the image moves
@@ -246,7 +246,7 @@
          data-anim-scroll="lines"  subheading, per-line rise
          data-anim-scroll="fade"   the list block
        Unlike the hero's load animations these are scroll-triggered, and they
-       replay when scrolled back to â€” matching the reference's
+       replay when scrolled back to — matching the reference's
        toggleActions:"none play none reset". -->
   <section class="halves" aria-labelledby="halves-h">
     <h2 class="visually-hidden" id="halves-h">What we do, service by service</h2>
@@ -387,7 +387,7 @@
 
 
   <!-- ======================================================================
-       HOW WE PROTECT THE CLAIM â€” accordion
+       HOW WE PROTECT THE CLAIM — accordion
        ======================================================================
        The reference's .accordion_services_section, measured off the live
        site at 1900px wide:
@@ -398,7 +398,7 @@
                     col 5-7   the heading
                     col 9-11  the disclosure content
                     col 12    the plus/minus toggle
-         h3         32px / 37.44px Â· 600 Â· uppercase
+         h3         32px / 37.44px · 600 · uppercase
          body       16px / 24px
          divider    1px rule above every row, with a brand-coloured highlight
                     that wipes across on hover and stays while open
@@ -408,7 +408,7 @@
        lifted from the inline <style> block it ships. No height measuring,
        so it animates correctly whatever the content length.
 
-       ACCESSIBILITY â€” this differs from the reference deliberately. The
+       ACCESSIBILITY — this differs from the reference deliberately. The
        reference toggles a data attribute on a <button> with no ARIA at all.
        Here each row is a real <button> carrying aria-expanded and
        aria-controls, and the panel is a labelled region, so the state is
@@ -615,7 +615,7 @@
   </section>
 
   <!-- ======================================================================
-       ALSO AVAILABLE â€” OHS and medico-legal
+       ALSO AVAILABLE — OHS and medico-legal
        ======================================================================
        Built on the reference's .laws_home_grid pattern (its homepage), which
        is the closest thing it has to a peer-cards block: a grid whose 1px
@@ -676,7 +676,7 @@
   </section>
 
   <!-- ======================================================================
-       HOW A CASE RUNS â€” auto-advancing pairs over a full-bleed image
+       HOW A CASE RUNS — auto-advancing pairs over a full-bleed image
        ======================================================================
        Layout follows the supplied reference: a photographic background with
        text sitting at the BOTTOM LEFT and BOTTOM RIGHT, and dot indicators
@@ -765,7 +765,7 @@
     </div>
   </section>
 
-  <!-- Road ahead â€” HIDDEN.
+  <!-- Road ahead — HIDDEN.
        Kept in the markup rather than deleted so the copy is not lost, but
        `hidden` keeps it out of the layout AND out of the accessibility tree.
        Delete this wrapper comment and the hidden attribute to restore it. -->
@@ -912,31 +912,12 @@
 <script src="js/nav.js" defer></script>
 
 <!-- Services hero motion. GSAP + ScrollTrigger are the same self-hosted
-     vendor copies the homepage uses â€” no CDN, no build step. Both are
+     vendor copies the homepage uses — no CDN, no build step. Both are
      `defer`, so they run in document order ahead of services-hero.js, which
      guards on window.gsap and bails out cleanly (leaving the hero fully
      visible) if either failed to load. -->
 <script src="js/vendor/gsap.min.js" defer></script>
 <script src="js/vendor/ScrollTrigger.min.js" defer></script>
 <script src="js/services-hero.js" defer></script>
-
-<!-- Floating controls, bottom-right. The WhatsApp pill sits directly above the
-     back-to-top square; both reveal together once the hero has scrolled past. -->
-<a class="wa-float" id="wa-float"
-   href="https://wa.me/00000000000?text=Hi%20MedShield%20-%20I%27d%20like%20to%20talk%20about%20crew%20medical%20cover."
-   target="_blank" rel="noopener" aria-label="Chat with MedShield on WhatsApp">
-  <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-    <path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38a9.87 9.87 0 0 0 4.74 1.21h.01c5.46 0 9.9-4.45 9.9-9.91 0-2.65-1.03-5.14-2.9-7.01A9.82 9.82 0 0 0 12.04 2Zm0 18.15h-.01a8.2 8.2 0 0 1-4.19-1.15l-.3-.18-3.12.82.83-3.04-.2-.31a8.18 8.18 0 0 1-1.26-4.38c0-4.54 3.7-8.23 8.25-8.23 2.2 0 4.27.86 5.82 2.42a8.18 8.18 0 0 1 2.41 5.82c0 4.54-3.7 8.23-8.23 8.23Zm4.52-6.16c-.25-.12-1.47-.72-1.69-.81-.23-.08-.39-.12-.56.13-.16.24-.64.8-.79.97-.14.16-.29.19-.54.06-.25-.12-1.05-.39-1.99-1.23-.74-.66-1.23-1.47-1.38-1.72-.14-.25-.01-.38.11-.5.11-.11.25-.29.37-.43.13-.15.17-.25.25-.41.08-.17.04-.31-.02-.43-.06-.12-.56-1.34-.76-1.84-.2-.48-.4-.42-.56-.43h-.47c-.17 0-.43.06-.66.31-.22.25-.87.85-.87 2.07s.89 2.4 1.02 2.56c.12.17 1.75 2.67 4.23 3.74.59.26 1.05.41 1.41.52.59.19 1.13.16 1.56.1.47-.07 1.47-.6 1.67-1.18.21-.58.21-1.07.15-1.18-.06-.11-.22-.17-.47-.29Z"/>
-  </svg>
-</a>
-
-<button type="button" class="to-top-fill" id="to-top" aria-label="Back to top">
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-       stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-    <path d="M12 19V5"/><path d="m5 12 7-7 7 7"/>
-  </svg>
-</button>
-
-<script src="js/floating-controls.js" defer></script>
 </body>
 </html>

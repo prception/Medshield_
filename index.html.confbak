@@ -955,6 +955,11 @@
         </p>
         <!-- Both cases are anonymised (no vessel, company or individual named).
              Written sign-off is still required before publishing - see README. -->
+        <p class="cases__confirm">
+          <span class="confirm">[CONFIRM: client sign-off]</span>
+          Both cases are anonymised, but written clearance and confirmation of the
+          savings figures are required before this section goes live.
+        </p>
       </header>
 
       <!-- CENTRE - the featured case -------------------------------------- -->
@@ -1506,8 +1511,8 @@
               <h3 class="contact__alertTitle" id="emergency-h">Medical emergency at sea right now?</h3>
               <p class="contact__alertBody">
                 Do not use this form. Call
-                <strong><a href="tel:+919840603936">+91 98406 03936</a></strong>
-                &ndash; answered by a coordinator.
+                <strong class="confirm">[CONFIRM: 24/7 number]</strong>
+                &ndash; answered by a coordinator, any hour.
               </p>
             </aside>
           </div>
@@ -1663,8 +1668,8 @@
             health as seriously as the vessel itself.
           </p>
           <p class="site-footer__cap site-footer__cap--left">Get in touch</p>
-          <!-- Points at the form rather than a mailto, so an enquiry arrives
-               with the fleet details already attached. -->
+          <!-- Real email and phone are still [CONFIRM] in CONTENT.md, so this
+               points at the form rather than guessing an address. -->
           <a class="site-footer__email" href="#contact">Request a proposal</a>
           <p class="site-footer__offices">
             <strong>Chennai, India</strong> â€“ HQ

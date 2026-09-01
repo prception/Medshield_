@@ -1,0 +1,1544 @@
+/* ==========================================================================
+   SERVICES — hero
+   ==========================================================================
+   Additive stylesheet, loaded AFTER style.css and inner.css, so it inherits
+   the token system without redeclaring any of it.
+
+   inner.css says the inner pages are deliberately static; this hero is the
+   agreed exception, so its motion and its viewport-scaled type live here
+   rather than leaking into the shared inner stylesheet.
+
+   METRICS ARE THE REFERENCE'S, VERBATIM
+   Taken from the built Webflow stylesheet rather than estimated from a
+   screenshot:
+     .hero_main_text_heading.u-text-style-h1  font-size: 16vw
+     .hero_main_text_layout                   min-height: 100svh
+                                              padding-block: 3.5rem
+     --site--margin                           1rem -> 3.75rem across the range
+     --site--gutter                           1rem
+     .u-overlay (data-number="75")            60% black flat
+   The headline is sized in vw ON PURPOSE — it is meant to span the full
+   measure at every width, which a clamp() ceiling would break.
+   ========================================================================== */
+
+/* --- Local scale ---------------------------------------------------------
+   Scoped to the hero so nothing here can affect the rest of the page. */
+
+.hero-svc {
+  --hero-margin: clamp(1rem, 0.4rem + 2.6vw, 3.75rem);   /* --site--margin */
+  --hero-gutter: 1rem;                                   /* --site--gutter */
+  --hero-pad-block: 3.5rem;                              /* space--3-5      */
+
+  /* The reference's flat 16vw, which now applies cleanly: the rows carry the
+     same wording it uses ("What we" / "Can"+"Do" / "For You"), so the longest
+     row fills about half the measure and three of them clear the viewport.
+
+     The min() second term is a guard, not the normal path. On a short or
+     landscape viewport (a 500px-tall window, a phone on its side) three rows
+     at 16vw would still overflow the 100svh box and push "For You" off the
+     bottom, so the height-derived size takes over there. On any ordinary
+     screen the 16vw term wins and the look is the reference's exactly. */
+  --hero-heading-size: min(16vw, calc((100svh - var(--hero-pad-block) * 2) * 0.235));
+
+  position: relative;
+  isolation: isolate;
+  overflow: clip;              /* the bg scales past 100% — clip, don't scroll */
+  background: var(--surface-deep);   /* paints before the image decodes */
+  color: var(--text-on-deep);
+}
+
+/* --- Image layer ---------------------------------------------------------
+   OVERSCAN. The parallax translates this layer downward by up to 20% of its
+   own height, so its TOP edge is the one that can pull away and expose bare
+   section ground behind it — which reads as the picture being chopped off
+   under the header.
+
+   A 1px inset is not enough for that: it only ever covered rounding. The
+   layer is instead extended 22% above the section (just past the 20% the
+   parallax can ask for) and pinned to a height that accounts for it, so
+   there is always image behind the top edge no matter where in the scrub the
+   layer happens to be — including the first frame after a reload that
+   restored a scroll position.
+
+   The section clips (overflow: clip), so none of this overscan is visible. */
+
+.hero-svc__bg {
+  position: absolute;
+  inset: -22% -1px auto;
+  height: calc(100% + 44%);
+  z-index: 0;
+  will-change: transform;
+}
+
+.hero-svc__img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 50% 50%;
+  display: block;
+}
+
+/* The reference's .u-overlay with data-number="75" resolves to a FLAT 60%
+   black — not a gradient. Flat is what lets the headline stay legible
+   wherever it falls over a busy photograph. */
+.hero-svc__overlay {
+  position: absolute;
+  inset: 0;
+  background: color-mix(in srgb, #000 60%, transparent);
+}
+
+/* --- Text layer ----------------------------------------------------------
+   Absolutely positioned over the image and pinned to the TOP, with its own
+   100svh min-height and its contents pushed to the bottom of that box. That
+   is the reference's arrangement (.hero_main_text_wrap { inset: 0 0 auto }),
+   and it is what makes the headline sit on the lower third of the picture
+   while the section itself is still exactly one viewport tall. */
+
+.hero-svc__textWrap {
+  position: absolute;
+  inset: 0 0 auto;
+  z-index: 3;
+}
+
+/* The section has no in-flow children — the image layer and the text layer
+   are both absolutely positioned — so it would collapse to zero height and
+   the whole hero would vanish. This spacer is the ONE in-flow element, and
+   it carries the same 100svh + padding as the text layout so the two stay
+   locked to the same height. The reference gets this for free from Webflow's
+   .u-min-height-screen sitting on an in-flow wrapper; we have to be explicit
+   about it. */
+.hero-svc::before {
+  content: "";
+  display: block;
+  min-height: 100svh;
+  padding-block: var(--hero-pad-block);
+}
+
+.hero-svc__container {
+  width: calc(100% - var(--hero-margin) * 2);
+  margin-inline: auto;
+}
+
+.hero-svc__layout {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;         /* everything sits at the bottom */
+  gap: var(--hero-pad-block);
+  min-height: 100svh;
+  padding-block: var(--hero-pad-block);
+}
+
+/* --- Paragraph row -------------------------------------------------------
+   12-column grid: the left block spans 1-3, the right block spans 8-12 and
+   is right-aligned. Small uppercase type, deliberately the same size as the
+   reference's title-1 rather than a lede. */
+
+.hero-svc__paras {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: var(--hero-gutter);
+}
+
+.hero-svc__parasCol--left  { grid-column: 1 / span 3; }
+.hero-svc__parasCol--right {
+  grid-column: 8 / span 5;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+}
+
+.hero-svc__para {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(0.75rem, 0.68rem + 0.3vw, 0.9375rem);
+  font-weight: 500;
+  line-height: 1.45;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-on-deep);
+  max-width: 40ch;
+}
+.hero-svc__para--right { text-align: right; }
+.hero-svc__nowrap {
+  white-space: nowrap;
+  border-bottom: 1px solid currentColor;   /* the reference's yellow underline */
+  padding-bottom: 0.05em;
+}
+
+/* --- Headline ------------------------------------------------------------
+   Three rows. Row 2 is space-between so its two words sit at opposite ends
+   of the same line; row 3 is pushed right. This is what produces the
+   staggered, edge-to-edge block — NOT an indent on the text itself.
+
+   line-height is 0.85 and set on the row, because the row IS the mask: a
+   taller line box would show the characters before they had cleared its
+   edge. The tiny padding-block gives descenders room inside the clip. */
+
+.hero-svc__headingWrap {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.hero-svc__row {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  justify-content: space-between;
+  align-items: stretch;
+  overflow: clip;                     /* the mask */
+  line-height: 0.85;
+  padding-block: 0.02em 0.06em;
+}
+.hero-svc__row--end { justify-content: flex-end; }
+
+.hero-svc__heading {
+  font-family: var(--font-display);
+  font-size: var(--hero-heading-size);
+  font-weight: 700;
+  line-height: 0.85;
+  letter-spacing: -0.025em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: var(--text-on-deep);
+}
+.hero-svc__heading--end { text-align: end; }
+
+/* Each character is its own inline-block so it can be transformed. Written
+   by the engine; styled here so the markup stays clean. */
+.hero-svc__char {
+  display: inline-block;
+  will-change: transform;
+}
+
+/* Masked words. Written by the engine for [data-anim-scroll="words"]; the
+   mask is inline-block so several sit on a line and wrap normally, and the
+   small vertical padding gives descenders room inside the clip. */
+.hero-svc__wordMask {
+  display: inline-block;
+  overflow: clip;
+  vertical-align: bottom;
+  padding-block: 0.02em 0.08em;
+}
+.hero-svc__wordInner {
+  display: inline-block;
+  will-change: transform;
+}
+
+/* Masked lines inside the small paragraphs. */
+.hero-svc__lineMask {
+  display: block;
+  overflow: clip;
+  padding-block: 0.04em;
+}
+.hero-svc__lineInner {
+  display: block;
+  will-change: transform;
+}
+
+/* --- Pre-animation hidden state ------------------------------------------
+   THE PROGRESSIVE-ENHANCEMENT CONTRACT.
+
+   Gated behind html.svc-hero-anim, which a tiny inline script in the HEAD of
+   services.html adds before first paint, and which js/services-hero.js
+   REMOVES the moment it decides not to animate. So:
+     - no JS / JS error / no GSAP / reduce-motion -> nothing is ever hidden
+     - JS present -> hidden before first paint, so no flash of unsplit text
+   The state we must never reach is "hidden and never revealed". */
+
+html.svc-hero-anim .hero-svc [data-fouc-prevent] {
+  visibility: hidden;
+}
+
+/* --- Motion preferences --------------------------------------------------- */
+
+@media (prefers-reduced-motion: reduce) {
+  html.svc-hero-anim .hero-svc [data-fouc-prevent] { visibility: visible; }
+  .hero-svc__bg,
+  .hero-svc__char,
+  .hero-svc__lineInner { transform: none !important; }
+}
+
+/* --- Responsive ------------------------------------------------------------
+   The 12-column paragraph split collapses to a stack well before the columns
+   get too narrow to hold a word. The headline stays in vw throughout — that
+   is the whole point of the treatment — but the rows go flush-left on a
+   phone, where a space-between row would leave a hole in the middle. */
+
+@media (max-width: 60rem) {
+  .hero-svc__parasCol--left  { grid-column: 1 / span 5; }
+  .hero-svc__parasCol--right { grid-column: 7 / span 6; }
+}
+
+@media (max-width: 40rem) {
+  .hero-svc {
+    --hero-pad-block: 2.25rem;
+    /* Portrait phones have height to spare and very little width, so the
+       width term is the binding one. 18vw, not 20: the longest row here is
+       "WHAT WE" (7 characters plus a space) and at 20vw it runs into the
+       right margin. Row 2 has also become a column at this width, so there
+       are four rows to fit rather than three. */
+    --hero-heading-size: min(18vw, calc((100svh - var(--hero-pad-block) * 2) * 0.2));
+  }
+  .hero-svc__layout { gap: 2rem; }
+  .hero-svc__paras { grid-template-columns: 1fr; gap: 1rem; }
+  .hero-svc__parasCol--left,
+  .hero-svc__parasCol--right { grid-column: 1 / -1; }
+  .hero-svc__parasCol--right { justify-content: flex-start; }
+  .hero-svc__para--right { text-align: left; }
+  /* Row 2 holds two words that sit at opposite ends on desktop. Flushing the
+     row left would butt them together into "CARECOST" and push the pair off
+     the right edge, so on a phone the row becomes a COLUMN: each word gets
+     its own line, all flush left. That keeps four readable lines instead of
+     one broken one. */
+  .hero-svc__row { justify-content: flex-start; }
+  .hero-svc__row--split {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .hero-svc__row--end { justify-content: flex-start; }
+  .hero-svc__heading--end { text-align: start; }
+
+  /* Each word is now its own line box, so the row can no longer be the mask —
+     it would clip all of its children to one line's height. Move the mask
+     down onto the individual headings. */
+  .hero-svc__row--split { overflow: visible; }
+  .hero-svc__row--split .hero-svc__heading {
+    overflow: clip;
+    padding-block: 0.02em 0.06em;
+  }
+}
+
+/* ==========================================================================
+   SERVICES — alternating halves ("it depends who you are in the case")
+   ==========================================================================
+   Metrics measured off the live reference (.services_halves_section at
+   1600px wide) rather than estimated from a screenshot:
+
+     item            50/50 flex row · gap 32px · padding-block 80px
+     text column     flex 1 1 0 · justify-content flex-end · gap 80px
+     image wrap      flex 1 1 0 · overflow clip
+     image           aspect-ratio 4/5 · height 120% · object-position 50% 100%
+     h2              52px / 0.966 · 600 · uppercase
+     subheading      18px / 1.5 · uppercase · brand colour
+     list            16px / 1.5
+
+   The image being 120% tall inside a clipped wrapper is not a mistake — it is
+   the overscan its parallax travels through, exactly as in the hero.
+   ========================================================================== */
+
+.halves {
+  padding-block: var(--s-7);
+  background: var(--surface-page);
+}
+
+.halves__item {
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  gap: 2rem;                     /* 32px */
+  padding-block: 5rem;           /* 80px */
+  padding-inline: var(--site-margin);
+  position: relative;
+}
+
+/* The alternation. The reference sets order:-1 on the image wrapper of every
+   even item at runtime; doing it in CSS gets the same result without JS, so
+   the layout is still correct if scripting never runs. */
+.halves__item--flip .halves__imageWrap { order: -1; }
+
+/* --- Text column ---------------------------------------------------------
+   Bottom-aligned, so the heading group sits on the same baseline as the foot
+   of the image beside it. That alignment is what makes the alternation read
+   as deliberate rather than as two unrelated columns. */
+
+.halves__text {
+  flex: 1 1 0;
+  display: flex;
+  flex-direction: column;
+  /* Centred, not bottom-aligned. The reference bottom-aligns because its
+     lists are long enough to fill the column; ours are shorter, and
+     flex-end pushed the heading into the middle of the row and left a large
+     dead band above it. Centring keeps the heading and its list reading as
+     one block against the image beside them. */
+  justify-content: center;
+  /* 80px between the heading group and the list is also too much at our
+     text length — it was what opened the gap. 2.5rem holds them together. */
+  gap: 2.5rem;
+  min-width: 0;
+  will-change: transform;
+}
+
+.halves__textTop {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-4);               /* 16px, as the reference */
+}
+
+.halves__num {
+  margin: 0;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.halves__h {
+  margin: 0;
+  font-family: var(--font-display);
+  /* The reference sits at a flat 52px. Scale down on narrow viewports but
+     never above it — a larger heading is the main thing that made this
+     section read as heavier than the reference. */
+  font-size: clamp(1.75rem, 1.2rem + 1.9vw, 3.25rem);   /* -> 52px */
+  font-weight: 600;
+  line-height: 0.966;
+  text-transform: uppercase;
+  color: var(--text-primary);
+  /* Each word is masked so it can rise from behind its own edge. */
+  overflow: clip;
+  padding-block: 0.04em 0.08em;
+}
+
+.halves__sub {
+  margin: 0;
+  font-size: clamp(0.9375rem, 0.9rem + 0.2vw, 1.125rem);  /* -> 18px */
+  line-height: 1.5;
+  text-transform: uppercase;
+  color: var(--accent);
+  max-width: 42ch;
+}
+
+.halves__rich { color: var(--text-secondary); }
+
+/* 16px in the brand colour, matching the reference — not the small grey
+   caps this previously used. */
+.halves__richLead {
+  margin: 0 0 var(--s-4);
+  font-size: 1rem;
+  line-height: 1.5;
+  font-weight: 400;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+/* The reference's list is deliberately plain: 16px/24px, NO row padding and
+   NO rules between items, with a 14.4px gap doing all the separation. The
+   bordered, generously-padded rows this previously used were the single
+   biggest reason the section read as much heavier than the reference. */
+.halves__rich ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;                   /* 14.4px */
+}
+
+.halves__rich li {
+  font-size: 1rem;               /* 16px */
+  line-height: 1.5;              /* 24px */
+  padding-left: 1.4em;
+  position: relative;
+}
+/* The reference marks each item with a check glyph rather than a bullet. */
+.halves__rich li::before {
+  /* U+2713 CHECK MARK, written as a CSS escape rather than a literal glyph:
+     this stylesheet is served without a charset declaration, so a raw
+     multi-byte character is decoded as Latin-1 and paints as mojibake. An
+     escape is pure ASCII and cannot be misread. */
+  content: "\2713";
+  position: absolute;
+  left: 0;
+  top: 0;
+  color: var(--accent);
+}
+
+.halves__cta {
+  display: inline-block;
+  margin-top: var(--s-5);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--link);
+  text-decoration: none;
+  border-bottom: 1px solid currentColor;
+  padding-bottom: 0.15em;
+  transition: color 0.2s ease;
+}
+.halves__cta:hover,
+.halves__cta:focus-visible { color: var(--link-hover); }
+
+/* --- Image column --------------------------------------------------------- */
+
+.halves__imageWrap {
+  flex: 1 1 0;
+  overflow: clip;
+  min-width: 0;
+  align-self: stretch;
+}
+
+/* The reference's image column is 874x605 at 1900px wide — landscape, not
+   the tall portrait this previously used. A portrait crop is what made each
+   row so tall that only one fitted the screen at a time. */
+.halves__image {
+  width: 100%;
+  height: 120%;                  /* the parallax overscan */
+  aspect-ratio: 3 / 2;
+  object-fit: cover;
+  object-position: 50% 50%;
+  display: block;
+  will-change: transform;
+}
+
+/* --- Scroll-animation hidden state ---------------------------------------
+   Same contract as the hero: gated behind html.svc-hero-anim so that no JS,
+   a JS error, or reduce-motion leaves everything visible. Only the pieces
+   the engine actually animates are hidden, and each is revealed as its
+   ScrollTrigger fires. */
+
+html.svc-hero-anim .halves__h,
+html.svc-hero-anim .halves__sub,
+html.svc-hero-anim .halves__rich { visibility: hidden; }
+
+@media (prefers-reduced-motion: reduce) {
+  html.svc-hero-anim .halves__h,
+  html.svc-hero-anim .halves__sub,
+  html.svc-hero-anim .halves__rich { visibility: visible; }
+  .halves__text,
+  .halves__image { transform: none !important; }
+}
+
+/* --- Responsive ------------------------------------------------------------
+   Below 60rem the two columns stack. The image goes FIRST in every item —
+   including the flipped ones — because an alternating stack reads as a
+   mistake rather than as rhythm once the columns are no longer side by side.
+   This is what the reference does at the same breakpoint (its image wrap
+   takes order:-9999 and width:100%). */
+
+@media (max-width: 60rem) {
+  .halves__item,
+  .halves__item--flip {
+    flex-direction: column;
+    gap: var(--s-5);
+    padding-block: var(--s-7);
+  }
+  .halves__item--flip .halves__imageWrap,
+  .halves__imageWrap { order: -1; }
+  .halves__text { gap: var(--s-5); }
+  .halves__image {
+    height: auto;                /* no parallax at this width, so no overscan */
+    aspect-ratio: 3 / 2;
+  }
+}
+
+@media (max-width: 40rem) {
+  .halves__item,
+  .halves__item--flip { padding-block: var(--s-6); }
+  .halves__image { aspect-ratio: 4 / 3; }
+}
+
+/* ==========================================================================
+   SERVICES — CTA text bridge
+   ==========================================================================
+   The reference's .cta_text_section, measured at 1900px wide:
+
+     section    background #FFFEFC (its near-white ground)
+     inner      gap 32px between heading, lede block and button
+     h2         52px / 50.232px · 600 · uppercase
+     lede       18px / 27px · regular · muted
+     button     16px · 600 · uppercase · accent
+     lede column spans 8 of 12, so the paragraph breaks well before the
+                right edge rather than running the full measure
+
+   The heading deliberately shares its size and treatment with .halves__h:
+   the two sections are one typographic system, and the CTA reads as the
+   question the list below it answers.
+   ========================================================================== */
+
+.cta-text {
+  background: var(--surface-page);
+  padding-block: var(--s-9) var(--s-7);
+  padding-inline: var(--site-margin);
+}
+
+.cta-text__inner {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;                     /* 32px */
+}
+
+.cta-text__h {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(1.75rem, 1.2rem + 1.9vw, 3.25rem);   /* -> 52px, as .halves__h */
+  font-weight: 600;
+  line-height: 0.966;
+  text-transform: uppercase;
+  color: var(--text-primary);
+  max-width: 22ch;
+  /* Masked, so each word can rise from behind its own edge. */
+  overflow: clip;
+  padding-block: 0.04em 0.08em;
+}
+
+/* The lede sits in a column 8 of 12 wide in the reference. Expressed here as
+   a measure rather than a grid, which holds the same line length without
+   needing a 12-column context for one paragraph. */
+.cta-text__bottom {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;                     /* 32px */
+  align-items: flex-start;
+}
+
+.cta-text__lede {
+  margin: 0;
+  font-size: clamp(0.9375rem, 0.9rem + 0.2vw, 1.125rem);  /* -> 18px */
+  line-height: 1.5;              /* 27px */
+  color: var(--text-secondary);
+  max-width: 62ch;
+}
+
+.cta-text__cta { margin: 0; }
+
+.cta-text__link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5em;
+  font-size: 1rem;               /* 16px */
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--link);
+  text-decoration: none;
+  border-bottom: 1px solid transparent;
+  padding-bottom: 0.15em;
+  transition: color 0.2s ease, border-color 0.2s ease;
+}
+.cta-text__link:hover,
+.cta-text__link:focus-visible {
+  color: var(--link-hover);
+  border-bottom-color: currentColor;
+}
+
+/* The arrow shifts on hover, the way the reference's does. */
+.cta-text__arrow {
+  flex: none;
+  transition: transform 0.3s cubic-bezier(0.19, 1, 0.22, 1);
+}
+.cta-text__link:hover .cta-text__arrow,
+.cta-text__link:focus-visible .cta-text__arrow {
+  transform: translate(0.15em, -0.15em);
+}
+
+/* --- Scroll-animation hidden state ---------------------------------------
+   Same contract as the rest of the page: gated behind html.svc-hero-anim so
+   no JS, a JS error, or reduce-motion leaves everything visible. */
+
+html.svc-hero-anim .cta-text__h,
+html.svc-hero-anim .cta-text__lede,
+html.svc-hero-anim .cta-text__cta { visibility: hidden; }
+
+@media (prefers-reduced-motion: reduce) {
+  html.svc-hero-anim .cta-text__h,
+  html.svc-hero-anim .cta-text__lede,
+  html.svc-hero-anim .cta-text__cta { visibility: visible; }
+  .cta-text__arrow { transition: none; }
+}
+
+@media (max-width: 40rem) {
+  .cta-text {
+    padding-block: var(--s-7) var(--s-6);
+  }
+  .cta-text__inner { gap: var(--s-5); }
+  .cta-text__bottom { gap: var(--s-5); }
+  .cta-text__h { max-width: 100%; }
+}
+
+/* ==========================================================================
+   SERVICES — "how we protect the claim" accordion
+   ==========================================================================
+   The reference's .accordion_services_section, measured off the live site at
+   1900px wide:
+
+     section   padding-block 96px
+     row       12-col grid · 16px gutter · 32px block padding
+               col 1 icon · col 5-7 heading · col 9-11 body · col 12 toggle
+     h3        32px / 37.44px · 600 · uppercase
+     body      16px / 24px
+     divider   1px #E0E0E0 above every row, plus a brand highlight that
+               wipes across on hover and stays while the row is open
+
+   The disclosure is pure CSS — grid-template-rows 0fr -> 1fr — so it needs
+   no height measurement and animates correctly at any content length. The
+   0.75s cubic-bezier(0.625, 0.05, 0, 1) easing is the reference's own,
+   lifted from the inline <style> block it ships.
+   ========================================================================== */
+
+.acc {
+  padding-block: var(--s-9);
+  padding-inline: var(--site-margin);
+  background: var(--surface-page);
+}
+
+/* --- Section head --------------------------------------------------------- */
+
+.acc__head {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-4);
+  margin-bottom: var(--s-7);
+  max-width: 62ch;
+}
+
+.acc__eyebrow {
+  margin: 0;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.acc__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(1.75rem, 1.2rem + 1.9vw, 3.25rem);
+  font-weight: 600;
+  line-height: 0.966;
+  text-transform: uppercase;
+  color: var(--text-primary);
+  overflow: clip;                 /* the word mask */
+  padding-block: 0.04em 0.08em;
+}
+
+.acc__lede {
+  margin: 0;
+  font-size: clamp(0.9375rem, 0.9rem + 0.2vw, 1.125rem);
+  line-height: 1.5;
+  color: var(--text-secondary);
+}
+
+/* --- List ----------------------------------------------------------------- */
+
+.acc__list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.acc__item { position: relative; }
+
+/* The rule sits ABOVE each row; the last item gets one below as well, so the
+   stack is closed at both ends. */
+.acc__divider {
+  position: relative;
+  height: 1px;
+  background: var(--border);
+  transform-origin: left center;
+}
+.acc__item:last-child::after {
+  content: "";
+  display: block;
+  height: 1px;
+  background: var(--border);
+}
+
+/* The brand highlight. Scaled to 0 from the RIGHT at rest, so it retracts the
+   way it came; on hover and while open it wipes across from the left. */
+.acc__dividerHi {
+  position: absolute;
+  inset: 0;
+  background: var(--accent);
+  transform: scaleX(0);
+  transform-origin: right center;
+  transition: transform 0.75s cubic-bezier(0.19, 1, 0.22, 1);
+}
+.acc__item:hover .acc__dividerHi,
+.acc__item[data-accordion-status="active"] .acc__dividerHi {
+  transform: scaleX(1);
+  transform-origin: left center;
+}
+
+/* --- Row ------------------------------------------------------------------
+   A real <button>, so it is keyboard-operable and announces its state. The
+   grid is the reference's: 12 columns, 16px gutter, 32px block padding. */
+
+.acc__row {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: 1rem;                      /* 16px */
+  align-items: start;
+  width: 100%;
+  padding: 2rem 0;                /* 32px */
+  margin: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.acc__row:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 4px;
+}
+
+.acc__col { min-width: 0; }
+.acc__col--icon   { grid-column: 1 / span 2; }
+.acc__col--title  { grid-column: 5 / span 3; }
+.acc__col--body   { grid-column: 9 / span 3; }
+.acc__col--toggle {
+  grid-column: 12 / span 1;
+  display: flex;
+  justify-content: flex-end;
+  align-items: flex-start;
+}
+
+.acc__icon {
+  display: block;
+  width: 2.25rem;                 /* 36px */
+  height: 2.25rem;
+  color: var(--accent);
+}
+
+.acc__h {
+  display: block;
+  font-family: var(--font-display);
+  font-size: clamp(1.25rem, 1rem + 0.9vw, 2rem);   /* -> 32px */
+  font-weight: 600;
+  line-height: 1.17;              /* 37.44/32 */
+  text-transform: uppercase;
+  color: var(--text-primary);
+  overflow: clip;                 /* the word mask */
+  padding-block: 0.04em 0.08em;
+}
+
+/* --- Disclosure ----------------------------------------------------------
+   grid-template-rows 0fr -> 1fr is the whole mechanism: no measured height,
+   so any content length animates correctly. The inner element must be
+   min-height:0 and overflow:hidden, or the 0fr row will not actually clip. */
+
+.acc__content {
+  display: grid;
+  grid-template-rows: 0fr;
+  overflow: hidden;
+  transition: grid-template-rows 0.75s cubic-bezier(0.625, 0.05, 0, 1);
+}
+.acc__item[data-accordion-status="active"] .acc__content {
+  grid-template-rows: 1fr;
+}
+
+.acc__contentInner {
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-4);
+}
+
+.acc__p {
+  display: block;
+  font-size: 1rem;
+  line-height: 1.5;
+  color: var(--text-secondary);
+}
+.acc__lead {
+  display: block;
+  font-size: 1rem;
+  line-height: 1.5;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+/* --- Plus / minus toggle -------------------------------------------------
+   Two 1px bars; the vertical one rotates flat when the row opens, turning
+   the plus into a minus. Rotating rather than hiding it means the change is
+   animated rather than a swap. */
+
+.acc__plus {
+  position: relative;
+  width: 2.25rem;
+  height: 2.25rem;
+  flex: none;
+  color: var(--accent);
+  transition: transform 0.5s cubic-bezier(0.19, 1, 0.22, 1);
+}
+/* The nudge-on-hover only applies to a CLOSED row. Hover now also opens the
+   row, so an unscoped rule would spin the icon to 90deg at the same moment it
+   is turning into a minus — two transforms fighting over one element. */
+.acc__item:not([data-accordion-status="active"]):hover .acc__plus {
+  transform: rotate(90deg);
+}
+.acc__item[data-accordion-status="active"] .acc__plus { transform: rotate(0deg); }
+
+.acc__plusLine {
+  position: absolute;
+  top: 50%;
+  left: 25%;
+  width: 50%;
+  height: 1px;
+  background: currentColor;
+  transform: translateY(-50%);
+}
+.acc__plusLine--v {
+  transform: translateY(-50%) rotate(90deg);
+  transition: transform 0.75s cubic-bezier(0.625, 0.05, 0, 1);
+}
+/* rotate(0.001deg) rather than 0deg, matching the reference: a non-zero angle
+   keeps the browser interpolating the rotation instead of snapping. */
+.acc__item[data-accordion-status="active"] .acc__plusLine--v {
+  transform: translateY(-50%) rotate(0.001deg);
+}
+
+/* --- Scroll-animation hidden state ----------------------------------------
+   Same contract as the rest of the page: gated behind html.svc-hero-anim, so
+   no JS, a JS error, or reduce-motion leaves everything visible. */
+
+html.svc-hero-anim .acc__title,
+html.svc-hero-anim .acc__lede,
+html.svc-hero-anim .acc__h,
+html.svc-hero-anim .acc__col--icon,
+html.svc-hero-anim .acc__col--toggle { visibility: hidden; }
+
+@media (prefers-reduced-motion: reduce) {
+  html.svc-hero-anim .acc__title,
+  html.svc-hero-anim .acc__lede,
+  html.svc-hero-anim .acc__h,
+  html.svc-hero-anim .acc__col--icon,
+  html.svc-hero-anim .acc__col--toggle { visibility: visible; }
+  /* The accordion must still OPEN under reduce-motion — it is a disclosure,
+     not decoration — so the transition is shortened rather than removed. */
+  .acc__content,
+  .acc__plus,
+  .acc__plusLine--v,
+  .acc__dividerHi { transition-duration: 0.01ms; }
+}
+
+/* --- Responsive ------------------------------------------------------------
+   Below 60rem the 12-column row collapses. The icon column is dropped (the
+   reference hides it at the same point with .u-hide-mobile-landscape) and the
+   heading takes the full width with the toggle beside it, so a phone shows
+   title + toggle on one line and the body beneath. */
+
+@media (max-width: 60rem) {
+  .acc__row {
+    grid-template-columns: 1fr auto;
+    gap: var(--s-4);
+    padding: var(--s-5) 0;
+  }
+  .acc__col--icon { display: none; }
+  .acc__col--title  { grid-column: 1; }
+  .acc__col--toggle { grid-column: 2; grid-row: 1; }
+  .acc__col--body   { grid-column: 1 / -1; }
+  .acc__plus { width: 1.75rem; height: 1.75rem; }
+}
+
+@media (max-width: 40rem) {
+  .acc { padding-block: var(--s-7); }
+  .acc__head { margin-bottom: var(--s-6); }
+}
+
+/* ==========================================================================
+   SERVICES — "also available" peer cards
+   ==========================================================================
+   Built on the reference's .laws_home_grid (its homepage), measured live:
+
+     grid      column gap 1px, row gap 0, cards on #FFFEFC
+     card      padding 32px 18px
+     body      16px / 24px
+     hairline  a 1px rule inside each card, above its foot
+
+   The separator is the GAP, not a border: a background layer sits behind the
+   grid and shows through the 1px gutters as hairlines. That is what lets the
+   diagonal wipe on the backing layer read as the rules drawing themselves in.
+
+   Three columns in the reference, two here — there are two services.
+   ========================================================================== */
+
+.laws {
+  padding-block: var(--s-9);
+  padding-inline: var(--site-margin);
+  background: var(--surface-sunken);
+}
+
+.laws__head {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-4);
+  margin-bottom: var(--s-7);
+  /* Wide enough for this heading to break in two or three lines rather than
+     six. 24ch stacked it one word per line and clipped the longest word
+     against the mask. */
+  max-width: 42ch;
+}
+
+.laws__eyebrow {
+  margin: 0;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.laws__title {
+  margin: 0;
+  font-family: var(--font-display);
+  /* A step smaller than the other section titles: this heading is long, and
+     at the full 52px it cannot fit two words to a line at any sane measure. */
+  font-size: clamp(1.5rem, 1.1rem + 1.3vw, 2.5rem);
+  font-weight: 600;
+  line-height: 0.966;
+  text-transform: uppercase;
+  color: var(--text-primary);
+  overflow: clip;                 /* the word mask */
+  padding-block: 0.04em 0.08em;
+}
+
+/* --- Grid ------------------------------------------------------------------
+   .laws__outer is the positioning context for the backing layer; the grid
+   sits above it, and the 1px gaps let it through. */
+
+.laws__outer {
+  position: relative;
+  isolation: isolate;
+}
+
+.laws__bg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background: var(--border);
+  /* The diagonal wipe writes clip-path here; the start state is set in JS so
+     that with no JS the layer is simply present and the hairlines show. */
+}
+
+.laws__grid {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0 1px;                     /* the 1px column gutter IS the separator */
+  transform-origin: left center;
+}
+
+.laws__card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  gap: var(--s-4);
+  min-height: 100%;
+  padding: 2rem 1.125rem 2.5rem;  /* 32px 18px, with room for the foot rule */
+  background: var(--surface-raised);
+  overflow: hidden;               /* keeps the hover rule inside the card */
+}
+
+.laws__inner {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-4);
+}
+
+.laws__cardH {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(1.125rem, 1rem + 0.5vw, 1.375rem);
+  font-weight: 600;
+  line-height: 1.25;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.laws__p {
+  margin: 0;
+  font-size: 1rem;                /* 16px */
+  line-height: 1.5;               /* 24px */
+  color: var(--text-secondary);
+}
+
+/* --- Hover -----------------------------------------------------------------
+   The reference has no transform-based hovers anywhere: its hover language is
+   a brand-coloured rule wiping across, which is exactly what the accordion
+   rows here already use. Same vocabulary, applied to a card.
+
+   .laws__hi is a top edge that wipes in from the left on hover and retracts
+   the way it came, and the card ground lifts a step at the same time. */
+
+.laws__hi {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--accent);
+  transform: scaleX(0);
+  transform-origin: right center;
+  transition: transform 0.75s cubic-bezier(0.19, 1, 0.22, 1);
+}
+.laws__card:hover .laws__hi,
+.laws__card:focus-within .laws__hi {
+  transform: scaleX(1);
+  transform-origin: left center;
+}
+
+.laws__card {
+  transition: background-color 0.5s cubic-bezier(0.19, 1, 0.22, 1);
+}
+.laws__card:hover,
+.laws__card:focus-within { background: var(--surface-page); }
+
+/* The heading picks up the same accent shift, so the whole card responds as
+   one object rather than only its edge. */
+.laws__cardH { transition: color 0.5s cubic-bezier(0.19, 1, 0.22, 1); }
+.laws__card:hover .laws__cardH { color: var(--accent-hover); }
+
+/* The rule inside each card, above its foot. transform-origin:0 so it draws
+   left-to-right, which is what its scaleX animation animates. */
+.laws__rule {
+  position: absolute;
+  inset: auto 1.125rem 0.625rem;
+  height: 1px;
+  background: var(--border);
+  transform-origin: 0%;
+}
+
+/* --- Scroll-animation hidden state ----------------------------------------
+   Gated behind html.svc-hero-anim, as everywhere else on this page, so no JS,
+   a JS error, or reduce-motion leaves the whole section visible. */
+
+html.svc-hero-anim .laws__title,
+html.svc-hero-anim .laws__cardH,
+html.svc-hero-anim .laws__p { visibility: hidden; }
+
+@media (prefers-reduced-motion: reduce) {
+  html.svc-hero-anim .laws__title,
+  html.svc-hero-anim .laws__cardH,
+  html.svc-hero-anim .laws__p { visibility: visible; }
+  .laws__bg { clip-path: none !important; }
+  .laws__grid,
+  .laws__rule { transform: none !important; }
+  .laws__hi,
+  .laws__card,
+  .laws__cardH { transition-duration: 0.01ms; }
+}
+
+/* --- Responsive ------------------------------------------------------------
+   One column on a phone. The gap becomes a ROW gutter there, so the hairline
+   still separates the two cards — it just runs horizontally instead. */
+
+@media (max-width: 48rem) {
+  .laws { padding-block: var(--s-7); }
+  .laws__head { margin-bottom: var(--s-6); max-width: 100%; }
+  .laws__grid {
+    grid-template-columns: 1fr;
+    gap: 1px 0;
+  }
+}
+
+/* ==========================================================================
+   SERVICES — "how a case runs", auto-advancing pairs
+   ==========================================================================
+   Follows the supplied reference layout: a full-bleed photograph with text at
+   the BOTTOM LEFT and BOTTOM RIGHT and dot indicators centred beneath. Eight
+   steps are shown two at a time across four slides.
+
+   Slides are stacked in one grid cell rather than laid out in a row, so the
+   section height is the tallest pair and never jumps as the text changes
+   length. Only the active slide is in the accessibility tree and only it
+   accepts pointer events.
+   ========================================================================== */
+
+.proc {
+  position: relative;
+  isolation: isolate;
+  overflow: clip;
+  /* A full viewport and a little more, so the section fills the screen and
+     the next one just breaks the bottom edge — which reads as "there is more
+     below" rather than as a gap. svh, not vh, so a mobile browser's
+     collapsing address bar does not make it jump.
+
+     No max cap here: the previous min(90svh, 46rem) capped it at 736px, so on
+     any tall screen it stopped short of the viewport entirely. */
+  min-height: 105svh;
+  display: flex;
+  padding-block: var(--s-8) var(--s-7);
+  padding-inline: var(--site-margin);
+  background: var(--surface-deep);
+  color: var(--text-on-deep);
+}
+
+/* --- Background -----------------------------------------------------------
+   Overscanned like the hero, because the parallax translates it: without the
+   margin the top edge would pull away and show bare section ground. */
+
+.proc__bg {
+  position: absolute;
+  inset: -10% -1px auto;
+  height: calc(100% + 20%);
+  z-index: 0;
+  will-change: transform;
+}
+
+.proc__img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 50% 50%;
+  display: block;
+}
+
+/* Darker at the foot, where the text sits, and lighter across the middle so
+   the vessel stays visible. */
+.proc__scrim {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(
+      to bottom,
+      color-mix(in srgb, var(--surface-deep) 74%, transparent) 0%,
+      color-mix(in srgb, var(--surface-deep) 42%, transparent) 34%,
+      /* From here down is where the step text sits, so the scrim goes much
+         heavier — 82% was not enough over the pale hull in the middle of
+         the photograph. */
+      color-mix(in srgb, var(--surface-deep) 88%, transparent) 62%,
+      color-mix(in srgb, var(--surface-deep) 95%, transparent) 80%,
+      color-mix(in srgb, var(--surface-deep) 98%, transparent) 100%
+    );
+}
+
+/* --- Layout ---------------------------------------------------------------
+   Head at the top, slides pushed to the bottom, dots beneath them. */
+
+.proc__inner {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  gap: var(--s-6);
+}
+
+.proc__head {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+  max-width: 26ch;
+}
+
+.proc__eyebrow {
+  margin: 0;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--accent-2-on-deep);
+}
+
+.proc__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(1.5rem, 1.1rem + 1.3vw, 2.5rem);
+  font-weight: 600;
+  line-height: 1;
+  text-transform: uppercase;
+  color: var(--text-on-deep);
+  overflow: clip;                 /* the word mask */
+  padding-block: 0.04em 0.08em;
+}
+
+/* --- Stage ----------------------------------------------------------------
+   Every slide occupies the SAME grid cell, so they cross-fade in place and
+   the stage is as tall as the tallest pair. `margin-top: auto` is what pushes
+   the whole block to the bottom of the section, as in the reference. */
+
+.proc__stage {
+  display: grid;
+  margin-top: auto;
+}
+
+.proc__slide {
+  grid-area: 1 / 1;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--s-6) var(--s-8);
+  align-items: end;
+
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(1.25rem);
+  pointer-events: none;
+  transition:
+    opacity 0.7s cubic-bezier(0.19, 1, 0.22, 1),
+    transform 0.7s cubic-bezier(0.19, 1, 0.22, 1),
+    visibility 0s linear 0.7s;
+}
+
+.proc__slide.is-active {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+  pointer-events: auto;
+  transition:
+    opacity 0.7s cubic-bezier(0.19, 1, 0.22, 1),
+    transform 0.7s cubic-bezier(0.19, 1, 0.22, 1),
+    visibility 0s linear 0s;
+}
+
+/* The second column sits to the right, as in the reference. Text is not
+   right-ALIGNED — that hurts readability on a paragraph — the column is. */
+.proc__col--right { justify-self: end; }
+.proc__col {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  max-width: 38ch;
+}
+
+/* Each column's own pieces are staggered by transition-delay, so within a
+   slide the left pair arrives just before the right. */
+.proc__slide.is-active .proc__col--left  { transition-delay: 0.05s; }
+.proc__slide.is-active .proc__col--right { transition-delay: 0.15s; }
+
+.proc__num {
+  font-family: var(--font-display);
+  font-size: 0.8125rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  color: var(--accent-2-on-deep);
+  text-shadow: 0 1px 10px color-mix(in srgb, #001427 80%, transparent);
+}
+
+.proc__h {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(1.125rem, 0.95rem + 0.7vw, 1.625rem);
+  font-weight: 700;              /* was 600 — needs more weight over an image */
+  line-height: 1.15;
+  text-transform: uppercase;
+  color: var(--text-on-deep);
+  text-shadow: 0 2px 16px color-mix(in srgb, #001427 82%, transparent);
+}
+
+.proc__p {
+  margin: 0;
+  font-size: clamp(0.9375rem, 0.9rem + 0.2vw, 1.0625rem);
+  line-height: 1.55;
+  font-weight: 500;              /* 400 read thin over a busy photograph */
+  /* Full white, not --text-on-deep-secondary. The secondary tone is tuned
+     for a flat navy ground; over a photograph with moving light and dark
+     areas it loses contrast wherever the image goes pale. */
+  color: var(--text-on-deep);
+  /* A soft shadow does the rest of the work, so legibility no longer depends
+     on which part of the image happens to sit behind a given line. */
+  text-shadow: 0 1px 12px color-mix(in srgb, #001427 78%, transparent);
+}
+
+/* --- Dots ------------------------------------------------------------------
+   Real buttons, centred beneath the slides. The active one fills. */
+
+.proc__dots {
+  display: flex;
+  justify-content: center;
+  gap: var(--s-3);
+  margin-top: var(--s-6);
+}
+
+.proc__dot {
+  width: 0.75rem;
+  height: 0.75rem;
+  padding: 0;
+  border: 1px solid var(--text-on-deep-muted);
+  border-radius: 50%;
+  background: none;
+  cursor: pointer;
+  transition:
+    background-color 0.4s cubic-bezier(0.19, 1, 0.22, 1),
+    border-color 0.4s cubic-bezier(0.19, 1, 0.22, 1),
+    transform 0.4s cubic-bezier(0.19, 1, 0.22, 1);
+}
+.proc__dot:hover { border-color: var(--text-on-deep); }
+.proc__dot:focus-visible {
+  outline: 2px solid var(--accent-2-on-deep);
+  outline-offset: 3px;
+}
+.proc__dot.is-active {
+  background: var(--text-on-deep);
+  border-color: var(--text-on-deep);
+  transform: scale(1.15);
+}
+
+/* --- Scroll-animation hidden state ---------------------------------------- */
+
+html.svc-hero-anim .proc__title { visibility: hidden; }
+
+@media (prefers-reduced-motion: reduce) {
+  html.svc-hero-anim .proc__title { visibility: visible; }
+  /* The slides must still CHANGE — the sequence is the content — so the
+     transition is shortened rather than removed, and the drift is dropped. */
+  .proc__slide {
+    transform: none !important;
+    transition-duration: 0.01ms, 0.01ms, 0s;
+  }
+  .proc__bg { transform: none !important; }
+}
+
+/* --- Responsive ------------------------------------------------------------
+   One column below 48rem: the two steps stack, the right column stops being
+   right-set, and the section grows to fit rather than staying viewport-tall. */
+
+@media (max-width: 48rem) {
+  .proc {
+    /* Not the desktop 105svh: the two steps stack here, so a fixed viewport
+       height would leave a large empty band under them. A floor of 100svh
+       keeps it a full screen without forcing it taller than its content. */
+    min-height: 100svh;
+    padding-block: var(--s-7) var(--s-6);
+  }
+  .proc__inner { gap: var(--s-5); }
+  .proc__head { max-width: 100%; }
+  .proc__slide {
+    grid-template-columns: 1fr;
+    gap: var(--s-5);
+  }
+  .proc__col--right { justify-self: start; }
+  .proc__col { max-width: 100%; }
+  .proc__dots { margin-top: var(--s-5); }
+}
+
+/* ==========================================================================
+   SERVICES — closing CTA
+   ==========================================================================
+   The reference's final .cta_text_section, measured live at 1900px:
+
+     ground   near-white — NOT a filled colour band
+     h2       52px / 50.232px · 600 · uppercase
+     sub      24px / 36px · uppercase · brand colour
+     body     18px / 27px · muted grey
+     layout   two columns, 8 and 4 of 12, 16px gutter
+     gaps     32px between heading, subheading row and columns
+
+   Replaces .simple-cta, which was a filled navy band. The reference closes
+   the page on the same ground as the rest of it and lets the type carry the
+   weight, so nothing here paints a background.
+   ========================================================================== */
+
+.close-cta {
+  background: var(--surface-page);
+  padding-block: var(--s-9);
+  padding-inline: var(--site-margin);
+}
+
+.close-cta__inner {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;                      /* 32px */
+}
+
+.close-cta__h {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(1.75rem, 1.2rem + 1.9vw, 3.25rem);   /* -> 52px */
+  font-weight: 600;
+  line-height: 0.966;
+  text-transform: uppercase;
+  color: var(--text-primary);
+  max-width: 20ch;
+  overflow: clip;                 /* the word mask */
+  padding-block: 0.04em 0.08em;
+}
+
+/* Two columns, 8 and 4 of 12 as in the reference, with its 16px gutter. */
+.close-cta__bottom {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: 1rem;
+  align-items: start;
+}
+.close-cta__left  { grid-column: 1 / span 6; }
+.close-cta__right {
+  grid-column: 8 / span 5;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-5);
+  align-items: flex-start;
+}
+
+.close-cta__sub {
+  margin: 0;
+  font-size: clamp(1.125rem, 0.95rem + 0.7vw, 1.5rem);  /* -> 24px */
+  line-height: 1.5;               /* 36px */
+  text-transform: uppercase;
+  color: var(--accent);
+  max-width: 26ch;
+}
+
+.close-cta__body {
+  margin: 0;
+  font-size: clamp(0.9375rem, 0.9rem + 0.2vw, 1.125rem);  /* -> 18px */
+  line-height: 1.5;               /* 27px */
+  color: var(--text-secondary);
+}
+
+/* Same link treatment as the CTA bridge higher up the page, so the two read
+   as one component used twice rather than two different buttons. */
+.close-cta__link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5em;
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--link);
+  text-decoration: none;
+  border-bottom: 1px solid transparent;
+  padding-bottom: 0.15em;
+  transition: color 0.2s ease, border-color 0.2s ease;
+}
+.close-cta__link:hover,
+.close-cta__link:focus-visible {
+  color: var(--link-hover);
+  border-bottom-color: currentColor;
+}
+
+.close-cta__arrow {
+  flex: none;
+  transition: transform 0.3s cubic-bezier(0.19, 1, 0.22, 1);
+}
+.close-cta__link:hover .close-cta__arrow,
+.close-cta__link:focus-visible .close-cta__arrow {
+  transform: translate(0.15em, -0.15em);
+}
+
+/* --- Scroll-animation hidden state ---------------------------------------- */
+
+html.svc-hero-anim .close-cta__h,
+html.svc-hero-anim .close-cta__sub,
+html.svc-hero-anim .close-cta__body,
+html.svc-hero-anim .close-cta__ctaWrap { visibility: hidden; }
+
+@media (prefers-reduced-motion: reduce) {
+  html.svc-hero-anim .close-cta__h,
+  html.svc-hero-anim .close-cta__sub,
+  html.svc-hero-anim .close-cta__body,
+  html.svc-hero-anim .close-cta__ctaWrap { visibility: visible; }
+  .close-cta__arrow { transition: none; }
+}
+
+/* --- Responsive ------------------------------------------------------------ */
+
+@media (max-width: 60rem) {
+  .close-cta__left  { grid-column: 1 / -1; }
+  .close-cta__right { grid-column: 1 / -1; }
+  .close-cta__bottom { gap: var(--s-5); }
+}
+
+@media (max-width: 40rem) {
+  .close-cta { padding-block: var(--s-7); }
+  .close-cta__h { max-width: 100%; }
+  .close-cta__sub { max-width: 100%; }
+}

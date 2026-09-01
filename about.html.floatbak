@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
@@ -67,7 +67,7 @@
 <main id="main">
 
   <!-- ======================================================================
-       01 â€” ABOUT US.  Device 1: split wordmark.
+       01 — ABOUT US.  Device 1: split wordmark.
        The reference's opening move, verbatim in structure: the word broken
        across two lines with one letter straddling them, a dense small
        paragraph column to the right, a photo tile beneath it, and a hairline
@@ -111,7 +111,7 @@
   </section>
 
   <!-- ======================================================================
-       02 â€” VISION & MISSION.  Device 1, paired variant.
+       02 — VISION & MISSION.  Device 1, paired variant.
        Same split-wordmark rhythm, but the body column divides into two
        stacks so vision and mission read as a pair rather than a sequence.
        ====================================================================== -->
@@ -152,7 +152,7 @@
   </section>
 
   <!-- ======================================================================
-       03 â€” BY THE NUMBERS.  Device 2: asymmetric stat mosaic.
+       03 — BY THE NUMBERS.  Device 2: asymmetric stat mosaic.
        Four indexed stats on a 4-column bed with structural voids, one cell
        inverted to navy. The voids are not filler waiting for content - they
        are what stops the block reading as a dashboard.
@@ -193,14 +193,12 @@
         </div>
       </div>
 
-      <!-- OPEN: client sources give both "1,800+ partner hospitals" and,
-           separately, "17-45+ locations across India" depending on the
-           document. Reconcile before quoting a single figure. -->
+      <p class="confirm-note" data-ab-reveal>[CONFIRM] Network scale: client sources give both "1,800+ partner hospitals" and, separately, "17-45+ locations across India" depending on document - figure to be reconciled with the client before publishing a single number.</p>
     </div>
   </section>
 
   <!-- ======================================================================
-       04 â€” THE TWO-LAYER MODEL.  Device 2, layers variant.
+       04 — THE TWO-LAYER MODEL.  Device 2, layers variant.
        The composition carries the argument: Layer 02 (the medical team) is
        placed ABOVE Layer 01 (the network) on the grid, because that is
        literally the claim being made.
@@ -244,7 +242,7 @@
   </section>
 
   <!-- ======================================================================
-       05 â€” FOUNDERS.  Device 1, at name scale, mirrored on the second.
+       05 — FOUNDERS.  Device 1, at name scale, mirrored on the second.
        Each founder's surname becomes the wordmark; the bio is the tight
        column. Mirroring the second entry keeps two consecutive uses of the
        same device from reading as a template.
@@ -307,7 +305,7 @@
   </section>
 
   <!-- ======================================================================
-       06 â€” THE DISCIPLINES.  Device 3: bordered wall, merged centre cell.
+       06 — THE DISCIPLINES.  Device 3: bordered wall, merged centre cell.
        Twelve capability tiles ringing a navy statement block, exactly the
        reference's brand wall - but the cells carry disciplines rather than
        logos, which is the honest version of that device for this company.
@@ -348,7 +346,7 @@
 
         <!-- Exactly ten tiles ring the statement: six across the top row,
              then two flanking pairs down the sides. The count is load-bearing
-             â€” see the placement note on .ab-tile--statement. -->
+             — see the placement note on .ab-tile--statement. -->
         <div class="ab-tile" data-ab-reveal>
           <p class="ab-tile__name">Preventive health</p>
           <p class="ab-tile__meta">Occupational programmes</p>
@@ -379,7 +377,7 @@
   </section>
 
   <!-- ======================================================================
-       07 â€” THE PANEL.  Device 3, bio variant.
+       07 — THE PANEL.  Device 3, bio variant.
        Eleven named reviewers as a dense wall rather than eleven tall cards.
        Each biography is in the DOM for search and assistive tech, revealed
        on hover or keyboard focus so the wall keeps its density.
@@ -473,7 +471,7 @@
   </section>
 
   <!-- ======================================================================
-       08 â€” WHAT WE ARE NOT.  Device 4: giant numeral + ranked list.
+       08 — WHAT WE ARE NOT.  Device 4: giant numeral + ranked list.
        The numeral is a zero, and it means something: zero commercial
        interest in where the seafarer is treated. The list is what we are
        not, set as ranked hairline rows.
@@ -524,7 +522,7 @@
   </section>
 
   <!-- ======================================================================
-       09 â€” OFFICES.  Device 4, second use.
+       09 — OFFICES.  Device 4, second use.
        Giant 3, and the three offices as ranked hairline rows with their
        contact detail nested beneath each.
        ====================================================================== -->
@@ -570,13 +568,11 @@
         </div>
       </div>
 
-      <!-- OPEN: contact details above come from client collateral (Company
-           Profile, Maritime Healthcare Solutions deck). Confirm they are the
-           correct monitored routes. -->
+      <p class="confirm-note" data-ab-reveal style="margin-top: var(--s-6);">[CONFIRM] Contact details above are drawn from client-supplied collateral (Company Profile, Maritime Healthcare Solutions deck) - confirm these are the correct, monitored 24/7 routes before publishing.</p>
     </div>
   </section>
 
-  <!-- 10 â€” Closing CTA. Unchanged from the previous page. -->
+  <!-- 10 — Closing CTA. Unchanged from the previous page. -->
   <section class="simple-cta">
     <div class="shell">
       <h2>Let's take the next case</h2>
@@ -643,24 +639,5 @@
 </footer>
 
 <script src="js/nav.js" defer></script>
-
-<!-- Floating controls, bottom-right. The WhatsApp pill sits directly above the
-     back-to-top square; both reveal together once the hero has scrolled past. -->
-<a class="wa-float" id="wa-float"
-   href="https://wa.me/00000000000?text=Hi%20MedShield%20-%20I%27d%20like%20to%20talk%20about%20crew%20medical%20cover."
-   target="_blank" rel="noopener" aria-label="Chat with MedShield on WhatsApp">
-  <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-    <path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38a9.87 9.87 0 0 0 4.74 1.21h.01c5.46 0 9.9-4.45 9.9-9.91 0-2.65-1.03-5.14-2.9-7.01A9.82 9.82 0 0 0 12.04 2Zm0 18.15h-.01a8.2 8.2 0 0 1-4.19-1.15l-.3-.18-3.12.82.83-3.04-.2-.31a8.18 8.18 0 0 1-1.26-4.38c0-4.54 3.7-8.23 8.25-8.23 2.2 0 4.27.86 5.82 2.42a8.18 8.18 0 0 1 2.41 5.82c0 4.54-3.7 8.23-8.23 8.23Zm4.52-6.16c-.25-.12-1.47-.72-1.69-.81-.23-.08-.39-.12-.56.13-.16.24-.64.8-.79.97-.14.16-.29.19-.54.06-.25-.12-1.05-.39-1.99-1.23-.74-.66-1.23-1.47-1.38-1.72-.14-.25-.01-.38.11-.5.11-.11.25-.29.37-.43.13-.15.17-.25.25-.41.08-.17.04-.31-.02-.43-.06-.12-.56-1.34-.76-1.84-.2-.48-.4-.42-.56-.43h-.47c-.17 0-.43.06-.66.31-.22.25-.87.85-.87 2.07s.89 2.4 1.02 2.56c.12.17 1.75 2.67 4.23 3.74.59.26 1.05.41 1.41.52.59.19 1.13.16 1.56.1.47-.07 1.47-.6 1.67-1.18.21-.58.21-1.07.15-1.18-.06-.11-.22-.17-.47-.29Z"/>
-  </svg>
-</a>
-
-<button type="button" class="to-top-fill" id="to-top" aria-label="Back to top">
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-       stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-    <path d="M12 19V5"/><path d="m5 12 7-7 7 7"/>
-  </svg>
-</button>
-
-<script src="js/floating-controls.js" defer></script>
 </body>
 </html>

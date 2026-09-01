@@ -193,9 +193,7 @@
         </div>
       </div>
 
-      <!-- OPEN: client sources give both "1,800+ partner hospitals" and,
-           separately, "17-45+ locations across India" depending on the
-           document. Reconcile before quoting a single figure. -->
+      <p class="confirm-note" data-ab-reveal>[CONFIRM] Network scale: client sources give both "1,800+ partner hospitals" and, separately, "17-45+ locations across India" depending on document - figure to be reconciled with the client before publishing a single number.</p>
     </div>
   </section>
 
@@ -570,9 +568,7 @@
         </div>
       </div>
 
-      <!-- OPEN: contact details above come from client collateral (Company
-           Profile, Maritime Healthcare Solutions deck). Confirm they are the
-           correct monitored routes. -->
+      <p class="confirm-note" data-ab-reveal style="margin-top: var(--s-6);">[CONFIRM] Contact details above are drawn from client-supplied collateral (Company Profile, Maritime Healthcare Solutions deck) - confirm these are the correct, monitored 24/7 routes before publishing.</p>
     </div>
   </section>
 
