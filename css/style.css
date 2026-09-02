@@ -475,6 +475,10 @@
   /* Space */
   --s-1: 0.25rem;  --s-2: 0.5rem;   --s-3: 0.75rem;  --s-4: 1rem;
   --s-5: 1.5rem;   --s-6: 2rem;     --s-7: 3rem;     --s-8: 4rem;
+
+  /* Clearance kept under the process band so the card's foot copy is never
+     flush with the fold. See .process__body / .process__card. */
+  --band-foot: clamp(0.75rem, 0.5rem + 0.6vw, 1.25rem);
   --s-9: 6rem;
   --section-y: clamp(3.5rem, 2.2rem + 5vw, 6.5rem);
 
@@ -718,7 +722,8 @@ textarea:focus-visible,
 
    LEGIBILITY over other sections is handled by INK INVERSION, not by hiding:
    .is-on-light flips the wordmark and hamburger to dark ink whenever a pale
-   section is behind the bar (see isDeepUnderBar in hero.js). The bar itself
+   section is behind the bar (see js/bar-ink.js, which owns that probe for
+   every page and reads the data-bar-ink="light" markers). The bar itself
    clears out of the way only while the user is actively scrolling, and
    returns once the scroll goes idle — see .is-hidden and the idle timer. */
 .site-header {
@@ -764,8 +769,9 @@ textarea:focus-visible,
    sections below the hero pass under it the white wordmark and white
    hamburger were rendering white-on-white — invisible, and overlapping the
    text behind them. Rather than reintroduce a filled bar, the bar's INK
-   flips to the dark on-page ink instead. hero.js adds .is-on-light when the
-   element behind the bar is a light section.
+   flips to the dark on-page ink instead. bar-ink.js adds .is-on-light when
+   the element behind the bar is a light section — a section declares itself
+   dark with data-bar-ink="light", and anything unmarked is treated as pale.
 
    Only colour transitions; no background ever appears. */
 .site-header.is-on-light .brand {
@@ -2628,11 +2634,17 @@ main {
      the size above: three lines this large only fit the section height at a
      leading this tight. */
   line-height: 0.92;
-  /* Barely negative. The heavy negative tracking was pulling the words into
-     a condensed block; the reference's statement runs WIDE, its letters at
-     close to normal width, and that width is most of what gives it presence
-     across the panel. */
-  letter-spacing: -0.015em;
+  /* NO STRETCH, SO THE TRACKING DOES THE SETTING.
+
+     The statement used to be scaled on the X axis (scaleX 1.04-1.45, see the
+     --stretch notes below) to make each line span the panel. Scaling a
+     typeface horizontally distorts it — the stems thicken while the
+     horizontals stay put — so it read as pulled apart rather than as a wide
+     setting. That is gone; the tracking is pulled in a little further
+     instead, which closes the airy word gaps the stretch left behind and
+     lets the three lines read as one solid block. */
+  letter-spacing: -0.03em;
+  word-spacing: -0.02em;
   color: var(--pnl-ink);
   /* No text-transform. The lines are sentence-case in the markup - a capital
      opening each one - and a lowercase transform here would flatten those
@@ -2694,7 +2706,7 @@ main {
      rather than pushing it off both sides and breaking the stagger's left
      alignment. */
   transform-origin: left center;
-  transform: scaleX(var(--stretch, 1.12));
+  transform: scaleX(var(--stretch, 1));
   /* scaleX on an inline-level box would be ignored; block is what makes the
      line a transformable box in the first place (set above). */
 }
@@ -2726,7 +2738,7 @@ main {
   /* The stretch has to be restated here. transform is a single property:
      declaring translateY alone would drop the scaleX entirely and the lines
      would snap narrow the moment the reveal took over. */
-  transform: scaleX(var(--stretch, 1.18)) translateY(110%);
+  transform: scaleX(var(--stretch, 1)) translateY(110%);
   /* Slower than the page default 1s: this is the largest type on the site
      and it needs the extra beat to read as deliberate rather than snapped. */
   transition: transform 1.15s cubic-bezier(0.16, 1, 0.3, 1);
@@ -2734,12 +2746,12 @@ main {
 }
 .reveal-on .contact__title[data-reveal].is-in .contact__lineText {
   /* Rests at the stretch, not at none - "none" would reset the scaleX too. */
-  transform: scaleX(var(--stretch, 1.18));
+  transform: scaleX(var(--stretch, 1));
 }
 
 @media (prefers-reduced-motion: reduce) {
   .reveal-on .contact__title[data-reveal] .contact__lineText {
-    transform: scaleX(var(--stretch, 1.18));
+    transform: scaleX(var(--stretch, 1));
     transition: none;
   }
 }
@@ -2759,7 +2771,7 @@ main {
    already spans 82% of the panel unstretched, so the same factor would run
    the words off the screen edge. Measured at each size, not scaled by rule. */
 @media (min-width: 900px) {
-  .contact__title { --stretch: 1.32; }
+  .contact__title { --stretch: 1; }
 }
 
 @media (min-width: 900px) {
@@ -2852,7 +2864,7 @@ main {
      panel. Past roughly 1.5 the letterforms stop reading as extended and
      start reading as distorted, and a squashed headline is worse than a
      narrow one. */
-  .contact__title { --stretch: 1.45; }
+  .contact__title { --stretch: 1; }
   .contact__aside { gap: 0.4rem; }
   .contact__alert { margin-top: 0.25rem; padding: 0.5rem 0.75rem; }
   .cform { gap: 0.45rem; }
@@ -2869,7 +2881,7 @@ main {
   .contact__inner { min-height: 0; }
   /* Barely any. Stacked, line 1 already spans ~82% of a narrow panel before
      any stretch, so there is almost no room to widen into. */
-  .contact__title { --stretch: 1.04; }
+  .contact__title { --stretch: 1; }
   .contact__line--2 { padding-left: 4%; }
   .contact__line--3 { padding-left: 18%; }
 }
@@ -3551,9 +3563,22 @@ main {
    The band's height is fixed px because its ramp is specified in px. It carries
    no text, so the pale top raises no contrast question. */
 /* Ink probe. Carries data-bar-ink="light" on behalf of the footer, spanning
-   only the region below the light lead-in — the part that is genuinely dark.
-   hero.js reads bounding rects, so this rect is what makes the header flip to
-   white ink at the correct scroll position instead of over the pale top.
+   the region that is genuinely too dark for dark ink. bar-ink.js reads
+   bounding rects, so this rect is what makes the header flip to white ink at
+   the correct scroll position instead of over the pale top.
+
+   It does NOT start at --footer-rise (the seam between the two gradient
+   layers). The lead-in ramp is only pale at its TOP; it runs continuously
+   down to #075486, and the dark ink loses the ramp well before the seam.
+   Measured against the ink actually used (#142231 dark, #FAFBFD light), the
+   two cross at ~72% of the ramp: at 71.7% dark still leads 3.99 to 3.91, and
+   by 73.9% light is ahead 4.17 to 3.74 and dark has fallen under AA. Starting
+   the probe at the seam left the bar painting dark ink over the ramp's bottom
+   third, bottoming out at 2.01:1 on the seam colour itself.
+
+   So the probe starts at 72% of the lead-in and runs to the footer's bottom.
+   The remaining pale top keeps dark ink, which is correct and comfortable
+   there (15.6:1 at the very top, still 4.2:1 where the probe takes over).
 
    Zero-size in the layout sense: absolutely positioned, so it adds no height
    and displaces nothing. The footer is the containing block. */
@@ -3561,7 +3586,7 @@ main {
   position: absolute;
   left: 0;
   right: 0;
-  top: var(--footer-rise);
+  top: calc(var(--footer-rise) * 0.72);
   bottom: 0;
   pointer-events: none;
 }
@@ -6263,7 +6288,15 @@ main {
      That beat is now bought by the pin's own scroll budget instead — see
      TRAVEL_VH in process-to-cases.js, which is what actually governs how
      fast the close plays. */
-  padding-block: var(--section-y) 0;
+  /* TIGHTER AT THE TOP THAN THE SITE DEFAULT.
+
+     The heading sat low enough that the composition read as bottom-heavy —
+     a deep white band above the eyebrow, then the pictures crowding the
+     fold. A reduced top padding lifts the whole header block; the band is
+     unaffected because .process__body's min-height is measured from the
+     header's real height (--process-head-h), so the space reclaimed here
+     becomes air between the heading and the pictures rather than extra card. */
+  padding-block: var(--process-top, clamp(2rem, 1.2rem + 2.6vw, 3.75rem)) 0;
   /* Plain white ground, not --surface-page: this section is deliberately the
      brightest stop on the page, so it takes pure white rather than the
      slightly tinted default. */
@@ -6347,10 +6380,27 @@ main {
      --process-head-h is published by js/process-marquee.js from the header's
      real rect and kept current on resize; the 200px here is only the fallback
      for the frame before it is written. */
-  min-height: calc(100vh - var(--section-y) - var(--process-head-h, 200px));
+  min-height: calc(100vh - var(--process-top, clamp(2rem, 1.2rem + 2.6vw, 3.75rem)) - var(--process-head-h, 200px));
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
+  /* THE BAND CLEARS THE FOLD.
+
+     The band used to be flush against the section's bottom edge, and the
+     section is exactly one viewport tall — so at the resting position the
+     card's bottom edge landed EXACTLY on the fold (measured: card bottom 900
+     against a 900px viewport at 1440 wide). The copy that sits at the card's
+     foot — the stage title and its supporting line — was therefore jammed
+     against the bezel with nothing under it, and any browser chrome, zoom
+     rounding or mobile URL bar clipped it outright.
+
+     --band-foot is that clearance. It is padding on the body rather than a
+     margin on the frame, so it stays inside the box the min-height above
+     governs and the section is still exactly one viewport tall — the pin's
+     'bottom bottom' trigger is untouched. The card's own vh term is reduced
+     by the same amount (see .process__card) so the plate shrinks into the
+     clearance instead of pushing the section past the fold. */
+  padding-bottom: var(--band-foot);
 }
 
 .process__pinWrap { position: relative; }
@@ -6478,7 +6528,27 @@ main {
      every few seconds. The vh term is raised alongside the rem cap because it
      is what actually binds on a short laptop screen — leaving it at 52vh
      capped the run at 15s there no matter how large the rem cap went. */
-  width: min(30rem, calc(66vh * 4 / 5), 66vw);
+  /* THE VH TERM IS NET OF THE FOOT CLEARANCE.
+
+     .process__body now holds --band-foot of padding under the band so the
+     card's copy clears the fold. Sizing the card from the full 66vh would
+     simply push that clearance back out through the section's bottom edge, so
+     the height available to the plate is the fold share MINUS the clearance,
+     and the width follows from it through the 4:5 ratio. */
+  /* THE FOLD TERM IS WHAT IS ACTUALLY LEFT, not a flat share of the screen.
+
+     A flat 66vh does not know what sits above the band. On a short laptop
+     (measured 1280x720) the header's own 200px box plus --section-y plus a
+     66vh plate came to 774px against a 720px viewport, so the section was
+     taller than the fold and the card's foot copy landed 11px BELOW it even
+     with the clearance below. The available height is the viewport minus the
+     furniture above the band and minus the clearance under it; 66vh stays as
+     the upper bound so the band still reads as a strip along the section's
+     foot on a tall screen rather than a wall of pictures. */
+  --card-h: min(66vh,
+                calc(100vh - var(--process-top, clamp(2rem, 1.2rem + 2.6vw, 3.75rem))
+                     - var(--process-head-h, 200px) - var(--band-foot)));
+  width: min(30rem, calc(var(--card-h) * 4 / 5), 66vw);
   aspect-ratio: 4 / 5;
   border-radius: var(--radius-lg);
   overflow: hidden;
@@ -6628,7 +6698,8 @@ main {
        The vh term lets the plate use the space it is sitting in, the same way
        the desktop rule does; the vw cap still keeps one card plus a slice of
        the next on screen, which is what makes the band read as running. */
-    width: min(17rem, calc(52vh * 4 / 5), 74vw);
+    /* Net of the foot clearance, same reasoning as the desktop rule. */
+    width: min(17rem, calc(min(52vh, var(--card-h)) * 4 / 5), 74vw);
   }
   .process__cardCopy { padding: var(--s-4); }
 }

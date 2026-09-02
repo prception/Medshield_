@@ -72,7 +72,7 @@
         <h1 class="csx__title" id="csx-h">Case studies</h1>
         <p class="csx__lede">
           How MedShield brings inflated medical costs back to market rate and
-          gets crew care back on track &ndash; across cruise, shipping and
+          gets crew care back on track - across cruise, shipping and
           offshore. Real cases, real figures, taken verbatim from the files.
         </p>
       </header>
@@ -110,7 +110,7 @@
         </li>
 
         <!-- 02 - the inverted row --------------------------------------- -->
-        <li class="csx-case csx-case--invert">
+        <li class="csx-case csx-case--invert" data-bar-ink="light">
           <div class="csx-case__body">
             <div>
               <h2 class="csx-case__title">
@@ -178,7 +178,7 @@
               <p class="csx-case__tag">Cruise &middot; port coordination</p>
               <p class="csx-case__text">
                 A crew member landed ashore mid-itinerary with the vessel due
-                to sail. We took the case at the gangway &ndash; provider
+                to sail. We took the case at the gangway - provider
                 selected, treatment costed and approved before delivery, and
                 repatriation documented against MLC obligations as the case
                 ran.
@@ -341,7 +341,7 @@
               <p class="wtl-step__num">Point 5</p>
               <h3 class="wtl-step__title">One record per seafarer</h3>
               <p class="wtl-step__text">
-                Across vessels, ports and years &ndash; one history that
+                Across vessels, ports and years - one history that
                 travels with the crew member rather than with the voyage.
               </p>
             </div>
@@ -362,7 +362,7 @@
               <h3 class="wtl-step__title">Unbiased provider choice</h3>
               <p class="wtl-step__text">
                 Hospitals scored on merit, never on referral relationships
-                &ndash; we hold no financial interest in where you are treated.
+                - we hold no financial interest in where you are treated.
               </p>
             </div>
           </li>
@@ -402,7 +402,7 @@
 </main>
 
 <footer class="site-footer">
-  <div class="site-footer__deep-probe" aria-hidden="true"></div>
+  <div class="site-footer__deep-probe" data-bar-ink="light" aria-hidden="true"></div>
   <div class="shell">
     <div class="site-footer__main">
       <div class="site-footer__top">
@@ -457,6 +457,10 @@
 </footer>
 
 <script src="js/cases-reveal.js"></script>
+<!-- Shared header-ink probe. Must execute BEFORE the bar script below,
+     which repaints the ink from inside its own scroll pass; both are defer,
+     so document order is execution order. -->
+<script src="js/bar-ink.js" defer></script>
 <script src="js/nav.js" defer></script>
 
 <!-- Floating controls, bottom-right. The WhatsApp pill sits directly above the
@@ -477,5 +481,8 @@
 </button>
 
 <script src="js/floating-controls.js" defer></script>
+
+<!-- Smooth scroll, shared with the other pages (js/smooth-scroll.js). -->
+<script src="js/smooth-scroll.js" defer></script>
 </body>
 </html>

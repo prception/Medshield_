@@ -64,7 +64,7 @@
 
 <main id="main">
   <!-- 1-2. Hero: breadcrumb, title and lede, vertically centred in the band -->
-  <section class="c-hero" aria-labelledby="contact-h">
+  <section class="c-hero" aria-labelledby="contact-h" data-bar-ink="light">
     <div class="shell c-hero__inner">
 
       <nav class="crumb" aria-label="Breadcrumb">
@@ -139,7 +139,7 @@
 
             <div class="cinfo">
               <p class="cinfo__label">Visit us</p>
-              <p class="cinfo__value">Chennai, India &ndash; headquarters</p>
+              <p class="cinfo__value">Chennai, India - headquarters</p>
               <p class="cinfo__value">Singapore <span aria-hidden="true">&middot;</span> Dubai, UAE</p>
               <p class="cinfo__value">Full office addresses on request</p>
             </div>
@@ -149,7 +149,7 @@
               <p class="contact__alertBody">
                 Do not use this form. Call
                 <strong><a href="tel:+919840603936">+91 98406 03936</a></strong>
-                &ndash; answered by a coordinator.
+                - answered by a coordinator.
               </p>
             </aside>
           </div>
@@ -185,9 +185,9 @@
                 <select class="cform__input cform__select" id="f-fleet" name="fleet"
                         required aria-describedby="e-fleet">
                   <option value="">Select&#8230;</option>
-                  <option>1&#8211;5</option>
-                  <option>6&#8211;20</option>
-                  <option>21&#8211;50</option>
+                  <option>1-5</option>
+                  <option>6-20</option>
+                  <option>21-50</option>
                   <option>50+</option>
                 </select>
                 <p class="cform__error" id="e-fleet" hidden></p>
@@ -327,7 +327,7 @@
 </main>
 
 <footer class="site-footer">
-  <div class="site-footer__deep-probe" aria-hidden="true"></div>
+  <div class="site-footer__deep-probe" data-bar-ink="light" aria-hidden="true"></div>
   <div class="shell">
     <div class="site-footer__main">
       <div class="site-footer__top">
@@ -381,6 +381,10 @@
   </div>
 </footer>
 
+<!-- Shared header-ink probe. Must execute BEFORE the bar script below,
+     which repaints the ink from inside its own scroll pass; both are defer,
+     so document order is execution order. -->
+<script src="js/bar-ink.js" defer></script>
 <script src="js/nav.js" defer></script>
 <script>
 (function () {
@@ -479,5 +483,8 @@
 </button>
 
 <script src="js/floating-controls.js" defer></script>
+
+<!-- Smooth scroll, shared with the other pages (js/smooth-scroll.js). -->
+<script src="js/smooth-scroll.js" defer></script>
 </body>
 </html>

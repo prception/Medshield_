@@ -17,10 +17,6 @@
   var header = document.getElementById('site-header');
 
   if (header) {
-    /* Looked up here as well as in the overlay block below, because the ink
-       probe needs the toggle's box from the very first scroll event and the
-       overlay's own `toggle` is not assigned until much later in this file. */
-    var inkProbeEl = header.querySelector('.nav-toggle');
     var STUCK_AT = 80;
     var ticking = false;
     var lastY = window.scrollY;
@@ -41,41 +37,11 @@
        from flickering the bar. */
     var MOTION_THRESHOLD = 6;
 
-    /* Which section is under the bar, and is it dark?
-
-       Dark sections are marked in the HTML with data-bar-ink="light" — one
-       source of truth, rather than a selector list here that silently rots
-       the next time a section is added or restyled.
-
-       The probe point is 28px down: half the bar's height, so the ink flips
-       as a section boundary crosses the vertical MIDDLE of the bar (level
-       with the logo) rather than its very top edge. Sampling is a walk over
-       the marked elements rather than elementFromPoint, because the bar
-       itself — and the open overlay — sit at that point and would be the hit.
-
-       HORIZONTAL bounds are tested too, not just top/bottom. Most marked
-       elements are full-bleed sections where the x test is always true, but
-       .doubts__panel — the problem section's gradient fill — starts at
-       left:50% and sweeps left as the section scrubs. A top/bottom-only test
-       reported it as "not under the bar" for the whole sweep, so the
-       hamburger stayed dark ink over the navy panel it was actually sitting
-       on. The x sampled is the TOGGLE's own centre, because the toggle is the
-       only ink in the bar that flips (the brand is a full-colour PNG), and it
-       sits at the right edge — the half that the panel covers first.
-
-       Not cached: .doubts and the hero are scroll-scrubbed and change height
-       and width as they animate, so the rects have to be live. */
-    function isDeepUnderBar() {
-      var PROBE = 28;
-      var t = inkProbeEl && inkProbeEl.getBoundingClientRect();
-      var x = t ? t.left + t.width / 2 : window.innerWidth - 32;
-      var deep = document.querySelectorAll('[data-bar-ink="light"]');
-      for (var i = 0; i < deep.length; i++) {
-        var r = deep[i].getBoundingClientRect();
-        if (r.top <= PROBE && r.bottom > PROBE && r.left <= x && r.right > x) return true;
-      }
-      return false;
-    }
+    /* Ink colour is no longer decided here. bar-ink.js owns that probe for
+       every page (see its header comment for how a section declares itself
+       dark), and this block just asks it to repaint from inside the same
+       rAF-throttled pass that does the hide/show work, so the bar does one
+       layout read per frame rather than two. */
 
     function syncHeader() {
       ticking = false;
@@ -85,15 +51,8 @@
       // position. STUCK_AT survives only as the "still at the top" threshold
       // that keeps the bar pinned open near y=0.
 
-      /* Ink inversion. The bar has no background, so its ink must match the
-         section actually behind it at this scroll position.
-
-         This used to test one thing — "has the hero scrolled past?" — and
-         assumed everything below the hero was pale. It is not: .process,
-         .cta-band and .site-footer are all deep navy, so past the hero the
-         bar flipped to dark ink and the wordmark and hamburger rendered
-         navy-on-navy. The test is now the REAL section under the bar. */
-      header.classList.toggle('is-on-light', !isDeepUnderBar());
+      /* Ink inversion, against the REAL section under the bar. */
+      if (window.__medshieldBarInk) window.__medshieldBarInk.paint();
 
       /* Logo visibility. The brand is part of the HERO composition, not a
          permanent fixture of the bar: once the page has left the hero the
@@ -425,7 +384,7 @@
        font gate, not from page load: the entrance is itself font-gated, so a
        delay measured from load would cut it off on a slow font and leave a
        dead gap on a fast one. */
-    var H1_HOLD    = 2600;   // ms the first headline stays after it lands
+    var H1_HOLD    = 2200;   // ms the first headline stays after it lands
     var CYCLE_HOLD = 3200;   // ms each cycling phrase stays
 
     /* Re-runs the per-character wipe on a scope that is already split.
@@ -597,19 +556,33 @@
       if (altEl.classList.contains('is-in')) lockCycleWidth();
     }, { passive: true });
 
-    /* Kick-off. Armed off the same font gate as the entrance so the hold
-       starts when the first headline actually lands, with the same 900ms hard
-       floor behind it in case the font never settles. */
+    /* Kick-off. Armed off the same font gate AS WELL AS the preloader gate
+       used by the entrance. The font resolves while the loader is still
+       covering the page, so arming on the font alone burned most of H1_HOLD
+       underneath the loader and the first headline was swapped away almost
+       the instant the hero expanded into view. Gating it too means the hold
+       is counted from the moment the headline is actually on screen. */
     var swapArmed = false;
     function armSwap() {
       if (swapArmed) return;
       swapArmed = true;
       window.setTimeout(doSwap, H1_HOLD);
     }
-    if (document.fonts && document.fonts.ready) {
-      document.fonts.ready.then(armSwap);
+    function armGated() {
+      var gate = window.__preloaderGate;
+      if (gate && typeof gate.then === 'function') {
+        gate.then(armSwap, armSwap);   // resolve OR reject must arm it
+      } else {
+        armSwap();
+      }
     }
-    window.setTimeout(armSwap, 900);
+    if (document.fonts && document.fonts.ready) {
+      document.fonts.ready.then(armGated);
+    }
+    window.setTimeout(armGated, 900);
+    // Absolute floor, ungated — mirrors the entrance's own 7000ms failsafe so
+    // a gate that never settles cannot freeze the cycle on headline one.
+    window.setTimeout(armSwap, 7000);
   }
 
   /* --- 3. Hero video + scroll progress ------------------------------------ */

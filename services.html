@@ -21,7 +21,7 @@
 <link rel="stylesheet" href="css/services-hero.css">
 
 <!-- Services-hero FOUC gate. Must run BEFORE first paint, so it is inline and
-     in the head â€” a defer'd script executes after the page has already
+     in the head - a defer'd script executes after the page has already
      painted, which would show the un-split headline for a frame before
      hiding it. Adds the class only when the hero will actually animate; the
      matching conditions are re-checked in js/services-hero.js, which removes
@@ -41,7 +41,7 @@
        range is computed relative to that offset and comes out NEGATIVE
        (start -1500, end -540 for a 1500px restore). Scroll position 0 then
        sits past the end of that range, so the scrub pins itself at 100% and
-       the image layer keeps a permanent 20% offset â€” the band of bare ground
+       the image layer keeps a permanent 20% offset - the band of bare ground
        under the header. No later refresh() can undo it, because by then the
        damage is in the recorded start/end.
 
@@ -113,13 +113,13 @@
        The visible rows are decorative duplicates: they are chopped into
        per-character spans by the split engine, which would make a screen
        reader announce them letter by letter. So the rows are aria-hidden and
-       a single visually-hidden <h1> carries the real heading text â€” exactly
+       a single visually-hidden <h1> carries the real heading text - exactly
        what the reference does, and the reason .u-sr-only exists there.
 
        data-fouc-prevent marks what must stay invisible until fonts are ready
        and the split has run. If JS never runs the head gate never lands and
        all of this renders as a plain static hero. -->
-  <section class="hero-svc" data-hero-svc>
+  <section class="hero-svc" data-hero-svc data-bar-ink="light">
 
     <div class="hero-svc__bg" data-anim-load="scale" data-parallax="trigger"
          data-parallax-start="0" data-parallax-end="20" data-fouc-prevent>
@@ -174,17 +174,17 @@
   </section>
 
   <!-- ======================================================================
-       CTA TEXT â€” the bridge between the hero and the service detail
+       CTA TEXT - the bridge between the hero and the service detail
        ======================================================================
        The reference's .cta_text_section, measured off the live site at
        1900px wide:
 
-         h2      52px / 50.232px Â· 600 Â· uppercase   (same face and size as
+         h2      52px / 50.232px · 600 · uppercase   (same face and size as
                                                       the halves headings, so
                                                       the two read as one
                                                       typographic system)
-         lede    18px / 27px Â· regular Â· muted grey
-         button  16px Â· 600 Â· uppercase Â· accent, with a diagonal arrow
+         lede    18px / 27px · regular · muted grey
+         button  16px · 600 · uppercase · accent, with a diagonal arrow
          gaps    32px between heading, lede and button
 
        It sets up the section that follows: the halves list answers "who are
@@ -203,7 +203,7 @@
         <p class="cta-text__lede" data-anim-scroll="lines" data-split="lines">Every
           case looks different depending on where you stand. An owner, a
           crewing manager and the seafarer each need something different from
-          the same file &mdash; and we adjust what we do to match.</p>
+          the same file - and we adjust what we do to match.</p>
         <div class="cta-text__cta" data-anim-scroll="fade">
           <a class="cta-text__link" href="contact.html">Get in touch
             <svg class="cta-text__arrow" viewBox="0 0 24 24" fill="none"
@@ -218,7 +218,7 @@
   </section>
 
   <!-- ======================================================================
-       SERVICES â€” "it depends who you are in the case"
+       SERVICES - "it depends who you are in the case"
        ======================================================================
        Layout and motion copied from the reference build
        (rioproperty.co.za/services, its .services_halves_section), measured off
@@ -233,7 +233,7 @@
          - items ALTERNATE: the reference does this at runtime by setting
            order:-1 on the image wrapper of every even item, which is why the
            alternation is invisible in its static HTML. Here it is a CSS class
-           (.halves__item--flip) â€” same result, no JS required, and it still
+           (.halves__item--flip) - same result, no JS required, and it still
            works if scripting fails.
 
        Counter-parallax: the text moves 10 -> -10 while the image moves
@@ -246,7 +246,7 @@
          data-anim-scroll="lines"  subheading, per-line rise
          data-anim-scroll="fade"   the list block
        Unlike the hero's load animations these are scroll-triggered, and they
-       replay when scrolled back to â€” matching the reference's
+       replay when scrolled back to - matching the reference's
        toggleActions:"none play none reset". -->
   <section class="halves" aria-labelledby="halves-h">
     <h2 class="visually-hidden" id="halves-h">What we do, service by service</h2>
@@ -387,7 +387,7 @@
 
 
   <!-- ======================================================================
-       HOW WE PROTECT THE CLAIM â€” accordion
+       HOW WE PROTECT THE CLAIM - accordion
        ======================================================================
        The reference's .accordion_services_section, measured off the live
        site at 1900px wide:
@@ -398,7 +398,7 @@
                     col 5-7   the heading
                     col 9-11  the disclosure content
                     col 12    the plus/minus toggle
-         h3         32px / 37.44px Â· 600 Â· uppercase
+         h3         32px / 37.44px · 600 · uppercase
          body       16px / 24px
          divider    1px rule above every row, with a brand-coloured highlight
                     that wipes across on hover and stays while open
@@ -408,7 +408,7 @@
        lifted from the inline <style> block it ships. No height measuring,
        so it animates correctly whatever the content length.
 
-       ACCESSIBILITY â€” this differs from the reference deliberately. The
+       ACCESSIBILITY - this differs from the reference deliberately. The
        reference toggles a data attribute on a <button> with no ARIA at all.
        Here each row is a real <button> carrying aria-expanded and
        aria-controls, and the panel is a labelled region, so the state is
@@ -446,7 +446,7 @@
               <span class="acc__content" id="acc-panel-1" role="region"
                     aria-labelledby="acc-btn-1">
                 <span class="acc__contentInner">
-                  <span class="acc__p">Local field agents, geo-tagged medical visit logs and time-stamped records &mdash; so a claim can be checked against what actually happened, not just what was billed.</span>
+                  <span class="acc__p">Local field agents, geo-tagged medical visit logs and time-stamped records - so a claim can be checked against what actually happened, not just what was billed.</span>
                   <span class="acc__lead">Why it matters:</span>
                   <span class="acc__p">A claim is verified against the visit, not just against the invoice.</span>
                 </span>
@@ -476,7 +476,7 @@
               <span class="acc__content" id="acc-panel-2" role="region"
                     aria-labelledby="acc-btn-2">
                 <span class="acc__contentInner">
-                  <span class="acc__p">A centralised provider-selection policy covering accreditation, emergency response time, treatment quality and pricing transparency &mdash; reviewed and audited periodically.</span>
+                  <span class="acc__p">A centralised provider-selection policy covering accreditation, emergency response time, treatment quality and pricing transparency - reviewed and audited periodically.</span>
                   <span class="acc__lead">Why it matters:</span>
                   <span class="acc__p">Reviewed and audited periodically, so the network stays honest over time.</span>
                 </span>
@@ -596,7 +596,7 @@
               <span class="acc__content" id="acc-panel-6" role="region"
                     aria-labelledby="acc-btn-6">
                 <span class="acc__contentInner">
-                  <span class="acc__p">One platform instead of siloed PEME, ship and hospital records &mdash; nothing gets lost or contradicted between stakeholders.</span>
+                  <span class="acc__p">One platform instead of siloed PEME, ship and hospital records - nothing gets lost or contradicted between stakeholders.</span>
                   <span class="acc__lead">Why it matters:</span>
                   <span class="acc__p">Nothing gets lost or contradicted between stakeholders.</span>
                 </span>
@@ -615,7 +615,7 @@
   </section>
 
   <!-- ======================================================================
-       ALSO AVAILABLE â€” OHS and medico-legal
+       ALSO AVAILABLE - OHS and medico-legal
        ======================================================================
        Built on the reference's .laws_home_grid pattern (its homepage), which
        is the closest thing it has to a peer-cards block: a grid whose 1px
@@ -654,7 +654,7 @@
             <h3 class="laws__cardH" data-anim-scroll="lines" data-split="lines">Occupational Health &amp; Safety</h3>
             <p class="laws__p" data-anim-scroll="lines" data-split="lines">Maritime
               safety audits, PEME-related audits and vessel-specific audits
-              &mdash; focused on preventing workplace injury and ensuring
+              - focused on preventing workplace injury and ensuring
               compliance with international safety standards.</p>
           </div>
           <div class="laws__rule" data-anim-scroll="scaleX" aria-hidden="true"></div>
@@ -666,7 +666,7 @@
             <h3 class="laws__cardH" data-anim-scroll="lines" data-split="lines">Medico-Legal Services</h3>
             <p class="laws__p" data-anim-scroll="lines" data-split="lines">Combining
               medical and legal expertise: advice on injury claims, maritime
-              regulations and dispute resolution &mdash; protecting clients
+              regulations and dispute resolution - protecting clients
               from legal risk while upholding standards of care.</p>
           </div>
           <div class="laws__rule" data-anim-scroll="scaleX" aria-hidden="true"></div>
@@ -676,7 +676,7 @@
   </section>
 
   <!-- ======================================================================
-       HOW A CASE RUNS â€” auto-advancing pairs over a full-bleed image
+       HOW A CASE RUNS - auto-advancing pairs over a full-bleed image
        ======================================================================
        Layout follows the supplied reference: a photographic background with
        text sitting at the BOTTOM LEFT and BOTTOM RIGHT, and dot indicators
@@ -692,7 +692,7 @@
        Motion vocabulary is the page's own: the outgoing pair fades and drops,
        the incoming pair rises, and the background holds a slow scale so the
        image is never static behind changing text. -->
-  <section class="proc" id="process" aria-labelledby="proc-h"
+  <section class="proc" id="process" aria-labelledby="proc-h" data-bar-ink="light"
            data-proc data-proc-interval="5000">
     <div class="proc__bg" data-parallax="trigger"
          data-parallax-start="-8" data-parallax-end="8"
@@ -725,7 +725,7 @@
           <div class="proc__col proc__col--left">
             <span class="proc__num">03</span>
             <h3 class="proc__h">Our SME panel reviews</h3>
-            <p class="proc__p">Specialists assess urgency, complexity and treatment options &mdash; decisions backed by expertise, not guesswork.</p>
+            <p class="proc__p">Specialists assess urgency, complexity and treatment options - decisions backed by expertise, not guesswork.</p>
           </div>
           <div class="proc__col proc__col--right">
             <span class="proc__num">04</span>
@@ -742,7 +742,7 @@
           <div class="proc__col proc__col--right">
             <span class="proc__num">06</span>
             <h3 class="proc__h">International payment handled</h3>
-            <p class="proc__p">The hospital is paid directly, documented and compliant with global financial regulations &mdash; no crew member out of pocket.</p>
+            <p class="proc__p">The hospital is paid directly, documented and compliant with global financial regulations - no crew member out of pocket.</p>
           </div>
         </div>
         <div class="proc__slide" data-proc-slide="3" aria-hidden="true">
@@ -765,7 +765,7 @@
     </div>
   </section>
 
-  <!-- Road ahead â€” HIDDEN.
+  <!-- Road ahead - HIDDEN.
        Kept in the markup rather than deleted so the copy is not lost, but
        `hidden` keeps it out of the layout AND out of the accessibility tree.
        Delete this wrapper comment and the hidden attribute to restore it. -->
@@ -851,7 +851,7 @@
 </main>
 
 <footer class="site-footer">
-  <div class="site-footer__deep-probe" aria-hidden="true"></div>
+  <div class="site-footer__deep-probe" data-bar-ink="light" aria-hidden="true"></div>
   <div class="shell">
     <div class="site-footer__main">
       <div class="site-footer__top">
@@ -909,10 +909,14 @@
      window.__medshieldScroll to freeze the page behind the overlay menu.
      Shared with the homepage so both have the identical scroll feel. -->
 <script src="js/smooth-scroll.js" defer></script>
+<!-- Shared header-ink probe. Must execute BEFORE the bar script below,
+     which repaints the ink from inside its own scroll pass; both are defer,
+     so document order is execution order. -->
+<script src="js/bar-ink.js" defer></script>
 <script src="js/nav.js" defer></script>
 
 <!-- Services hero motion. GSAP + ScrollTrigger are the same self-hosted
-     vendor copies the homepage uses â€” no CDN, no build step. Both are
+     vendor copies the homepage uses - no CDN, no build step. Both are
      `defer`, so they run in document order ahead of services-hero.js, which
      guards on window.gsap and bails out cleanly (leaving the hero fully
      visible) if either failed to load. -->

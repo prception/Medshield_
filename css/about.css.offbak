@@ -1,0 +1,2334 @@
+/* ==========================================================================
+   ABOUT — editorial layout system
+   ==========================================================================
+   Loaded AFTER style.css and inner.css, so the whole token vocabulary
+   (colour, type scale, spacing, .shell, .btn, .eyebrow) is already in scope.
+   Nothing here redeclares a token and nothing here introduces a colour: the
+   reference this is drawn from is a dark/orange poster, and only its LAYOUT
+   and TYPOGRAPHIC SCALE are borrowed. Brand blue and teal stay as they are.
+
+   Four devices, each used twice so the page reads as a rhythm rather than
+   ten bespoke sections:
+
+     .ab-split   — oversized split wordmark + tight body column   (01, 02, 05)
+     .ab-mosaic  — asymmetric bordered stat grid, corner-indexed  (03, 04)
+     .ab-wall    — strict bordered cell wall, merged centre cell  (06, 07)
+     .ab-figure  — giant numeral + ranked hairline list           (08, 09)
+
+   The hairline grids are built with a single-direction border (right+bottom
+   on every cell, and one ring on the container) so adjacent cells never
+   double up into a 2px rule. That is the whole trick; there is no gap
+   anywhere in .ab-mosaic or .ab-wall, by design — the cells touch.
+   ========================================================================== */
+
+/* --- Section scaffolding -------------------------------------------------- */
+
+.ab-section {
+  padding-block: var(--s-9);
+  border-bottom: 1px solid var(--border);
+}
+.ab-section:last-of-type { border-bottom: none; }
+.ab-section--sunken { background: var(--surface-sunken); }
+.ab-section--deep {
+  background: var(--surface-deep);
+  color: var(--text-on-deep);
+  border-bottom: none;
+}
+.ab-section--deep .eyebrow { color: var(--accent-2-on-deep); }
+
+/* The tiny corner index (01, 02, 03...) that appears on every device. In the
+   reference it sits hard into the top-right of a cell; here it is a shared
+   class so the numbering reads continuously down the page. */
+.ab-idx {
+  font-family: var(--font-editorial);
+  font-size: var(--t-micro);
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+.ab-section--deep .ab-idx { color: var(--text-on-deep-muted); }
+
+
+/* ==========================================================================
+   DEVICE 1 — .ab-split
+   Oversized wordmark broken across lines, with one letter overlapping into
+   the line below, and a tight body column set beside it. The reference's
+   "ABO / UT US" with the U straddling both lines.
+   ========================================================================== */
+
+.ab-split {
+  display: grid;
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
+  gap: var(--s-8);
+  align-items: start;
+}
+
+/* --- the wordmark --------------------------------------------------------- */
+
+.ab-split__mark {
+  font-family: var(--font-editorial);
+  font-weight: 800;
+  /* Deliberately larger than --t-hero: this is the poster figure, not a
+     heading, and the device only works at a scale that crowds its own box. */
+  font-size: clamp(3.6rem, 1.1rem + 11vw, 11rem);
+  line-height: 0.82;
+  letter-spacing: -0.035em;
+  text-transform: uppercase;
+  color: var(--text-primary);
+  margin: 0;
+}
+.ab-section--deep .ab-split__mark { color: var(--text-on-deep); }
+
+/* Each line of the wordmark is its own row so the overlap letter can be
+   pulled up into the row above without disturbing flow. */
+.ab-split__line {
+  display: block;
+  position: relative;
+}
+/* The straddling letter. Pulled up by just under a line so it reads as
+   belonging to both rows at once — the reference's single most recognisable
+   move. Indented to sit under the tail of the line above. */
+.ab-split__lap {
+  display: inline-block;
+  margin-top: -0.30em;
+  margin-left: 0.06em;
+  color: var(--accent);
+}
+.ab-section--deep .ab-split__lap { color: var(--accent-ink-on-deep); }
+
+/* Second line of the pair, nudged right so the pair sits as a stepped block
+   rather than a flush-left stack. */
+.ab-split__line--step { padding-left: 0.34em; }
+
+
+/* --- The ABOUT US lockup ---------------------------------------------------
+   The reference's hero mark is not a two-line stack with a lapped letter —
+   it is a composed LOCKUP of four pieces:
+
+       ABO   large, top-left, setting the cap line and the left edge
+       U     a single OVERSIZED glyph immediately right of ABO, rising to
+             ABO's cap and dropping well past the second line's baseline —
+             it is what visually ties the two rows together
+       T     normal size, sitting on ABO's baseline to the right of the U
+       US    second row, indented so it starts under ABO's O
+
+   Grid cannot express this: the U must OVERLAP its neighbours rather than
+   reserve a column, and the T must sit beside a glyph twice its size. So the
+   block is a positioning context and each piece is placed in em units off
+   the block's own font-size — the whole assembly then scales with the
+   clamp() and needs no per-breakpoint numbers.
+
+   Height is reserved by the in-flow ABO/US rows, and the right-hand padding
+   reserves the width the overhanging U and T occupy, so the absolutely
+   placed pieces never collapse the block or bleed into the body column.
+*/
+
+.ab-lockup {
+  position: relative;
+  display: block;
+  line-height: 0.78;
+  /* Reserves the width the absolutely-placed U and T paint into (the T ends
+     at ~4.16em, the in-flow rows at ~2.71em), so neither ever bleeds into
+     the body column beside the lockup. */
+  padding-right: 1.55em;
+}
+.ab-lockup__abo,
+.ab-lockup__us { display: block; }
+
+/* US — second row. Indented to start beneath the oversized U rather than
+   under ABO, which is where the reference sets it: the U's bowl and the US
+   row share the same left edge, so the two rows lock together.
+
+   All offsets in this block are measured from the glyphs' PAINTED extents
+   (a Range over each text node), not from element boxes — an inline box is
+   narrower than the ink it carries at this weight and tracking, and using
+   the box measurement is what buried the U inside ABO's O. Measured at the
+   clamp ceiling: ABO paints 0 to 2.196em. */
+.ab-lockup__us { padding-left: 2.24em; }
+
+/* The oversized U. Top-aligned with ABO's cap line, immediately right of it,
+   and scaled past the parent so it spans both rows as one continuous letter. */
+.ab-lockup__u {
+  position: absolute;
+  /* CAUTION: left/top here resolve against this element's OWN font-size
+     (1.62em), not the lockup's. To sit at 2.24 lockup-em the value must be
+     2.24 / 1.62 = 1.383em. Forgetting that conversion is what made the U
+     drift out of position. */
+  left: 1.383em;
+  top: -0.034em;
+  font-size: 1.62em;
+  line-height: 0.78;
+  color: var(--accent);
+}
+
+/* T — normal size, on ABO's baseline, placed clear of the U's RIGHT edge.
+   The U paints 2.24em to 3.47em, so the T starts just past that. */
+.ab-lockup__t {
+  position: absolute;
+  left: 3.52em;
+  top: 0;
+}
+
+.ab-lockup__accent { color: var(--accent); }
+.ab-section--deep .ab-lockup__u,
+.ab-section--deep .ab-lockup__accent { color: var(--accent-ink-on-deep); }
+
+
+/* --- the body column ------------------------------------------------------ */
+
+.ab-split__body {
+  display: grid;
+  gap: var(--s-5);
+  /* Sits low against the wordmark, as the reference's paragraph does — it
+     starts around the wordmark's midline, not at its cap height. */
+  padding-top: var(--s-6);
+}
+
+/* Tight, dense, small — the counterweight to the display type. The reference
+   sets this text noticeably smaller than its own body copy. */
+.ab-split__copy {
+  font-size: var(--t-small);
+  line-height: 1.65;
+  color: var(--text-secondary);
+  max-width: 46ch;
+  margin: 0;
+}
+.ab-section--deep .ab-split__copy { color: var(--text-on-deep-secondary); }
+
+.ab-split__media {
+  margin: 0;
+  border: 1px solid var(--border);
+  overflow: hidden;
+  background: var(--surface-sunken);
+}
+.ab-section--deep .ab-split__media { border-color: var(--border-on-deep); background: var(--surface-deep-alt); }
+.ab-split__media img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  aspect-ratio: 4 / 3;
+}
+
+/* Thin outlined button, exactly the reference's "READ MORE": a hairline box,
+   letterspaced micro caps, no fill until hover. */
+.ab-split__more {
+  justify-self: start;
+  display: inline-block;
+  padding: var(--s-3) var(--s-6);
+  border: 1px solid var(--border-strong);
+  font-family: var(--font-editorial);
+  font-size: var(--t-micro);
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  text-decoration: none;
+  color: var(--text-primary);
+  background: transparent;
+  transition: background-color 220ms ease, color 220ms ease, border-color 220ms ease;
+}
+.ab-split__more:hover,
+.ab-split__more:focus-visible {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+.ab-section--deep .ab-split__more { border-color: var(--hairline-on-deep-hi); color: var(--text-on-deep); }
+.ab-section--deep .ab-split__more:hover,
+.ab-section--deep .ab-split__more:focus-visible {
+  background: var(--accent-2-on-deep);
+  border-color: var(--accent-2-on-deep);
+  color: var(--surface-deep);
+}
+
+/* Paired variant (02 Vision & Mission): two body columns under one mark. */
+.ab-split--pair .ab-split__body {
+  grid-template-columns: 1fr 1fr;
+  gap: var(--s-6);
+  align-items: start;
+}
+.ab-split__stack > * + * { margin-top: var(--s-4); }
+.ab-split__sublabel {
+  font-family: var(--font-editorial);
+  font-size: var(--t-eyebrow);
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--accent-2-ink);
+  margin: 0;
+}
+.ab-section--deep .ab-split__sublabel { color: var(--accent-2-on-deep); }
+
+/* Mirrored variant (05 Founders): media and copy left, wordmark right. */
+.ab-split--mirror { grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr); }
+.ab-split--mirror .ab-split__mark { order: 2; }
+.ab-split--mirror .ab-split__body { order: 1; }
+
+/* Founder wordmarks carry a name, not a word — they need a smaller ceiling
+   or a long surname blows the column out. */
+.ab-split--name .ab-split__mark {
+  font-size: clamp(2.6rem, 0.9rem + 7.2vw, 6.4rem);
+  line-height: 0.88;
+}
+.ab-split__role {
+  font-family: var(--font-editorial);
+  font-size: var(--t-label);
+  font-weight: 600;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  color: var(--accent-2-ink);
+  margin: var(--s-4) 0 0;
+}
+.ab-section--deep .ab-split__role { color: var(--accent-2-on-deep); }
+
+
+/* ==========================================================================
+   DEVICE 2 — .ab-mosaic
+   Asymmetric bordered grid. Cells are placed by hand on a 4-column bed;
+   some cells are deliberately EMPTY and one is inverted. The empties are
+   the device — a full grid reads as a dashboard, not a poster.
+   ========================================================================== */
+
+.ab-mosaic {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  grid-auto-rows: minmax(11.5rem, auto);
+  border-top: 1px solid var(--border);
+  border-left: 1px solid var(--border);
+}
+.ab-section--deep .ab-mosaic { border-color: var(--border-on-deep); }
+
+.ab-cell {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: var(--s-2);
+  padding: var(--s-5);
+  border-right: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  min-width: 0;
+}
+.ab-section--deep .ab-cell { border-color: var(--border-on-deep); }
+
+.ab-cell .ab-idx {
+  position: absolute;
+  top: var(--s-4);
+  right: var(--s-4);
+}
+
+.ab-cell__label {
+  font-size: var(--t-micro);
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+  margin: 0;
+}
+.ab-section--deep .ab-cell__label { color: var(--text-on-deep-muted); }
+
+/* The stat numeral. Fraunces is reserved for homepage proof figures, so these
+   stay in the editorial grotesque — matching the reference, whose figures are
+   set in the same family as its display type. */
+.ab-cell__figure {
+  font-family: var(--font-editorial);
+  font-weight: 700;
+  font-size: clamp(2.4rem, 1.2rem + 3.6vw, 4.6rem);
+  line-height: 0.9;
+  letter-spacing: -0.02em;
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+  margin: 0;
+}
+.ab-section--deep .ab-cell__figure { color: var(--text-on-deep); }
+
+.ab-cell__title {
+  font-family: var(--font-editorial);
+  font-size: var(--t-h3);
+  font-weight: 700;
+  line-height: 1.2;
+  color: var(--text-primary);
+  margin: 0;
+}
+.ab-section--deep .ab-cell__title { color: var(--text-on-deep); }
+
+.ab-cell__body {
+  font-size: var(--t-small);
+  line-height: 1.6;
+  color: var(--text-secondary);
+  margin: 0;
+}
+.ab-section--deep .ab-cell__body { color: var(--text-on-deep-secondary); }
+
+/* The one inverted cell — the reference's cream box among the dark ones.
+   Here it inverts the other way: deep navy among the light cells. */
+.ab-cell--invert {
+  background: var(--surface-deep);
+  border-color: var(--surface-deep);
+}
+.ab-cell--invert .ab-cell__figure,
+.ab-cell--invert .ab-cell__title { color: var(--text-on-deep); }
+.ab-cell--invert .ab-cell__label,
+.ab-cell--invert .ab-idx { color: var(--text-on-deep-muted); }
+.ab-cell--invert .ab-cell__body { color: var(--text-on-deep-secondary); }
+
+/* Empty structural cells. Present so the grid keeps its rules, carrying no
+   content — this is what makes the block read as composed rather than filled. */
+.ab-cell--void { background: transparent; }
+
+/* Hand-placed spans. Named by intent, not by coordinate, so the composition
+   can be re-tuned without touching the markup. */
+.ab-cell--wide { grid-column: span 2; }
+.ab-cell--tall { grid-row: span 2; }
+/* --lead keeps its content as one bottom-anchored pair rather than pushing
+   the label to the top edge: at 2x2 a space-between leaves a dead field in
+   the middle, which reads as a mistake rather than as composed space. The
+   emptiness in this device is supposed to live in the --void cells. */
+.ab-cell--lead { grid-column: span 2; grid-row: span 2; }
+
+/* Layer variant (04): the two statement cells are placed EXPLICITLY on a
+   4x4 bed so Layer 02 sits visibly ABOVE and to the RIGHT of Layer 01 —
+   the composition is the argument. The voids fill the remaining slots, so
+   the block still resolves to a clean rectangle rather than a staircase;
+   auto-flowed voids gave a ragged silhouette that read as a bug. */
+.ab-mosaic--layers { grid-auto-rows: minmax(9rem, auto); }
+.ab-mosaic--layers .ab-cell__body { max-width: 52ch; }
+.ab-mosaic--layers .ab-cell--upper { grid-column: 3 / 5; grid-row: 1 / 3; }
+.ab-mosaic--layers .ab-cell--lower { grid-column: 1 / 3; grid-row: 3 / 5; }
+.ab-mosaic--layers .ab-cell--void-a { grid-column: 1 / 3; grid-row: 1 / 3; }
+.ab-mosaic--layers .ab-cell--void-b { grid-column: 3 / 5; grid-row: 3 / 5; }
+
+@media (max-width: 860px) {
+  /* Explicit placement released with the voids on the narrow bed. */
+  .ab-mosaic--layers .ab-cell--upper,
+  .ab-mosaic--layers .ab-cell--lower { grid-column: 1 / -1; grid-row: auto; }
+}
+
+
+/* ==========================================================================
+   DEVICE 3 — .ab-wall
+   Strict grid of equal bordered cells with one merged centre cell carrying a
+   two-line statement, one word accented. The reference's brand wall.
+   ========================================================================== */
+
+.ab-wall {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  grid-auto-rows: minmax(8.5rem, auto);
+  border-top: 1px solid var(--border);
+  border-left: 1px solid var(--border);
+}
+.ab-section--deep .ab-wall { border-color: var(--border-on-deep); }
+
+.ab-tile {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: var(--s-2);
+  padding: var(--s-4);
+  border-right: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  text-align: center;
+  min-width: 0;
+  transition: background-color 260ms ease;
+}
+.ab-section--deep .ab-tile { border-color: var(--border-on-deep); }
+.ab-tile:hover { background: var(--surface-raised); }
+.ab-section--deep .ab-tile:hover { background: var(--surface-deep-hi); }
+
+.ab-tile__name {
+  font-family: var(--font-editorial);
+  font-size: var(--t-label);
+  font-weight: 700;
+  line-height: 1.25;
+  letter-spacing: 0.01em;
+  color: var(--text-primary);
+  margin: 0;
+}
+.ab-section--deep .ab-tile__name { color: var(--text-on-deep); }
+
+.ab-tile__meta {
+  font-size: var(--t-micro);
+  line-height: 1.45;
+  color: var(--text-muted);
+  margin: 0;
+}
+.ab-section--deep .ab-tile__meta { color: var(--text-on-deep-muted); }
+
+/* Panel tiles carry a bio that is present for search and screen readers but
+   only revealed on hover/focus — keeping the wall dense, as the device needs.
+   grid-template-rows 0fr -> 1fr animates a natural height with no fixed value. */
+.ab-tile--bio { text-align: left; justify-content: flex-start; }
+.ab-tile__bio {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 320ms ease, opacity 320ms ease;
+  opacity: 0;
+}
+.ab-tile__bio > span { overflow: hidden; }
+.ab-tile--bio:hover .ab-tile__bio,
+.ab-tile--bio:focus-within .ab-tile__bio {
+  grid-template-rows: 1fr;
+  opacity: 1;
+}
+.ab-tile--bio .ab-tile__bio span span {
+  display: block;
+  padding-top: var(--s-3);
+  font-size: var(--t-micro);
+  line-height: 1.55;
+  color: var(--text-secondary);
+}
+.ab-section--deep .ab-tile--bio .ab-tile__bio span span { color: var(--text-on-deep-secondary); }
+
+@media (prefers-reduced-motion: reduce) {
+  .ab-tile__bio { transition: none; }
+}
+
+/* The merged statement cell. Placed EXPLICITLY rather than left to auto-flow:
+   on a 6-column bed with 3 rows there are 18 slots, the statement eats 8
+   (cols 2-5, rows 2-3) and exactly 10 tiles fill the rest. Auto-flow would
+   drop the statement wherever it first fit and leave a ragged tail row, which
+   is the one thing this device cannot have — the reference's wall is a closed
+   rectangle. Column and row counts here, the tile count in the markup, and
+   the fallbacks in the media queries all move together. */
+.ab-tile--statement {
+  grid-column: 2 / 6;
+  grid-row: 2 / 4;
+  justify-content: center;
+  gap: 0;
+  background: var(--surface-deep);
+  border-color: var(--surface-deep);
+}
+.ab-tile--statement:hover { background: var(--surface-deep); }
+.ab-wall__statement {
+  font-family: var(--font-editorial);
+  font-weight: 800;
+  font-size: clamp(1.5rem, 0.6rem + 2.8vw, 3.1rem);
+  line-height: 1.02;
+  letter-spacing: -0.015em;
+  text-transform: uppercase;
+  color: var(--text-on-deep);
+  margin: 0;
+}
+.ab-wall__statement em {
+  font-style: normal;
+  color: var(--accent-2-on-deep);
+}
+
+
+/* ==========================================================================
+   DEVICE 4 — .ab-figure
+   A display numeral at poster scale on the left; heading and a ranked
+   hairline list on the right.
+   ========================================================================== */
+
+.ab-figure {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: var(--s-8);
+  align-items: center;
+}
+
+.ab-figure__numeral {
+  font-family: var(--font-editorial);
+  font-weight: 800;
+  /* The whole point of the device: absurd scale. The reference's figure is
+     three glyphs wide; ours are single digits, so the same vw ramp renders
+     visually far smaller against the same column. The ceiling is raised to
+     compensate, and the column is the real constraint anyway. */
+  font-size: clamp(7rem, 2rem + 26vw, 26rem);
+  line-height: 0.78;
+  letter-spacing: -0.05em;
+  color: var(--accent);
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+}
+.ab-section--deep .ab-figure__numeral { color: var(--accent-2-on-deep); }
+.ab-figure__numeral sup {
+  font-size: 0.42em;
+  vertical-align: 0.55em;
+  letter-spacing: -0.02em;
+  color: var(--text-primary);
+}
+.ab-section--deep .ab-figure__numeral sup { color: var(--text-on-deep); }
+
+.ab-figure__title {
+  font-family: var(--font-editorial);
+  font-weight: 800;
+  font-size: clamp(1.5rem, 0.7rem + 2.4vw, 2.7rem);
+  line-height: 1.05;
+  letter-spacing: -0.015em;
+  text-transform: uppercase;
+  color: var(--text-primary);
+  margin: 0 0 var(--s-5);
+}
+.ab-section--deep .ab-figure__title { color: var(--text-on-deep); }
+.ab-figure__title em { font-style: normal; color: var(--accent-2-ink); }
+.ab-section--deep .ab-figure__title em { color: var(--accent-2-on-deep); }
+
+.ab-rank {
+  list-style: none;
+  /* The list sits directly under a display heading and its own border-top
+     doubles as the first rule, so it needs its own breathing room - without
+     this the heading's descenders touch the first row. */
+  margin: var(--s-6) 0 0;
+  padding: 0;
+  border-top: 1px solid var(--border);
+}
+.ab-section--deep .ab-rank { border-color: var(--border-on-deep); }
+.ab-rank__row {
+  display: grid;
+  /* Wide enough for the longest key on the page ("Hospitals"); at 3.5rem
+     it collided with the value beside it. */
+  grid-template-columns: 5.5rem minmax(0, 1fr);
+  gap: var(--s-4);
+  align-items: baseline;
+  padding-block: var(--s-3);
+  border-bottom: 1px solid var(--border);
+}
+.ab-section--deep .ab-rank__row { border-color: var(--border-on-deep); }
+.ab-rank__key {
+  font-family: var(--font-editorial);
+  font-size: var(--t-small);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+.ab-section--deep .ab-rank__key { color: var(--text-on-deep-muted); }
+.ab-rank__val {
+  font-size: var(--t-body);
+  line-height: 1.45;
+  color: var(--text-primary);
+}
+.ab-section--deep .ab-rank__val { color: var(--text-on-deep); }
+.ab-rank__val small {
+  display: block;
+  font-size: var(--t-micro);
+  line-height: 1.5;
+  color: var(--text-secondary);
+  margin-top: var(--s-1);
+}
+.ab-section--deep .ab-rank__val small { color: var(--text-on-deep-secondary); }
+.ab-rank__val a { color: inherit; }
+
+
+/* ==========================================================================
+   ARRIVING TEXT — scroll reveal
+   ==========================================================================
+   Two mechanisms, both driven by js/about-reveal.js adding .is-in:
+
+     [data-ab-reveal]  — a block rises and fades in. --ab-d staggers siblings.
+     [data-ab-lines]   — a display heading whose lines are split into masked
+                         rows by the script, each row sliding up from behind
+                         its own clip. This is the "arriving text" proper.
+
+   Everything below is authored so the NO-JS and REDUCED-MOTION states are the
+   finished state, never the hidden one: the hidden styles are applied only
+   under .ab-anim, a class the script adds to <html> at parse time and only
+   when motion is allowed. If the script never runs, nothing is ever hidden.
+   ========================================================================== */
+
+.ab-anim [data-ab-reveal] {
+  opacity: 0;
+  transform: translateY(1.6rem);
+}
+.ab-anim [data-ab-reveal].is-in {
+  opacity: 1;
+  transform: none;
+  transition:
+    opacity 760ms cubic-bezier(0.22, 0.61, 0.36, 1) var(--ab-d, 0ms),
+    transform 900ms cubic-bezier(0.22, 0.61, 0.36, 1) var(--ab-d, 0ms);
+}
+
+/* Line-masked headings. The script wraps each visual line in
+   .ab-line > .ab-line__i; the mask is the outer element's overflow. */
+.ab-line {
+  display: block;
+  overflow: hidden;
+  /* A descender ('g', 'y') would otherwise be clipped by the mask, since the
+     line box stops at the baseline. Padding restores it and the equal
+     negative margin keeps the leading unchanged. */
+  padding-bottom: 0.14em;
+  margin-bottom: -0.14em;
+}
+.ab-line__i {
+  display: block;
+  will-change: transform;
+}
+.ab-anim .ab-line__i {
+  transform: translateY(105%);
+}
+.ab-anim .is-in .ab-line__i {
+  transform: none;
+  transition: transform 900ms cubic-bezier(0.22, 0.61, 0.36, 1);
+  transition-delay: calc(var(--ab-i, 0) * 90ms + var(--ab-d, 0ms));
+}
+
+/* Counting figures hold their box while the digits change, so a mosaic cell
+   never reflows mid-count. */
+.ab-cell__figure[data-ab-count] { font-variant-numeric: tabular-nums; }
+
+@media (prefers-reduced-motion: reduce) {
+  .ab-anim [data-ab-reveal],
+  .ab-anim [data-ab-reveal].is-in,
+  .ab-anim .ab-line__i {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+}
+
+
+/* ==========================================================================
+   RESPONSIVE
+   ==========================================================================
+   The devices degrade by losing their asymmetry, not their scale. The giant
+   numerals and wordmarks stay oversized on a phone — that IS the design; a
+   politely-shrunk version of this page is just a normal about page.
+   ========================================================================== */
+
+@media (max-width: 1024px) {
+  .ab-wall { grid-template-columns: repeat(4, 1fr); }
+  /* The explicit 6-column placement above must be released here, or the
+     statement would still try to sit in columns 2-5 of a 4-column bed. */
+  .ab-tile--statement { grid-column: 1 / -1; grid-row: auto; }
+}
+
+@media (max-width: 860px) {
+  .ab-split,
+  .ab-split--mirror,
+  .ab-figure {
+    grid-template-columns: 1fr;
+    gap: var(--s-6);
+  }
+  .ab-split--mirror .ab-split__mark,
+  .ab-split--mirror .ab-split__body { order: 0; }
+  .ab-split__body { padding-top: 0; }
+  .ab-split--pair .ab-split__body { grid-template-columns: 1fr; }
+
+  .ab-mosaic { grid-template-columns: repeat(2, 1fr); }
+  .ab-cell--lead,
+  .ab-cell--wide { grid-column: span 2; }
+  .ab-cell--tall { grid-row: span 1; }
+  /* The structural voids earn their keep only on a wide bed; on two columns
+     they are just empty boxes, so they go. */
+  .ab-cell--void { display: none; }
+
+  .ab-figure__numeral { font-size: clamp(5rem, 2rem + 26vw, 12rem); }
+}
+
+@media (max-width: 560px) {
+  .ab-wall { grid-template-columns: repeat(2, 1fr); }
+  .ab-tile--statement { grid-column: 1 / -1; grid-row: auto; }
+  .ab-mosaic { grid-template-columns: 1fr; }
+  .ab-cell--lead,
+  .ab-cell--wide { grid-column: span 1; }
+  .ab-rank__row { grid-template-columns: 2.75rem minmax(0, 1fr); gap: var(--s-3); }
+}
+
+/* ==========================================================================
+   WHITE-DESERT SECTION SYSTEM
+   ==========================================================================
+   Ported from the devices used on white-desert.com/about/founders, verified
+   against their shipped CSS chunks rather than guessed at:
+
+     hero       .about-banner      height:100svh, full-bleed cover image and a
+                                   dim scrim, small label over a large title
+     reveal     [data-reveal]      1.4s reveal-opacity + 1.4s
+                                   cubic-bezier(.16,1,.3,1) reveal-transform.
+                                   They translate 20rem; trimmed to 4rem here
+                                   because 20rem is tuned for their 100svh
+                                   panels and overshoots a normal section.
+     scrub      .about-scrub       400svh rail over a 100svh sticky stage
+     split      .split-img_col     aspect-ratio 1/1.01 media beside copy
+
+   Everything below is additive: it introduces .wd-* classes and does not
+   touch the existing .ab-* rules, so any section left unconverted still
+   renders exactly as before.
+   ========================================================================== */
+
+/* --- the reveal primitive, theirs ---------------------------------------
+   Gated behind html.ab-anim like the rest of this file, so a JS failure or
+   reduce-motion leaves the final state painted. See js/about-reveal.js. */
+
+@keyframes wd-reveal-opacity { 0% { opacity: 0; } to { opacity: 1; } }
+@keyframes wd-reveal-transform {
+  0% { transform: translateY(4rem); }
+  to { transform: translateY(0); }
+}
+
+.ab-anim [data-wd-reveal] { opacity: 0; }
+
+.ab-anim [data-wd-reveal].is-in {
+  animation: 1.4s both wd-reveal-opacity,
+             1.4s cubic-bezier(.16, 1, .3, 1) both wd-reveal-transform;
+  animation-delay: var(--ab-d, 0ms);
+}
+
+/* Their opacity-only variant, for elements that must not move. */
+.ab-anim [data-wd-reveal="opacity"].is-in {
+  animation: 1.4s both wd-reveal-opacity;
+  animation-delay: var(--ab-d, 0ms);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ab-anim [data-wd-reveal] { opacity: 1; animation: none !important; }
+}
+
+/* --- 01 hero -------------------------------------------------------------
+   .about-banner verbatim: a 100svh stage, the image absolutely filling it
+   beneath a dim layer, content on top. Full-bleed by sitting outside .shell,
+   with an inner .shell restoring the measure for the type. */
+
+/* The hero sits at the BOTTOM of the stack. Every following .ab-section is
+   position:relative with a higher z-index, so as the page scrolls they ride
+   up OVER the hero rather than pushing it off — that, plus the scrubbed
+   layers in js/hero-parallax.js, is the whole glide effect. The reference
+   does exactly this: their `section{position:relative}` over a z-index:0
+   banner. `isolation` is deliberately NOT set: it would create a stacking
+   context and trap the hero above later sections. */
+.wd-hero {
+  position: relative;
+  z-index: 0;
+  height: 100svh;
+  min-height: 34rem;
+  width: 100%;
+  color: var(--text-on-deep);
+  overflow: clip;
+}
+
+/* Anything after the hero must paint above it. */
+.wd-hero ~ * {
+  position: relative;
+  z-index: 1;
+}
+
+/* Their .about-banner_fade: black, full-bleed, driven 0 -> 0.8 on scroll. */
+.wd-hero__fade {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  background: #000;
+  opacity: 0;
+}
+
+/* The background is driven DOWN by up to 100svh, so the layer is given that
+   much headroom ABOVE the hero and twice the height. At rest (translate 0)
+   its lower half covers the hero exactly; as it descends, the half that was
+   parked overhead slides in, so a blank strip is never exposed. Without the
+   extra height this reads as the photograph sliding off its own scrim. */
+.wd-hero__bg {
+  position: absolute;
+  top: -100svh;
+  left: 0;
+  right: 0;
+  height: 200svh;
+  z-index: 0;
+  will-change: transform;
+}
+
+/* The dim and fade veils stay locked to the hero frame — only the photograph
+   moves. Re-stated here because .wd-hero__bg above no longer covers them. */
+.wd-hero__bg img { height: 100%; }
+
+.wd-hero__bg img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  display: block;
+  /* Their clouds layer is promoted so the slow drift never repaints the
+     photograph under it. Same trick, same reason. */
+  will-change: transform;
+  transform: translateZ(0) scale(1.06);
+  animation: wd-hero-drift 24s ease-out both;
+}
+
+@keyframes wd-hero-drift {
+  from { transform: translateZ(0) scale(1.14); }
+  to   { transform: translateZ(0) scale(1.06); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wd-hero__bg img { animation: none; transform: translateZ(0) scale(1.02); }
+}
+
+/* Their .dim is a flat rgba(0,0,0,.1), which is enough over Antarctic white.
+   Over a working port photograph it is not enough to hold white type, so
+   this is graded instead: heaviest at the foot, where the title sits. */
+.wd-hero__dim {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  /* Weighted to the middle now that the lockup is centred rather than sitting
+     at the foot: enough contrast to hold white type over a busy photograph,
+     while the corners stay open so the image still reads. */
+  background: linear-gradient(to bottom,
+    rgba(var(--rgb-deep), .34) 0%,
+    rgba(var(--rgb-deep), .50) 45%,
+    rgba(var(--rgb-deep), .40) 100%);
+}
+
+.wd-hero__content {
+  position: relative;
+  z-index: 3;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding-block: calc(5.25rem + var(--s-6)) var(--s-7);
+}
+
+/* Their .about-banner_h1: the display face, italic, at a modest size. It is
+   a label sitting above the title, not an eyebrow — hence no tracking and no
+   uppercase, which is what separates it from every other label on the page. */
+.wd-hero__label {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-weight: 400;
+  font-size: clamp(1.125rem, 0.9rem + 0.7vw, 1.75rem);
+  line-height: 1.1;
+  text-align: center;
+  color: var(--text-on-deep);
+  margin: 0 0 var(--s-4);
+}
+
+/* Their .hero-banner_title-basic, verbatim: uppercase, weight 500,
+   line-height 1, centred, capped at 90% so it never reaches the gutters. */
+.wd-hero__title {
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-size: clamp(2.75rem, 0.5rem + 10vw, 9rem);
+  line-height: 1;
+  letter-spacing: 0.01em;
+  text-transform: uppercase;
+  text-align: center;
+  max-width: 90%;
+  margin: 0 auto;
+}
+
+/* --- 02 split: media beside copy ----------------------------------------
+   .split-img_col is aspect-ratio 1/1.01, very nearly square, which is what
+   keeps their photographs from reading as banners. Kept exactly. */
+
+.wd-split {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: var(--s-8);
+  align-items: center;
+}
+
+.wd-split--mirror .wd-split__media { order: 2; }
+
+.wd-split__media {
+  position: relative;
+  z-index: 2;
+  aspect-ratio: 1 / 1.01;
+  overflow: clip;
+  border-radius: 2px;
+  margin: 0;
+  background: var(--surface-sunken);
+}
+
+.wd-split__media img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.wd-split__body > * + * { margin-top: var(--s-4); }
+
+/* Consecutive body paragraphs need their own beat: the rule above is a
+   flow-gap for the label/title/copy stack, and a bare `p + p` inherits a
+   zero margin from the base reset without this. */
+.wd-split__copy + .wd-split__copy { margin-top: var(--s-4); }
+
+.wd-split__label {
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: .175em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+.wd-split__title {
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: clamp(2rem, 1rem + 3vw, 3.5rem);
+  line-height: 1.04;
+  letter-spacing: -0.015em;
+  margin: 0;
+  max-width: 18ch;
+}
+
+.wd-split__title em {
+  font-family: var(--font-editorial);
+  font-style: italic;
+}
+
+.wd-split__copy {
+  margin: 0;
+  max-width: 52ch;
+  font-size: 1rem;
+  line-height: 1.7;
+  color: var(--text-secondary);
+}
+
+.wd-split__role {
+  margin: 0;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: .175em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+/* --- 03 scrub: sticky stage ---------------------------------------------
+   Their .about-scrub_component is a 400svh rail; the stage inside is sticky
+   at 100svh, so the cards hold still while the page scrolls past them. The
+   card ratio (16/11) and the 1rem gutter are theirs. */
+
+.wd-scrub { position: relative; z-index: 2; height: 400svh; }
+
+.wd-scrub__sticky {
+  position: sticky;
+  top: 0;
+  height: 100svh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: clip;
+}
+
+.wd-scrub__wrap {
+  display: flex;
+  gap: 1rem;
+  align-items: stretch;
+  justify-content: center;
+  width: 100%;
+}
+
+.wd-scrub__item {
+  position: relative;
+  aspect-ratio: 16 / 11;
+  width: 100%;
+  border-radius: 2px;
+  overflow: clip;
+}
+
+/* --- 04 card row ---------------------------------------------------------
+   Their "More about us" four-up: image, title, copy. */
+
+.wd-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+  gap: var(--s-5);
+}
+
+.wd-card > * + * { margin-top: var(--s-3); }
+
+.wd-card__media {
+  position: relative;
+  aspect-ratio: 1 / 1.01;
+  overflow: clip;
+  border-radius: 2px;
+  margin: 0;
+  background: var(--surface-sunken);
+}
+
+.wd-card__media img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform .8s cubic-bezier(.16, 1, .3, 1);
+}
+
+.wd-card:hover .wd-card__media img { transform: scale(1.04); }
+
+@media (prefers-reduced-motion: reduce) {
+  .wd-card__media img { transition: none; }
+  .wd-card:hover .wd-card__media img { transform: none; }
+}
+
+.wd-card__title {
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: 1.375rem;
+  line-height: 1.15;
+  margin: 0;
+}
+
+.wd-card__copy {
+  margin: 0;
+  font-size: 0.9375rem;
+  line-height: 1.6;
+  color: var(--text-secondary);
+}
+
+/* --- 05 hairline rule, their dashed-divider ----------------------------- */
+
+.wd-divider {
+  width: 100%;
+  height: 0.5px;
+  border: 0;
+  margin: 0;
+  background-image: repeating-linear-gradient(90deg,
+    rgba(44, 55, 75, .4) 0, rgba(44, 55, 75, .4) 2px,
+    transparent 2px, transparent 4px);
+}
+
+.ab-section--deep .wd-divider {
+  background-image: repeating-linear-gradient(90deg,
+    rgba(255, 255, 255, .4) 0, rgba(255, 255, 255, .4) 2px,
+    transparent 2px, transparent 4px);
+}
+
+/* --- responsive ---------------------------------------------------------- */
+
+@media (max-width: 900px) {
+  .wd-split,
+  .wd-split--mirror {
+    grid-template-columns: 1fr;
+    gap: var(--s-5);
+  }
+  .wd-split--mirror .wd-split__media { order: 0; }
+
+  /* The sticky rails are a desktop device. On a phone they spend four
+     screens of scroll on one idea, so they collapse to stacked blocks. */
+  .wd-scrub { height: auto; }
+  .wd-scrub__sticky { position: static; height: auto; padding-block: var(--s-7); }
+  .wd-scrub__wrap { flex-direction: column; }
+
+
+}
+
+@media (max-width: 560px) {
+  .wd-hero { height: auto; min-height: 30rem; }
+  .wd-hero__content { min-height: 30rem; }
+}
+
+/* ==========================================================================
+   WD INTRO — big title left, narrow copy column right
+   ==========================================================================
+   Their "How it all started" block. Verified against their bundle:
+
+     .section-title-lg   font:400 <big>/100% var(--font-display), uppercase
+     copy column         starts around the horizontal midpoint and is
+                         markedly narrower than the title block, dropped
+                         well below the heading's baseline
+   ========================================================================== */
+
+.wd-intro {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  column-gap: var(--s-7);
+  align-items: start;
+}
+
+.wd-intro__head { grid-column: 1; }
+
+.wd-intro__title {
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: clamp(2.5rem, 0.6rem + 6.2vw, 6rem);
+  line-height: 1;
+  letter-spacing: 0.005em;
+  text-transform: uppercase;
+  margin: 0;
+  max-width: 11ch;
+}
+
+/* The copy column: second grid column, narrower than its track, and dropped
+   below the title. The top offset is what creates their stepped composition. */
+.wd-intro__body {
+  grid-column: 2;
+  max-width: 34rem;
+  padding-top: clamp(var(--s-8), 19vw, 20rem);
+}
+
+.wd-intro__eyebrow {
+  font-family: var(--font-body);
+  font-size: 0.9375rem;
+  font-weight: 700;
+  letter-spacing: .02em;
+  text-transform: uppercase;
+  color: var(--text-primary);
+  margin: 0 0 var(--s-4);
+}
+
+.wd-intro__copy {
+  margin: 0;
+  font-size: 1rem;
+  line-height: 1.65;
+  color: var(--text-secondary);
+}
+
+.wd-intro__copy + .wd-intro__copy { margin-top: var(--s-4); }
+
+@media (max-width: 900px) {
+  .wd-intro { grid-template-columns: 1fr; row-gap: var(--s-6); }
+  .wd-intro__head,
+  .wd-intro__body { grid-column: 1; }
+  .wd-intro__body { padding-top: 0; max-width: none; }
+  .wd-intro__title { max-width: none; }
+}
+
+/* --- Lenis, required stylesheet -----------------------------------------
+   Shipped with the library; inlined here rather than pulled from the CDN as
+   a second request. Identical to the rules in the reference's own bundle. */
+
+html.lenis,
+html.lenis body { height: auto; }
+.lenis.lenis-smooth { scroll-behavior: auto !important; }
+.lenis.lenis-smooth [data-lenis-prevent] { overscroll-behavior: contain; }
+.lenis.lenis-stopped { overflow: clip; }
+.lenis.lenis-smooth iframe { pointer-events: none; }
+
+/* ==========================================================================
+   WD VM — vision / mission, sticky stage with swapping backgrounds
+   ==========================================================================
+   A 200svh rail with a 100svh sticky stage inside it. Scroll position picks
+   the active step: the labels stack top-left with the inactive one dimmed,
+   the copy swaps on the right, and the background photograph cross-fades
+   while easing out of a small zoom.
+
+   Same rail/sticky construction as .wd-scrub, which is the reference's
+   .about-scrub_component (400svh over a 100svh sticky stage). Two steps here
+   rather than four, so the rail is 200svh.
+
+   State lives in one attribute on the section, data-vm-step="0|1", set by
+   js/vm-steps.js. Everything below is a reaction to that, so with no JS the
+   first step is simply shown and the section still reads.
+   ========================================================================== */
+
+.wd-vm {
+  position: relative;
+  height: 200svh;
+  background: var(--surface-deep);
+  color: var(--text-on-deep);
+}
+
+.wd-vm__sticky {
+  position: sticky;
+  top: 0;
+  height: 100svh;
+  overflow: clip;
+  display: flex;
+  align-items: center;
+  isolation: isolate;
+}
+
+/* --- background layers -------------------------------------------------- */
+
+.wd-vm__bg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+}
+
+.wd-vm__layer {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transition: opacity 1s cubic-bezier(.16, 1, .3, 1);
+}
+
+.wd-vm__layer img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  /* The zoom: each layer sits slightly enlarged and eases back as it takes
+     over, so the picture settles rather than simply appearing. */
+  transform: scale(1.12);
+  transition: transform 2.4s cubic-bezier(.16, 1, .3, 1);
+  will-change: transform;
+}
+
+.wd-vm[data-vm-step="0"] .wd-vm__layer--0,
+.wd-vm[data-vm-step="1"] .wd-vm__layer--1 { opacity: 1; }
+
+.wd-vm[data-vm-step="0"] .wd-vm__layer--0 img,
+.wd-vm[data-vm-step="1"] .wd-vm__layer--1 img { transform: scale(1); }
+
+/* Deep scrim: the copy is small and must hold over a busy photograph. */
+.wd-vm__scrim {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background:
+    linear-gradient(to right,
+      rgba(var(--rgb-deep), .92) 0%,
+      rgba(var(--rgb-deep), .72) 55%,
+      rgba(var(--rgb-deep), .58) 100%);
+}
+
+/* --- content ------------------------------------------------------------ */
+
+/* The two columns are deliberately NOT aligned to each other: in the
+   reference the labels sit above the centre line and the copy hangs below
+   it, which is what stops the pair reading as a plain two-up. The hairline
+   between them runs the full stage height. */
+.wd-vm__inner {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: var(--s-8);
+  /* Both columns hang off the centre line rather than being centred on it:
+     the label stack ENDS on the line (so the active label rests on it) and
+     the copy BEGINS just under it. That is the alignment in the reference. */
+  align-items: end;
+}
+
+/* The divider is HORIZONTAL and runs the full width of the stage, sitting on
+   the vertical centre. The stack of labels rises above it and the active
+   label plus the copy sit on it, which is the alignment in the reference. */
+.wd-vm__inner::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(to right,
+    rgba(var(--rgb-on-deep), .24) 0%,
+    rgba(var(--rgb-on-deep), .24) 72%,
+    transparent 100%);
+  pointer-events: none;
+}
+
+/* The stacked labels. The inactive one stays on the page at low opacity,
+   exactly as in the reference shot — it is the device, not decoration. */
+.wd-vm__labels {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  margin: 0;
+  padding: 0 0 var(--s-3);
+  list-style: none;
+}
+
+.wd-vm__label {
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-size: clamp(2rem, 0.8rem + 4.4vw, 4.5rem);
+  line-height: 1.04;
+  letter-spacing: 0.01em;
+  text-transform: uppercase;
+  color: var(--text-on-deep);
+  opacity: 0.28;
+  transition: opacity .7s cubic-bezier(.16, 1, .3, 1);
+}
+
+.wd-vm[data-vm-step="0"] .wd-vm__label--0,
+.wd-vm[data-vm-step="1"] .wd-vm__label--1 { opacity: 1; }
+
+/* The copy panes are stacked in one cell so the swap is a cross-fade, not a
+   reflow — the grid cell keeps the height of the tallest pane. The column is
+   dropped below the centre line and sized from the top so its height never
+   pushes the line off centre. */
+.wd-vm__panes {
+  display: grid;
+  /* Anchored to the line itself rather than to the grid row, so the copy
+     always starts just under it whatever height the pane takes. */
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  right: 0;
+  padding-top: var(--s-5);
+}
+
+.wd-vm__pane {
+  grid-area: 1 / 1;
+  max-width: 34rem;
+  opacity: 0;
+  transform: translateY(1.25rem);
+  transition: opacity .7s cubic-bezier(.16, 1, .3, 1),
+              transform .7s cubic-bezier(.16, 1, .3, 1);
+  pointer-events: none;
+}
+
+.wd-vm[data-vm-step="0"] .wd-vm__pane--0,
+.wd-vm[data-vm-step="1"] .wd-vm__pane--1 {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+.wd-vm__eyebrow {
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: .175em;
+  text-transform: uppercase;
+  color: var(--text-on-deep-muted);
+  margin: 0 0 var(--s-3);
+}
+
+.wd-vm__copy {
+  margin: 0;
+  font-size: 1.0625rem;
+  line-height: 1.7;
+  color: var(--text-on-deep-secondary);
+}
+
+/* Step dots, bottom centre, as in the reference shot. */
+.wd-vm__dots {
+  position: absolute;
+  z-index: 2;
+  left: 50%;
+  bottom: var(--s-6);
+  transform: translateX(-50%);
+  display: flex;
+  gap: var(--s-2);
+}
+
+.wd-vm__dot {
+  width: 0.4rem;
+  height: 0.4rem;
+  border-radius: 50%;
+  background: rgba(var(--rgb-on-deep), .3);
+  transition: background .5s ease;
+}
+
+.wd-vm[data-vm-step="0"] .wd-vm__dot--0,
+.wd-vm[data-vm-step="1"] .wd-vm__dot--1 { background: var(--text-on-deep); }
+
+@media (max-width: 900px) {
+  /* The rail is a desktop device; on a phone it spends two screens of scroll
+     on two paragraphs. Collapse to a normal stacked block, both steps shown. */
+  .wd-vm { height: auto; }
+  .wd-vm__sticky { position: static; height: auto; padding-block: var(--s-8); }
+  .wd-vm__inner { grid-template-columns: 1fr; gap: var(--s-5); }
+  /* The hairline and the stagger are the two-column device; both go with it. */
+  .wd-vm__inner::before { display: none; }
+  .wd-vm__labels { padding-bottom: 0; }
+  .wd-vm__panes {
+    display: block;
+    position: static;
+    padding-top: 0;
+  }
+  .wd-vm__pane {
+    position: static;
+    opacity: 1;
+    transform: none;
+    pointer-events: auto;
+    max-width: none;
+  }
+  .wd-vm__pane + .wd-vm__pane { margin-top: var(--s-6); }
+  .wd-vm__label { opacity: 1; }
+  .wd-vm__dots { display: none; }
+  /* Only the first photograph is used on the collapsed layout. */
+  .wd-vm__layer--0 { opacity: 1; }
+  .wd-vm__layer--0 img { transform: scale(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wd-vm__layer,
+  .wd-vm__layer img,
+  .wd-vm__label,
+  .wd-vm__pane { transition: none; }
+  .wd-vm__layer img { transform: scale(1); }
+}
+
+/* ==========================================================================
+   WD NUMS — statement + oversized figure stack
+   ==========================================================================
+   The reference layout: a large statement heading top-left with an image
+   top-right, then a narrow paragraph bottom-left, oversized left-aligned
+   numerals running down the centre, and small labels to their right.
+
+   Two rows on a 12-column bed:
+
+     row 1   heading (cols 1-7)          image (cols 9-12)
+     row 2   paragraph (cols 1-3)   figures (5-9)   labels (10-12)
+
+   The figures are the whole point of the composition, so they are set far
+   larger than anything else on the page and left-aligned as a column, which
+   is what makes them read as a stack rather than as a row of stats.
+   ========================================================================== */
+
+.wd-nums {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  column-gap: var(--s-5);
+  row-gap: var(--s-9);
+  align-items: start;
+}
+
+.wd-nums__head {
+  grid-column: 1 / span 7;
+}
+
+.wd-nums__title {
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: clamp(1.75rem, 0.9rem + 2.4vw, 3rem);
+  line-height: 1.18;
+  letter-spacing: -0.01em;
+  margin: 0;
+  max-width: 26ch;
+}
+
+/* Not italic and not the editorial face: this phrase reads as part of the
+   sentence, coloured rather than styled. Raw brand teal, matching the
+   figures below - see the contrast note on .wd-nums__figure. */
+.wd-nums__title em {
+  font-family: inherit;
+  font-style: normal;
+  color: var(--accent-2);
+}
+
+.wd-nums__media {
+  grid-column: 9 / span 4;
+  aspect-ratio: 4 / 3;
+  overflow: clip;
+  border-radius: 2px;
+  margin: 0;
+  background: var(--surface-sunken);
+}
+
+.wd-nums__media img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* The narrow supporting paragraph, bottom-left. Deliberately small and set
+   to a tight measure — it is the counterweight to the figures, not a
+   competitor for attention. */
+.wd-nums__lede {
+  grid-column: 1 / span 4;
+  margin: 0;
+  font-size: 0.9375rem;
+  line-height: 1.7;
+  color: var(--text-primary);
+}
+
+/* The figure stack. One grid row per stat, so a figure and its label share a
+   baseline band without either dictating the other's width. */
+.wd-nums__stats {
+  grid-column: 6 / span 7;
+  display: flex;
+  flex-direction: column;
+}
+
+/* One row per stat, divided by a hairline. The rule sits on the top edge so
+   the first row is not underlined twice by the section above it. */
+.wd-nums__row {
+  display: grid;
+  /* A fixed figure column, not max-content: the numbers differ wildly in
+     width ("1,800+" against "3"), so content sizing would shunt every label
+     to a different x-position row to row. A fixed track keeps the labels on
+     one axis and the figures left-aligned against each other. */
+  grid-template-columns: minmax(0, 19rem) minmax(0, 18rem);
+  column-gap: var(--s-6);
+  align-items: baseline;
+  padding-block: var(--s-3);
+  border-top: 1px solid var(--border);
+}
+
+.wd-nums__row:last-child { border-bottom: 1px solid var(--border); }
+
+.wd-nums__figure {
+  font-family: var(--font-editorial);
+  font-weight: 700;
+  /* Deliberately oversized: this is the one element on the page allowed to
+     dominate its section. Capped so the widest figure ("1,800+", six glyphs
+     plus a comma) still clears its track — above this it runs under the
+     label beside it. */
+  font-size: clamp(2.75rem, 1rem + 5.4vw, 5.5rem);
+  line-height: 1.02;
+  letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums;
+  /* Raw brand teal, at the client's explicit direction. Note this is the
+     verbatim logo hue and measures 2.59:1 on the page ground, so it does
+     NOT meet WCAG AA for text — style.css marks it decoration-only for
+     that reason. Kept here because the figures are large display type and
+     the brand match was the priority. */
+  color: var(--accent-2);
+  margin: 0;
+}
+
+.wd-nums__label {
+  margin: 0;
+  font-size: 0.75rem;
+  line-height: 1.5;
+  color: var(--text-primary);
+  max-width: 22ch;
+}
+
+@media (max-width: 900px) {
+  .wd-nums { row-gap: var(--s-6); }
+  .wd-nums__head,
+  .wd-nums__lede,
+  .wd-nums__stats { grid-column: 1 / -1; }
+  .wd-nums__media { grid-column: 1 / -1; aspect-ratio: 16 / 9; }
+  .wd-nums__row { grid-template-columns: 1fr; }
+  .wd-nums__label { max-width: none; }
+}
+
+/* ==========================================================================
+   WD FOUNDERS — scroll-scrubbed reel
+   ==========================================================================
+   Bed (sticky stage, one row):
+
+     [ rail ] [ portrait ] [ oversized name ] [ bio ]
+                 centre        from the         far
+                of the bed   image's edge      right
+
+   The rail label is one unbroken line — white-space holds it there and the
+   column is sized to exactly what that line needs (max-content), so it can
+   never wrap into two.
+
+   The portrait stands ON the section's base line: the row is end-aligned, so
+   the image's bottom edge is the stage floor.
+
+   SCRUB
+   .wd-fnd is a tall rail (200svh for two founders) with a 100svh sticky
+   stage. js/founders-scrub.js writes --fnd-p (0..1 across the rail) and
+   data-fnd-step onto the section every frame. Everything below is expressed
+   against --fnd-p, so the motion is scrubbed by scroll position rather than
+   played on a timer:
+
+     - the portrait stack translates up by one full frame per step
+     - the name reel translates up by one slot per step — the vertical
+       countdown — clipped by its own column
+     - the bios ride the same clock and cross-fade
+
+   PROGRESSIVE ENHANCEMENT
+   Without JS --fnd-p stays 0: the first founder is shown complete and
+   readable and the rail simply scrolls past. Under reduced motion and below
+   900px the rail is collapsed and both founders stack as ordinary blocks.
+   ========================================================================== */
+
+.wd-fnd {
+  position: relative;
+  /* One viewport of travel per founder, plus one to read the last. */
+  height: 200svh;
+
+  /* The name's display size, shared by the type rule and by the reel frame
+     that has to be exactly one entry tall. */
+  --fnd-name-size: clamp(2.75rem, 0.4rem + 6.6vw, 6.5rem);
+  /* The portrait box, shared by the shot and by the travel distance. */
+  --fnd-shot-h: clamp(30rem, 78svh, 52rem);
+  /* Clear air between one portrait and the next while they slide, so the two
+     images never touch and read as a single strip. Travel is therefore one
+     box PLUS this gap. */
+  --fnd-gap: var(--s-6);
+  --fnd-travel: calc(var(--fnd-shot-h) + var(--fnd-gap));
+  /* One name entry - index + two name lines + role. This is the reel's
+     standing frame and its per-step travel, kept off the type size so the
+     two cannot drift apart. */
+  --fnd-entry-h: calc(var(--fnd-name-size) * 1.96 + 4.5rem);
+}
+
+.wd-fnd__stage {
+  position: sticky;
+  top: 0;
+  height: 100svh;
+  overflow: clip;
+  display: flex;
+  align-items: stretch;
+}
+
+.wd-fnd__grid {
+  flex: 1;
+  display: grid;
+  /* rail sized to its own single line; portrait fixed and centred in the
+     bed; the name starts at the portrait's right edge; the bio is pushed to
+     the far right of the bed by the 1fr on either side of the name. */
+  grid-template-columns:
+    max-content
+    minmax(0, 1fr)
+    clamp(22rem, 30vw, 34rem)
+    minmax(0, 1fr)
+    clamp(17rem, 21vw, 24rem);
+  column-gap: var(--s-5);
+  /* One explicit row filling the stage, so "end" means the stage floor
+     rather than the bottom of whichever item is tallest. Everything is
+     placed into it by column, and the visually-hidden heading is taken out
+     of flow below - left in, it claims this row for itself and pushes the
+     content into a second, shrink-wrapped one. */
+  grid-template-rows: 1fr;
+  align-items: end;
+  /* The stage is pinned to the viewport top, so it sits under the fixed
+     header for its whole run. The top padding clears that bar and the
+     bottom padding keeps the role line off the very edge of the screen -
+     the portrait still reads as standing on the floor because it is much
+     taller than the padding. */
+  padding-block: clamp(5.5rem, 11svh, 8rem) var(--s-5);
+}
+
+/* --- rail --------------------------------------------------------------- */
+
+/* The section heading is for assistive tech only; it must not occupy a grid
+   cell. .visually-hidden already takes it out of flow, but it is repeated
+   here as an explicit placement so the single-row bed above cannot be
+   claimed by it. */
+.wd-fnd__grid > .visually-hidden { grid-area: 1 / 1; }
+
+.wd-fnd__rail {
+  grid-row: 1;
+  grid-column: 1;
+  align-self: start;
+  white-space: nowrap;
+  font-family: var(--font-body);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: .175em;
+  text-transform: uppercase;
+  color: var(--text-primary);
+  line-height: 1.5;
+  margin: 0;
+}
+
+/* --- portrait ----------------------------------------------------------- */
+/* Column 3, the centre of the bed. The cell is end-aligned, so the frame's
+   bottom edge is the stage floor and the figure stands on it. */
+
+/* The frame is the portrait box itself, and it CLIPS. A shot is parked one
+   box-height below it, so the next founder waits completely out of sight
+   under the current one, and a step slides it up into exactly the position
+   the outgoing one occupied while that one leaves through the top edge.
+
+   Sized any taller (a full-stage frame) and both shots share the visible
+   area at once; sized any shorter and the outgoing image escapes above the
+   mask instead of being cut off by it. */
+.wd-fnd__media {
+  grid-row: 1;
+  grid-column: 3;
+  position: relative;
+  /* Starts on the same top line as the rail label on the left, rather than
+     standing on the stage floor. */
+  align-self: start;
+  height: var(--fnd-shot-h);
+  overflow: clip;
+}
+
+
+/* Each shot is parked one full frame below its slot and lifted through the
+   frame by the scrub; --fnd-i is the shot's own index. */
+/* One frame of travel per step: at rest the next shot sits a full box below
+   the mask - invisible - and a step brings it up into the frame as the
+   current one is clipped away at the top. */
+.wd-fnd__shot {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  transform: translate3d(0,
+    calc((var(--fnd-i) - var(--fnd-p, 0)) * var(--fnd-travel)), 0);
+  will-change: transform;
+  background: var(--surface-sunken);
+}
+
+.wd-fnd__shot--0 { --fnd-i: 0; }
+.wd-fnd__shot--1 { --fnd-i: 1; }
+
+.wd-fnd__shot img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* --- names -------------------------------------------------------------- */
+/* Column 4 — begins at the portrait's right edge. The column is the clip;
+   the reel inside moves up exactly one slot per step. */
+
+/* The reel is clipped VERTICALLY ONLY. overflow:clip would also cut the name
+   off at the column's right edge, and the display size is deliberately larger
+   than the column - the column sets where the name STARTS (the portrait's
+   right edge), not how wide it may run. A clip-path inset that is open on the
+   right does the vertical masking without that side effect.
+
+   The frame is only as tall as ONE entry, and it is parked at the bottom of
+   the bed beside the portrait. That height is what makes the countdown read:
+   a step moves the reel by exactly one frame, so the outgoing name leaves
+   through the top edge as the incoming one arrives from the bottom, at the
+   same visual rate as the portrait swapping behind it. A full-column frame
+   would move the reel by the column's height instead, and the name would
+   crawl while the portrait raced. */
+.wd-fnd__names {
+  grid-row: 1;
+  /* Spans the open middle AND the bio track: the frame needs the room so the
+     clip never cuts the name, while the bio sits above it on its own layer
+     and keeps the far-right column visually. */
+  grid-column: 4 / -1;
+  /* Bound to the same top line as the portrait and the left-hand rail. */
+  align-self: start;
+  /* Only as tall as ONE entry. This is the whole countdown device: the name
+     does not travel with the image, it holds one standing position and the
+     next name rises into it from below while the current one leaves through
+     the top. A frame the height of the portrait would instead let the name
+     drift down the bed alongside the image. */
+  height: var(--fnd-entry-h);
+  position: relative;
+  /* A real clip on both axes - the reel has to be masked top and bottom for
+     the countdown to read. The frame is wide enough (it spans to the bed's
+     edge) that the name never reaches the right edge and gets sliced; the
+     name's START is still the portrait's right edge. */
+  overflow: clip;
+}
+
+.wd-fnd__reel {
+  position: absolute;
+  inset: 0;
+  /* One ENTRY per step, not one portrait-height: the reel runs at its own
+     rate so each name rises from the bottom of the standing position into
+     it, like a counter rolling over, while the portrait slides its own
+     larger distance beside it. */
+  transform: translate3d(0, calc(var(--fnd-p, 0) * var(--fnd-entry-h) * -1), 0);
+  will-change: transform;
+}
+
+/* A slot fills the reel's frame exactly, so one step is one frame of travel
+   and the names roll upward like a counter. */
+.wd-fnd__slot {
+  position: absolute;
+  left: 0;
+  /* Not right:0 - the name may run past the column into the bed's open
+     middle; the column only fixes where it begins. */
+  width: max-content;
+  /* Stops the name short of the bed's right edge at the widest sizes. */
+  max-width: 34vw;
+  top: calc(var(--fnd-i) * var(--fnd-entry-h));
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  /* Top of the frame, so index / name / role sit against the portrait's
+     upper edge as in the reference. */
+  justify-content: flex-start;
+}
+
+.wd-fnd__slot:nth-child(1) { --fnd-i: 0; }
+.wd-fnd__slot:nth-child(2) { --fnd-i: 1; }
+
+.wd-fnd__idx {
+  font-family: var(--font-body);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: .175em;
+  color: var(--text-muted);
+  margin: 0 0 var(--s-2);
+}
+
+/* The largest type in the section, set tight over two lines. */
+.wd-fnd__name {
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-size: var(--fnd-name-size);
+  line-height: 0.98;
+  letter-spacing: -0.02em;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.wd-fnd__name span {
+  display: block;
+  /* Room for descenders, pulled back off the layout so lines stack tight. */
+  padding-bottom: 0.14em;
+  margin-bottom: -0.14em;
+}
+
+.wd-fnd__role {
+  font-family: var(--font-body);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: .175em;
+  text-transform: uppercase;
+  color: var(--text-primary);
+  margin: var(--s-3) 0 0;
+}
+
+/* --- bios --------------------------------------------------------------- */
+/* Column 5 — the far right of the bed, its TOP on the portrait's top rather
+   than the stage floor. The cell carries the portrait's height and the bio
+   is parked at the start of it. */
+
+.wd-fnd__bios {
+  grid-row: 1;
+  grid-column: 5;
+  /* Above the names frame, which runs underneath this track. */
+  z-index: 1;
+  /* Same top line and same height as the portrait, so the track's floor IS
+     the image's bottom edge - which is what the bio inside it is pinned to. */
+  align-self: start;
+  height: var(--fnd-shot-h);
+  position: relative;
+}
+
+.wd-fnd__bio {
+  position: absolute;
+  /* Bottom, not top: the bio's last line finishes on the image's lower edge
+     however many lines it runs to. */
+  bottom: 0;
+  left: 0;
+  right: 0;
+  margin: 0;
+  font-size: 0.8125rem;
+  line-height: 1.65;
+  color: var(--text-primary);
+  /* --fnd-o is the signed distance from this bio's own step, written by the
+     scrub: the outgoing bio lifts and fades as the incoming one settles. */
+  opacity: var(--fnd-o, 1);
+  transform: translate3d(0, var(--fnd-y, 0px), 0);
+  will-change: opacity, transform;
+}
+
+.wd-fnd__bio--0 { --fnd-i: 0; }
+.wd-fnd__bio--1 { --fnd-i: 1; }
+
+/* --- fallbacks ---------------------------------------------------------- */
+/* Reduced motion and narrow beds get the plain stacked version: no sticky
+   stage, no scrub — both founders simply laid out in order. */
+
+@media (prefers-reduced-motion: reduce), (max-width: 900px) {
+  .wd-fnd { height: auto; }
+
+  .wd-fnd__stage {
+    position: static;
+    height: auto;
+    overflow: visible;
+    display: block;
+  }
+
+  /* A flex column, not a block: the markup groups all the portraits, then
+     all the names, then all the bios, because that is what the reel needs.
+     Stacked, each founder has to read as one unit - portrait, name, bio -
+     so `order` re-interleaves the three groups without a second copy of the
+     content in the HTML. Ranks are 10s so entries stay well separated. */
+  .wd-fnd__grid {
+    display: flex;
+    flex-direction: column;
+    /* The stage no longer pins, but the header is still fixed and the rail
+       is the first thing in the section, so it keeps its clearance. */
+    padding-block: clamp(4.5rem, 9svh, 6rem) var(--s-7);
+  }
+
+  .wd-fnd__rail { order: 0; margin-bottom: var(--s-5); }
+
+  /* The portrait frame and the reel are unwrapped: their children become the
+     flow items so each shot and each slot can be ordered independently. */
+  .wd-fnd__media,
+  .wd-fnd__names,
+  .wd-fnd__reel,
+  .wd-fnd__bios {
+    display: contents;
+  }
+
+  /* Unwrapped by display:contents above, these are now direct flex items and
+     no longer inherit the grid tracks - each has to state its own full-width
+     box, and the slot has to drop the max-content sizing the reel gave it or
+     the name centres itself against the column. */
+  .wd-fnd__shot {
+    position: static;
+    transform: none;
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    overflow: clip;
+    background: var(--surface-sunken);
+    margin-bottom: var(--s-5);
+  }
+
+  .wd-fnd__shot--0 { order: 10; }
+  .wd-fnd__slot:nth-child(1) { order: 11; }
+  .wd-fnd__bio--0 { order: 12; }
+
+  .wd-fnd__shot--1 { order: 20; }
+  .wd-fnd__slot:nth-child(2) { order: 21; }
+  .wd-fnd__bio--1 { order: 22; }
+
+  .wd-fnd__slot {
+    position: static;
+    width: 100%;
+    max-width: none;
+    height: auto;
+    align-items: flex-start;
+    margin-bottom: var(--s-4);
+  }
+
+  .wd-fnd__bio {
+    position: static;
+    width: 100%;
+    opacity: 1;
+    transform: none;
+    margin-bottom: var(--s-8);
+  }
+
+  /* The wide-bed name size is built for a 30rem column beside a portrait; on
+     one narrow column it has to come down to something that fits. */
+  .wd-fnd { --fnd-name-size: clamp(2.5rem, 11vw, 4rem); }
+
+  /* The reel frame's fixed height is a wide-bed device only. */
+  .wd-fnd__names { height: auto; }
+}
+
+
+/* ==========================================================================
+   DEVICE 5 — .ab-apart  ("What sets us apart")
+   ==========================================================================
+   A full-bleed photographic bed with three anchored blocks, matching the
+   reference poster exactly:
+
+     top-left     the stacked oversized headline
+     bottom-left  a single standfirst paragraph, in the first column
+     bottom       a hairline strip of numbered cells, starting in column two
+                  and running to the right edge of the viewport
+
+   The bottom row is one grid: the standfirst occupies the leftmost track and
+   the cells occupy the rest, so the strip visually begins left of centre and
+   continues out to the edge, as in the reference. The photograph is scrimmed
+   twice — once overall for legibility, once from the bottom so the cell strip
+   always has a dark floor no matter which image is dropped in.
+   ========================================================================== */
+
+.ab-apart {
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: min(100svh, 62rem);
+  padding-block: var(--s-8) 0;
+  overflow: hidden;
+  color: #fff;
+  border-bottom: none;
+  background: var(--surface-deep);
+}
+
+/* --- the bed -------------------------------------------------------------- */
+
+.ab-apart__media {
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+}
+.ab-apart__media img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 50% 30%;
+  display: block;
+}
+/* Two scrims, one element: a flat wash for the headline at the top and a
+   steeper ramp under the cell strip. Both are deliberately keyed off the
+   brand navy rather than pure black so the section still reads as MedShield. */
+.ab-apart::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    /* The strip band: opaque enough under the cells to hold small text, and
+       fading out fast just above them so the photograph stays clean. */
+    linear-gradient(to top,
+      rgba(0, 22, 46, 0.95) 0%,
+      rgba(0, 22, 46, 0.92) 28%,
+      rgba(0, 22, 46, 0.60) 36%,
+      rgba(0, 22, 46, 0.00) 46%),
+    /* A soft wash behind the headline only, strongest at the top-left where
+       the stacked type sits over open sky. */
+    linear-gradient(to bottom,
+      rgba(0, 22, 46, 0.62) 0%,
+      rgba(0, 22, 46, 0.34) 30%,
+      rgba(0, 22, 46, 0.00) 52%),
+    linear-gradient(to right,
+      rgba(0, 22, 46, 0.45) 0%,
+      rgba(0, 22, 46, 0.12) 40%,
+      rgba(0, 22, 46, 0.00) 70%);
+}
+
+.ab-apart__inner {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  flex: 1;
+  gap: var(--s-8);
+}
+
+/* --- top-left: label + stacked headline ----------------------------------- */
+
+.ab-apart__head { padding-inline: var(--site-margin); }
+
+.ab-apart__label {
+  font-family: var(--font-editorial);
+  font-size: var(--t-micro);
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--accent-2-on-deep);
+  margin: 0 0 var(--s-4);
+}
+
+/* Set in the same voice as every other section heading on the page
+   (.wd-split__title): --font-display at a regular weight, with the emphasis
+   carried by an editorial italic rather than by extra weight. */
+.ab-apart__title {
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: clamp(2.2rem, 1.1rem + 4.2vw, 4.4rem);
+  line-height: 1.04;
+  letter-spacing: -0.015em;
+  margin: 0;
+  color: #fff;
+  text-wrap: balance;
+}
+.ab-apart__title span { display: block; }
+.ab-apart__title em {
+  font-family: var(--font-editorial);
+  font-style: italic;
+  color: var(--accent-2-on-deep);
+}
+
+/* --- bottom row: standfirst in column one, cells in the rest --------------- */
+
+.ab-apart__grid {
+  display: grid;
+  /* The standfirst column is fixed at roughly one cell's width so the strip
+     starts left of centre; the cells take everything that is left. The gap
+     is what keeps the standfirst clear of the first cell's rule, as in the
+     reference — the two blocks must not butt together. */
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 5fr);
+  column-gap: clamp(1.5rem, 3vw, 4rem);
+  align-items: end;
+}
+
+.ab-apart__lede {
+  margin: 0;
+  padding: var(--s-6) 0 var(--s-7) var(--site-margin);
+  font-size: clamp(0.8125rem, 0.74rem + 0.22vw, 0.9375rem);
+  line-height: 1.55;
+  color: rgba(255, 255, 255, 0.82);
+  max-width: 30ch;
+}
+
+/* The strip itself. Six equal cells; on anything short of a very wide bed it
+   scrolls horizontally rather than crushing the copy, and the last cell runs
+   to the right edge of the viewport as in the reference. */
+.ab-apart__cells {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  /* Six equal tracks that SHARE the row, with no min-width floor: the cells
+     shrink together rather than overflowing, so all six are always visible
+     on a wide bed without a horizontal scroll. The type inside is sized to
+     survive the narrowest track this produces. */
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  border-top: 1px solid rgba(255, 255, 255, 0.18);
+}
+
+.ab-apart__cell {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 15.5rem;
+  padding: var(--s-6) clamp(1rem, 1.5vw, 1.75rem) var(--s-7);
+  border-left: 1px solid rgba(255, 255, 255, 0.18);
+}
+
+.ab-apart__num {
+  font-family: var(--font-editorial);
+  font-weight: 700;
+  font-size: clamp(1.35rem, 0.95rem + 0.8vw, 1.9rem);
+  line-height: 1;
+  letter-spacing: -0.02em;
+  color: #fff;
+  margin: 0 0 var(--s-2);
+  font-variant-numeric: tabular-nums;
+}
+
+.ab-apart__key {
+  font-family: var(--font-editorial);
+  font-size: var(--t-micro);
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.62);
+  /* The key row is what pins the cell titles to a common baseline: it grows
+     to absorb the difference between a one-line and a two-line title above. */
+  margin: 0 0 auto;
+  padding-bottom: var(--s-5);
+}
+
+.ab-apart__cellTitle {
+  font-family: var(--font-editorial);
+  font-size: clamp(0.75rem, 0.69rem + 0.16vw, 0.875rem);
+  font-weight: 600;
+  line-height: 1.26;
+  letter-spacing: -0.005em;
+  color: #fff;
+  margin: 0 0 var(--s-2);
+  text-wrap: pretty;
+  overflow-wrap: break-word;
+}
+
+.ab-apart__cellCopy {
+  margin: 0;
+  font-size: clamp(0.6875rem, 0.65rem + 0.1vw, 0.78125rem);
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.68);
+}
+
+/* --- narrow beds ---------------------------------------------------------- */
+
+/* Six across stops being readable well before the layout breaks, so the strip
+   REFLOWS rather than scrolls: three-up, then two-up. Every cell stays on
+   screen at every width — there is no horizontal scroll at any size. */
+@media (max-width: 1200px) {
+  .ab-apart__cells { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  /* On a wrapped grid the cells need their own horizontal rules back, and the
+     first cell of each row must not carry a left border against the edge. */
+  .ab-apart__cell { border-top: 1px solid rgba(255, 255, 255, 0.18); }
+  .ab-apart__cell:nth-child(-n + 3) { border-top: none; }
+}
+
+@media (max-width: 900px) {
+  .ab-apart {
+    min-height: 0;
+    padding-block: var(--s-8) 0;
+  }
+  /* Below the split the standfirst returns to a full-width block above the
+     strip; the strip then runs edge to edge on its own row. */
+  .ab-apart__grid { grid-template-columns: minmax(0, 1fr); column-gap: 0; }
+  .ab-apart__lede {
+    padding: var(--s-5) var(--site-margin) var(--s-6);
+    max-width: 46ch;
+  }
+  .ab-apart__cell:nth-child(3n + 1) { border-left: none; }
+}
+
+@media (max-width: 640px) {
+  .ab-apart__cells { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .ab-apart__cell {
+    min-height: 0;
+    /* The outer edges pick up the site margin so the copy in the first and
+       last column is not run against the edge of the viewport. */
+    padding: var(--s-4) var(--s-4) var(--s-5);
+    border-top: 1px solid rgba(255, 255, 255, 0.18);
+  }
+  .ab-apart__cell:nth-child(odd) {
+    border-left: none;
+    padding-left: var(--site-margin);
+  }
+  .ab-apart__cell:nth-child(even) { padding-right: var(--site-margin); }
+  .ab-apart__cell:nth-child(-n + 2) { border-top: none; }
+  .ab-apart__key { padding-bottom: var(--s-4); }
+}
+
+/* ==========================================================================
+   SECTION 06 — "How we work" (.ab-layers)
+   The two-layer card row shared the generic .wd-* type scale, which sat a
+   step away from the editorial voice section 05 establishes just above it.
+   These overrides pull the label, headline and card type onto the same
+   family and scale as .ab-apart, and cut the card media down so the whole
+   row finishes inside the section's own padding instead of running past it.
+   ========================================================================== */
+
+/* The section owns its own box: nothing inside is allowed to spill past the
+   shell or the section's block padding. */
+.ab-layers { overflow: clip; }
+
+.ab-layers .shell {
+  display: flex;
+  flex-direction: column;
+  max-width: 100%;
+}
+
+/* Label — matches .ab-apart__label, tinted for the light bed. */
+.ab-layers .wd-split__label {
+  font-family: var(--font-editorial);
+  font-size: var(--t-micro);
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin: 0 0 var(--s-4);
+}
+
+/* Headline — the .wd-nums__title voice: the display face at regular weight,
+   not the heavy editorial cut. This section is a following beat, so it reads
+   at the same restraint as the figures section rather than shouting. */
+.ab-layers .wd-split__title {
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: clamp(1.375rem, 0.85rem + 1.5vw, 2rem);
+  line-height: 1.22;
+  letter-spacing: -0.008em;
+  max-width: 30ch;
+  margin: 0 0 var(--s-5);
+  text-wrap: balance;
+}
+/* Coloured, not styled — same treatment as .wd-nums__title em. */
+.ab-layers .wd-split__title em {
+  font-family: inherit;
+  font-style: normal;
+  color: var(--accent-2);
+}
+
+/* The row. A tighter gap and a capped bed keep two cards from stretching
+   into a full-width pair of near-square photographs. */
+.ab-layers .wd-cards {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 18rem), 1fr));
+  gap: clamp(1.5rem, 3vw, 3rem);
+  align-items: start;
+}
+
+.ab-layers .wd-card {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+/* Smaller image: a landscape crop with its own ceiling, so the card's height
+   is set by its copy rather than by the picture. */
+.ab-layers .wd-card__media {
+  aspect-ratio: 16 / 10;
+  max-height: 15rem;
+  width: 100%;
+  margin: 0 0 var(--s-4);
+}
+
+.ab-layers .wd-card > * + * { margin-top: 0; }
+
+.ab-layers .wd-card .wd-split__label {
+  margin: 0 0 var(--s-2);
+  color: var(--text-muted);
+}
+
+/* Card title — the .ab-apart__cellTitle voice, sized up a little for a
+   two-up row rather than a six-up strip. */
+.ab-layers .wd-card__title {
+  font-family: var(--font-editorial);
+  font-weight: 600;
+  font-size: clamp(1rem, 0.9rem + 0.4vw, 1.25rem);
+  line-height: 1.22;
+  letter-spacing: -0.01em;
+  margin: 0 0 var(--s-3);
+  text-wrap: pretty;
+}
+
+/* Card copy — .ab-apart__cellCopy's rhythm, one notch up for line length. */
+.ab-layers .wd-card__copy {
+  margin: 0;
+  font-size: clamp(0.8125rem, 0.76rem + 0.16vw, 0.9375rem);
+  line-height: 1.6;
+  color: var(--text-secondary);
+  max-width: 46ch;
+}
+
+@media (max-width: 40rem) {
+  .ab-layers .wd-card__media { max-height: 12rem; }
+}

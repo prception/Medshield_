@@ -127,15 +127,21 @@
 
   function countUp(el) {
     var finalText = el.textContent;
-    var match = finalText.replace(/,/g, '').match(/\d+/);
+
+    /* Match against the ORIGINAL string, digits and separators together, so
+       the offsets below index the text we actually slice. Matching a
+       comma-stripped copy and then searching for the result in the original
+       silently fails on any grouped number ("1800" is not in "1,800+"),
+       which sliced prefix/suffix wrong and printed both numbers at once. */
+    var match = finalText.match(/[\d,]*\d/);
     if (!match) return;
 
-    var target = parseInt(match[0], 10);
+    var target = parseInt(match[0].replace(/,/g, ''), 10);
     if (!isFinite(target) || target <= 0) return;
 
-    var prefix = finalText.slice(0, finalText.indexOf(match[0]));
-    var suffix = finalText.slice(finalText.indexOf(match[0]) + match[0].length);
-    var grouped = finalText.indexOf(',') !== -1;
+    var prefix = finalText.slice(0, match.index);
+    var suffix = finalText.slice(match.index + match[0].length);
+    var grouped = match[0].indexOf(',') !== -1;
 
     var DURATION = 1100;
     var start = null;
@@ -182,13 +188,17 @@
       var step = parseInt(groups[i].getAttribute('data-ab-stagger'), 10) || 70;
       var kids = groups[i].children;
       for (var k = 0; k < kids.length; k++) {
-        if (kids[k].hasAttribute('data-ab-reveal')) {
+        if (kids[k].hasAttribute('data-ab-reveal') ||
+            kids[k].hasAttribute('data-wd-reveal')) {
           kids[k].style.setProperty('--ab-d', Math.min(k * step, 640) + 'ms');
         }
       }
     }
 
-    var targets = document.querySelectorAll('[data-ab-reveal]');
+    /* [data-wd-reveal] is the White-Desert-derived variant added in
+       about.css. It uses its own keyframes but the same .is-in switch and the
+       same --ab-d stagger, so one observer serves both. */
+    var targets = document.querySelectorAll('[data-ab-reveal], [data-wd-reveal]');
     if (!targets.length) return;
 
     var io = new IntersectionObserver(function (entries) {
@@ -198,7 +208,15 @@
 
         entry.target.classList.add('is-in');
 
-        var counters = entry.target.querySelectorAll('[data-ab-count]');
+        /* querySelectorAll only finds DESCENDANTS, so a figure that is itself
+           the reveal target — [data-wd-reveal][data-ab-count] on one element,
+           as the stat stack uses — would never count. Check the target too. */
+        var counters = [].slice.call(
+          entry.target.querySelectorAll('[data-ab-count]'));
+        if (entry.target.hasAttribute('data-ab-count')) {
+          counters.push(entry.target);
+        }
+
         for (var c = 0; c < counters.length; c++) {
           if (!counters[c].hasAttribute('data-ab-counted')) {
             counters[c].setAttribute('data-ab-counted', '');

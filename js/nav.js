@@ -13,6 +13,9 @@
 
   var FOCUSABLE = 'a[href], button:not([disabled]), input, select, textarea, [tabindex]:not([tabindex="-1"])';
   var lastFocused = null;
+  // Assigned by the scroll block below (it owns the idle timer). A no-op
+  // until then, and on pages where the block never runs.
+  var showBar = function () {};
 
   function isOpen() {
     return toggle.getAttribute('aria-expanded') === 'true';
@@ -20,6 +23,7 @@
 
   function openNav() {
     lastFocused = document.activeElement;
+    showBar();
     toggle.setAttribute('aria-expanded', 'true');
     toggle.setAttribute('aria-label', 'Close menu');
 
@@ -100,27 +104,71 @@
     if (event.target.closest('a') && isOpen()) closeNav();
   });
 
-  // Ink inversion once the bar scrolls off the dark .page-hero and onto a
-  // pale section, mirroring hero.js's data-bar-ink probing but simplified:
-  // inner pages have exactly one dark section (the hero), always at the top,
-  // so a single boundary check replaces the homepage's per-section probing.
+  // Bar behaviour on scroll, matching hero.js's header block so every page's
+  // bar feels identical: the logo belongs to the hero composition and
+  // dissolves once the page has scrolled past it, leaving the hamburger
+  // alone; the bar itself clears out of the way while a scroll is in motion
+  // and returns when it settles.
+  //
+  // Ink colour is NOT decided here. bar-ink.js owns that probe for every
+  // page, driven by data-bar-ink="light" markers in the HTML, and is
+  // repainted from inside this same rAF pass. That replaced a
+  // single-boundary "has the one dark hero scrolled past?" test, which was
+  // wrong on every inner page that has a second dark section further down
+  // (the navy CTA bands, the brand-blue case row, the footer): past the hero
+  // the bar flipped to dark ink and the hamburger rendered navy-on-navy.
   if (header) {
-    // .page-hero is the standard inner-page dark hero. services.html uses
-    // .hero-svc instead (the full-bleed image hero), and contact.html .c-hero
-    // (a photograph under a navy scrim) — all dark in the same way, and all
-    // must switch the bar's ink identically. Without being listed here a hero
-    // is treated as "no dark hero" and the bar paints dark ink over the
-    // photograph from the first frame.
-    var pageHero = document.querySelector('.page-hero, .hero-svc, .c-hero');
     var ticking = false;
+
+    // Same constants as hero.js's header block, so the two bars share one
+    // feel: pinned open near the top, faded brand past STUCK_AT, hidden
+    // while scrolling and back IDLE_MS after the motion stops.
+    var STUCK_AT = 80;
+    var MOTION_THRESHOLD = 6;
+    var IDLE_MS = 260;
+    var lastY = window.scrollY;
+    var idleTimer = 0;
+
+    // Never hide the bar at the very top of the page, or while the overlay
+    // menu is open — the bar carries the close control.
+    function isPinnedOpen() {
+      return window.scrollY <= STUCK_AT || isOpen();
+    }
+
     function paint() {
       ticking = false;
-      // No dark hero on this page — the bar needs dark ink from the start.
-      if (!pageHero) { header.classList.add('is-on-light'); return; }
-      var rect = pageHero.getBoundingClientRect();
-      var stillOverDark = rect.bottom > 72;
-      header.classList.toggle('is-on-light', !stillOverDark);
+      var y = window.scrollY;
+
+      if (window.__medshieldBarInk) window.__medshieldBarInk.paint();
+
+      // Brand fade. .site-header.is-scrolled .brand (style.css) drops the
+      // wordmark's opacity and pointer-events while keeping the anchor in the
+      // tab order, so "back to top" stays reachable by keyboard.
+      header.classList.toggle('is-scrolled', y > STUCK_AT);
+
+      var delta = y - lastY;
+      if (Math.abs(delta) < MOTION_THRESHOLD) return;
+      lastY = y;
+
+      if (isPinnedOpen()) {
+        header.classList.remove('is-hidden');
+      } else {
+        header.classList.add('is-hidden');
+      }
+
+      window.clearTimeout(idleTimer);
+      idleTimer = window.setTimeout(function () {
+        header.classList.remove('is-hidden');
+      }, IDLE_MS);
     }
+
+    // Opening the menu mid-scroll must not leave the close control off
+    // screen, so openNav() pins the bar back open through this.
+    showBar = function () {
+      window.clearTimeout(idleTimer);
+      header.classList.remove('is-hidden');
+    };
+
     window.addEventListener('scroll', function () {
       if (ticking) return;
       ticking = true;
