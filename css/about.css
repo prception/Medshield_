@@ -2473,7 +2473,7 @@ html.lenis body { height: auto; }
   padding: var(--s-5);
   background: var(--surface-sunken);
   border: 1px solid var(--border);
-  border-radius: 2px;
+  border-radius: var(--radius-lg);
   transition: background-color 260ms ease, border-color 260ms ease;
 }
 .ab-pcard:hover .ab-pcard__body,

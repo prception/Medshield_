@@ -1,0 +1,15 @@
+# robots.txt for https://medshield.in/
+User-agent: *
+Allow: /
+
+# Working files and internal references - not for indexing
+Disallow: /*.bak$
+Disallow: /*bak$
+Disallow: /_t.html
+Disallow: /_dbg.js
+Disallow: /wd.html
+Disallow: /obscura.html
+Disallow: /client%20contents/
+Disallow: /client contents/
+
+Sitemap: https://medshield.in/sitemap.xml

@@ -1,0 +1,41 @@
+# MedShield
+
+> Maritime medical case management for crew operators. MedShield manages the
+> whole crew medical case - from the first call at sea to the closed claim -
+> for cruise lines, shipping companies and offshore operators across India,
+> Singapore and the UAE.
+
+MedShield sits between the vessel and the shore: an independent medical team
+above a verified provider network. Because the medical judgement is our own
+and not the treating facility's, hospital selection, treatment plans and
+invoices are reviewed by clinicians who have no financial relationship with
+the provider. That independence is the core of the offering.
+
+Operating footprint: 45+ locations across India, offices in Singapore and the
+UAE, and a partner network of 1,800+ hospitals, clinics, labs, pharmacies and
+rehabilitation providers. Telemedicine reaches crew wherever the vessel is, so
+a case can begin at sea and be handed to a treating facility on arrival.
+
+## Services
+
+- [Services overview](https://medshield.in/services.html): All six service lines in detail, plus the eight-step case process.
+- Claims management: The case is run end to end - one dedicated case manager, one point of contact, from first call to closed claim.
+- Claims advisory & legal: Advisory and legal support on disputed, complex or high-value claims.
+- Medical welfare budgeting: Forecasting and controlling crew medical spend across a fleet.
+- Telemedicine: Care that starts at sea, regardless of the vessel's position.
+- Fraud prevention and cost safeguards: Independent review of hospital pricing and referral patterns to catch inflated invoices and financially-motivated referrals.
+- Occupational health & safety, and medico-legal services: OHS programmes and medico-legal casework.
+
+## Pages
+
+- [Home](https://medshield.in/): What MedShield does, the problem it solves, and how a case runs.
+- [About](https://medshield.in/about.html): Founders, the independent medical team, leadership and clinical panel, and offices in Chennai, Singapore and Dubai.
+- [Case studies](https://medshield.in/case-studies.html): Two anonymised cases - bringing a hospital's inflated pricing back to market rate, and cutting recovery time and cost through proprietary provider selection. Every figure sourced.
+- [Contact](https://medshield.in/contact.html): Request a proposal, or reach the Chennai, Singapore and Dubai offices.
+
+## Contact
+
+- General enquiries: info@medshield.in
+- Chennai, India (headquarters): +91 44 3594 9210
+- Mobile: +91 98406 03936
+- Offices: Chennai, India (HQ) - Singapore - Dubai, UAE

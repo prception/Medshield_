@@ -1,0 +1,31 @@
+# Working backups - never deploy these (Google would index them as duplicates)
+*.bak
+*bak
+*.seobak
+*.pre-*
+*.csxsafe
+# ...but the asset backups under assets/ are deliberately kept
+!assets/**/*bak*
+
+# Local debug / scratch
+_dbg.js
+_t.html
+probe*.cjs
+p2.cjs
+p3.cjs
+
+# Dependencies
+node_modules/
+
+# Client source material - kept locally, never committed or deployed
+client contents/
+
+# Reference site rips (other studios' HTML - do not publish)
+obscura.html
+wd.html
+tmc.html
+
+# Editor/OS cruft
+Thumbs.db
+_Thumbs.db
+.DS_Store

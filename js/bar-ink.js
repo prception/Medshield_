@@ -246,13 +246,56 @@
     }
     if (!lums.length) return null;
 
-    lums.sort(function (a, b) { return a - b; });
-    var lo = lums[Math.floor(lums.length * 0.1)];
-    var hi = lums[Math.floor(lums.length * 0.9)];
+    /* The glyph can OVERHANG the picture -- on a phone the images stop at the
+       page margin while the icon sits nearer the edge, so part of every stroke
+       is on the page ground, not the photograph. Those pixels are not in the
+       image and cannot be sampled from it, so they are added explicitly:
+       without them a dark photo under the left half wins light ink, and the
+       half of the icon standing on white disappears. */
+    var overhang = Math.max(0, right - r.right) + Math.max(0, r.left - left);
+    if (overhang > 0) {
+      var pageLum = pageGroundLuminance();
+      if (pageLum !== null) {
+        var share = Math.round(lums.length * (overhang / (right - left)));
+        for (var k = 0; k < share; k++) lums.push(pageLum);
+      }
+    }
 
-    var darkScore = Math.min(contrast(INK_DARK_L, lo), contrast(INK_DARK_L, hi));
-    var lightScore = Math.min(contrast(INK_LIGHT_L, lo), contrast(INK_LIGHT_L, hi));
-    return lightScore > darkScore;
+    lums.sort(function (a, b) { return a - b; });
+
+    /* Scored on the MEDIAN, not on the darkest and lightest tenth.
+
+       The extremes are the wrong statistic for a photograph: a bright picture
+       with a lamp or a shadow in the frame has a few near-black pixels, and
+       scoring light ink against those made it the winner on a ground that is
+       overwhelmingly pale -- the icon then vanished into the other 90% of the
+       strip. What the eye judges is the ink against the ground it mostly
+       crosses, which is what the median measures.
+
+       On an exact tie dark ink wins, matching the unmarked default. */
+    var mid = lums[Math.floor(lums.length / 2)];
+    return contrast(INK_LIGHT_L, mid) > contrast(INK_DARK_L, mid);
+  }
+
+  /* The page's own ground, for the part of the glyph hanging off an image.
+     Read from <main> (or <body>) rather than assumed white, so a page with a
+     tinted surface is measured rather than guessed. Cached: this is a
+     stylesheet constant, not something that changes as the page scrolls. */
+  var pageGroundLum;
+  function pageGroundLuminance() {
+    if (pageGroundLum !== undefined) return pageGroundLum;
+    pageGroundLum = null;
+    var el = document.querySelector('main') || document.body;
+    while (el) {
+      var bg = window.getComputedStyle(el).backgroundColor;
+      var m = bg && bg.match(/rgba?\(([\d.]+)[,\s]+([\d.]+)[,\s]+([\d.]+)(?:[,\s/]+([\d.]+))?/);
+      if (m && (m[4] === undefined || parseFloat(m[4]) > 0.5)) {
+        pageGroundLum = relLuminance(+m[1], +m[2], +m[3]);
+        break;
+      }
+      el = el.parentElement;
+    }
+    return pageGroundLum;
   }
 
   /* The topmost <img> under the glyph, if the ground there is a photograph at
