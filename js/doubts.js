@@ -162,50 +162,6 @@
      so the composition ends with a clear margin rather than edges touching. */
   var GAP_INSET = 18;
 
-  /* Height of the empty band the compact grid reserves for the picture,
-     measured as the real vertical gap between the last card of the upper
-     block and the first card of the lower one. Measured rather than read from
-     the stylesheet so the two cannot drift apart, and so it stays correct
-     whatever the cards' content does to their heights. */
-  function gridBandHeight() {
-    if (cards.length < 2) return { h: 0, mid: 0 };
-    // Measured off the RESTING layout: a leftover transform from a previous
-    // build would otherwise report a band that does not exist.
-    gsap.set(cards, { clearProps: 'transform' });
-
-    /* Find the band by MEASURING the rows rather than assuming which index
-       ends the upper one. The compact grid is three columns (cards 0-2 above
-       the band, 3-5 below), not two — indexing cards[3]/cards[4] as the pair
-       either side of the gap picked two cards in the SAME row, reported a
-       band of ~0, and left the picture centred well above the real gap, where
-       it covered the top row.
-
-       Splitting on the largest vertical jump between consecutive cards works
-       for any column count, so this cannot drift again if the grid changes. */
-    var rects = cards.map(function (c) { return c.getBoundingClientRect(); });
-    var split = 0, biggest = -Infinity;
-    for (var i = 1; i < rects.length; i++) {
-      var gap = rects[i].top - rects[i - 1].top;
-      if (gap > biggest) { biggest = gap; split = i; }
-    }
-    if (!split) return { h: 0, mid: 0 };
-
-    // Lowest edge of the row above, highest edge of the row below.
-    var upperBottom = -Infinity, lowerTop = Infinity;
-    for (var j = 0; j < rects.length; j++) {
-      if (j < split) upperBottom = Math.max(upperBottom, rects[j].bottom);
-      else           lowerTop    = Math.min(lowerTop,    rects[j].top);
-    }
-
-    var frameTop = frame.getBoundingClientRect().top;
-    return {
-      h: Math.max(0, lowerTop - upperBottom),
-      // Relative to .doubts__frame — the media's containing block on this
-      // layout (see the compact block in style.css).
-      mid: ((upperBottom + lowerTop) / 2) - frameTop
-    };
-  }
-
   /* The seam across the middle of the closed card block: the horizontal gap
      between the innermost card left of centre and the innermost one right of
      it. With no reserved column this is just the grid's column gap, but it is
@@ -364,6 +320,29 @@
     return (T === Infinity) ? 0 : (B - T);
   }
 
+  /* The card block's top edge, as a `top` value for the picture — i.e. in the
+     media's own offset parent (.doubts__frame).
+
+     The picture is seated ON the block, so this is where its box starts. It
+     used to be hard-coded 0, which is correct only where the block begins at
+     the frame's top edge — true on the wide layout, where the grid is the
+     frame's only occupant, and false on the compact one, where the intro sits
+     above the grid inside the same frame. There the picture was lifted to the
+     frame's ceiling, level with the intro's eyebrow instead of with the cards,
+     and its bottom edge fell short of the block by the same distance.
+
+     Measured, not derived from the intro's height, so it stays right whatever
+     the copy above the grid wraps to. */
+  function cardsBlockTop() {
+    gsap.set(cards, { clearProps: 'transform' });
+    var T = Infinity;
+    cards.forEach(function (c) {
+      T = Math.min(T, c.getBoundingClientRect().top);
+    });
+    if (T === Infinity) return 0;
+    return T - frame.getBoundingClientRect().top;
+  }
+
   function measure() {
     var fw = frame.clientWidth  || 1;
     var vh = window.innerHeight || 1;
@@ -392,14 +371,11 @@
        cards touching the picture's edges, and a margin there is precisely what
        made this read as a small panel floating in a slot rather than as the
        cards being forced apart BY the picture. */
-    /* The compact cap is READ from the stylesheet rather than repeated here.
-       It used to be a literal 460 matching the `min(100%, 460px)` in the
-       band's grid-template-rows, with a comment on both sides asking whoever
-       changed one to change the other. That cap is now per-breakpoint
-       (--doubts-cap: 380px on small phones, 620px on tablets), so a duplicated
-       constant would be wrong at two widths out of three — and wrong silently,
-       since the symptom is only that the picture stops growing. Reading the
-       property keeps the single definition in the place the band already uses.
+    /* The compact cap is READ from the stylesheet rather than repeated here,
+       so the one definition lives in the place that already uses it. It is
+       per-breakpoint (--doubts-cap tightens on small phones), so a duplicated
+       constant would be wrong at some widths — and wrong silently, since the
+       only symptom is a picture that stops growing.
 
        The fallback matches the stylesheet's own default for the same reason. */
     var capProp = parseFloat(
@@ -407,50 +383,56 @@
     );
     if (!isFinite(capProp) || capProp <= 0) capProp = 460;
 
-    var fullW = wide
-      ? centreSeam() + effectivePush() * 2
-      : Math.min(fw * 0.86, capProp);
+    /* ONE formula for both layouts: the picture claims exactly the seam the
+       closed card block leaves, plus the travel the cards make on each side.
 
-    /* On the compact layout the picture must not outgrow the empty grid row
-       reserved for it, or it grows back over the cards the row exists to keep
-       clear. The row is measured rather than assumed, so the two stay in step
-       even if the stylesheet's band changes. */
-    if (!wide) {
-      var band = gridBandHeight();
-      /* Fit INSIDE the band with clearance, not merely equal to it. At exactly
-         the band's height the picture's edges touch the rows above and below,
-         and since the cards carry a small outward push in state 3 the two were
-         landing on each other — the top row's titles ended up under the
-         image. The inset keeps a visible gutter on both sides at every point
-         in the timeline. */
-      var fit = band.h - 24;
-      if (fit > 0 && fullH > fit) {
-        fullH = fit;
-        fullW = fullH * (1280 / 720);
-      }
-      /* Nudge the picture from where the grid stack puts it (the frame's
-         centre) onto the band's centre. `position: relative` offsets from the
-         element's OWN flow position, so what the stylesheet needs is the
-         DELTA between the two centres, not the band's absolute midpoint —
-         writing the latter pushed the picture down the page by its full
-         offset instead of the few pixels it actually had to move.
+       The compact layout used to have a formula of its own (a fraction of the
+       frame, capped), because its cards did not move — they drifted 10px and
+       the picture simply grew over them. Now that the compact grid is narrowed
+       and centred like the desktop one, its cards have room to part and the
+       same negotiation applies: effectivePush() is called once and drives both
+       the cards' travel and the picture's width, so the two can never
+       disagree. Sizing them separately is exactly what once had the picture
+       opening for 150px a side while the cards could only manage 60.
 
-         Written as a custom property consumed by CSS `top`, never as an
-         inline transform: GSAP animates this element's width/height, and an
-         inline transform is the one thing that could fight it. */
-      var frameMid = frame.getBoundingClientRect().height / 2;
-      media.style.setProperty('--doubts-band-mid', (band.mid - frameMid) + 'px');
-    } else {
-      media.style.removeProperty('--doubts-band-mid');
-    }
+       The cap still binds on compact, where the seam plus a full push could
+       otherwise reach the shell's edges. */
+    var fullW = centreSeam() + effectivePush() * 2;
+    if (!wide) fullW = Math.min(fullW, capProp);
+
+    /* On the compact layout the picture is BOUND TO THE CARD BLOCK, exactly as
+       it is on the wide one: its top edge level with the highest card and its
+       bottom edge level with the lowest, so it spans the listed cards rather
+       than occupying a slot cut out of the middle of them.
+
+       It used to be clamped to `gridBandHeight() - 24` — the empty grid row
+       between the two card blocks. That made the phone a different composition
+       from the desktop: a small letterboxed strip parked in a gap, roughly a
+       fifth of the block's height, which then had to jump to full-stage size in
+       stage 2 with nothing in between. Binding it to the block is what the
+       expansion needs to read as one continuous move: the picture opens ACROSS
+       the cards, and then the same box keeps growing into the stats.
+
+       The block height is already what `fullH` holds (cardsBlockHeight above),
+       so there is nothing to clamp here — only the width to derive. The cards
+       stay legible over it because .doubts__grid sits at z-index 3, above the
+       picture's z-index 2 (see the stacking block in style.css), and because
+       the CLEAR beat fades them out before stage 2 grows past them.
+
+       Width is unchanged — it still comes from the frame (the ternary above),
+       not from the height's aspect ratio. The picture is a cropping window: the
+       <img> inside is pinned to the takeover's size and never scales, so a
+       taller box simply shows more of the same photograph. Deriving width from
+       16:9 at the block's full height would have made the box wider than the
+       frame. */
 
     // The state-2 strip: narrow enough to read as a seam between the cards.
-    /* The intermediate width. On the wide layout the cards are closed up
-       against each other, so the picture's first appearance is exactly the
-       seam between them — it emerges IN the join and then forces it open.
-       Sizing it wider than the seam would have it overlap the cards before
-       they have moved, which is the overlap the expansion exists to resolve. */
-    var narrowW = wide ? Math.max(8, centreSeam()) : 64;
+    /* The intermediate width. The cards are closed up against each other on
+       BOTH layouts now, so the picture's first appearance is exactly the seam
+       between them — it emerges IN the join and then forces it open. Sizing it
+       wider than the seam would have it overlap the cards before they have
+       moved, which is the overlap the expansion exists to resolve. */
+    var narrowW = Math.max(8, centreSeam());
 
     geo = {
       wide:    wide,
@@ -461,6 +443,11 @@
       narrowH: Math.min(vh * 0.62, 520),
       fullW:   fullW,
       fullH:   fullH,
+      /* Where the picture's box starts, so it is seated on the card block
+         rather than on the frame's ceiling. Zero on the wide layout, where the
+         two coincide; a real offset on the compact one, where the intro sits
+         above the grid in the same frame. */
+      blockTop: cardsBlockTop(),
       /* How far a card steps aside, per side. This is PUSH_ALLOWANCE, the
          same number the picture's width was allowed to claim above — so the
          card's travel and the picture's growth are two halves of one
@@ -546,7 +533,38 @@
       });
       media.style.setProperty('--doubts-media-cy', (blockTop - restT) + 'px');
     } else {
-      media.style.removeProperty('--doubts-media-cy');
+      /* COMPACT (< 1000px): the same measured seat the wide branch gets.
+
+         This branch used to clear the offset entirely, on the assumption that
+         the stylesheet's own centring already put the picture on the card
+         block at this size. It does not: the compact frame carries the intro
+         above the grid, so `top` (resolved against the frame's PADDING box)
+         and the block (centred in the frame's CONTENT box) start from
+         different origins, and the picture came to rest a measured 48px BELOW
+         the top card at every compact width — its bottom edge hanging the same
+         48px past the last row. That is the misalignment on screen: the panel
+         opens across a band that is a card-gap lower than the cards it is
+         supposed to be spanning.
+
+         Measured exactly as above — where does the box land with no nudge, and
+         how far is that from the block's top edge — rather than derived from
+         padding values, which go stale the moment the compact measure changes.
+
+         Scoped to this else branch, so the wide layout never reaches it. */
+      var prevCyC = media.style.getPropertyValue('--doubts-media-cy');
+      media.style.setProperty('--doubts-media-cy', '0px');
+      var restTC = media.getBoundingClientRect().top;
+      if (prevCyC) media.style.setProperty('--doubts-media-cy', prevCyC);
+
+      var blockTopC = Infinity;
+      cards.forEach(function (c) {
+        blockTopC = Math.min(blockTopC, c.getBoundingClientRect().top);
+      });
+      if (blockTopC === Infinity) {
+        media.style.removeProperty('--doubts-media-cy');
+      } else {
+        media.style.setProperty('--doubts-media-cy', (blockTopC - restTC) + 'px');
+      }
     }
   }
 
@@ -721,7 +739,7 @@
       // Full height from the outset: only the width ever animates. A pixel
       // value now — fullVH is measured off the card block, not the viewport.
       height: geo.fullVH,
-      top: 0,
+      top: geo.blockTop,
       autoAlpha: 0,
       // While disabled it stays out of the layout entirely rather than
       // sitting at zero width, so it cannot affect anything it is measured
@@ -954,7 +972,7 @@
       tl.set(media, {
           autoAlpha: 1,
           height: geo.fullVH,
-          top: 0
+          top: geo.blockTop
         }, EXPAND_AT)
         .fromTo(media,
           { width: 0 },
@@ -973,6 +991,8 @@
          rather than dropping downward out of the block it started in. */
       var overW = stage.clientWidth;
       var overH = stage.clientHeight;
+      // Same test measure() used, so the two layouts cannot disagree.
+      var wideNow = geo.wide;
 
       /* The `top` the panel must end on is MEASURED, not assumed to be half
          the height it gains. That identity only holds if the panel starts
@@ -988,12 +1008,116 @@
       cards.forEach(function (c) {
         blockTop = Math.min(blockTop, c.getBoundingClientRect().top);
       });
-      var topPx = (blockTop === Infinity) ? 0 : (stageTop - blockTop);
+      /* An ABSOLUTE `top`, not the delta. The measurement below is the delta —
+         how far the panel's top edge has to travel from the card block up to
+         the stage's ceiling — and it has to be added to where the panel
+         actually starts, which is geo.blockTop.
+
+         The two used to be the same number because stage 1 left the panel at
+         `top: 0`, so a delta from there WAS an absolute position. Now that the
+         panel is seated on the card block (geo.blockTop, so it spans the cards
+         on every layout), the delta alone would land it that much too high —
+         on a phone, a couple of hundred pixels above the stage, leaving the
+         ground showing under the finished picture. */
+      var topPx = (blockTop === Infinity)
+        ? 0
+        : geo.blockTop + (stageTop - blockTop);
+
+      /* The takeover runs to the FULL STAGE on every layout.
+
+         The compact branches used to hold the picture at the card block's own
+         height and top (geo.fullVH / geo.blockTop), so stage 2 on a phone
+         finished as a band across the middle of the section with the page
+         ground showing above and below it — ~150px of gap at the top at 390px
+         wide. That is the unfilled section: the reveal ends, the statement and
+         the numbers come up, and they stand on a strip rather than on a
+         picture that owns the stage.
+
+         The reason it was held back no longer applies. That note reported the
+         picture bursting out of the area the cards define — but the picture
+         was seated 48px BELOW the block at every compact width (measure()
+         cleared --doubts-media-cy on this branch), so it was never bracketing
+         the cards to begin with and any height it gained showed as an edge in
+         the wrong place. With the seat measured, the box now starts exactly on
+         the block and grows out of it symmetrically, which is the same
+         continuous move the wide layout makes.
+
+         overW/overH/topPx are the stage's own measurements and are already
+         computed above for the wide branch — the compact branch simply uses
+         them too, so the two layouts cannot drift apart. */
+
+      /* COMPACT ONLY: the takeover is sized to the LARGE viewport, not to the
+         stage.
+
+         The stage is `height: 100svh` — the SMALL viewport height, i.e. the
+         height with the mobile browser's toolbars expanded. overH is that box,
+         and it is correct for the card composition. It is NOT correct for the
+         finished picture: the toolbars retract during this very scroll, the
+         visible viewport grows to the large viewport height, and a picture cut
+         to svh leaves a strip of page ground above and below it — measured at
+         90px on a 390x844 phone whose small viewport is 754.
+
+         A SEPARATE value rather than a change to overH: overH still feeds the
+         wide branch and the <img> pinning in measure(), and both must keep the
+         stage's own height. This one is read from --doubts-vh-full (declared
+         on the stage in the max-width:1023px block in style.css, as 100lvh)
+         and is only ever consulted below the desktop breakpoint.
+
+         The picture is made TALLER THAN THE LARGE VIEWPORT and centred on the
+         stage, rather than sized to exactly one viewport and pinned to an edge.
+
+         Which edge the toolbar's space appears at is not fixed. On some
+         viewports the pinned stage keeps its ceiling and the space opens at the
+         foot; on others the stage re-centres as the viewport grows and the
+         picture is carried DOWNWARD, opening the gap at the head instead —
+         measured at 38px (375px wide) and 45px (768px) with the box anchored to
+         its top edge, while 390px was flush. Anchoring to either edge therefore
+         fixes one case and breaks the other.
+
+         Covering BOTH is what the overshoot is for: the box takes the toolbar's
+         full height as slack on each side and stays centred, so the visible
+         viewport is covered wherever it lands within that range. The excess is
+         cropped by the window the <figure> already is (overflow: hidden) and by
+         the section's own clip, so the extra height is never seen as anything
+         but photograph. */
+      var compactOverH = overH;
+      var compactTopPx = topPx;
+      if (!wideNow) {
+        /* MEASURED with a probe element, not read off the custom property.
+
+           getComputedStyle() on an unregistered custom property returns the
+           literal token it was declared with — "100lvh", not a pixel length —
+           so parseFloat() on it yields 100 and would collapse the picture to a
+           hundred pixels. The property is declared in the stylesheet so the
+           unit lives with the rest of the section's CSS, but the VALUE has to
+           come from laying it out. */
+        var probe = document.createElement('div');
+        probe.style.cssText =
+          'position:absolute;top:-9999px;left:0;width:1px;visibility:hidden;' +
+          'pointer-events:none;height:' +
+          (getComputedStyle(stage).getPropertyValue('--doubts-vh-full') || '100lvh');
+        stage.appendChild(probe);
+        var lvhPx = probe.getBoundingClientRect().height;
+        probe.remove();
+
+        /* Only ever GROWS the picture. If lvh is unsupported, unreadable, or
+           already equal to svh (every desktop browser, and any phone with
+           static chrome), this leaves the stage's own height untouched. */
+        if (isFinite(lvhPx) && lvhPx > overH) {
+          /* The toolbar's height is the whole uncertainty: the viewport can
+             grow by at most (lvh - svh), in either direction relative to the
+             stage. Taking that much slack on BOTH sides covers every landing
+             point, so the picture is (lvh + slack) tall and centred. */
+          var slack = lvhPx - overH;
+          compactOverH = lvhPx + slack;
+          compactTopPx = topPx - slack;
+        }
+      }
 
       tl.to(media, {
           width:  overW,
-          height: overH,
-          top:    topPx,
+          height: wideNow ? overH : compactOverH,
+          top:    wideNow ? topPx : compactTopPx,
           duration: STAGE2_DUR
         }, STAGE2_AT);
 
@@ -1097,28 +1221,25 @@
     cards.forEach(function (card, i) {
       var v = vec[i];
 
-      /* On the compact layout the grid already reserves an empty row for the
-         picture, so the cards' FINAL positions are clear of it by
-         construction and the outward move is a small vertical one away from
-         that band — just enough to read as the centre pushing, without
-         reopening the overlap the reserved row exists to prevent. A
-         horizontal push here would only shove the two columns off screen,
-         since they already span the full width. */
-      if (!geo.wide) {
-        tl.to(card, { y: v.sy * 10, duration: EXPAND_DUR }, EXPAND_AT);
-        return;
-      }
-
       /* Cards move HORIZONTALLY away from the channel — the reference's
          `x: ±itemWidth / 2` on its two lists, one sign per side. That is the
          motion the reveal is made of: the cards pull apart and the picture
          occupies exactly the gap they open.
 
-         The rows are raked, so a card can sit on the channel in its own row
-         (the top row's card 3 and the bottom row's card 4 are each outboard of
-         the shared join). Such a card has nowhere sideways to go that helps —
-         the picture is not growing toward it — so it steps aside VERTICALLY
-         instead, and only as far as the picture's edge actually reaches it. */
+         This is ONE code path for both layouts now. The compact grid used to
+         opt out of it into a 10px vertical drift, because its cards filled the
+         frame and had nowhere to be pushed to; narrowing and centring that
+         grid (max-width in the compact block of style.css) gives them the same
+         room the desktop block has always had, so the same push applies.
+
+         The v.mid branch below is the desktop's alone in practice. Its rows
+         are raked, so a card can sit ON the channel in its own row (the top
+         row's card 3 and the bottom row's card 4 are each outboard of the
+         shared join). Such a card has nowhere sideways to go that helps — the
+         picture is not growing toward it — so it steps aside VERTICALLY
+         instead, and only as far as the picture's edge actually reaches it.
+         The compact grid is two even columns with every card cleanly one side
+         of the seam, so nothing there is `mid` and all six take the push. */
       if (v.mid) {
         var overlap = (geo.fullH / 2) - (Math.abs(v.dy) - v.halfH);
         var vRoom = Math.max(0, (stage.clientHeight / 2) - (Math.abs(v.dy) + v.halfH));
@@ -1287,9 +1408,7 @@
     }, 200);
   }, { passive: true });
 
-  // With the picture switched off, collapse the row the compact grid reserves
-  // for it — otherwise the two card blocks are split by an empty band.
-  if (!SHOW_MEDIA) grid.style.setProperty('--doubts-band', '0px');
+
 
   section.classList.add('doubts--live');
   // Marks the covering section as an opaque layer that paints above the pinned

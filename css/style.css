@@ -4484,70 +4484,60 @@ main {
    reads on the wider layouts. Keeping it would have meant type below the
    section's minimum size. */
 @media (max-width: 999px) {
-  /* An EMPTY middle row is the picture's centre: without it the image had no
-     space of its own and sat behind the cards, so the expansion — the whole
-     point of the section — could not be seen. The card rows then genuinely
-     open away from a picture that occupies the gap between them, which is the
-     desktop idea at this size. `grid-template-areas` names the six slots
-     explicitly so the empty band cannot be back-filled by auto-placement.
+  /* TWO columns across the whole compact range, in three rows of two, with a
+     seam down the middle — the desktop arrangement at phone scale.
 
-     Three columns from 560px up: one row of cards per side of the band, so the
-     blocks are equal and the grid's centre IS the band's centre.
+     An EVEN column count is what makes the desktop push mechanism work here.
+     At three columns the middle card straddles the centre axis, and a card the
+     axis runs through has no side to be pushed to: effectivePush() skips it by
+     design (`if (Math.abs(dx) < r.width * 0.5) return`), so the middle column
+     would have sat still while the outer two parted around it. Two columns put
+     every card cleanly on one side of the seam, so all six travel.
 
-     Below 560px this drops to TWO columns — see the block after this one. At
-     three columns a 360px viewport leaves each card ~86px of content, and the
-     longest word in the set ("overcharged?") measures ~80px at the title size:
-     it fit by six pixels on the metrics of one font and overflowed on the
-     next. Two columns buy ~150px of content and the titles wrap instead of
-     racing the font's advance widths.
+     NO reserved band and no reserved channel. The picture is bound to the CARD
+     BLOCK's height (see measure() in js/doubts.js) and emerges from the seam
+     the closed block leaves down its middle, forcing the two columns apart —
+     which is exactly the desktop reading: the space is not waiting for the
+     picture, the picture takes it. The same box then keeps growing into the
+     stats composition, so the picture the cards were sitting on becomes the
+     ground the numbers stand on with no jump between the two.
 
-     The 2-column split is 4 cards above the band and 2 below, which is NOT
-     symmetric — but it does not need to be. js/doubts.js measures the real gap
-     and writes its midpoint as --doubts-band-mid (see the .doubts__media rule
-     at the end of this block), so the picture is centred on the band that
-     actually exists rather than on an assumed middle. That correction was
-     already required here because the lower row wraps taller than the upper
-     one; an uneven card count is the same problem it already solves. */
+     `grid-template-areas` names the six slots explicitly rather than leaving
+     them to auto-placement, so the card order on screen is the document
+     order. */
   .doubts--live .doubts__grid {
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(2, 1fr);
     grid-template-areas:
-      "a b c"
-      ". . ."
-      "d e f";
-    gap: var(--s-2);
-  }
-  /* The empty band matches the compact image's height: 0.86 of the frame's
-     width at the source 16:9, plus a little breathing room. Kept in sync with
-     the `fullW` compact branch in js/doubts.js — if one moves, move both.
-     js/doubts.js measures this band rather than recomputing it, so the image
-     can only ever be as tall as the gap actually reserved here.
+      "a b"
+      "c d"
+      "e f";
+    grid-template-rows: auto auto auto;
+    row-gap: var(--s-1);
+    column-gap: var(--s-2);
 
-     The 460px cap is a CAP, not a target: it stopped the band growing on the
-     wide end of this range, where there is the most room for the picture. From
-     600px up the min() saturated and every viewport from 600 to 999px reserved
-     the same 271px, so the image stopped scaling exactly where the layout
-     started having space to give it. --doubts-cap raises the ceiling on the
-     tablet end (see the 768px block below), leaving phones on the old value —
-     one token, so the cap and the JS branch that mirrors it stay legible. */
-  .doubts--live .doubts__grid {
-    /* Declared, not merely defaulted in the var() below: js/doubts.js reads
-       this property back to size the compact picture, and an undeclared
-       custom property computes to the empty string — the JS fallback would
-       then be carrying the real value and the two would drift apart again,
-       which is exactly what reading it was meant to prevent. */
-    /* Lowered from 460px: each card now carries its own photograph, so the two
-       card blocks are roughly twice the height they were and the band that
-       sits between them has to give the difference back — at the old cap the
-       bottom row was pushed clean off the pinned stage. */
+    /* Narrower than the frame, and centred — the single most important line
+       in this block. The outward push is clamped by the room left between the
+       outermost card and the frame's edge (effectivePush() in js/doubts.js),
+       so a grid that fills its frame leaves NONE and the expansion has nothing
+       to work with. That is why the compact layout used to fall back to a 10px
+       vertical drift instead of a real push.
+
+       Pulling the block in buys that travel back on both sides, exactly as
+       `max-width: 1080px` does for the desktop grid.
+
+       80% leaves 10% of the frame per side. On a 390px phone that is ~34px of
+       travel each way — with the seam between the columns, enough for the
+       picture to open to roughly a third of the block's width, which is what
+       makes the parting legible at this size. A tighter block would push
+       harder but leave the cards too narrow for their titles to wrap; this is
+       the point where the two stop competing. */
+    max-width: 80%;
+    margin-inline: auto;
+
+    /* Read back by js/doubts.js to cap the picture's WIDTH on this layout (the
+       height comes from the card block). Per-breakpoint, so the tablet block
+       below can raise it. */
     --doubts-cap: 250px;
-    /* --doubts-band is the reserved row's height. js/doubts.js sets it to 0
-       while the picture is switched off, so the two card blocks close up
-       instead of leaving an empty gap where nothing is drawn; with the
-       picture on it resolves to the height below. */
-    grid-template-rows:
-      auto
-      var(--doubts-band, calc(0.86 * min(100%, var(--doubts-cap)) * 9 / 16 + var(--s-7)))
-      auto;
   }
 
   .doubts--live .doubt:nth-child(1) { grid-area: a; }
@@ -4607,59 +4597,25 @@ main {
     margin-bottom: 2px;
   }
 
-  /* The picture is nudged onto the band's OWN centre line.
+  /* The picture's position on this layout is set by js/doubts.js, not here.
 
-     The grid is symmetric in card COUNT (three above, three below) but not in
-     card HEIGHT — the lower row wraps to more lines and runs taller — so the
-     frame's centre, which is what the wide layout centres the picture on,
-     sits above the empty band's centre. Left uncorrected the picture reached
-     up over the top row's titles, which is the exact overlap the reserved
-     band exists to prevent.
-
-     js/doubts.js measures the real gap and writes its midpoint here as
-     --doubts-band-mid (relative to .doubts__frame, the media's offset
-     parent). Consumed via `translate` — a property of its own — so it can
-     never collide with anything GSAP sets on `transform`. */
-  .doubts--live .doubts__media {
-    position: relative;
-    /* A DELTA from the grid stack's own centring, not an absolute offset —
-       hence the 0 default: with no value written the picture simply stays
-       where the stack put it. */
-    top: var(--doubts-band-mid, 0px);
-  }
+     There used to be a `position: relative; top: var(--doubts-band-mid)` rule
+     at this point, nudging the picture onto the empty band's centre. It was
+     dead code twice over: the live-state rule further down this file sets
+     `position: absolute` at the same specificity and later in the source, so
+     it won both properties outright — and there is no band to centre on any
+     more. The picture is seated on the card block's top edge by geo.blockTop
+     and given the block's own height, which is the same relationship the wide
+     layout has always had. */
 }
 
-/* --- Small phones: two columns ------------------------------------------
+/* --- Small phones ---------------------------------------------------------
 
-   Three columns is the compact layout's default, and it holds down to about
-   560px. Below that the arithmetic runs out: the shell's padding is nearly
-   constant while the viewport shrinks, so at 360px three columns and two gaps
-   leave each card ~86px of content. The longest title word measures ~80px at
-   the title size — inside the box by six pixels on one font's metrics and
-   outside it on another's. Dropping a column is what buys real room back
-   (~150px of content) rather than trusting a margin that thin.
-
-   Four cards above the band and two below. That is deliberately uneven: an
-   even split of six into two-card rows is impossible, and it does not matter,
-   because the picture is centred on the MEASURED band (--doubts-band-mid)
-   rather than on the grid's midpoint. The three-column layout already relies
-   on that correction for its own uneven row heights. */
+   The two-column arrangement is now the compact default (see the block above),
+   so there is no column count to change here — only the picture's width cap,
+   which is tightened so the picture does not crowd the narrower card columns
+   a phone leaves. */
 @media (max-width: 559px) {
-  .doubts--live .doubts__grid {
-    grid-template-columns: repeat(2, 1fr);
-    grid-template-areas:
-      "a b"
-      "c d"
-      ". ."
-      "e f";
-    /* Four rows of cards need a row gap that does not eat the band; the column
-       gap can stay wider because there is only one of it. */
-    row-gap: var(--s-1);
-    column-gap: var(--s-2);
-  }
-  /* The band is sized off the frame, and the frame is narrow here — the 460px
-     cap never binds at this width, so the picture is already proportional. It
-     only needs to stop competing with four rows of cards for the viewport. */
   .doubts--live .doubts__grid { --doubts-cap: 240px; }
 }
 
@@ -9093,4 +9049,75 @@ html.pl-lock body {
    rule is only the belt to that braces. */
 @media (prefers-reduced-motion: reduce) {
   html.pl-on .preloader { display: none; }
+}
+
+/* ==========================================================================
+   MOBILE & TABLET OVERRIDES (<= 1023px) — desktop untouched
+   ==========================================================================
+
+   Everything below is scoped to max-width: 1023px. Desktop (>= 1024px) never
+   enters these blocks, so the wide layout renders exactly as it did before.
+   -------------------------------------------------------------------------- */
+
+/* --- 1. Horizontal overflow: the white strip at the right edge ------------
+
+   `body { overflow-x: hidden }` in the reset does NOT clip here. When <html>
+   is `overflow: visible`, the BODY's overflow value is propagated to the
+   viewport and the body itself is then treated as `visible` — so the body
+   stops being a clipping box and the wide marquee tracks (.why__track,
+   .process__track) leak past the right edge. The page really is scrollable
+   sideways: at 390px the document scrolls 422px to the right, which is the
+   band of page background that shows up beside the design.
+
+   Clipping on <html> is what actually holds, because that IS the viewport's
+   own box. `clip` rather than `hidden` so no scroll container is created —
+   `hidden` on the root would make the root scrollable and break the pinned
+   sections' position:fixed measurements. */
+@media (max-width: 1023px) {
+  html {
+    overflow-x: hidden; /* fallback for engines without `clip` */
+    overflow-x: clip;
+  }
+  /* The clip needs an origin that is the padding box, otherwise a descendant
+     with a transform can still paint outside it. */
+  html { overflow-clip-margin: 0; }
+}
+
+/* --- 2. The takeover must fill the LARGEST viewport, not the smallest -----
+
+   .doubts--live .doubts__stage is `height: 100svh`, and svh is the SMALL
+   viewport height — the height with the mobile browser's toolbars EXPANDED.
+   That is the right unit for the stage: it is the only height guaranteed to be
+   visible, so the card composition never has a row hidden behind a toolbar.
+
+   But it is the wrong height for the finished picture. As soon as the toolbars
+   retract — which they do on the very scroll that drives this section — the
+   visible viewport grows to the LARGE viewport height (lvh) while the stage,
+   and therefore the picture sized off it, stays at svh. The difference is the
+   toolbar's height, and it shows as a strip of page ground above and below the
+   photograph: measured at 90px on a 390x844 phone whose small viewport is 754.
+
+   Fixing it by moving the stage to lvh would push the bottom card row under the
+   toolbar at rest, which is the bug svh exists to prevent. So the stage keeps
+   svh and only the PICTURE is allowed to reach past it:
+
+     - the stage stops clipping vertically, so the picture may exceed its box
+     - --doubts-vh-full carries the large-viewport height for js/doubts.js to
+       size the takeover with
+
+   Horizontal clipping is kept (`overflow-x: clip`), because that is what holds
+   the panel's 8vw overshoot off the right edge. Only the vertical axis opens.
+   Per the CSS spec a single-axis `clip` requires the other axis to be `clip`
+   too, so both are declared explicitly rather than using the shorthand. */
+@media (max-width: 1023px) {
+  .doubts--live .doubts__stage {
+    /* The large-viewport height, read back by js/doubts.js. Falls back to the
+       stage's own svh height wherever lvh is unsupported. */
+    --doubts-vh-full: 100lvh;
+    overflow-x: clip;
+    overflow-y: visible;
+  }
+  /* The section still clips, so nothing the picture gains can spill into the
+     neighbouring sections — only past the stage's own svh edge. */
+  .doubts--live { overflow-x: clip; overflow-y: clip; }
 }
