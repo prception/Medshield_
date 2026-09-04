@@ -5879,15 +5879,19 @@ main {
 
    TWO gradients, not one, and this is what keeps colour in the whole body:
 
-     1. the corner bloom — brand blue into teal, strongest at the top-left,
-        now running to 100% instead of dying at 84%. Stopping it short was what
-        left the lower third of the card reading as flat white.
+     1. the corner bloom — brand blue, strongest at the top-left, running to
+        100% instead of dying at 84%. Stopping it short was what left the
+        lower third of the card reading as flat white.
 
-     2. a full-card wash — a linear teal-to-blue diagonal at low alpha under
-        the bloom. A radial alone can only ever be strong in one place; the
-        wash is what gives the far corner a tint to fade INTO, so the body
-        stays coloured edge to edge rather than falling off to the bare
-        surface token.
+     2. a full-card wash — the SAME blue on a low-alpha diagonal under the
+        bloom. A radial alone can only ever be strong in one place; the wash
+        is what gives the far corner a tint to fade INTO, so the body stays
+        coloured edge to edge rather than falling off to the bare surface
+        token.
+
+   Both layers are one hue and vary only in alpha, so the card reads as a
+   single light source coming in from the top-left rather than a two-colour
+   blue→teal gradient.
 
    Layer order is painting order: the bloom is listed first and therefore sits
    on top of the wash. */
@@ -5902,23 +5906,24 @@ main {
   z-index: 0;
   pointer-events: none;
   background:
-    /* 1. the corner bloom */
+    /* 1. the corner bloom — ONE hue, brand blue, fading only in alpha. */
     radial-gradient(
       ellipse 145% 125% at 6% -14%,
       rgb(var(--accent-rgb) / 0.40) 0%,
       rgb(var(--accent-rgb) / 0.28) 20%,
-      rgba(32, 176, 168, 0.22) 45%,
-      rgba(32, 176, 168, 0.13) 68%,
-      rgba(32, 176, 168, 0.07) 100%
+      rgb(var(--accent-rgb) / 0.20) 45%,
+      rgb(var(--accent-rgb) / 0.12) 68%,
+      rgb(var(--accent-rgb) / 0.07) 100%
     ),
-    /* 2. the full-card wash — teal at the top-left corner through to brand
-       blue at the bottom-right, so the two hues bracket the whole pane. */
+    /* 2. the full-card wash — the SAME blue, strongest at the top-left and
+       thinning towards the opposite corner, so the light reads as one source
+       from the top left rather than two hues meeting in the middle. */
     linear-gradient(
       152deg,
-      rgba(32, 176, 168, 0.14) 0%,
-      rgba(32, 176, 168, 0.08) 38%,
-      rgb(var(--accent-rgb) / 0.09) 72%,
-      rgb(var(--accent-rgb) / 0.14) 100%
+      rgb(var(--accent-rgb) / 0.14) 0%,
+      rgb(var(--accent-rgb) / 0.10) 38%,
+      rgb(var(--accent-rgb) / 0.07) 72%,
+      rgb(var(--accent-rgb) / 0.05) 100%
     );
 }
 
