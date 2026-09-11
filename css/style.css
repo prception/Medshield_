@@ -419,8 +419,6 @@
     #075486 100%
   );
 
-
-
   /* Type. System stacks for the page body — no CDN, no FOIT.
      Display face is the grotesque end of the stack; body is humanist. */
   --font-display: "Helvetica Neue", "Segoe UI", Inter, Roboto, Arial, sans-serif;
@@ -1257,7 +1255,7 @@ textarea:focus-visible,
    corner annotation, which is why it sits in its own grid cell rather than
    stacking with the H1. */
 .hero__label {
-  /* Wide enough to hold "MARITIME HEALTHCARE & CLAIMS MANAGEMENT" on two
+  /* Wide enough to hold "MARITIME HEALTHCARE & CASE MANAGEMENT" on two
      lines at this tracking. At span 4 it broke to three, which turned a
      corner annotation into a paragraph. */
   grid-column: 1 / span 4;
@@ -4300,6 +4298,21 @@ main {
   z-index: 1;
   padding: var(--s-7);
   justify-items: start;
+  /* LEFT corners only. The panel's right side is deliberately overhung
+     (width runs 8vw past the stage) so it bleeds off the viewport edge —
+     rounding that side would pull a curve into view that has no edge to
+     belong to. The leading edge is the only one the reader actually sees in
+     state 1, so that is the one that gets softened.
+
+     A one-off value rather than a token: --radius (4px) and even --radius-lg
+     (8px) are sized for cards and inputs and simply disappear on a colour
+     field this large. This is the site's single largest surface, so it takes
+     the one radius that reads at that scale.
+
+     js/doubts.js tweens this to 0 on the same tween that takes `left` to 0 —
+     once the fill is full-bleed the corner would otherwise leave a notch of
+     pale page ground at the stage's edge. */
+  border-radius: 28px 0 0 28px;
   will-change: left, width;
 }
 
@@ -4311,6 +4324,9 @@ main {
     --panel-start: 0;
     place-items: center;
     text-align: center;
+    /* Full-bleed here: both vertical edges are off-stage, so there is no
+       leading edge left to round. */
+    border-radius: 0;
   }
 }
 
@@ -5398,9 +5414,46 @@ main {
      There was a third — the opaque fill inside the outlined WHAT, which had to
      match the ground precisely or the letterforms showed as pale boxes. WHAT is
      a solid word now and no longer reads this token. */
-  --services-ground: #fff;
+  --services-ground: #f7fcff;
 
-  background: var(--services-ground);
+  /* The base wash. The atmosphere proper is painted by .services__sky above
+     this; what lives here is only the flat colour the cover mechanism needs
+     (see --cover-ground below) plus a very light vertical lift so the section
+     is never bare white behind a failed/blurless layer. */
+  background:
+    /* Matches .services__sky's ground ramp stop for stop. The sky paints over
+       this, so the two must agree - if they disagree, a browser without
+       backdrop-filter (or any moment the sky has not painted) shows a
+       different top-to-bottom shading than the design. */
+    linear-gradient(
+      180deg,
+      /* PURE WHITE, HELD ALL THE WAY THROUGH THE WORDMARK BAND.
+
+         This is the fix for "there is so much white space at the top now". The
+         band above the type is 118px and has ALWAYS been 118px - it is
+         unchanged from the original. What changed is that it became VISIBLE:
+         the original section was pure white, so that empty band was
+         indistinguishable from the section above it and the eye read the
+         section as beginning at the wordmark. Tint it even slightly and the
+         same empty band acquires an edge, and an empty band you can SEE reads
+         as wasted space.
+
+         So the ramp holds #ffffff down to 34% - past the overshoot (96px),
+         past the band (118px) and through the wordmark itself (to 458px) -
+         and only then begins to lift. The section still meets the one above it
+         on white, exactly as it used to, and the colour arrives where it is
+         actually wanted: behind the cards, for the glass to sample. */
+      #ffffff 0%,
+      #ffffff 28%,
+      #fdfeff 40%,
+      #f8fbfe 52%,
+      #f1f8fd 64%,
+      #e9f4fc 78%,
+      #e1effa 90%,
+      #dcedfa 100%
+    );
+  /* .doubts-cover paints --cover-ground and MUST be opaque - so it gets the
+     flat token, not the gradient. */
   --cover-ground: var(--services-ground);
   /* No borders at all. A top border would draw a hairline across the seam the
      overshoot exists to hide, and the bottom one read as an unwanted rule under
@@ -5419,6 +5472,178 @@ main {
    So the distribution is `center` with the gap doing the separating. The two
    rows sit as a group in the middle of the viewport, which is the same optical
    result the three-row version produced without the element that anchored it. */
+/* --- THE ATMOSPHERE ------------------------------------------------------
+
+   Everything the reference's background does, built from gradients, blurred
+   shapes and one inline SVG - deliberately NOT a raster image, so it scales to
+   any viewport, costs no request and stays crisp on any DPR.
+
+   It is also what makes the glass work. backdrop-filter has nothing to blur
+   over a flat fill; the cards read as frosted only because there is structure
+   - waves, blooms, colour steps - passing behind them.
+
+   Stacking inside .services (isolation: isolate):
+     .services__sky      z 0   the whole atmosphere
+     .services__inner    z 1   wordmark, aside, cards */
+.services__sky {
+  position: absolute;
+  /* Covers the overshoot too, so the atmosphere reaches the section's painted
+     top edge rather than starting below it and leaving a white band. */
+  inset: calc(var(--overshoot) * -1) 0 0;
+  z-index: 0;
+  pointer-events: none;
+  /* The sky must clip its own blobs: they are deliberately larger than the
+     section and would otherwise widen the document. `clip` keeps both axes
+     honest here - unlike the section, this layer has nothing to overflow
+     vertically on purpose. */
+  overflow: hidden;
+
+  /* THE MESH.
+
+     THE WHITE IS NOT A RADIAL ANY MORE, and that is the whole fix for the
+     "huge white gap at the top" this layer used to show.
+
+     It was two big white ellipses centred just off the top edge. But this
+     layer is the section PLUS the overshoot - ~1092px at a 900px viewport - so
+     an ellipse 70% of that tall bled ~760px of near-opaque white straight down
+     the section: it painted out the entire wordmark band and then stopped
+     abruptly, right where the cards begin. The result was a tall white slab
+     above a hard blue edge, which reads as a large empty gap that the old pure
+     white section never showed (white on white is invisible; white on blue is
+     a band).
+
+     The white is now carried by the vertical wash BELOW instead, which shades
+     continuously from near-white at the top to cyan at the foot with no edge
+     anywhere. The radials that remain are blue only, they sit low, and every
+     one of them fades to zero well inside the layer - so nothing paints a
+     horizontal boundary across the middle of the section. */
+  background:
+    /* The blue belongs BEHIND THE CARDS, low and to both sides - that is what
+       the glass samples, and what makes the panes read as translucent rather
+       than as pale boxes on a pale ground. Kept under 60% opacity and centred
+       low so the wordmark band above stays clean without a white patch. */
+    radial-gradient(85%  46% at 14% 92%,  rgb(196 231 249 / 0.62) 0%, rgb(196 231 249 / 0) 72%),
+    radial-gradient(95%  50% at 90% 95%,  rgb(190 227 248 / 0.58) 0%, rgb(190 227 248 / 0) 70%),
+    radial-gradient(65%  34% at 52% 100%, rgb(206 236 251 / 0.5)  0%, rgb(206 236 251 / 0) 74%),
+    /* THE GROUND, and the only thing that spans the full height. A long,
+       even ramp: white at the very top so the section still meets the one
+       above it on white, then a gradual lift into cyan behind the cards.
+       Every stop is a small step from the last, so there is no visible line
+       anywhere down the section. */
+    linear-gradient(
+      180deg,
+      /* PURE WHITE, HELD ALL THE WAY THROUGH THE WORDMARK BAND.
+
+         This is the fix for "there is so much white space at the top now". The
+         band above the type is 118px and has ALWAYS been 118px - it is
+         unchanged from the original. What changed is that it became VISIBLE:
+         the original section was pure white, so that empty band was
+         indistinguishable from the section above it and the eye read the
+         section as beginning at the wordmark. Tint it even slightly and the
+         same empty band acquires an edge, and an empty band you can SEE reads
+         as wasted space.
+
+         So the ramp holds #ffffff down to 34% - past the overshoot (96px),
+         past the band (118px) and through the wordmark itself (to 458px) -
+         and only then begins to lift. The section still meets the one above it
+         on white, exactly as it used to, and the colour arrives where it is
+         actually wanted: behind the cards, for the glass to sample. */
+      #ffffff 0%,
+      #ffffff 28%,
+      #fdfeff 40%,
+      #f8fbfe 52%,
+      #f1f8fd 64%,
+      #e9f4fc 78%,
+      #e1effa 90%,
+      #dcedfa 100%
+    );
+}
+
+/* THE BLOOMS. Three large, soft, organic shapes carrying the diffuse blue
+   light behind the card row. border-radius in four unequal percentages is what
+   keeps them organic rather than circular; the blur removes any trace of an
+   edge, so nothing here reads as a geometric shape. */
+.services__blob {
+  position: absolute;
+  display: block;
+  border-radius: 46% 54% 60% 40% / 52% 44% 56% 48%;
+  filter: blur(90px);
+  will-change: transform;
+}
+/* Left, behind cards 01-02. */
+.services__blob--a {
+  left: -12%;
+  top: 48%;
+  width: 62%;
+  height: 68%;
+  background: radial-gradient(closest-side, rgb(150 210 240 / 0.55), rgb(150 210 240 / 0));
+  animation: services-drift-a 34s ease-in-out infinite alternate;
+}
+/* Right, behind cards 03-04, slightly cooler and wider. */
+.services__blob--b {
+  right: -16%;
+  top: 44%;
+  width: 66%;
+  height: 74%;
+  border-radius: 58% 42% 45% 55% / 46% 58% 42% 54%;
+  background: radial-gradient(closest-side, rgb(163 217 243 / 0.5), rgb(163 217 243 / 0));
+  animation: services-drift-b 42s ease-in-out infinite alternate;
+}
+/* A high, very pale centre bloom that lifts the middle of the wordmark row. */
+.services__blob--c {
+  left: 26%;
+  /* DROPPED from -18%, then again from 30%. Up there this bloom sat directly
+     behind the wordmark and tinted the band above it - the same band the ramp
+     is now holding pure white, so a bloom overlapping it would put the tint
+     straight back and undo the fix. It now starts below the type. */
+  top: 46%;
+  width: 52%;
+  height: 46%;
+  border-radius: 52% 48% 38% 62% / 60% 40% 60% 40%;
+  background: radial-gradient(closest-side, rgb(214 240 252 / 0.42), rgb(214 240 252 / 0));
+  animation: services-drift-c 38s ease-in-out infinite alternate;
+}
+/* Slow, small, and on transform only - a drift the eye registers as the
+   section breathing, never as motion competing with the copy. */
+@keyframes services-drift-a {
+  from { transform: translate3d(0, 0, 0)          scale(1);    }
+  to   { transform: translate3d(4%, -5%, 0)       scale(1.08); }
+}
+@keyframes services-drift-b {
+  from { transform: translate3d(0, 0, 0)          scale(1.05); }
+  to   { transform: translate3d(-5%, 4%, 0)       scale(1);    }
+}
+@keyframes services-drift-c {
+  from { transform: translate3d(0, 0, 0)          scale(1);    }
+  to   { transform: translate3d(-3%, 6%, 0)       scale(1.1);  }
+}
+
+/* THE FLOWING LINES. The SVG is sized to cover the layer and cropped with
+   `slice`, exactly like an object-fit: cover image, so the curves keep their
+   proportion at any aspect ratio instead of stretching. */
+.services__waves {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  /* Quiet on purpose: these are contour hints, not a pattern. Any stronger and
+     they compete with the card edges for the eye. */
+  opacity: 0.9;
+  /* FADED OUT ACROSS THE TOP. The upper curves ran straight through the
+     wordmark band, and against the now-white top they were the one thing left
+     drawing a horizontal line across it. The mask keeps the lower curves (the
+     ones behind and below the cards) at full strength and dissolves them
+     before they reach the type. */
+  -webkit-mask-image: linear-gradient(180deg, transparent 0%, transparent 34%, rgb(0 0 0 / 0.4) 48%, #000 64%);
+  mask-image: linear-gradient(180deg, transparent 0%, transparent 34%, rgb(0 0 0 / 0.4) 48%, #000 64%);
+}
+
+/* The whole atmosphere is decorative. Under reduced motion it stays - it is
+   the section's ground - but it stops moving. */
+@media (prefers-reduced-motion: reduce) {
+  .services__blob { animation: none; }
+}
+
 .services__inner {
   position: relative;
   z-index: 1;
@@ -5447,7 +5672,29 @@ main {
      is now just breathing room against the top edge — it used to also keep the
      words clear of a decorative dot and ring in this corner, and those are
      gone. */
-  padding: clamp(0.85rem, 2.4vh, 1.75rem) var(--site-margin) clamp(1rem, 3vh, 2rem);
+  /* THE VISIBLE TOP AND BOTTOM, BALANCED.
+
+     A correction to a long-standing asymmetry, and it needs the overshoot
+     explained to make sense. The section's BOX starts 96px above where it is
+     VISIBLE - that is --overshoot, padding painted over the section above to
+     hide the reveal seam. So the box's top padding is not the gap the reader
+     sees; the gap they see is this padding MINUS nothing, measured from the
+     box top, but the box top is itself off-screen.
+
+     Measured properly, from the visible edge down: the wordmark sat 22px below
+     it while the cards sat 118px above the bottom edge - a better than 5:1
+     imbalance. On the old pure-white section neither band was visible and it
+     never showed. On the tinted ground both bands read as real space, and the
+     section looked bottom-heavy with the type jammed against the top.
+
+     The top padding is therefore raised to open a proper band above the
+     wordmark, and align-content stays `start` so that padding is exactly what
+     sets the gap. The remaining slack still collects under the cards, so the
+     two ends now read as a matched pair rather than 22 against 118.
+
+     Bounded in vh so a short viewport tightens both ends together and the
+     section keeps its one-viewport lock. */
+  padding: clamp(1.75rem, 4.4vh, 3rem) var(--site-margin) clamp(1.75rem, 4.4vh, 3rem);
   display: grid;
   grid-template-rows: auto auto;
   /* `start`, not `center`: the pair sits UP against the top padding rather than
@@ -5457,9 +5704,50 @@ main {
 
      The leftover slack now collects at the BOTTOM of the section instead,
      under the cards, which is where it is least visible. */
-  align-content: start;
-  /* The only separator between the wordmark and the cards. */
+  /* `space-evenly`, and this is what keeps the top and bottom bands equal at
+     EVERY viewport height rather than only at the one it was tuned on.
+
+     `start` parked both rows against the top padding and let all the leftover
+     height collect under the cards. That is fine while the cards are still
+     growing with the viewport, but their min-height clamp tops out at 24rem -
+     so past roughly 1000px tall the grid stops absorbing anything and the
+     surplus lands entirely at the bottom. Measured at 1920x1080 that was 84px
+     above the wordmark against 225px below the cards.
+
+     space-evenly divides the free space into equal parts and puts one before
+     the first row, one between the rows and one after the last - so the band
+     above the wordmark and the band under the cards are the same measure by
+     construction, and they stay the same as the viewport grows. The section's
+     own padding below sets the FLOOR for those bands on a short viewport,
+     where there is no free space left to distribute.
+
+     Why not space-between: with two rows it has no middle share to give, so it
+     pushes the wordmark hard against the top and the cards hard against the
+     bottom - the 22px/118px imbalance this is fixing, in reverse. */
+  align-content: space-evenly;
+  /* The MINIMUM separator between the wordmark and the cards. space-evenly
+     supplies more than this whenever the section has height to spare; on a
+     short viewport this is what holds the two rows apart. */
   gap: clamp(1.25rem, 4vh, 3rem);
+}
+
+/* --- THE WORDMARK ROW ----------------------------------------------------
+
+   A positioning context wrapping the wordmark and the top-right paragraph, and
+   the first of .services__inner's two distributed rows.
+
+   It exists so .services__aside can be positioned against the ROW rather than
+   against the section: the row is placed by the inner's own distribution, so
+   the aside follows the wordmark wherever the free space puts it, with no
+   value to keep in sync.
+
+   It deliberately does NOT wrap the words in an extra measured box.
+   services.js reads .services__wordmark's WIDTH as the words' travel distance
+   (wordmarkWidth() -> baseW -> TRAVEL), so that element's geometry has to stay
+   exactly as it was - this wrapper is a sibling context around it, not a
+   change to it. */
+.services__row {
+  position: relative;
 }
 
 /* --- THE WORDMARK ------------------------------------------------------- */
@@ -5700,30 +5988,34 @@ main {
 /* The top-right paragraph. Positioned against the wordmark row so it holds the
    reference's slot without a second grid column. */
 .services__aside {
+  /* ABSOLUTE INSIDE THE WORDMARK ROW - see .services__row.
+
+     The offset that remains is the only one that was ever meant: WHAT's 0.38em
+     drop inside the wordmark box, which is what puts the lede's first line on
+     its cap line. Everything else - where the row itself sits, and how the
+     section's free space is shared above and below it - is the browser's job
+     now, so this cannot drift when the distribution changes.
+
+     Three earlier attempts are worth recording, because each failed for a
+     reason that still applies:
+
+       1. absolute against the SECTION at `inner's top padding + --wm * 0.38`.
+          Correct only while the inner packed to the top with `start`. Once the
+          slack was distributed (space-evenly, which is what equalises the
+          section's top and bottom bands) the wordmark moved with the free
+          space and this sum stopped tracking it.
+
+       2. absolute against .services__wordmark. Its BOX is 1.72em tall and
+          spans the full content width, neither of which is the type - the
+          aside landed above WHAT's cap line and flush to the viewport edge.
+
+       3. a hand-tuned --aside-band fraction of the viewport. The band is not
+          linear in vh: past ~1000px tall the cards' min-height clamp tops out
+          and the distribution's share jumps (48px at 768, 60px at 900, but
+          119px at 1080), so no single clamp fits all three. */
   position: absolute;
-  /* DROPPED TO MEET THE WORDMARK'S FIRST LINE, from top: 0.
-
-     At 0 this block hung from the section's top edge while the wordmark began
-     well below it, so the paragraph floated alone in the upper-right corner
-     with nothing across from it — the two halves of the row read as unrelated.
-
-     The wordmark's caps start at: .services__inner's top padding (this block
-     is positioned against the SECTION, which has none, so the padding has to
-     be added back here) plus WHAT's own `top: 0.38em`, which is 0.38 of --wm.
-     Repeating the padding's clamp rather than referencing a variable because
-     that is what .services__inner declares literally; the two must be changed
-     together.
-
-     Result: the lede's first line sits on roughly the same horizon as WHAT's
-     cap line, so the sentence and the mark read as one row. The CTA follows in
-     normal flow beneath it and comes along automatically. */
-  top: calc(clamp(0.85rem, 2.4vh, 1.75rem) + var(--wm) * 0.38);
-  /* The site margin, not 0. This block is positioned against the section,
-     which carries no gutter of its own, so an inset of 0 put the paragraph
-     hard on the bezel while every other edge on the page respected
-     --site-margin. Mirroring the margin here gives the section a right edge
-     that answers the left one the wordmark starts from. */
-  right: var(--site-margin);
+  top: calc(var(--wm) * 0.38);
+  right: 0;
   z-index: 4;
   max-width: 24ch;
   /* The block is right-aligned in the composition, but its CONTENTS are
@@ -5794,7 +6086,11 @@ main {
   /* Tighter gutters than before. The cards are the substance of this section,
      so at a fixed total width every pixel taken out of the gutter goes into
      the panes themselves. */
-  gap: clamp(0.45rem, 1vw, 0.8rem);
+  /* WIDER than the old tinted panes wanted. Those had a visible hairline and a
+     solid body, so a tight gutter still read as four distinct cards; glass has
+     an almost invisible boundary and needs the air between panes to do that
+     work instead. This is the reference's rhythm. */
+  gap: clamp(0.7rem, 1.35vw, 1.2rem);
 
   /* THE CARDS' HEIGHT, claimed rather than inherited.
      .services__inner distributes its slack with space-between, which puts
@@ -5819,25 +6115,30 @@ main {
   list-style: none;
 }
 
-/* The card keeps the reference's CONSTRUCTION — a soft-cornered pane lit by a
-   gradient bleeding out of one corner — but in the pale end of our palette
-   rather than the screenshot's dark body. Three layers, each behaving
-   differently:
+/* --- THE GLASS CARD ------------------------------------------------------
 
-     1. the tinted body         .service background-color
-     2. the corner glow         .service::before  (brand blue -> teal, top-left)
-     3. the bottom fade         .service::after   (the body tint again, so the
-                                scope list settles into the card the way the
-                                reference's last paragraph does)
+   Apple-style frosted glass, not a tinted panel. Five layers do the work and
+   each one is doing a different job - drop any of them and it stops reading as
+   glass and starts reading as a translucent box:
 
-   The reference's glow is orange because its brand is orange. Ours is the two
-   brand hues in sequence — --accent blue nearest the corner, --accent-2 teal
-   spilling out of it — so the card reads as MedShield rather than as a copy of
-   the screenshot.
+     1. the pane      a near-white -> pale-cyan diagonal at low alpha. Light
+                      enough that the atmosphere behind it is genuinely visible
+                      THROUGH the card, which is the whole effect.
+     2. the blur      backdrop-filter blur + saturate, so the waves and blooms
+                      passing behind the card are diffused rather than hidden.
+                      This is what makes the boundary almost invisible.
+     3. the rim       a 1px semi-transparent WHITE border. On this pale ground a
+                      dark hairline would read as a drawn outline; glass has a
+                      lit edge, not a stroked one.
+     4. the inner     an inset white highlight along the top edge - the sheen a
+        highlight     real bevel catches. It is what stops the pane looking flat.
+     5. the float     a soft, wide, low-alpha blue-navy drop. Wide and faint, so
+                      the card reads as hovering above the atmosphere rather
+                      than pasted onto it.
 
-   Because the body is light, every alpha in the stack had to come down with
-   it: on a pale ground the same values that read as "lit" on navy read as
-   "muddy". The glow is roughly a third of its dark-card strength. */
+   The old card's opaque body, corner bloom and bottom veil are gone: all three
+   existed to give a WHITE section a coloured card, and the section now supplies
+   its own colour for the glass to sample. */
 .service {
   position: relative;
   overflow: hidden;
@@ -5845,194 +6146,239 @@ main {
   min-height: 0;
   display: flex;
   flex-direction: column;
-  /* Roomier than the old glass pane, and roomier again now that the wordmark
-     has given height back. The reference's padding is what gives the figure
-     air; a tight card makes the glow look like a border artefact. */
   padding: clamp(1.35rem, 3.6vh, 2.35rem);
-  /* The reference's defining shape: a large, soft, near-squircle radius, not
-     the page's 8px utility corner. In vh so it tracks the card's own height. */
-  border-radius: clamp(16px, 3vh, 26px);
+  /* The reference's shape: a large soft squircle. Clamped so a short viewport
+     never squares it off. */
+  border-radius: clamp(20px, 3.2vh, 28px);
 
-  /* The base the gradients are mixed over. --surface-raised (#FEFEFF) rather
-     than the cooler --surface-sunken it replaced: the two gradient layers now
-     supply all of the card's colour, and a grey base under them dulled the
-     teal. A near-white base keeps the brand hues clean, and the card still
-     separates from the section's pure-white ground because the gradients tint
-     it everywhere. */
-  background-color: var(--surface-raised);
-  /* A navy hairline at low alpha. On a light body the edge has to be DARKER
-     than the fill to exist at all — the white hairline the dark card used
-     would be invisible here. */
-  border: 1px solid rgb(var(--surface-deep-rgb) / 0.10);
-  /* Softer and shallower than the dark card's drop: a pale pane sitting in a
-     heavy shadow reads as cut out and pasted on. The inset top highlight is
-     what gives the light body its slight lift. */
+  /* THE ARROW'S DIAMETER, declared here rather than on .service__go, because
+     .service__list has to reserve room at its foot for the disc to sit in.
+     Two rules, one number.
+
+     SMALLER than it was (was 32-40px). The reservation this drives is what
+     made the card 32px taller than it used to be, which ate the section's
+     bottom gap and broke the 118px/118px symmetry the top and bottom used to
+     have. A smaller disc is also closer to the reference's proportion. */
+  --go: clamp(28px, 3.6vh, 34px);
+
+  /* 1. THE PANE. Translucent, and it must STAY translucent - an opaque
+     background-color here would give backdrop-filter nothing to show. */
+  background: linear-gradient(
+    145deg,
+    rgb(255 255 255 / 0.58) 0%,
+    rgb(238 250 255 / 0.40) 46%,
+    rgb(206 236 250 / 0.26) 100%
+  );
+
+  /* 2. THE BLUR. saturate() above 100% is what keeps the blues behind the card
+     from washing out to grey as they diffuse - blur alone desaturates. */
+  -webkit-backdrop-filter: blur(26px) saturate(135%);
+  backdrop-filter: blur(26px) saturate(135%);
+
+  /* 3. THE RIM, white rather than navy. */
+  border: 1px solid rgb(255 255 255 / 0.72);
+
+  /* 4 + 5. The float and the inner highlight, in one stack.
+     The last inset is a faint blue lower-edge line - the colour a glass pane
+     picks up from what is under it, and what stops the bottom of the card
+     dissolving into the background. */
   box-shadow:
-    0 12px 28px -10px rgb(var(--surface-deep-rgb) / 0.16),
-    0 2px 6px rgb(var(--surface-deep-rgb) / 0.06),
-    inset 0 1px 0 rgb(255 255 255 / 0.9);
+    0 24px 54px -18px rgb(20 80 120 / 0.20),
+    0 6px 16px -6px rgb(20 80 120 / 0.10),
+    inset 0 1px 1px rgb(255 255 255 / 0.85),
+    inset 0 -1px 1px rgb(190 224 242 / 0.45);
 }
 
-/* THE GLOW. An off-card radial centred past the top-left corner, so what shows
-   inside the card is the gradient's flank — the reference's light comes from
-   outside the frame, which is why it has no visible hot spot.
-
-   TWO gradients, not one, and this is what keeps colour in the whole body:
-
-     1. the corner bloom — brand blue, strongest at the top-left, running to
-        100% instead of dying at 84%. Stopping it short was what left the
-        lower third of the card reading as flat white.
-
-     2. a full-card wash — the SAME blue on a low-alpha diagonal under the
-        bloom. A radial alone can only ever be strong in one place; the wash
-        is what gives the far corner a tint to fade INTO, so the body stays
-        coloured edge to edge rather than falling off to the bare surface
-        token.
-
-   Both layers are one hue and vary only in alpha, so the card reads as a
-   single light source coming in from the top-left rather than a two-colour
-   blue→teal gradient.
-
-   Layer order is painting order: the bloom is listed first and therefore sits
-   on top of the wash. */
+/* A specular top-left highlight, painted INSIDE the pane rather than as a
+   border - the soft bright corner every real frosted panel has where the light
+   meets it. Faint by design: at any strength it becomes a gradient card again. */
 .service::before {
   content: "";
   position: absolute;
   inset: 0;
-  /* z-index 0, not -1. The card creates its own stacking context
-     (isolation:isolate), so a negative index would paint the glow BEHIND the
-     card's own background-color and it would never be seen. 0 puts it above
-     the fill and below the content, which is at z-index:1. */
   z-index: 0;
   pointer-events: none;
+  border-radius: inherit;
   background:
-    /* 1. the corner bloom — ONE hue, brand blue, fading only in alpha. */
-    radial-gradient(
-      ellipse 145% 125% at 6% -14%,
-      rgb(var(--accent-rgb) / 0.40) 0%,
-      rgb(var(--accent-rgb) / 0.28) 20%,
-      rgb(var(--accent-rgb) / 0.20) 45%,
-      rgb(var(--accent-rgb) / 0.12) 68%,
-      rgb(var(--accent-rgb) / 0.07) 100%
-    ),
-    /* 2. the full-card wash — the SAME blue, strongest at the top-left and
-       thinning towards the opposite corner, so the light reads as one source
-       from the top left rather than two hues meeting in the middle. */
-    linear-gradient(
-      152deg,
-      rgb(var(--accent-rgb) / 0.14) 0%,
-      rgb(var(--accent-rgb) / 0.10) 38%,
-      rgb(var(--accent-rgb) / 0.07) 72%,
-      rgb(var(--accent-rgb) / 0.05) 100%
-    );
+    radial-gradient(120% 80% at 4% -6%,   rgb(255 255 255 / 0.55) 0%, rgb(255 255 255 / 0) 58%),
+    radial-gradient(90% 70%  at 96% 108%, rgb(198 232 249 / 0.35) 0%, rgb(198 232 249 / 0) 60%);
 }
 
-/* THE FADE. A pale veil across the card's foot, so the scope list — the
-   smallest, quietest type on the pane — is not fighting the gradient for
-   legibility. On a light body it has to be the PALE surface, not navy: a navy
-   veil here would darken the foot into a bruise rather than calming it.
+/* No bottom veil any more. The old ::after painted an opaque pale wash across
+   the card's foot to rescue the scope list from the corner bloom; there is no
+   bloom now, the list sits on glass, and an opaque band there would put a
+   visible horizontal seam across the pane. Neutralised rather than deleted so
+   nothing else in the cascade can resurrect it. */
+.service::after { content: none; }
 
-   Deliberately WEAKER and SHORTER than it was (0.94 over 46% of the card).
-   At those values it was erasing the gradient across nearly half the pane,
-   which is most of why the body read as white. At 0.55 over 34% it takes the
-   edge off the wash under the list and leaves the colour visible through it —
-   the list ink is --text-secondary at 8.3:1, which has plenty of headroom for
-   a tinted rather than white ground. */
-.service::after {
-  content: "";
+/* --- THE ORB -------------------------------------------------------------
+   The icon container: a small circle of the same glass as the card, brighter
+   and more blurred, so it reads as a lens sitting ON the pane. Absolutely
+   placed in the top-right corner, out of flow, so the number and the title
+   keep the card's normal vertical rhythm regardless of it. */
+.service__orb {
   position: absolute;
-  inset-inline: 0;
-  bottom: 0;
-  height: 34%;
-  /* Above the glow (0) so it can veil the glow's spill as well as the fill,
-     still below the content (1). */
-  z-index: 0;
+  top: clamp(0.9rem, 2.2vh, 1.5rem);
+  right: clamp(0.9rem, 2.2vh, 1.5rem);
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  width: clamp(50px, 8.2vh, 72px);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background:
+    radial-gradient(closest-side at 32% 26%, rgb(255 255 255 / 0.9) 0%, rgb(255 255 255 / 0.28) 62%, rgb(255 255 255 / 0.1) 100%),
+    linear-gradient(150deg, rgb(228 245 254 / 0.7), rgb(178 219 245 / 0.45));
+  -webkit-backdrop-filter: blur(14px) saturate(140%);
+  backdrop-filter: blur(14px) saturate(140%);
+  border: 1px solid rgb(255 255 255 / 0.8);
+  /* The glow. An outer bloom in pale brand blue at low alpha is what turns a
+     translucent disc into a lit orb; the inset is its own top-edge bevel. */
+  box-shadow:
+    0 10px 24px -6px rgb(20 80 120 / 0.24),
+    /* THE BLOOM. Two rings, not one: a tight bright halo hugging the rim and a
+       wide soft one spreading past it. A single shadow can be tight or wide but
+       not both, and it is the pair that reads as a lit orb rather than as a
+       disc with a shadow. */
+    0 0 0 6px rgb(190 226 247 / 0.30),
+    0 0 34px 6px rgb(126 192 236 / 0.45),
+    inset 0 1px 2px rgb(255 255 255 / 0.95);
+  color: var(--accent);
   pointer-events: none;
-  background: linear-gradient(
-    to bottom,
-    rgb(250 251 252 / 0),
-    rgb(250 251 252 / 0.34) 55%,
-    rgb(250 251 252 / 0.55)
-  );
+}
+.service__orb svg {
+  width: 44%;
+  height: 44%;
+  display: block;
+  /* A whisper of a drop so the thin 1.4px strokes hold their edge against the
+     bright centre of the orb. */
+  filter: drop-shadow(0 1px 1px rgb(255 255 255 / 0.7));
 }
 
-/* The number becomes the reference's outlined pill in the card's top row —
-   the one element up there that is a shape rather than text. Teal outline,
-   teal ink: --accent-2-ink is the palette's teal-as-TEXT value, 4.8:1 on the
-   light ground. Not the raw --accent-2, which the palette reserves for rules
-   and marks and which measures 2.68:1 — too low for a label. */
+/* --- CARD TYPE -----------------------------------------------------------
+   The number is the reference's quiet index, not the old outlined pill: a
+   small blue numeral with a short rule under it. The pill carried its own
+   near-opaque white ground to survive the corner bloom, and on glass that chip
+   read as a sticker. */
 .service__num {
   align-self: flex-start;
   font-family: var(--font-display);
-  font-size: clamp(0.62rem, 1.25vh, 0.75rem);
+  font-size: clamp(0.8rem, 1.7vh, 1rem);
   font-weight: 700;
-  letter-spacing: 0.14em;
-  color: var(--accent-2-ink);
-  margin: 0 0 clamp(0.9rem, 2.4vh, 1.6rem);
-  padding: 0.35em 0.85em;
-  /* rgba() with the COMMA-separated channel token — --rgb-accent-2 is stored
-     as "32, 176, 168", so the slash-alpha rgb() form would not parse. */
-  border: 1px solid rgba(var(--rgb-accent-2), 0.5);
-  border-radius: 999px;
-  /* NEARLY OPAQUE, and that is a contrast requirement rather than a style
-     choice. The pill sits in the top-left corner — precisely where the bloom
-     is densest — and against that ground the teal label measures 2.26:1. The
-     pill therefore carries its own near-white ground so the label is read
-     against THAT (4.6:1) instead of against the gradient. A translucent chip
-     here is the one thing on the card the glow is not allowed to reach. */
-  background: rgb(255 255 255 / 0.93);
+  letter-spacing: 0.06em;
+  color: var(--accent);
+  margin: 0 0 clamp(0.9rem, 2.4vh, 1.5rem);
+  padding: 0 0 0.4em;
+  background: none;
+  border: 0;
+  /* The short teal underscore under the numeral, as in the reference. */
+  border-bottom: 1.5px solid rgba(var(--rgb-accent-2), 0.6);
+  /* BLOCK, and width-limited. align-self:flex-start already shrinks the box to
+     its content, so the rule was drawn to the numeral's exact width and read as
+     an underline rather than as the reference's short mark. This widens it a
+     little past the digits, and no further - a rule running the card's width
+     would read as a divider. */
+  display: block;
+  width: 2.4em;
+  border-radius: 0;
 }
 
-/* The oversized figure line. In the reference this is the one element the eye
-   lands on first, so it takes the biggest jump in the card's type scale.
-   Brand navy at full strength on the pale body. */
 .service__title {
   font-family: var(--font-display);
-  font-size: clamp(1.18rem, 2.9vh, 1.62rem);
+  font-size: clamp(1.1rem, 2.6vh, 1.45rem);
   font-weight: 700;
-  line-height: 1.12;
+  line-height: 1.14;
   letter-spacing: -0.015em;
+  /* Dark navy, full strength. It is the highest-contrast ink on the pane and
+     the thing the eye lands on first. */
   color: var(--surface-deep);
-  margin: 0 0 clamp(0.45rem, 1.2vh, 0.75rem);
+  margin: 0 0 clamp(0.4rem, 1.1vh, 0.7rem);
+  /* Clears the orb on the first line at every card width. */
+  padding-right: clamp(0.5rem, 2vw, 1.5rem);
 }
-/* The promise line. Still no teal rule — weight and ink carry the hierarchy,
-   which is how the reference separates its two paragraphs, and a rule would
-   now compete with the pill above it. */
+/* Muted navy-blue-grey, one weight down from before: on glass a 600 body line
+   crowded the title it sits under. */
 .service__get {
-  font-size: clamp(0.84rem, 1.8vh, 1rem);
-  font-weight: 600;
-  line-height: 1.4;
-  color: var(--surface-deep);
-  margin: 0 0 clamp(0.5rem, 1.4vh, 0.9rem);
+  font-size: clamp(0.82rem, 1.75vh, 0.97rem);
+  font-weight: 500;
+  line-height: 1.45;
+  color: var(--text-secondary);
+  margin: 0 0 clamp(0.7rem, 1.8vh, 1.1rem);
 }
-/* The scope list replaces the old body paragraph: same information, scannable,
-   and it costs a predictable number of lines instead of a variable wrap.
-   margin-top:auto pins it to the card's bottom so all four align. */
-/* margin-top:auto pins the list to the bottom of the pane, so the four cards'
-   rule-sets align on a common baseline however long their titles wrap. The
-   panes are equal-height siblings (align-items:stretch), and any slack is
-   small now that the row is auto-sized — so this aligns rather than leaving
-   the big mid-card dead band the 1fr row used to produce. */
+
+/* THE LIST. One thin divider ABOVE the whole list, not a rule per row - the
+   reference separates the block, then relies on spacing inside it. The old
+   per-item border-top read as a table on a glass pane.
+
+   margin-top:auto still pins the list to the card's foot, so all four cards'
+   dividers align on one baseline however long their titles wrap. */
 .service__list {
   margin: auto 0 0;
-  padding: 0;
+  /* The BOTTOM padding keeps the arrow off the last list item.
+
+     It reserves ~60% of the disc rather than its full diameter plus air. The
+     full reservation added 32px to the card, which is exactly what broke the
+     section's top/bottom symmetry (118px above the cards, only 86px below).
+
+     A partial reservation is enough because the disc is RIGHT-ALIGNED and the
+     scope lines are short. The last row's LINE BOX runs the full column width
+     and does overlap the disc's box, but the line box is mostly empty space:
+     measured across all four cards the actual glyphs stop 124-175px short of
+     the disc's left edge, so nothing legible is ever behind it. Reserving the
+     full diameter would only be buying clearance from blank space - and it
+     cost 32px of card height, which is what broke the section's 118/118
+     top-to-bottom symmetry. */
+  padding:
+    clamp(0.7rem, 1.8vh, 1.1rem)
+    0
+    calc(var(--go) * 0.45)
+    0;
   list-style: none;
-  font-size: clamp(0.78rem, 1.65vh, 0.92rem);
-  line-height: 1.55;
-  /* The footnote tier of the reference's card. --text-secondary is 8.3:1 on
-     the light ground — quiet, but it is the ONLY thing carrying each service's
-     scope, so it does not get pushed below AA the way the reference's does. */
+  font-size: clamp(0.76rem, 1.6vh, 0.9rem);
+  line-height: 1.5;
   color: var(--text-secondary);
+  /* White over blue: the divider has to be brighter than the glass to be seen
+     without being drawn. */
+  border-top: 1px solid rgb(255 255 255 / 0.65);
 }
 .service__list li {
-  padding-top: 0.3em;
-  /* An alpha rule, not --border: it sits on a tinted pane under the fade
-     veil, so a solid hairline would read heavier here than on the page. */
-  border-top: 1px solid rgb(var(--surface-deep-rgb) / 0.11);
+  padding-top: 0;
+  border-top: 0;
 }
-.service__list li + li { margin-top: 0.3em; }
+.service__list li + li { margin-top: clamp(0.3em, 0.9vh, 0.5em); }
 
-/* The travelling highlight, parked off the left edge until JS sweeps it. */
+/* --- THE ARROW -----------------------------------------------------------
+   A small glass disc in the card's bottom-right corner, the same material as
+   the orb at a smaller size. Decorative (aria-hidden in the markup): the
+   section is not a set of links, so this is the reference's affordance without
+   an empty control in the tab order. */
+.service__go {
+  position: absolute;
+  right: clamp(0.9rem, 2.2vh, 1.4rem);
+  bottom: clamp(0.9rem, 2.2vh, 1.4rem);
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  width: var(--go);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: linear-gradient(150deg, rgb(255 255 255 / 0.8), rgb(232 246 254 / 0.5));
+  -webkit-backdrop-filter: blur(10px) saturate(130%);
+  backdrop-filter: blur(10px) saturate(130%);
+  border: 1px solid rgb(255 255 255 / 0.8);
+  box-shadow:
+    0 6px 14px -4px rgb(20 80 120 / 0.2),
+    inset 0 1px 1px rgb(255 255 255 / 0.9);
+  color: var(--accent);
+  pointer-events: none;
+  transition: transform 0.28s cubic-bezier(0.22, 1, 0.36, 1),
+              box-shadow 0.28s ease;
+}
+.service__go svg { width: 46%; height: 46%; display: block; }
+
+/* The travelling highlight, parked off the left edge until JS sweeps it.
+   Weaker than it was: on a translucent pane a strong white sweep blanks the
+   card out mid-run instead of crossing it. */
 .service__sheen {
   position: absolute;
   inset-block: 0;
@@ -6041,14 +6387,10 @@ main {
   z-index: 0;
   opacity: 0;
   pointer-events: none;
-  /* Back up now that the pane is pale again — but not to the old 0.72, which
-     was tuned against a translucent card with page white showing through. On
-     this tinted body 0.55 is enough to read as a highlight crossing the
-     surface without blowing the card out to flat white mid-sweep. */
   background: linear-gradient(
     100deg,
     transparent,
-    rgb(255 255 255 / 0.55) 50%,
+    rgb(255 255 255 / 0.42) 50%,
     transparent
   );
   transform: translateX(-140%) skewX(-14deg);
@@ -6056,11 +6398,11 @@ main {
 /* --- HOVER: a small lift with a single pulse ----------------------------
    Two motions, deliberately different in kind so they don't fight:
 
-     1. a SUSTAINED lift — the card rises 6px and gains a deeper drop for as
+     1. a SUSTAINED lift - the card rises 6px and gains a deeper drop for as
         long as the pointer is on it. This is the state; it must not animate
         on a loop or the row reads as restless.
 
-     2. a ONE-SHOT pulse — a short scale bump that plays once on enter and
+     2. a ONE-SHOT pulse - a short scale bump that plays once on enter and
         settles back to the lifted rest. Both motions share the one transform
         property, so rather than fight over it the keyframes compose them:
         the animation ENDS on exactly the :hover transform value, so nothing
@@ -6068,6 +6410,8 @@ main {
 
    The animation is bound to :hover only, so leaving the card cancels it and
    the transition takes the card back down.
+
+   The arrow nudges right alongside both.
 
    Pointer-only: `@media (hover: hover)` keeps a touch tap from latching the
    lifted state until the next tap elsewhere. */
@@ -6077,17 +6421,18 @@ main {
        keeps the entrance smooth.
 
        A bare `transition: transform` here applies to every transform change on
-       the element — including the ~60 per-second writes GSAP makes while the
+       the element - including the ~60 per-second writes GSAP makes while the
        card is sliding in. Each of those frames would then be re-eased over its
-       own 340ms curve, so the browser is always animating toward a target the
-       tween has already moved past. The result is a soft, laggy, stuttering
-       slide: the classic "CSS transition fighting a JS tween" glitch.
+       own curve, so the browser is always animating toward a target the tween
+       has already moved past: the classic "CSS transition fighting a JS tween"
+       stutter.
 
        .service--arrived is added by services.js only once the card has landed
        and its inline transform has been cleared, so the hover lift gets its
        transition and the entrance never sees one. */
     transition:
       box-shadow 340ms cubic-bezier(0.22, 1, 0.36, 1),
+      background-color 340ms ease,
       border-color 340ms ease;
   }
   .service--arrived {
@@ -6100,22 +6445,33 @@ main {
   .service--arrived:hover,
   .service--arrived:focus-within {
     transform: translateY(-6px);
-    /* The navy hairline goes TRANSPARENT rather than tinted. Lifted off the
-       white ground and scaled by the pulse, that 1px navy edge stopped
-       reading as a hairline and started reading as a hard black outline
-       drawn around the card. The edge is carried by the shadow stack
-       instead, which is soft and cannot alias into a line. Kept as
-       `transparent` and not `border:none` so the box size never changes —
-       removing the border would reflow the card by 1px on hover. */
-    border-color: transparent;
+    /* The rim brightens rather than fading. On glass the lit edge IS the
+       boundary - dropping it, as the opaque card did, dissolves the card's
+       shape at exactly the moment the reader is pointing at it. */
+    border-color: rgb(255 255 255 / 0.9);
     box-shadow:
-      0 22px 44px -14px rgb(var(--surface-deep-rgb) / 0.20),
-      0 4px 12px rgb(var(--surface-deep-rgb) / 0.06),
-      inset 0 1px 0 rgb(255 255 255 / 0.95);
+      0 34px 68px -20px rgb(20 80 120 / 0.26),
+      0 8px 20px -6px rgb(20 80 120 / 0.12),
+      inset 0 1px 1px rgb(255 255 255 / 0.95),
+      inset 0 -1px 1px rgb(190 224 242 / 0.5);
   }
 
+  /* THE EXTRA LIGHT. Carried by the specular layer's OPACITY rather than by
+     the pane's background, because a gradient is not interpolable and an
+     opacity is - so this is one cheap composited property rather than a
+     repaint of the whole card face.
+
+     It rests below full strength for exactly this reason: 0.82 -> 1 is the
+     headroom the hover state has to spend. */
+  .service::before {
+    opacity: 0.82;
+    transition: opacity 340ms ease;
+  }
+  .service--arrived:hover::before,
+  .service--arrived:focus-within::before { opacity: 1; }
+
   .service--arrived:hover {
-    /* forwards so the card rests at the keyframe's end state — identical to
+    /* forwards so the card rests at the keyframe's end state - identical to
        the :hover transform above, so nothing moves when the run finishes.
 
        Gated on --arrived for the same reason as the transition above: a
@@ -6124,19 +6480,27 @@ main {
        overwrite the tween's outright. */
     animation: service-pulse 520ms cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
   }
+
+  .service--arrived:hover .service__go,
+  .service--arrived:focus-within .service__go {
+    transform: translateX(3px);
+    box-shadow:
+      0 8px 18px -4px rgb(20 80 120 / 0.24),
+      inset 0 1px 1px rgb(255 255 255 / 0.95);
+  }
 }
 
-/* The bump: up-and-slightly-bigger, then settle. Peak scale is 1.03 — enough
-   to read as a nudge at card size, small enough that the 1px hairline and the
-   type inside don't visibly resample. */
+/* The bump: up-and-slightly-bigger, then settle. Peak scale is 1.03 - enough
+   to read as a nudge at card size, small enough that the 1px rim and the type
+   inside don't visibly resample. */
 @keyframes service-pulse {
   0%   { transform: translateY(0)     scale(1);    }
   45%  { transform: translateY(-10px) scale(1.03); }
   100% { transform: translateY(-6px)  scale(1);    }
 }
 
-/* Reduced motion: keep the state change (shadow, border) — it is the
-   affordance — and drop the movement entirely. */
+/* Reduced motion: keep the state change (shadow, rim) - it is the affordance -
+   and drop the movement entirely. */
 @media (prefers-reduced-motion: reduce) {
   .service,
   .service--arrived { transition: box-shadow 200ms ease, border-color 200ms ease; }
@@ -6144,11 +6508,22 @@ main {
   .service:focus-within,
   .service--arrived:hover,
   .service--arrived:focus-within { transform: none; animation: none; }
+  .service__go { transition: none; }
+  .service--arrived:hover .service__go,
+  .service--arrived:focus-within .service__go { transform: none; }
 }
 
 /* Real content sits above the sheen — and above both gradient pseudo-layers,
    which are at z-index:-1 inside the card's own stacking context. */
-.service > :not(.service__sheen) { position: relative; z-index: 1; }
+/* The orb and the arrow are EXCLUDED as well as the sheen, and that exclusion
+   is load-bearing: this rule sets `position: relative`, which would override
+   their own `position: absolute` and drop both back into the flex column - the
+   orb landing left of the number instead of in the top-right corner. They
+   carry their own position and z-index (2, above this tier) already. */
+.service > :not(.service__sheen, .service__orb, .service__go) {
+  position: relative;
+  z-index: 1;
+}
 
 /* Cards' resting state while JS drives the entrance.
 
@@ -6195,6 +6570,13 @@ main {
      inherited by the aside as well as the wordmark. */
   .services { --wm: clamp(3rem, 13vw, 6rem); }
   .services__wordmark { height: calc(var(--wm) * 1.7); }
+  /* The atmosphere stays, but its blooms are sized against a viewport-height
+     section; with the height lock released they would otherwise stretch down
+     a very tall stacked column and lose all their density. Pinning the sky to
+     the top two-thirds keeps the light where the content is. */
+  .services__blob--a { top: 22%; height: 40%; }
+  .services__blob--b { top: 16%; height: 44%; }
+  .services__blob--c { top: -8%; height: 34%; }
   .services__grid {
     grid-template-columns: repeat(2, 1fr);
     margin-top: var(--s-6);
@@ -6281,13 +6663,103 @@ main {
 
 .process__header {
   padding-bottom: var(--s-7);
+
+  /* THE HEADER IS A ROW: display line left, the watch link at its foot right.
+
+     baseline is wrong here and end is what is wanted — the link is to sit on
+     the header's BOTTOM edge, level with the last line of the title, and the
+     title is a multi-line display setting whose first baseline is nowhere
+     near it. flex-end puts the two boxes on the same floor, which is what
+     the eye actually reads as "opposite the heading".
+
+     gap is the minimum air between the two; the title's own 24ch max-width
+     (below) is what stops it running into the link on a wide screen. */
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--s-6);
+  flex-wrap: wrap;
 }
+/* The text column has to be a block in its own right so the flex row lays out
+   two children, not three loose ones — otherwise the eyebrow, the title and
+   the link all become siblings on the same axis. */
+.process__headerText { min-width: 0; }
+
 .process__eyebrow { margin-bottom: var(--s-4); }
-.process__title {
-  margin: 0;
-  /* Wide enough for the line to break where the reference's does — after
-     "one point" — rather than turning into four short lines. */
-  max-width: 24ch;
+
+/* --- THE WATCH LINK ------------------------------------------------------
+   Styled to MATCH .services__cta ("Request a proposal" in What we do), not to
+   be its own thing: both are the quiet text-link exit from a section whose
+   real conversion point is elsewhere, so they should read as one recurring
+   control rather than two inventions. Same accent blue, same 650 weight, same
+   sentence case, same border-drawn underline, same arrow nudge.
+
+   It is NOT shared with .services__cta as one class. That one carries layout
+   that belongs to its own column — a margin-top tuned to the lede above it and
+   a vh-tracking font-size sized against the services pane — and neither is
+   right in a flex header row. Only the appearance is common, and appearance is
+   what is restated here.
+
+   WHY NOT THE UPPERCASE MICRO TREATMENT it had before: at --t-micro with
+   letter-spacing it matched .hero__cta-alt instead, which is the on-deep
+   vocabulary. On this light ground the section-level text CTA is the services
+   one, so that is the pattern to follow.
+
+   It is pushed down off the title's floor by a hair (translateY) because the
+   underline sits 0.15em below the text and flex-end aligns the BOX bottoms,
+   which would otherwise hang the rule below the title's baseline. */
+.process__watch {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45em;
+  flex: none;
+
+  font-size: clamp(0.76rem, 1.6vh, 0.9rem);
+  font-weight: 650;
+  line-height: 1.2;
+  white-space: nowrap;
+  text-decoration: none;
+  /* Brand blue, not teal: teal is emphasis on this page, blue is action. */
+  color: var(--accent);
+  /* The underline is drawn by the border so it can sit away from the
+     descenders and animate its colour independently of the label. */
+  border-bottom: 1px solid rgb(var(--accent-rgb) / 0.35);
+  padding-bottom: 0.15em;
+  /* Stated rather than left to the UA default for <a href>. The band below is
+     a marquee with its own pointer handling and the header is clipped and
+     made pointer-events:none through the hand-off (see #process.is-morphing
+     .process__header); declaring the cursor here means the affordance is a
+     property of the control itself and does not depend on either. */
+  cursor: pointer;
+  transform: translateY(-0.1rem);
+  transition: color 0.16s ease, border-color 0.16s ease;
+}
+.process__watch:hover,
+.process__watch:focus-visible {
+  color: var(--accent-hover);
+  border-bottom-color: var(--accent-hover);
+}
+
+/* The arrow nudges on hover — the same one-shot vocabulary as the cards. */
+.process__watchArrow {
+  display: inline-block;
+  transition: transform 0.22s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.process__watch:hover .process__watchArrow,
+.process__watch:focus-visible .process__watchArrow { transform: translateX(3px); }
+
+@media (prefers-reduced-motion: reduce) {
+  .process__watchArrow { transition: none; }
+  .process__watch:hover .process__watchArrow { transform: none; }
+}
+
+/* ON A NARROW SCREEN the row wraps and the link drops under the title. Left
+   is then the correct edge — it is no longer opposite anything, and hanging
+   it on the right would leave it stranded across a gap from the copy it
+   belongs to. The translateY nudge goes with the alignment it was correcting. */
+@media (max-width: 719px) {
+  .process__header { gap: var(--s-4); }
+  .process__watch { transform: none; }
 }
 
 /* --- THE STAGE AREA ------------------------------------------------------
@@ -6698,6 +7170,34 @@ main {
   -webkit-overflow-scrolling: touch;
 }
 .process:not(.process--live) .process__card--clone { display: none; }
+
+/* HOVER HOLDS THE BAND — and says so.
+
+   js/process-marquee.js stops advancing the strip while the pointer is inside
+   the frame (see the `paused` note there). That pause is invisible on its own:
+   a band that simply stops could as easily be a stalled animation. So the card
+   under the cursor lifts a little and deepens its shadow, which reads as "this
+   one is being held" rather than "the section broke".
+
+   Only while .process--live is on. The resting strip is a scroller the reader
+   drags themselves — nothing is paused there, so nothing should claim to be.
+
+   Transform-only + box-shadow, and the transform is a translate on the plate
+   itself: the track's own translate3d is written every frame by JS on the
+   PARENT, so the two compose rather than fight. Guarded on hover:hover so a
+   touch device never sticks a card in the lifted state after a tap. */
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  .process--live .process__card {
+    transition: transform 260ms cubic-bezier(0.22, 0.61, 0.36, 1),
+                box-shadow 260ms cubic-bezier(0.22, 0.61, 0.36, 1);
+    will-change: transform;
+  }
+  .process--live .process__card:hover,
+  .process--live .process__card:focus-within {
+    transform: translateY(-6px);
+    box-shadow: 0 26px 60px -26px rgba(0, 29, 59, 0.46);
+  }
+}
 
 /* --- 05b Process -> Case studies transition ----------------------------- */
 /* The transition has almost no styling of its own, by design: the thing that
@@ -7827,6 +8327,34 @@ main {
   );
 }
 
+/* THE COPY SCRIM.
+
+   The photograph now runs across two thirds of the row, which puts real
+   picture — faces, instruments, window light — directly under the title and
+   the result line. Masking the photo further would only take us back to the
+   washed-out plates it was widened away from, so the contrast is restored
+   from the other side instead: a card-coloured veil sitting BETWEEN the
+   picture (z-index 0) and the copy (z-index 2), strongest at the left edge
+   where the text lives and gone by the time it reaches the right edge where
+   the picture is meant to be at full strength.
+
+   Inert and decorative — it is a rendering of the card's own ground, not a
+   surface of its own. */
+.case--support .case__inner::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background: linear-gradient(
+    90deg,
+    rgba(250, 251, 252, 0.97) 0%,
+    rgba(250, 251, 252, 0.93) 38%,
+    rgba(250, 251, 252, 0.58) 62%,
+    rgba(250, 251, 252, 0) 88%
+  );
+}
+
 /* No between-row rule any more: the gap does the separating. */
 
 /* THE NUMBER CHIP. A small dark filled marker, as in the reference, rather
@@ -7842,6 +8370,9 @@ main {
   border-radius: 2px;
   font-size: 0.7rem;
   letter-spacing: 0.08em;
+  /* Above the photograph and the art, like the rest of the copy. */
+  position: relative;
+  z-index: 2;
 }
 
 /* The teal square inside the chip — the brand accent doing the marking work
@@ -7872,7 +8403,8 @@ main {
      two-line statements. */
   max-width: none;
   position: relative;
-  z-index: 1;
+  /* Above both the art and the photograph. */
+  z-index: 2;
 }
 
 .case--support .case__result {
@@ -7881,7 +8413,7 @@ main {
   line-height: 1.45;
   color: var(--text-secondary);
   position: relative;
-  z-index: 1;
+  z-index: 2;
 }
 
 .case--support .case__figureNum {
@@ -7891,9 +8423,124 @@ main {
   font-variant-numeric: tabular-nums;
 }
 
+/* THE PHOTOGRAPHIC PLATE.
+
+   The right-hand third of each row, bleeding off its right edge — the same
+   corner the line-art occupies, so the two stack into one object rather than
+   competing for the plate: photograph at the bottom, line-art over it, copy
+   over both.
+
+   It is masked to nothing at its left edge instead of being given a hard
+   border, so the picture dissolves into the row's own tint and the rectangle
+   never reads as a thumbnail pasted into a card. The mask is the whole
+   treatment here: without it the images would restore exactly the boxed,
+   three-small-cards-beside-one-big-card look the support rows were designed
+   away from.
+
+   Under the copy at z-index 0 and inert, like the art. */
+.case--support .case__photo {
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  /* Wide enough to be a picture rather than a swatch, but the copy's
+     padding-right only reserves ~4.5rem of it — the rest is under the fade,
+     where text may safely overlap. */
+  width: 58%;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 0;
+  /* Fades out to the LEFT only, and slowly — the picture is at full strength
+     just at the row's right edge and is gone by the time it reaches the
+     titles' measure, so the copy always sits on the plate's own flat tint and
+     never on a face or an instrument.
+
+     The vertical axis is deliberately NOT masked: fading the top and bottom
+     as well detached the picture from its own plate and left it floating in
+     the middle of the row instead of being clipped by the corner, which is
+     what the line-art beside it does. Full-bleed top to bottom, cut only by
+     the plate's overflow. */
+  -webkit-mask-image: linear-gradient(90deg, transparent 0%, rgba(0,0,0,0.4) 22%, rgba(0,0,0,0.9) 45%, #000 62%);
+          mask-image: linear-gradient(90deg, transparent 0%, rgba(0,0,0,0.4) 22%, rgba(0,0,0,0.9) 45%, #000 62%);
+  /* The resting level the hover rule lifts from. It lives on the wrapper so
+     hover is one value for all three rows while each image keeps its own
+     correction underneath. */
+  opacity: 1;
+}
+.case--support .case__photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 42%;
+  display: block;
+  /* Present, not decorative wash. These were held at half opacity and better
+     than half desaturated, which on a near-white card ground left nothing but
+     a grey smudge — the pictures were technically there and effectively
+     invisible. They now carry their own colour; it is the left-edge mask, not
+     a loss of saturation, that keeps them from competing with the copy. */
+  opacity: 1;
+  filter: saturate(1) contrast(1.04);
+}
+
+/* EVENING THE THREE FRAMES OUT.
+
+   Row 02's photograph is a dark operating theatre while 03 and 04 are both
+   bright daylight interiors, so at one shared opacity the first row read as a
+   heavy grey block and the other two as pale washes — three different weights
+   down one column. Lifting 02 and holding the two bright ones back puts the
+   three pictures at the same apparent value, which is the only way a stack of
+   unrelated stock frames reads as one set.
+
+   Keyed off the image's own src so the correction travels with the picture:
+   swap a photograph and its correction goes with it rather than being left
+   attached to whichever row it used to sit in. */
+/* 02 is a dark theatre: it needs LIFTING to sit beside the other two, but
+   nowhere near as far as before — most of what used to be brightness was
+   compensating for an opacity that was itself too low. */
+.case--support .case__photo img[src*="case-surgery"] {
+  opacity: 1;
+  filter: saturate(1.05) contrast(1.02) brightness(1.12);
+  /* Framed off the lamp. Centred, the theatre light sat in the plate's top
+     corner as the brightest point in the whole stack; dropping the crop puts
+     the surgeon rather than the lamp in the visible half. */
+  object-position: center 62%;
+}
+
+/* 03 and 04 are the opposite problem: both are high-key daylight interiors
+   whose whites are the same value as the card itself, so at full strength
+   they still dissolve into the plate rather than reading as pictures. They
+   are DARKENED slightly and given a touch more contrast — the correction is
+   downward here and upward on 02, which is what brings all three to one
+   apparent weight. */
+.case--support .case__photo img[src*="case-review"],
+.case--support .case__photo img[src*="case-consult"] {
+  opacity: 1;
+  filter: saturate(1.05) contrast(1.06) brightness(0.98);
+}
+
+/* Hover lifts the picture a little, in step with the row's own hover — see
+   the .case--support:hover rule further down. */
+/* Hover lifts the picture a little, in step with the row's own hover.
+
+   Done on the WRAPPER, not the image: the per-image corrections below set
+   opacity and filter on the img itself, and a flat hover value there would
+   throw all three back to one weight the moment the pointer touched a row. A
+   multiplier on the parent lifts each of them from wherever it actually
+   sits. */
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  .case--support .case__photo { transition: transform 320ms ease; }
+  /* The pictures now rest at full strength, so there is no opacity left to
+     lift on hover — the lift is a slow push into the frame instead. Scaled
+     from the right edge, which is the one that bleeds, so nothing detaches
+     from the corner as it grows. */
+  .case--support:hover .case__photo { transform: scale(1.04); transform-origin: 100% 50%; }
+}
+
 /* THE LINE-ART PLATE. Large, faint and dashed, bleeding off the right edge
    exactly as in the reference. Decorative only: aria-hidden in the markup and
-   inert here, and it sits UNDER the copy at z-index 0. */
+   inert here, and it sits UNDER the copy at z-index 0. Now over the
+   photograph as well — it is the brand mark ON the picture, which is why its
+   opacity is lifted a touch from the 0.13 it carried against the bare tint. */
 .case--support .case__art {
   position: absolute;
   /* Bigger and set further into the corner than before: in the reference the
@@ -7906,9 +8553,14 @@ main {
   width: 10rem;
   height: 10rem;
   color: var(--accent);
-  opacity: 0.13;
+  /* Up again now the pictures beneath carry their own colour and value: at
+     0.2 the dashed art simply disappeared into a photograph instead of
+     sitting on it. It is a mark ON the image, so it has to hold its own
+     against one. */
+  opacity: 0.38;
   pointer-events: none;
-  z-index: 0;
+  /* Above the photograph, below the copy. */
+  z-index: 1;
 }
 .case--support .case__art svg { width: 100%; height: 100%; display: block; }
 
@@ -7932,12 +8584,50 @@ main {
   .case--support .case__title { font-size: 0.88rem; }
   .case--support .case__art { width: 8rem; height: 8rem; }
   .case--support .case__inner { padding-right: 3.5rem; }
+  /* The rows are at their shortest in this band, so the picture is pulled
+     back to a narrower column to leave the two-line titles their measure. */
+  .case--support .case__photo { width: 48%; }
 }
 
 /* Under 1040px the rows are ordinary stacked blocks and the art would crowd
-   the copy at narrow widths. */
+   the copy at narrow widths.
+
+   The PHOTOGRAPH stays: these rows are full-width here, so there is real
+   estate to the right of a short title, and the picture's left edge is masked
+   to nothing rather than being a hard rectangle the copy could collide with.
+   It is what keeps the three rows from becoming three plain text blocks on
+   phones. */
 @media (max-width: 1039px) {
   .case--support .case__art { display: none; }
+  /* Without the art over it the photograph is the only thing in the corner —
+     and at this width that corner is narrow. The desktop mask, which only
+     reaches full strength at the plate's right edge, spent its whole ramp
+     across a 46% column and left the picture a ghost. Here the fade is
+     compressed into the left third so most of the visible width is the
+     photograph at full strength, and the per-image opacities are lifted with
+     it: on a phone the picture has to carry the row on its own. */
+  .case--support .case__photo {
+    width: 66%;
+    opacity: 1;
+    -webkit-mask-image: linear-gradient(90deg, transparent 0%, rgba(0,0,0,0.8) 10%, #000 22%);
+            mask-image: linear-gradient(90deg, transparent 0%, rgba(0,0,0,0.8) 10%, #000 22%);
+  }
+  .case--support .case__photo img { opacity: 1; }
+  .case--support .case__photo img[src*="case-surgery"] {
+    opacity: 1;
+    filter: saturate(1.05) contrast(1.04) brightness(1.14);
+  }
+  .case--support .case__photo img[src*="case-review"],
+  .case--support .case__photo img[src*="case-consult"] {
+    opacity: 1;
+    filter: saturate(1.05) contrast(1.05) brightness(1);
+  }
+}
+
+/* Very narrow phones: a title wrapping to three lines runs the full width of
+   the row, and there is no corner left to give the picture. */
+@media (max-width: 560px) {
+  .case--support .case__photo { display: none; }
 }
 
 /* Shared bits --------------------------------------------------------------- */
@@ -8015,556 +8705,1398 @@ main {
   .case--support:hover .case__inner { transform: none; }
 }
 
-/* --- 07 Why MedShield --------------------------------------------------- */
+/* --- 07 Why MedShield — scroll-scrubbed reel ----------------------------- */
 
-/* Editorial split, still locked to one viewport. Three fixed zones on a
-   two-column grid — a narrow left rail, a headline block top-right, and the
-   card carousel filling the lower-right quadrant. The asymmetry is the whole
-   composition: the rail is deliberately narrow and the right column is
-   deliberately given the height, so the cards sit low and right with open
-   ground above them. Distinct ground (--surface-sunken) from the pure-white
-   .services section is what separates the two beats without a border.
+/* A tall rail with a one-viewport sticky stage inside it. The rail's HEIGHT
+   is the scrub's timeline: 500svh gives the 240-frame pull-back roughly four
+   viewports of scrolling to play across, which is slow enough to read as a
+   camera move rather than a flicker, and why-scrub.js spends the first and
+   last slices of it parked on a held frame.
 
-   ONLY .why__track translates. The rail and the headline are static — any
-   transform on an ancestor of the viewport would drag the composition along
-   with the cards, which is exactly what this layout must not do. */
+   The rail carries the section's dark ground rather than the stage, so the
+   band reads as one continuous field even before the first frame decodes.
+
+   Content for this section is deliberately absent for now — the reel is
+   being established on its own first. The stage is built to take an overlay
+   layer on top of the canvas when that copy lands. */
 .why {
   position: relative;
-  /* A little over one viewport: at a bare 100svh the card row left a band of
-     dead ground under it and the section read as half-empty. */
-  min-height: calc(100vh + 4rem);
-  min-height: calc(100svh + 4rem);
-  display: flex;
-  align-items: center;
-  /* White, not --surface-sunken: this band was reading as a tinted stop
-     between the white process section above it and the page ground below. */
-  background: #FFFFFF;
-  padding-block: clamp(1rem, 3vh, 2.25rem);
-  overflow: hidden;               /* the carousel's exit lane ends here */
+  height: 500svh;
+  background: #05121D;          /* deep sea, so the hold before frame 0 is
+                                   not a white flash */
 }
 
-.why__layout {
-  width: 100%;
-  display: grid;
-  grid-template-columns: minmax(13rem, 18vw) 1fr;
-  grid-template-rows: auto 1fr;
-  column-gap: clamp(1.5rem, 4vw, 4.5rem);
-  row-gap: clamp(0.5rem, 1.2vh, 1rem);
-  align-items: start;
-  /* height, not max-height: the grid has to CLAIM the section's locked height
-     so its 1fr second row can hand the carousel everything the headline does
-     not use. Left as max-height the grid sized to its content, the row
-     collapsed to the card's own height, and a card grown by its copy then
-     overran the section and was clipped at the bottom. */
-  height: calc(100svh + 4rem - clamp(2rem, 6vh, 4.5rem));
-  max-height: calc(100svh + 4rem - clamp(2rem, 6vh, 4.5rem));
-  min-height: 0;
-}
-
-/* --- LEFT RAIL — spans both rows so the "not us" block can sit low, level
-   with the foot of the card row, rather than floating under the points. */
-.why__rail .eyebrow {
-  /* Scoped to this rail, never the global .eyebrow: the label is dropped off
-     the section's top edge so it does not sit hard against the band's crown,
-     and its bottom margin is pulled in so it reads as a kicker sitting
-     directly on "Why us" rather than floating between the two. */
-  margin-top: clamp(1.6rem, 4vh, 2.8rem);
-  margin-bottom: clamp(0.4rem, 1vh, 0.6rem);
-}
-
-.why__rail {
-  grid-column: 1;
-  grid-row: 1 / span 2;
-  display: flex;
-  flex-direction: column;
-  min-height: 0;
-  /* Sized to its own content, NOT the full column. At height:100% the rail
-     spanned both grid rows and the auto margin below spread its blocks from
-     the section's crown to its floor, leaving the "what we are not" note
-     stranded far under the card row. */
-  height: auto;
-}
-
-.why__rail-title {
-  font-family: var(--font-display);
-  font-size: clamp(1.9rem, 1rem + 2.2vw, 3.1rem);
-  font-weight: 700;
-  line-height: 0.95;
-  letter-spacing: -0.03em;
-  color: var(--text-primary);
-  margin: 0;
-}
-
-/* The support points: hairline marks, not bullets. Filled teal square for the
-   first, hollow for the rest — the same restrained accent language as the
-   card bullets, one notch quieter. */
-.why__points {
-  margin: clamp(1.1rem, 3.2vh, 2.1rem) 0 0;
-  padding: 0;
-  list-style: none;
-  font-size: clamp(0.72rem, 0.2vw + 0.68rem, 0.8rem);
-  line-height: 1.5;
-  color: var(--text-secondary);
-}
-.why__points li {
-  position: relative;
-  padding-left: 1.35em;
-}
-.why__points li + li { margin-top: 0.55em; }
-.why__points li::before {
-  content: "";
-  position: absolute;
-  left: 0;
-  top: 0.5em;
-  width: 7px;
-  height: 7px;
-  border: 1.5px solid var(--accent-2-ink);
-  border-radius: 1px;
-}
-.why__points li:first-child::before { background: var(--accent-2-ink); }
-
-/* Pushed to the foot of the rail by the auto margin — the lower-left anchor
-   of the composition. */
-.notus {
-  /* A fixed gap, not `margin-top: auto` — the auto margin is what pushed this
-     block to the bottom of the section. */
-  margin-top: clamp(1.4rem, 3.6vh, 2.4rem);
-  padding-top: clamp(0.9rem, 2.4vh, 1.6rem);
-  border-top: 1px solid var(--border);
-  color: var(--text-secondary);
-}
-.notus__icon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: clamp(1.9rem, 3.2vh, 2.3rem);
-  height: clamp(1.9rem, 3.2vh, 2.3rem);
-  border-radius: 50%;
-  background: rgb(255 255 255 / 0.93);
-  color: var(--accent-2-ink);
-  border: 1px solid rgba(var(--rgb-accent-2), 0.5);
-  margin-bottom: clamp(0.5rem, 1.2vh, 0.8rem);
-}
-.notus__icon svg { width: 55%; height: 55%; }
-.notus__title {
-  font-size: clamp(0.9rem, 0.3vw + 0.82rem, 1.02rem);
-  font-weight: 700;
-  color: var(--text-primary);
-  margin: 0 0 0.35em;
-}
-.notus__body {
-  font-size: clamp(0.72rem, 0.2vw + 0.68rem, 0.8rem);
-  line-height: 1.55;
-  margin: 0;
-}
-
-/* --- TOP RIGHT — the headline. Fixed; indented from the rail so the eye
-   reads rail, then a band of open ground, then the headline. */
-.why__head {
-  grid-column: 2;
-  grid-row: 1;
-  /* Wide enough to hold "bring MedShield onboard." on ONE line: at 52ch the
-     second line broke again before "onboard." and the headline ran to three
-     lines, losing the two-line shape the <br> is there to set. */
-  max-width: 68ch;
-  padding-left: clamp(0rem, 4vw, 3.5rem);
-  /* Dropped to start level with "Why us" in the rail rather than with the
-     eyebrow above it, so the two columns share one optical top line. Tracks
-     the rail's own top spacing — the eyebrow's margin plus its box. */
-  padding-top: clamp(4.3rem, 9.4vh, 6rem);
-}
-.why__display {
-  font-size: clamp(1.4rem, 0.9rem + 1.7vw + 1vh, 2.35rem);
-  font-weight: 700;
-  line-height: 1.08;
-  letter-spacing: -0.025em;
-  color: var(--text-primary);
-  margin: 0;
-}
-/* --accent-2-ink, not the raw --accent-2: the brand teal is a fill-only hue
-   and is barred from type at any size (see the token block). The ink variant
-   is the text-safe teal and measures 4.8:1 on this band. */
-.why__display-brand {
-  color: var(--accent-2-ink);
-  white-space: nowrap;
-}
-
-.why__lede {
-  margin: clamp(0.5rem, 1.4vh, 0.9rem) 0 0;
-  color: var(--text-secondary);
-  font-size: clamp(0.84rem, 0.5vw + 0.62rem, 0.98rem);
-  line-height: 1.5;
-  max-width: 46ch;
-}
-
-/* --- BOTTOM RIGHT — the carousel -----------------------------------------
-   Anchored to the lower-right quadrant: the cell is bottom-aligned so the
-   card row hangs off the section's baseline the way the reference does.
-
-   The viewport bleeds past the right edge of the shell so the incoming fourth
-   card travels in from outside the measure rather than materialising at the
-   column edge. overflow:hidden here, plus overflow:hidden on .why, is what
-   guarantees no horizontal page scroll from either the bleed or the cards
-   parked off-stage to the right. */
-.why__carousel {
-  grid-column: 2;
-  grid-row: 2;
-  align-self: stretch;
-  min-width: 0;
-  min-height: 0;
-  display: flex;
-  /* End-aligned, then lifted off the floor: the row sits near the section's
-     baseline (rather than centred, which banked a dead band beneath it) but
-     is raised clear of the very bottom edge. */
-  align-items: flex-end;
-  padding-bottom: clamp(1.5rem, 4.5vh, 3rem);
-  padding-left: clamp(0rem, 4vw, 3.5rem);
-}
-
-.why__viewport {
-  --why-bleed: clamp(1rem, 3vw, 3rem);
-  width: 100%;
+/* The pinned viewport. Everything the reader sees in this section lives
+   here; the rail above only supplies the scroll distance. */
+.why-scrub__stage {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  height: 100svh;
   overflow: hidden;
-  padding-block: 0.75rem;         /* room for the card shadow, uncropped */
-  margin-right: calc(-1 * var(--why-bleed));
-  padding-right: var(--why-bleed);
-
-  /* The card queued off-stage is sliced by the clip, and a hard vertical cut
-     through a card face reads as a rendering fault rather than as a frame.
-     Fading the last stretch of the viewport turns that cut into an edge the
-     row travels past. Only the RIGHT end is masked: the left edge is a clean
-     boundary that the exiting card fades through under its own opacity tween,
-     and fading it too would dim the face of the first card on screen. */
-  -webkit-mask-image: linear-gradient(
-    to right,
-    #000 calc(100% - clamp(3.5rem, 8vw, 7rem)),
-    transparent 100%
-  );
-  mask-image: linear-gradient(
-    to right,
-    #000 calc(100% - clamp(3.5rem, 8vw, 7rem)),
-    transparent 100%
-  );
-}
-
-/* Three visible plus gaps, derived from the viewport width — --why-visible is
-   the only thing the breakpoints change to go one-up on mobile. The script
-   measures the rendered card width rather than recomputing this, so the step
-   distance can never drift from the layout. */
-.why__track {
-  --why-gap: clamp(0.85rem, 1.6vw, 1.5rem);
-  --why-visible: 3;
-  display: flex;
-  /* Every card the same height, set by the tallest copy in the set. Without
-     this each card sized to its own body text and the row read as a ragged
-     skyline as it advanced. */
-  align-items: stretch;
-  gap: var(--why-gap);
+  background: #05121D;
+  /* Its own compositor layer. Without this the sticky stage is re-rastered
+     against the page behind it on every scroll tick. */
   will-change: transform;
+  transform: translateZ(0);
 }
 
-/* --- the card ------------------------------------------------------------
-   A picture card. The illustration is NOT a band across the top: it is an
-   oversized figure pinned to the card's bottom-right corner, bleeding past
-   the right and bottom edges so it is cropped by the card rather than framed
-   inside it. The copy — number, title, body — sits over it in the top-left,
-   and the foot rail (tag pill, go button) sits over its lower edge. The face
-   is a vertical mint-to-teal gradient — the palette the supplied artwork was
-   rendered against — so the illustration's own glow continues into the card
-   rather than sitting on a white plate.
-
-   The artwork ships on black. `mix-blend-mode: screen` drops that black to
-   nothing while keeping every teal highlight intact, which is why no cut-out
-   PNG is needed and why the bed must be painted (never transparent) for the
-   blend to have something to lift against. */
-.why-card {
-  position: relative;
-  overflow: hidden;
-  isolation: isolate;
-  flex: 0 0 calc(
-    (100% - (var(--why-visible) - 1) * var(--why-gap)) / var(--why-visible)
-  );
-  display: flex;
-  flex-direction: column;
-  /* `auto`, not `height: 100%`: a percentage height resolves against the
-     track and wins over align-items, which is what left the row ragged. On
-     auto the flex stretch governs and every card matches the tallest.
-
-     The floor is what reserves the lower half for the artwork: the figure is
-     absolutely positioned and so contributes NO height, and without a minimum
-     the card would shrink to its copy and crop the illustration. */
-  height: auto;
-  min-height: clamp(18rem, 52vh, 27rem);
-  padding: clamp(1.1rem, 2.4vh, 1.6rem) clamp(1.05rem, 1.7vw, 1.5rem)
-           clamp(1rem, 2.2vh, 1.45rem);
-  border-radius: clamp(16px, 2.6vh, 24px);
-
-  /* The gradient of the reference: an all-but-white mint at the crown,
-     deepening through the brand teal to a saturated foot. */
-  background-image: linear-gradient(
-    180deg,
-    #EAF9F8 0%,
-    #CFF0EE 30%,
-    #A8E4E2 58%,
-    #7FD6D5 80%,
-    #63CBCC 100%
-  );
-  border: 1px solid rgb(255 255 255 / 0.55);
-  box-shadow:
-    0 18px 34px -20px rgb(var(--surface-deep-rgb) / 0.28),
-    0 1px 3px rgb(var(--surface-deep-rgb) / 0.05);
-  transition: transform 340ms cubic-bezier(0.22, 1, 0.36, 1),
-              box-shadow 340ms cubic-bezier(0.22, 1, 0.36, 1);
-}
-
-/* Kept so the existing sheen markup still has a rule, but no longer swept:
-   the carousel's own travel is the movement in this section, and a second
-   travelling highlight riding on top of it reads as noise. */
-.why-card__sheen {
+/* The canvas is sized in JS (device pixels, capped at DPR 2) and drawn to
+   cover; these rules only place it. display:block kills the inline-element
+   baseline gap that would otherwise leave a hairline under it. */
+.why-scrub__canvas {
   position: absolute;
   inset: 0;
-  z-index: 0;
-  opacity: 0;
-  pointer-events: none;
-}
- /* The figure is excluded BY NAME alongside the sheen: this selector is
-   (0,2,0) and would otherwise beat the (0,1,0) `position: absolute` that
-   hangs the artwork off the card's corner, dropping it back into the flow
-   where it takes a block of height at the top and shoves the copy down. */
-.why-card > :not(.why-card__sheen):not(.why-card__figure) {
-  position: relative;
-  z-index: 1;
-}
-/* The copy keeps its measured height; only the spacer above it gives ground
-   when the card is short. Without this the flex default lets every line box
-   shrink, and the text is what collapses instead of the gap. */
-.why-card__num,
-.why-card__title,
-.why-card__body,
-.why-card__foot { flex: 0 0 auto; }
-
-@media (hover: hover) and (pointer: fine) {
-  .why-card:hover {
-    transform: translateY(-3px);
-    box-shadow:
-      0 26px 44px -22px rgb(var(--surface-deep-rgb) / 0.34),
-      0 1px 3px rgb(var(--surface-deep-rgb) / 0.06);
-  }
-  .why-card:hover .why-card__figure img { transform: scale(1.04); }
-  .why-card:hover .why-card__go {
-    background: var(--surface-deep);
-    color: #fff;
-  }
+  display: block;
+  width: 100%;
+  height: 100%;
 }
 
-/* The illustration: taken out of the flow entirely and hung off the card's
-   bottom-right corner. It is deliberately wider and taller than the space it
-   occupies and is inset NEGATIVELY on the right and bottom, so the card's
-   own overflow:hidden crops it — the artwork runs off the corner instead of
-   sitting in a frame with a visible edge.
-
-   z-index 0 keeps it under the copy; the copy carries z-index 1. */
-.why-card__figure {
+/* The poster carries the section until the first frame is decoded, and IS
+   the section under reduced motion and without JS. Same framing as the
+   canvas, so the hand-off is invisible. */
+.why-scrub__poster {
   position: absolute;
-  z-index: 0;
-  margin: 0;
-  padding: 0;
-  /* The renders carry a wide black margin of their own, so the box has to be
-     pushed well past the corner for the SUBJECT — not the file's edge — to be
-     the thing that bleeds off. */
-  right: -22%;
-  bottom: -16%;
-  width: 104%;
-  /* Kept to the lower portion: the copy now sits at the CARD'S TOP, so the
-     artwork must not reach up behind the title. */
-  height: 70%;
-  pointer-events: none;
-  overflow: visible;
-}
-.why-card__figure img {
+  inset: 0;
   width: 100%;
   height: 100%;
   object-fit: cover;
-  object-position: center;
-  /* screen against the mint bed: the render's black ground goes to nothing
-     and only the teal glass survives. */
-  mix-blend-mode: screen;
-  transform-origin: right bottom;
-  transition: transform 500ms cubic-bezier(0.22, 1, 0.36, 1);
+  /* Fades out rather than cutting, so a slow connection does not snap. */
+  transition: opacity 0.4s linear;
 }
 
-/* The number leads the copy block, which now sits at the card's top — the
-   spacer that follows the body is what pushes the foot rail to the baseline. */
-.why-card__num {
-  font-family: var(--font-display);
-  font-size: clamp(0.82rem, 0.25vw + 0.76rem, 0.95rem);
-  font-weight: 700;
-  line-height: 1;
-  letter-spacing: 0.02em;
-  color: var(--accent-2-ink);
-  margin: 0;
-}
+[data-scrub-ready] .why-scrub__poster { opacity: 0; }
 
-/* The spacer that drops the copy block into the card's lower half, clearing
-   the artwork above it. A `margin-top: auto` on the number did this too, but
-   an auto margin claims ALL the free space before the box is allowed to
-   overflow — on a short viewport it pushed the title and body straight out
-   the bottom of the height-locked card. A flex spacer that is allowed to
-   shrink to nothing gives the same look with none of that: it yields its
-   height back to the copy exactly when the card gets tight. */
-.why-card__spacer {
-  flex: 1 1 auto;
-  min-height: 0;
-  pointer-events: none;
-}
-/* The short rule that trails the figure in the reference. */
-.why-card__num::after {
-  content: "";
-  display: inline-block;
-  width: 0.85em;
-  height: 1px;
-  margin-left: 0.5em;
-  vertical-align: 0.28em;
-  background: currentColor;
-  opacity: 0.6;
-}
-
-.why-card__title {
-  font-family: var(--font-display);
-  font-size: clamp(1.12rem, 0.55vw + 1vh + 0.36rem, 1.65rem);
-  font-weight: 700;
-  line-height: 1.12;
-  letter-spacing: -0.02em;
-  color: var(--surface-deep);
-  margin: clamp(0.3rem, 0.8vh, 0.5rem) 0 clamp(0.25rem, 0.7vh, 0.45rem);
-  /* Wide enough for a two-line title at three-up widths: at 11ch these ran to
-     three lines, and three lines of display type plus a four-line body does
-     not fit the height-locked card. Widened again with the larger size so the
-     bigger type does not buy back the third line. */
-  max-width: 17ch;
-}
-.why-card__body {
-  font-size: clamp(0.78rem, 0.24vw + 0.5vh + 0.4rem, 0.95rem);
-  line-height: 1.5;
-  /* Deep navy at reduced strength, not --text-secondary: the grey token was
-     mixed for the white page and goes muddy on a saturated teal. */
-  color: rgb(var(--surface-deep-rgb) / 0.72);
-  margin: 0;
-  max-width: 30ch;
-}
-
-/* The foot rail: pill left, go button right, riding over the lower edge of
-   the artwork. It follows the body directly — see the note on __num. */
-.why-card__foot {
-  margin-top: clamp(0.5rem, 1.4vh, 0.9rem);
+/* Overlay layer for the copy that will sit on the reel. Empty for now, but
+   the stacking context and the legibility scrim belong to the stage, not to
+   whatever content arrives later. */
+.why-scrub__overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 0.6rem;
+  pointer-events: none;         /* the reel is not interactive; links added
+                                   inside must re-enable this on themselves */
 }
-.why-card__tag {
-  display: inline-flex;
-  align-items: center;
-  padding: 0.42em 0.95em;
+
+
+/* --- the copy over the reel ---------------------------------------------
+   Centred on the stage, the way the reference places it: a small eyebrow
+   sitting directly on a large display line, with the supporting sentence
+   under it.
+
+   THE DRIFT. The copy never parks. --why-y is its position in viewport
+   heights (positive below centre, negative above) and why-scrub.js writes it
+   straight from scroll position, so the block enters from below, keeps
+   climbing while the reel plays, and leaves through the top. --why-in is
+   only the fade at the two ends.
+
+   Deliberately NO transition and NO animation on this element: both would
+   keep it moving after the reader stopped. Being a pure function of scroll
+   is what makes it stop dead the moment the scroll does, wherever it
+   happens to be.
+
+   It is centred by the overlay's own flex, so the transform is the only
+   thing that positions it vertically — one compositor layer, no layout. */
+.why-scrub__copy {
+  --why-in: 0;
+  --why-y: 0.62;
+  position: relative;
+  z-index: 1;
+  width: min(100%, 34rem);
+  margin-inline: auto;
+  padding-inline: var(--s-4, 1rem);
+  text-align: center;
+  color: #FFFFFF;
+  opacity: var(--why-in);
+  /* svh, not vh: matches the stage's own height unit, so the drift is
+     measured against the same viewport the reel is. */
+  transform: translate3d(0, calc(var(--why-y) * 100svh), 0);
+  /* NO will-change here. The lift is over within the section's approach,
+     but a standing will-change keeps this block on its own composited layer
+     for the whole 500svh rail — and every scrub frame then re-composites
+     four text-shadowed lines against the moving canvas underneath. Measured
+     at 1440x900 that cost ~7ms of a ~26ms frame and pushed long frames from
+     23 to 113 over a 200-frame scrub. The promotion is added only while the
+     lift is actually running (see [data-why-lifting]) and dropped after. */
+}
+
+/* Set by why-scrub.js only while --why-in is between 0 and 1. */
+[data-why-lifting] .why-scrub__copy { will-change: transform, opacity; }
+
+/* A soft vertical scrim behind the copy, not over the whole stage: the reel
+   is bright water and cloud, and white type needs a floor under it to stay
+   readable — but darkening the entire frame would flatten the footage. The
+   gradient is on the overlay so the copy itself carries no background box. */
+.why-scrub__overlay::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse 52% 48% at 50% 50%,
+                              rgba(3, 18, 30, 0.62) 0%,
+                              rgba(3, 18, 30, 0.42) 45%,
+                              rgba(3, 18, 30, 0) 78%);
+  opacity: var(--why-scrim, 1);
+  pointer-events: none;
+}
+
+/* Sits on the headline as a kicker, centred, and reversed out of the
+   footage. --accent-2-on-deep is the text-safe teal for dark ground
+   (10.6:1); the ink variant is tuned for white bands and goes muddy here. */
+.why-scrub__eyebrow {
+  margin-top: 0;
+  /* The global .eyebrow ships a --s-4 bottom margin tuned for a left-aligned
+     rail. Centred on a display line this size it reads as stuck to the
+     headline, so it gets its own, larger gap. */
+  margin-bottom: clamp(0.45rem, 1vh, 0.7rem);
+  color: var(--accent-2-on-deep);
+  /* The reel moves under it, so the label needs its own contrast floor. */
+  text-shadow: 0 1px 12px rgba(3, 18, 30, 0.55);
+}
+
+/* A stacked slab, not a sentence: uppercase, heavy, and set on leading
+   tight enough that the four lines read as one mass over the footage.
+
+   line-height is BELOW 1 on purpose. At this weight and in caps there are
+   no descenders to clear, so the normal 1.0-1.1 leaves a gap that breaks
+   the block into four separate lines instead of one shape.
+
+   text-wrap is left alone here — the breaks are hard-coded in the markup,
+   and balance/pretty would fight them. */
+.why-scrub__display {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(1.5rem, 0.7rem + 2.6vw + 0.6vh, 3.1rem);
+  font-weight: 800;
+  line-height: 0.94;
+  letter-spacing: -0.022em;
+  text-transform: uppercase;
+  color: #FFFFFF;
+  text-shadow: 0 2px 26px rgba(3, 18, 30, 0.5);
+}
+
+/* On this ground the brand word takes the on-deep teal (10.6:1 on navy),
+   not the ink teal the white bands use — that one goes muddy over the
+   footage. Its own line in the stack, so no nowrap is needed. */
+.why-scrub__brand { color: var(--accent-2-on-deep); }
+
+/* --- the points ----------------------------------------------------------
+   One at a time, alternating sides of the ship: odd points ride up the left
+   of the frame, even points up the right, each rising from below the fold
+   and leaving through the top. Same gesture as the tagline, so the section
+   reads as one continuous drift.
+
+   Every point occupies the SAME absolutely-positioned band; only --why-pt
+   (its own 0..1 slot, written by why-scrub.js) separates them in time. That
+   keeps the layout static - nothing reflows as they hand over - and means
+   any number of points costs the same.
+
+   No card chrome: a heading and one line straight on the footage. */
+/* --- the driven values ---------------------------------------------------
+   Registered so the engine keeps them as NUMBERS. An unregistered custom
+   property is a token stream: every write is re-parsed and every calc() that
+   reads it is re-resolved from text on the next style pass. These three are
+   written on up to eight elements every animation frame, so that parsing is
+   not free - registering them types the value once and lets the style system
+   treat it as the number it is.
+
+   `inherits: false` matters as much as the type. --why-pt is written per
+   POINT; if it inherited, a write to one would invalidate the subtree under
+   it, and the title, body and icon inside each point would all be dragged
+   into the recalculation for a value only the point itself uses. */
+@property --why-pt {
+  syntax: '<number>';
+  inherits: false;
+  initial-value: 0;
+}
+@property --why-pt-o {
+  syntax: '<number>';
+  inherits: false;
+  initial-value: 0;
+}
+@property --why-side {
+  syntax: '<number>';
+  inherits: false;
+  initial-value: 0;
+}
+@property --why-bow {
+  syntax: '<number>';
+  inherits: false;
+  initial-value: 0;
+}
+@property --why-tilt {
+  syntax: '<number>';
+  inherits: false;
+  initial-value: 0;
+}
+/* The hull anchor's DISTANCE from its fallback, as a percentage of the
+   stage width. Inherited, unlike the rest: it is written once on the
+   section and every point reads the same value. */
+@property --why-hull-d {
+  syntax: '<number>';
+  inherits: true;
+  initial-value: 0;
+}
+
+.why-pts {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  pointer-events: none;
+}
+
+/* The travel. --why-pt runs 0 (below the fold, unseen) -> 1 (gone off the
+   top). 0.5 is the resting line, level with the middle of the stage. Both
+   halves of a pair share the value, so they move in lockstep.
+
+   THE ENTRY CURVE. A point does not slide straight up its own column: it
+   starts further OUT toward its edge and arcs inward as it rises, settling
+   beside the ship. --why-bow peaks in the middle of the approach and is
+   zero once the point is at rest, so the sideways offset is spent by the
+   time it reaches its resting line and unwinds again as it leaves.
+
+   Built from the distance either side of the resting point (0.5), squared
+   so the swing is gentle near the middle and opens up at the extremes -
+   which is what makes it read as a curve rather than a diagonal.
+
+   The vertical run is NOT linear, which is where it parts company with the
+   tagline. The tagline drifts through and out - it has no resting state, so
+   a constant rate is right for it. A point does have one: it sits beside
+   the ship for a beat, and at a constant rate it never actually sits, it
+   sweeps through its resting line at the speed it arrived at and reads as
+   being carried past.
+
+   So why-scrub.js eases --why-pt before writing it (see rise() there). The
+   easing is a reparametrisation, not a hold: the rate drops to about half
+   through the resting line and picks back up at the ends, but it never
+   reaches zero, so the point still drifts rather than parking. --why-pt
+   therefore arrives here already eased, and this transform stays a plain
+   linear mapping of it - all three of the driven values are keyed to the
+   same eased position, so the rise, the bow and the tilt cannot drift out
+   of step with one another. */
+.why-pt {
+  position: absolute;
+  top: 50%;
+  width: min(30%, 20.5rem);
+  color: #FFFFFF;
+  --why-side: 0;                 /* -1 left, +1 right, 0 centre */
+  opacity: var(--why-pt-o, 0);
+  /* --why-bow is the entry curve's MAGNITUDE, 0 at the resting line and 1
+     at either end of the travel. It is written by why-scrub.js rather than
+     derived here with calc(): it is a raised cosine, which is flat at both
+     ends, and the polynomials calc() can express cheaply are not - see the
+     long note on bow() in that file for why that difference is the whole
+     of the "harsh finish" problem.
+
+     It is always positive, so multiplying by --why-side pushes the point
+     OUTWARD, away from the hull, at both ends of its travel. Sign matters:
+     an inward bow would swing the block across the ship on the way in,
+     which is the one path it must not take.
+
+     7vw, not the 12vw the old polynomial used. A curve that is flat at both
+     ends spends far more of its range in the middle - at the same amplitude
+     this one would stand the point three times further off the hull through
+     the body of the approach. 7vw matches the old peak offset while keeping
+     the motion evenly spread. */
+  /* THE ANCHOR RIDES IN HERE, NOT IN left/right.
+
+     --why-hull-d is how far the measured hull edge currently sits from the
+     fallback the layout is pinned to, in percent of the stage - always
+     negative or zero, since the fallback IS the widest case. Multiplying by
+     --why-side turns it into a signed offset that pulls both columns
+     inward, toward the centre, as the ship narrows.
+
+     The unit is vw, NOT %. A percentage in a transform resolves against the
+     ELEMENT'S OWN width, and the point is min(30%, 20.5rem) wide - about a
+     fifth of the stage - so a stage-relative measurement expressed as % is
+     silently scaled down by roughly five. The stage is full-bleed, so vw is
+     the unit that actually matches what was measured (it is what the bow
+     term beside it uses for the same reason).
+
+     It used to be part of `right`/`left` instead, and that was the source
+     of a visible shake as a point settled. Two reasons, both fixed by
+     moving it here. First, those properties are LAYOUT, so every change had
+     to be rationed - the script only committed one after the anchor had
+     drifted 0.06%, which on a wide stage is a ~1px jump, and consecutive
+     commits could land up to 10px apart. Stepping like that is invisible
+     while a block is travelling fast and painfully obvious once it settles,
+     because then there is nothing else moving to hide it. Second, layout
+     and the compositor are different pipelines: the vertical travel is a
+     transform and the sideways anchor was not, so the two halves of the
+     point's position could resolve on different frames and pull against
+     each other.
+
+     As a transform term it is composited like everything else, costs
+     nothing to write every frame, and moves in lockstep with the rise. */
+  transform:
+    translate3d(calc(var(--why-bow, 0) * var(--why-side) * 7vw
+                     + var(--why-hull-d, 0) * var(--why-side) * 1vw),
+                calc((0.5 - var(--why-pt, 0)) * 125svh),
+                0)
+    rotate(calc(var(--why-tilt, 0) * var(--why-side) * 2deg));
+  transform-origin: 50% 50%;
+  /* Everything that moves while a point is in motion - the travel, the bow,
+     the anchor, the lean and the opacity - is now a compositor property. No
+     layout runs on a scrub frame at all. */
+}
+
+/* Anchored to their own side of the centre, clear of the hull running up
+   the middle of the shot, and told which way to bow out. */
+/* Anchored to the hull as it actually is at that moment, not to its widest.
+
+   The ship is not a constant width down the reel: measured off the frames,
+   the hull spans 30.9%..69.5% at frame 001 and only 44.9%..54.8% by frame
+   120 as the drone climbs away. A single fixed anchor therefore has to be
+   set against the WIDEST moment a point is ever on screen (66.3%, at
+   t=0.22) - which leaves the later pairs stranded far out in open water,
+   because by then the hull has pulled in by more than ten percent of the
+   frame.
+
+   So the anchor is a variable instead. --why-hull below is the static
+   fallback the layout is pinned to - the widest case - and why-scrub.js
+   writes --why-hull-d, the measured edge's signed distance from it, which
+   the transform above applies. The points therefore sit just outside the
+   hull as it actually is and close in as the ship narrows, without any of
+   that movement touching layout. Pinning the static half to the widest case
+   also means the layout is correct before the first measurement lands.
+
+   Note the wake: the foam either side of the hull is bright but neutral,
+   while the decks are warm. The measurement keys off that difference, so
+   the points may cross the spray - which reads as water, not vessel - but
+   never the ship. */
+/* The fallback lives on the SECTION, not here. Declared on .why-pt it would
+   win over the value why-scrub.js writes to the section - a local
+   declaration always beats an inherited one - and the anchor would never
+   move off its widest case. */
+.why {
+  --why-hull: 66.3%;
+}
+.why-pt {
+  /* Clear of the measured hull edge. The measurement samples the frame at
+     one instant, but a block is a rectangle spanning many rows and the reel
+     keeps moving between ticks, so a bare touch-point is not enough - this
+     is the margin that absorbs both. */
+  --why-gap: 2.1%;
+}
+/* Pinned to the FALLBACK, not to the live measurement: this is the static
+   layout position, and the live anchor reaches the point through
+   --why-hull-d in the transform above. Nothing here changes while the reel
+   scrubs, so none of it can trigger a layout pass. */
+.why-pt[data-why-side="left"] {
+  right: calc(var(--why-hull) + var(--why-gap));
+  text-align: right;
+  --why-side: -1;
+}
+.why-pt[data-why-side="right"] {
+  left: calc(var(--why-hull) + var(--why-gap));
+  text-align: left;
+  --why-side: 1;
+}
+
+/* The closing point has no partner and no side to swing from, so it rises
+   straight up the middle over the hull. */
+/* The measure has to sit against the same edge the text is aligned to,
+   or a narrow paragraph drifts away from its own heading. */
+.why-pt[data-why-side="left"]  .why-pt__body { margin-left: auto; }
+.why-pt[data-why-side="right"] .why-pt__body { margin-right: auto; }
+.why-pt[data-why-side="centre"] .why-pt__body { margin-inline: auto; }
+
+.why-pt[data-why-side="centre"] {
+  left: 50%;
+  width: min(56%, 34rem);
+  margin-left: calc(min(56%, 34rem) / -2);
+  text-align: center;
+  --why-side: 0;
+}
+
+/* Promoted only while this point is actually on screen. A standing layer
+   here would be re-composited against the moving canvas for the whole rail
+   - the same reason the tagline's promotion is scoped. */
+.why-pt[data-why-on] { will-change: transform, opacity; }
+
+/* The mark above each point: a line icon drawn to the meaning of that
+   point rather than one generic ornament repeated nine times - a padlock
+   for data security, a shield for compliance, a coin for spend, and so on.
+
+   Stroke-based on a 24x24 grid to match the icons the rest of the site
+   already uses, and taking `currentColor` so it inherits the accent set
+   below rather than carrying its own fill. */
+.why-pt__icon {
+  display: block;
+  width: 1.6rem;
+  height: 1.6rem;
+  margin-bottom: clamp(0.35rem, 0.9vh, 0.6rem);
+  color: var(--accent-2-on-deep);
+  opacity: 0.95;
+  /* The reel moves under it and a 1.7px stroke is thin, so it gets the same
+     contrast floor the type has. */
+  filter: drop-shadow(0 1px 2px rgba(3, 18, 30, 0.75))
+          drop-shadow(0 2px 10px rgba(3, 18, 30, 0.5));
+}
+.why-pt[data-why-side="left"]  .why-pt__icon { margin-left: auto; }
+.why-pt[data-why-side="centre"] .why-pt__icon { margin-inline: auto; }
+
+.why-pt__title {
+  /* A real gap under the heading, as in the reference: the title is a
+     hard uppercase slab and the body a lighter paragraph, and they need
+     air between them to read as two distinct registers rather than one
+     block of text. */
+  margin: 0 0 clamp(1.05rem, 2.4vh, 1.6rem);
+  font-family: var(--font-display);
+  font-size: clamp(1.14rem, 0.46vw + 0.98rem, 1.5rem);
+  font-weight: 900;
+  line-height: 1.14;
+  letter-spacing: 0.012em;
+  text-transform: uppercase;
+  /* A tighter, darker shadow under the wider glow: over bright cloud the
+     glow alone leaves the strokes looking soft, and at this weight the
+     letterforms should read as cut out of the footage. */
+  text-shadow: 0 1px 2px rgba(3, 18, 30, 0.8),
+               0 2px 18px rgba(3, 18, 30, 0.62);
+}
+
+.why-pt__body {
+  margin: 0;
+  /* A measure, not a single long line: at the full column width these ran
+     as one wide sentence that fought the heading above it. ~34ch wraps the
+     copy to two or three lines under the title, which is the shape the
+     reference uses. max-width rather than width so a short line does not
+     leave a gap on the aligned edge. */
+  max-width: 32ch;
+  /* Matched to .why-cta__notus / its lead at the close of the section, so the
+     supporting copy runs at one size across the whole band. It sat a step
+     larger and read as a second heading under the title rather than as the
+     line explaining it. */
+  font-size: clamp(0.8rem, 0.32vw + 0.72rem, 0.95rem);
+  /* 500, not 700. At 700 the body carried nearly as much weight as the
+     900 title above it and the two ran together as one mass; the contrast
+     between a heavy heading and a lighter paragraph is what gives the pair
+     its hierarchy. Still above 400 because it sits on moving footage. */
+  font-weight: 500;
+  line-height: 1.55;
+  color: rgba(255, 255, 255, 0.9);
+  text-shadow: 0 1px 3px rgba(3, 18, 30, 0.8),
+               0 1px 14px rgba(3, 18, 30, 0.6);
+}
+
+/* --- read more ----------------------------------------------------------
+   Each point carries a second paragraph the reader can pull up on hover:
+   the headline claim stays on the footage, the evidence behind it opens in
+   a small card beside it. It is an expansion, not a link - nothing is
+   hidden from the scroll reading, and a reader who never hovers loses
+   nothing.
+
+   THE CURSOR. .why-pts is transparent to the cursor on purpose (the reel
+   behind it has to stay scrollable and the point text must never eat a
+   drag). So pointer-events are restored on the POINT ONLY, and only while
+   it is actually resting on screen - data-why-rest is written by
+   why-scrub.js across the middle of a point's slot. A point mid-flight,
+   or one parked off screen, stays transparent: an invisible block in the
+   travel band must not swallow a scroll gesture.
+
+   And it is not enough for the point to be at rest - the REEL has to have
+   stopped too. data-why-still is set on the section only after the scroll
+   position has held for a dwell (see STILL_MS in why-scrub.js), so a card
+   cannot open during a momentum scroll or between two flicks of a
+   trackpad, and every open card closes on the frame a scroll starts. Both
+   conditions, always, for every rule below that shows the card. */
+.why[data-why-still] .why-pt[data-why-rest] { pointer-events: auto; }
+
+.why-pt__more {
+  position: absolute;
+  top: 100%;
+  z-index: 2;
+  width: max(100%, 17rem);
+  max-width: min(22rem, 82vw);
+  margin-top: 0.6rem;
+  padding: 0.85rem 1rem 0.95rem;
+  text-align: left;
+  /* Chrome, unlike the points themselves: this one is a panel the reader
+     has asked for, so it gets a ground of its own to be read against
+     rather than sitting bare on moving footage. */
+  background: rgba(4, 22, 36, 0.9);
+  -webkit-backdrop-filter: blur(10px) saturate(1.1);
+  backdrop-filter: blur(10px) saturate(1.1);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 0.7rem;
+  box-shadow: 0 12px 34px rgba(3, 18, 30, 0.5);
+  font-size: clamp(0.82rem, 0.22vw + 0.75rem, 0.95rem);
+  font-weight: 500;
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.92);
+  text-shadow: none;
+  /* Closed. visibility, not display: the card has to be able to transition,
+     and it must be out of the hit-testing and the a11y tree while shut. */
+  visibility: hidden;
+  opacity: 0;
+  transform: translateY(0.4rem);
+  transition: opacity 0.22s ease, transform 0.22s ease, visibility 0s linear 0.22s;
+}
+/* Closing because the reader started scrolling again is not the same
+   gesture as moving the cursor off a point. The card should be GONE on
+   that frame - a panel fading out over a fifth of a second while the
+   footage is already moving under it is the exact artefact the still gate
+   exists to prevent. Cursor-off keeps the soft fade above. */
+.why:not([data-why-still]) .why-pt__more {
+  transition: none;
+}
+/* Anchored to the same edge the point's own text is aligned to, so the card
+   opens under the block rather than drifting across the hull. */
+.why-pt[data-why-side="left"]  .why-pt__more { right: 0; }
+.why-pt[data-why-side="right"] .why-pt__more { left: 0; }
+.why-pt[data-why-side="centre"] .why-pt__more { left: 50%; transform: translate(-50%, 0.4rem); }
+
+.why[data-why-still] .why-pt[data-why-rest]:hover .why-pt__more,
+.why[data-why-still] .why-pt[data-why-rest]:focus-within .why-pt__more {
+  visibility: visible;
+  opacity: 1;
+  transform: translateY(0);
+  transition-delay: 0s;
+}
+.why[data-why-still] .why-pt[data-why-rest][data-why-side="centre"]:hover .why-pt__more,
+.why[data-why-still] .why-pt[data-why-rest][data-why-side="centre"]:focus-within .why-pt__more {
+  transform: translate(-50%, 0);
+}
+
+/* The affordance. Without it the card is a secret: a short rule under the
+   title that draws in on hover says the block responds.
+
+   A SHORT rule, and drawn on the ::after rather than as a background on
+   the heading itself. The <h3> is a block filling its column, so a
+   background-size percentage measures the COLUMN, not the words - which
+   put a full-width line under a two-word title. Sizing an inline span to
+   the text instead would fix the width but break on the wrap: these titles
+   run to two or three lines, and an inline background paints one rule per
+   fragment.
+
+   So the rule is a fixed short length - a mark, not an underline. It sits
+   against the same edge the text is aligned to, which is the edge the last
+   line of a wrapped title ends on, so it reads as belonging to the title
+   however that title happens to break. */
+.why-pt__title {
+  --why-uline: 0;
+  position: relative;
+  padding-bottom: 0.5rem;
+}
+.why-pt__title::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 2.2rem;
+  height: 2px;
+  background: currentColor;
+  opacity: 0.85;
+  /* Drawn from the aligned edge outward, so the mark grows away from the
+     text rather than sliding along under it. */
+  transform: scaleX(var(--why-uline));
+  transform-origin: 100% 50%;
+  transition: transform 0.28s ease;
+}
+.why-pt[data-why-side="right"] .why-pt__title::after {
+  right: auto;
+  left: 0;
+  transform-origin: 0 50%;
+}
+.why-pt[data-why-side="centre"] .why-pt__title::after {
+  right: auto;
+  left: 50%;
+  margin-left: -1.1rem;
+  transform-origin: 50% 50%;
+}
+.why[data-why-still] .why-pt[data-why-rest]:hover .why-pt__title,
+.why[data-why-still] .why-pt[data-why-rest]:focus-within .why-pt__title { --why-uline: 1; }
+
+/* Keyboard: the point itself takes focus so the card can be opened without
+   a pointer. A visible ring, because the card is the only thing that says
+   which point is current. */
+.why-pt:focus-visible {
+  outline: 2px solid var(--accent-2-on-deep, #7fd4ff);
+  outline-offset: 0.5rem;
+  border-radius: 0.4rem;
+}
+
+/* The last pair and the closing point sit low enough in the band that a
+   card hanging below them would run off the stage. Those open upward. */
+.why-pt[data-why-flip] .why-pt__more {
+  top: auto;
+  bottom: 100%;
+  margin-top: 0;
+  margin-bottom: 0.6rem;
+  transform: translateY(-0.4rem);
+}
+.why-pt[data-why-flip][data-why-side="centre"] .why-pt__more {
+  transform: translate(-50%, -0.4rem);
+}
+.why[data-why-still] .why-pt[data-why-rest][data-why-flip]:hover .why-pt__more,
+.why[data-why-still] .why-pt[data-why-rest][data-why-flip]:focus-within .why-pt__more {
+  transform: translateY(0);
+}
+.why[data-why-still] .why-pt[data-why-rest][data-why-flip][data-why-side="centre"]:hover .why-pt__more,
+.why[data-why-still] .why-pt[data-why-rest][data-why-flip][data-why-side="centre"]:focus-within .why-pt__more {
+  transform: translate(-50%, 0);
+}
+
+/* --- the close ----------------------------------------------------------
+   The CTA that ends the sequence. It shares the points' vocabulary - white
+   type cut out of the footage, centred over the hull like the ninth point -
+   but not their travel. --why-cta runs 0 -> 1 as it comes up and then HOLDS
+   at 1, so unlike a point it arrives and stays: a control has to be
+   stationary to be clicked.
+
+   The rise is shorter than a point's (28svh, against their 125svh) and
+   without the sideways bow. Both are deliberate. The point travel is long
+   because it is a pass-through - in at the bottom, out at the top - whereas
+   this one only has to cover the distance from just below its resting line,
+   and a control that swings in on a curve reads as decoration rather than
+   as a button. */
+@property --why-cta {
+  syntax: '<number>';
+  inherits: false;
+  initial-value: 0;
+}
+
+.why-cta {
+  position: absolute;
+  left: 50%;
+  bottom: clamp(3rem, 11vh, 7rem);
+  width: min(90%, 30rem);
+  /* Centred on the hull the way the ninth point is, but through the
+     transform rather than a negative margin: the margin would resolve its
+     percentage against the STAGE's width while the box is sized in its own
+     min(), so the two disagree at some viewports and the block sits off
+     centre. -50% of the element's own box is exact at every width. */
+  transform: translate3d(-50%, calc((1 - var(--why-cta, 0)) * 28svh), 0);
+  text-align: center;
+  opacity: var(--why-cta, 0);
+  /* The layer hint is scoped the same way the tagline's and the points' are:
+     a standing layer over the moving canvas is re-composited for the whole
+     rail. Once parked this element is not moving, so it does not need one. */
+  will-change: auto;
+  /* The band above is transparent to the cursor so the reel stays
+     scrollable; the button inside has to take clicks back. */
+  pointer-events: none;
+}
+/* Only while it is actually travelling. */
+.why-cta[data-why-cta-on] { will-change: transform, opacity; }
+
+.why-cta__line {
+  margin: 0 0 clamp(0.85rem, 2vh, 1.35rem);
+  font-family: var(--font-display);
+  font-size: clamp(1.15rem, 0.6vw + 0.95rem, 1.6rem);
+  font-weight: 900;
+  line-height: 1.14;
+  letter-spacing: 0.012em;
+  text-transform: uppercase;
+  color: #FFFFFF;
+  /* Same contrast floor as .why-pt__title - it sits on the same footage. */
+  text-shadow: 0 1px 2px rgba(3, 18, 30, 0.8),
+               0 2px 18px rgba(3, 18, 30, 0.62);
+}
+
+/* WHAT WE ARE NOT. The boundary around the nine claims, sitting between the
+   closing line and the button.
+
+   WIDER THAN THE REST OF THE BAND. .why-cta is min(90%, 30rem), which is
+   right for a short display line and a button - two things that want to be
+   read as one narrow column. Three sentences of prose at that width is a
+   very tall, very thin block sitting over the middle of the footage. The
+   override takes it to 44rem and re-centres it on the parent's own centre
+   line, so the paragraph runs two or three comfortable lines instead of
+   six cramped ones. margin-inline is what does the re-centring: the parent
+   is already translated -50%, so this only has to be symmetrical within it.
+
+   NOT A TITLED BLOCK. The old .notus had a shield icon and an <h3>. Both
+   are dropped: at this size, over moving footage, an icon is a fleck and a
+   heading competes with the display line directly above it. The lead runs
+   inline instead, which is also what makes it read as a caveat spoken under
+   the headline rather than a tenth point. */
+.why-cta__notus {
+  /* Stays inside the band's own column - min(90%, 30rem) from .why-cta -
+     rather than breaking out of it. An earlier pass ran this at 44rem to
+     buy shorter lines; it bought a paragraph noticeably wider than the
+     headline and the button it sits between, which made the band read as
+     three different widths stacked. Sharing the parent's column is what
+     keeps the close reading as one block.
+
+     No width, no positioning: a <p> already fills its parent, and with
+     nothing overhanging there is nothing to re-centre. */
+  margin: 0 0 clamp(1.1rem, 2.6vh, 1.7rem);
+  font-size: clamp(0.8rem, 0.32vw + 0.72rem, 0.95rem);
+  line-height: 1.55;
+  /* Not #FFFFFF. The line above it is white and this must sit UNDER it in
+     the reading order - dropping the body to 82% is what puts it there
+     without changing its size much. */
+  color: rgba(255, 255, 255, 0.82);
+  /* The same contrast floor the line and the points use, since it is on the
+     same footage. Slightly heavier than theirs: this is small text at a low
+     opacity, which is the hardest combination to hold over a bright wake. */
+  text-shadow: 0 1px 2px rgba(3, 18, 30, 0.85),
+               0 2px 14px rgba(3, 18, 30, 0.7);
+  text-wrap: pretty;
+}
+
+/* The lead is a <strong> for the emphasis, not a heading: it is the first
+   clause of the sentence that follows, and marking it up as a heading would
+   put a fourth-level title in the outline between the section's h2 and
+   nothing at all. Full white and the display face, so it still reads as the
+   thing that introduces the sentence. */
+.why-cta__notus-lead {
+  font-family: var(--font-display);
+  font-weight: 800;
+  color: #FFFFFF;
+}
+
+.why-cta__btn {
+  pointer-events: auto;
+  /* Smaller than .btn--sm takes it on its own. The button is the only
+     control in a band that is otherwise all display type over footage, so
+     it does not need the size the in-page CTAs use to hold a flat section -
+     the isolation is doing that work. Kept at 36px rather than going
+     smaller: this is a touch target on a phone, and below ~36px it stops
+     being a comfortable one. */
+  padding: 0.5rem 1.15rem;
+  /* A notch under --t-small (0.875rem); there is no smaller token. */
+  font-size: 0.8rem;
+  min-height: 36px;
+
+  /* Outline only, so the footage reads through it. This is the ONE place on
+     the site that departs from --radius (4px, "clinical, not
+     startup-rounded"): that token is right for a form field or a card edge
+     sitting on a flat panel, but here the button is a lone shape floating
+     over a moving aerial, with no surrounding geometry to be square
+     against. A fully rounded end reads as a deliberate object there where a
+     4px corner just reads as a small rectangle that happens to be
+     see-through. Scoped to this class so the token itself is untouched. */
   border-radius: 999px;
-  background: rgb(255 255 255 / 0.72);
-  color: var(--surface-deep);
-  font-size: clamp(0.66rem, 0.18vw + 0.62rem, 0.74rem);
-  font-weight: 600;
-  line-height: 1.2;
-  letter-spacing: 0.005em;
-  white-space: nowrap;
-  box-shadow: 0 1px 2px rgb(var(--surface-deep-rgb) / 0.06);
-}
-.why-card__go {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  flex: none;
-  width: clamp(2rem, 3.6vh, 2.4rem);
-  height: clamp(2rem, 3.6vh, 2.4rem);
-  border-radius: 50%;
-  background: rgb(255 255 255 / 0.85);
-  color: var(--surface-deep);
-  box-shadow: 0 1px 3px rgb(var(--surface-deep-rgb) / 0.10);
-  transition: background 260ms ease, color 260ms ease;
-}
-.why-card__go svg { width: 48%; height: 48%; }
 
-/* --- tablet: still three up, but the rail tightens and the section releases
-   its height lock — a rail plus three readable cards does not fit a
-   viewport-locked composition much under 1180px. */
-@media (max-width: 1180px) {
-  .why { min-height: 0; align-items: stretch; }
-  .why__layout {
-    max-height: none;
-    grid-template-columns: minmax(11rem, 26vw) 1fr;
-  }
-  .why__carousel { margin-top: clamp(1.5rem, 4vh, 2.5rem); }
-  .why-card { min-height: 19rem; }
-  .why-card__title { max-width: 12ch; }
+  /* A hairline, not the 2px .btn ships. At 2px a transparent button reads
+     as a heavy outline box; the point here is a drawn line. Because the
+     border shrinks, the padding above is widened a touch to keep the label
+     off it. */
+  border-width: 1px;
+  /* Brighter than .btn--ghost's 0.55: that value is tuned for a flat dark
+     panel, and a 1px line at 55% white disappears over the bright cloud and
+     wake this sits on. */
+  border-color: rgba(255, 255, 255, 0.85);
+
+  /* The fill is gone, so the shadow that used to keep a solid button off the
+     footage has nothing to sit on. These do that job instead: a tight dark
+     shadow under the LINE and the LABEL, matching the floor the headline
+     and the points already use, so the button holds over both the white
+     wake and the dark hull without a fill. */
+  box-shadow: 0 1px 3px rgba(3, 18, 30, 0.5);
+  text-shadow: 0 1px 3px rgba(3, 18, 30, 0.75);
+  /* A hint of the footage darkened behind the label, so the type never has
+     to compete with a bright patch of wake directly under it. */
+  background: rgba(3, 18, 30, 0.18);
+  backdrop-filter: blur(2px);
+}
+.why-cta__btn:hover {
+  /* Fills toward white on hover rather than toward the brand blue: the
+     control is defined by its line here, so the line brightening and the
+     inside lifting is the affordance. */
+  background: rgba(255, 255, 255, 0.16);
+  border-color: #FFFFFF;
 }
 
-/* --- mobile: the rail stops being a rail. One column, and the carousel drops
-   to a single card per step — same sequence, same direction, same timing. */
-@media (max-width: 860px) {
-  .why__layout { display: block; }
-  .why__rail { display: block; height: auto; }
-  .why__rail-title { font-size: clamp(2rem, 8vw, 2.8rem); }
-  .notus { margin-top: clamp(1.5rem, 4vh, 2.2rem); }
-  .why__head {
-    max-width: none;
-    padding-left: 0;
-    margin-top: clamp(1.75rem, 5vh, 2.75rem);
-  }
-  .why__carousel {
-    padding-left: 0;
-    margin-top: clamp(1.5rem, 4vh, 2.25rem);
-  }
-  .why__track { --why-visible: 1; }
-  .why-card { min-height: clamp(15rem, 52vw, 19rem); }
-  .why-card__title { max-width: 14ch; }
-  .why-card__body { max-width: 24ch; }
-  .why-card__figure { width: 68%; height: 62%; }
-}
-
-@media (max-width: 860px) {
-  .why__viewport {
-    -webkit-mask-image: none;
-    mask-image: none;
-  }
-}
-
-@media (max-width: 480px) {
-  .why__viewport { margin-right: 0; padding-right: 0; }
-}
-
-/* Motion off: the script parks the track at 0 and never advances it, so the
-   cards become a plain row the reader scrolls by hand. */
+/* Motion off, and with JS off: --why-cta is never written, so the initial 0
+   would hide it. It joins the points as plain content at the end of the
+   list instead. */
 @media (prefers-reduced-motion: reduce) {
-  .why-card { transition: none; }
-  .why-card__figure img { transition: none; }
-  .why__viewport {
-    overflow-x: auto;
-    scroll-snap-type: x mandatory;
-    -webkit-overflow-scrolling: touch;
+  .why-cta {
+    /* static drops the left/bottom anchoring with it. */
+    position: static;
+    width: auto;
+    padding: clamp(1.5rem, 4vh, 2.5rem) 0 0;
+    transform: none;
+    opacity: 1;
+    /* The band is only transparent to the cursor because the reel behind it
+       has to stay scrollable. In normal flow there is nothing behind it to
+       protect, and the button must take clicks. */
+    pointer-events: auto;
   }
-  .why-card { scroll-snap-align: start; }
+}
+.no-js .why-cta {
+  position: static;
+  width: auto;
+  padding: clamp(1.5rem, 4vh, 2.5rem) 0 0;
+  transform: none;
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* --- mobile -------------------------------------------------------------
+   The hull fills more of a phone frame and there is no room beside it, so
+   the points stop hugging the sides and run up the middle instead. The
+   alternation is kept as a slight left/right offset so the sequence still
+   reads as coming from both sides. */
+@media (max-width: 860px) {
+  /* A pair CANNOT sit side by side here - two blocks wide enough to read
+     would overlap into each other on a 390px frame, which is exactly what
+     happened. So the pair stacks instead: the left half rides above the
+     centre line and the right half below it, both still arriving on the
+     same beat and travelling together. The alternation survives as the
+     stagger; only the axis changes. */
+  .why-pt {
+    width: auto;
+    left: 5%;
+    right: 5%;
+    text-align: center;
+    /* Same raised-cosine bow as the desktop rule - --why-bow is written by
+       why-scrub.js and read here unchanged - only the amplitude is smaller,
+       because on a phone the swing is a lean rather than a flank.
+
+       No --why-hull-d term: the columns have collapsed to a centred stack
+       spanning 5%..95%, so the block is not anchored to the hull edge any
+       more and has nothing to track as the ship narrows. */
+    transform:
+      translate3d(calc(var(--why-bow, 0) * var(--why-side) * 2.4vw),
+                  calc((0.5 - var(--why-pt, 0)) * 125svh
+                       + var(--why-side) * 6.4rem),
+                  0);
+  }
+  .why-pt[data-why-side="left"],
+  .why-pt[data-why-side="right"],
+  .why-pt[data-why-side="centre"] {
+    left: 5%;
+    right: 5%;
+    width: auto;
+    margin-left: 0;
+    text-align: center;
+  }
+  /* No hover on a phone, so the card opens on tap through :focus-within -
+     the point is focusable. Centred under the block whichever side it
+     nominally belongs to, since the columns have collapsed. */
+  .why-pt .why-pt__more {
+    left: 50%;
+    right: auto;
+    width: min(22rem, 90%);
+    transform: translate(-50%, 0.4rem);
+  }
+  .why[data-why-still] .why-pt[data-why-rest]:hover .why-pt__more,
+  .why[data-why-still] .why-pt[data-why-rest]:focus-within .why-pt__more {
+    transform: translate(-50%, 0);
+  }
+  .why-pt[data-why-flip] .why-pt__more { transform: translate(-50%, -0.4rem); }
+  .why[data-why-still] .why-pt[data-why-rest][data-why-flip]:hover .why-pt__more,
+  .why[data-why-still] .why-pt[data-why-rest][data-why-flip]:focus-within .why-pt__more {
+    transform: translate(-50%, 0);
+  }
+}
+
+/* Motion off: nothing is scrubbed, so the points cannot take turns in one
+   band - they would all stack on the same spot. Return them to normal flow
+   as a plain list, fully visible. */
+@media (prefers-reduced-motion: reduce) {
+  .why-pts {
+    position: static;
+    display: grid;
+    gap: clamp(1rem, 3vh, 2rem);
+    padding: clamp(1.5rem, 5vh, 3rem) 0 0;
+  }
+  .why-pt {
+    position: static;
+    width: auto;
+    opacity: 1;
+    transform: none;
+    will-change: auto;
+    text-align: left;
+  }
+  .why-pt[data-why-side="left"],
+  .why-pt[data-why-side="right"],
+  .why-pt[data-why-side="centre"] {
+    left: auto;
+    right: auto;
+    width: auto;
+    margin-left: 0;
+    text-align: left;
+  }
+  /* Nothing is scrubbed and nothing hides: the expansion is simply the
+     second paragraph of each point. */
+  .why-pt .why-pt__more {
+    position: static;
+    visibility: visible;
+    opacity: 1;
+    transform: none;
+    width: auto;
+    max-width: 46ch;
+    margin: 0.7rem 0 0;
+    transition: none;
+  }
+  .why-pt__title { background-image: none; }
+}
+
+.no-js .why-pts { position: static; display: grid; gap: 1.5rem; }
+.no-js .why-pt { position: static; width: auto; opacity: 1; transform: none; }
+.no-js .why-pt__more {
+  position: static;
+  visibility: visible;
+  opacity: 1;
+  transform: none;
+  width: auto;
+  max-width: 46ch;
+  margin: 0.7rem 0 0;
+}
+
+/* Motion off: no lift and no scrub, so the copy is simply present. The
+   scrim stays — it is legibility, not motion. */
+@media (prefers-reduced-motion: reduce) {
+  .why-scrub__copy {
+    --why-in: 1;
+    --why-y: 0;
+    opacity: 1;
+    transform: none;
+    will-change: auto;
+  }
+}
+
+/* Without JS --why-in is never written, and the initial 0 would hide the
+   copy entirely. The stylesheet's own default must therefore be visible;
+   the script sets it to 0 itself the moment it takes over. */
+.no-js .why-scrub__copy { --why-in: 1; --why-y: 0; opacity: 1; transform: none; }
+
+/* --- reduced motion / no JS ---------------------------------------------
+   Nothing is scrubbed, so the rail's extra height would just be four
+   viewports of empty scrolling. Collapse it to one and let the poster
+   stand as a still hero for the band. */
+@media (prefers-reduced-motion: reduce) {
+  .why { height: auto; }
+  .why-scrub__stage {
+    position: relative;
+    height: 78svh;
+  }
+  .why-scrub__canvas { display: none; }
+  .why-scrub__poster { opacity: 1; transition: none; }
+}
+
+.no-js .why { height: auto; }
+.no-js .why-scrub__stage { position: relative; height: 78svh; }
+.no-js .why-scrub__canvas { display: none; }
+
+/* --- mobile -------------------------------------------------------------
+   A shorter rail: a phone's scroll gesture covers far more of the page per
+   flick, so 500svh of rail there reads as an interminable section. 380svh
+   keeps the same reel at a pace that matches the shorter viewport. */
+@media (max-width: 860px) {
+  .why { height: 380svh; }
+}
+
+/* --- 07a Case studies -> Why lift --------------------------------------- */
+
+/* THE SPACER. Same contract as .p2c and .w2p: no content, paints nothing,
+   and its height is written by JS to match the pin distance exactly.
+
+   display:none by default is what makes the whole transition optional. With
+   no GSAP, no JS, or reduced motion this section contributes no height and
+   .why follows .cases as an ordinary block, in its authored position. */
+.c2w { display: none; }
+.c2w--live { display: block; }
+
+/* THE TWO PANELS — CASE STUDIES TRAVELS UP OFF THE SCREEN.
+
+   The section itself is the moving thing. It slides bodily upward, carrying
+   its heading, its featured plate and its supporting stack with it, until it
+   has cleared the top edge of the fold entirely. The Why reel is behind it,
+   already at its final position, and is uncovered as the section moves off.
+
+       case studies rides up and off the top
+       why behind it, static, standing where it always was
+
+   THE OUTGOING LAYER MOVES; THE INCOMING ONE DOES NOT. That asymmetry is the
+   whole effect. Case studies travelling is what the reader is meant to
+   watch - the section leaves under its own steam, the way a card is lifted
+   off a stack. The reel must NOT move to meet it: if it rose too, the two
+   would read as one long scroll and nothing would have been revealed. It is
+   nailed to where it will finally sit, so the eye reads "that was behind it
+   all along".
+
+   ONE custom property, --c2w, running 0 -> 1 across the pin, drives the
+   travel. The revealed layer reads no value at all - there is nothing about
+   it to animate, which is the strongest guarantee it cannot drift.
+
+   Scoped to .is-lifting / .is-lifted-in, added by cases-to-why.js only for
+   the stretch the pin is actually engaged. Nothing is scoped to .c2w--live,
+   which is present from page load: during normal scrolling both sections
+   must keep their authored stacking and position, or the fixed why panel
+   below would be pinned to the viewport for the entire page. */
+
+/* THE TRAVEL. Case studies is the layer on top, and it rides upward.
+
+   THE TRANSFORM GOES ON .cases__rise, THE INNER WRAPPER, NOT ON THE SECTION.
+   This is not a stylistic choice and it cannot be flattened into one rule.
+   ScrollTrigger pins with pinType:'fixed', which writes `transform:
+   translate(0px, 0px)` as an INLINE style on the pinned element and rewrites
+   it every tick. An inline declaration beats a stylesheet one, so a transform
+   authored here on .cases is silently overridden - the custom properties
+   resolve correctly, the rule is valid, and the section simply never moves.
+
+   .cases__rise is the section's own full-bleed child (it wraps the whole
+   composition and carries no transform of its own - see the note at its
+   markup in index.html), so moving it moves everything the reader can see
+   while leaving the pinned section's box, and ScrollTrigger's inline
+   transform on it, alone.
+
+   THE DISTANCE IS --c2w-travel, WRITTEN BY JS, NOT A PERCENTAGE. A
+   percentage would resolve against the wrapper's own border box, and the
+   composition is TALLER than the viewport (1036px against 900 at 1440x900)
+   while the pin has already carried part of it above the fold before the
+   lift starts. Neither -100% nor -100vh clears it: the first overshoots, the
+   second leaves the lower strip still on screen at the end. The script
+   measures what is actually still showing and writes exactly that many
+   pixels, so the section finishes flush off the top edge - see
+   travelDistance() in cases-to-why.js.
+
+   translate3d, not top/margin: a compositor-level property on a promoted
+   layer, so a scroll tick costs a composite rather than a re-layout of a
+   full screen of content. */
+.cases.is-lifting .cases__rise {
+  transform: translate3d(0, calc(-1 * var(--c2w, 0) * var(--c2w-travel, 0px)), 0);
+  will-change: transform;
+  backface-visibility: hidden;
+}
+
+/* THE GROUND TRAVELS WITH THE CONTENT, and this is the rule that decides
+   whether anything is revealed at all.
+
+   .cases normally paints --surface-page across its whole box. Left on during
+   the lift, that ground stays put while the composition slides up out of it:
+   the section empties from the top down and the reader watches the cards
+   leave across a blank page-coloured panel, with the reel still hidden
+   behind it. Everything moves correctly and nothing is revealed.
+
+   So the ground moves too. It goes on .cases__rise - the element being
+   translated - and comes OFF the section, which is left transparent for the
+   stretch of the pin so the reel underneath can show through the space the
+   composition gives up. */
+.cases.is-lifting {
+  /* THE GROUND IS THE SECTION'S OWN AGAIN, AND IT DOES NOT TRAVEL.
+
+     It used to be a pseudo-element on .cases__rise so that it left at exactly
+     the rate the composition did. That is the right instinct and the wrong
+     mechanism: the wrapper is 828px inside a 900px fold, so a ground bounded
+     by the wrapper stops short of the fold bottom and the reel showed through
+     the strip underneath from early in the lift - a hard horizontal seam with
+     bare page above it and reel below, which read as the section being
+     cropped. Padding that box downward to cover the fold fixes the seam and
+     breaks the reveal instead: the ground then travels up over the reel and
+     blanks the screen to page colour by mid-gesture. Both were measured.
+
+     A box that moves cannot both cover the fold at the start and be gone by
+     the end. So the ground stops moving: it stays on the pinned section,
+     which is nailed to the fold for the whole pin, and the section's own
+     clip-path is what retreats. The composition travels inside it; the ground
+     underneath is trimmed from the bottom up by exactly the same distance, so
+     the reel is uncovered from the bottom edge at the rate the cards leave,
+     and nothing is ever painted over it. */
+  background: var(--surface-page);
+  /* Trimmed from the bottom as the lift proceeds: at --c2w 0 the whole fold
+     is ground, at 1 there is none left. --c2w-travel is the distance the
+     composition covers, which is what has to be uncovered. */
+  clip-path: inset(0 0 calc(var(--c2w, 0) * var(--c2w-travel, 0px)) 0);
+  position: fixed;
+  z-index: 5;
+  /* The section is the window the composition travels behind: the wrapper
+     inside is moving up and out, and without this its upper part would paint
+     over whatever sits above the section rather than disappearing at the
+     fold's top edge. */
+  overflow: hidden;
+}
+
+/* The pseudo-element is positioned against this, and the wrapper is
+   otherwise a plain block. */
+.cases.is-lifting .cases__rise { position: relative; }
+
+/* THE Z-INDEX ABOVE IS NOT ENOUGH ON ITS OWN, and this is the rule the whole
+   reveal turned out to hang on.
+
+   ScrollTrigger does not pin .cases where it stands: it WRAPS it in a
+   generated div.pin-spacer and copies the pinned element's own computed
+   z-index onto that wrapper. .cases carries `z-index: 0` in its base rule
+   (it has to - it is the lower layer of the process morph above, see
+   .cases--awaiting), so the wrapper is born `position: relative; z-index: 0`,
+   which is a STACKING CONTEXT.
+
+   That context traps everything inside it. .cases' z-index:5 then only ranks
+   it against its siblings WITHIN the wrapper, and the wrapper as a whole
+   competes at 0 against .why's 4 - so the reel painted over a Case studies
+   section that was fully visible, opacity 1, correctly clipped, and simply
+   in the wrong box. Taking the clip off entirely still showed the reel,
+   which is what identified it: a clip that is not painting is not a clip
+   problem.
+
+   Raising the WRAPPER is the fix, because the wrapper is the thing actually
+   being ranked. Scoped to :has() on the lifting class so it applies only for
+   the stretch the pin is engaged - the same pin-spacer markup is generated
+   for other pins on this page, and a blanket rule would restack them too. */
+.pin-spacer:has(> .cases.is-lifting) {
+  z-index: 5;
+}
+
+/* THE REVEALED LAYER. Fixed to the viewport at its FINAL position for the
+   pin only, fully laid out from the first frame, and then left alone.
+
+   NOTHING IS ANIMATED HERE - deliberately and load-bearing. Every frame of
+   the reveal shows the reel exactly where it will be when the pin releases,
+   so the hand-off at the end is not a hand-off at all: the curtain finishes
+   cutting away and what is left standing is already the section, in place.
+
+   inset:0 rather than the rail's own 500svh: for the stretch of the pin only
+   the FIRST viewport of .why is what the reader can see, and that viewport
+   is what the sticky stage inside is already painting. The rail's real
+   height comes back the instant the class comes off, before any of its own
+   scroll has been spent.
+
+   z-index BELOW the pinned .cases (5), which is the inversion that makes
+   this a curtain rather than a fill: Case studies is on top being cut away,
+   and this is what has been sitting behind it all along. */
+/* THE REVEALED LAYER. Fixed to the viewport at its FINAL position for the
+   pin only, fully laid out from the first frame, and then left alone.
+
+   NOTHING IS ANIMATED HERE - deliberately and load-bearing. Every frame of
+   the reveal shows the reel exactly where it will be when the pin releases,
+   so the hand-off at the end is not a hand-off at all: the curtain finishes
+   cutting away and what is left standing is already the section, in place.
+
+   THIS ONLY READS AS A CURTAIN IF inset:0 IS ALSO WHERE FLOW ALREADY HAS IT
+   at the moment the class goes on, and that is a constraint on the LIFT
+   DISTANCE rather than on anything here. The pin engages when .cases' bottom
+   reaches the bottom of the fold, which is the moment .why's flow top is
+   exactly one viewport below the fold top; pinning it to 0 from that frame is
+   seamless only when the pin then runs for exactly that one viewport. It used
+   to run for 0.9 of one, so .why was being shown a tenth of a viewport - 90px
+   at 1440x900 - above where the document had it, and the class going on and
+   coming off snapped it up and back. See LIFT_VH in cases-to-why.js, which is
+   1 for this reason and is not a free parameter.
+
+   inset:0 rather than the rail's own 500svh: for the stretch of the pin only
+   the FIRST viewport of .why is what the reader can see, and that viewport
+   is what the sticky stage inside is already painting. The rail's real
+   height comes back the instant the class comes off, before any of its own
+   scroll has been spent.
+
+   z-index BELOW the pinned .cases (5), which is the inversion that makes
+   this a curtain rather than a fill: Case studies is on top being cut away,
+   and this is what has been sitting behind it all along. */
+.why.is-lifted-in {
+  position: fixed;
+  inset: 0;
+  height: auto;
+  z-index: 4;
+  overflow: hidden;
+}
+
+/* Reduced motion: no lift at all. The spacer never goes live (the script
+   bails before it), and these are here so that a preference changed
+   mid-session cannot leave a panel stranded off-screen. */
+@media (prefers-reduced-motion: reduce) {
+  .cases.is-lifting .cases__rise { transform: none; }
+  .cases.is-lifting {
+    position: relative;
+    z-index: 0;
+    overflow: visible;
+    /* The ground is the section's own now and is trimmed by clip-path, so a
+       preference changed mid-session has to be able to put it back - without
+       this the section would stay clipped to whatever --c2w last held. */
+    clip-path: none;
+  }
+  .why.is-lifted-in {
+    position: relative;
+    inset: auto;
+    height: 500svh;
+    overflow: visible;
+  }
+}
+
+/* --- 07b Why -> People push --------------------------------------------- */
+
+/* THE SPACER. NOT the same contract as .p2c, and the difference matters.
+
+   .p2c's pin runs with pinSpacing:false, so that element genuinely IS its
+   pin's spacer and carries the pin distance as its own height. This pin runs
+   with pinSpacing:true, so ScrollTrigger reserves the distance itself: this
+   element must reserve NO height (a height here is the pin distance counted
+   twice, i.e. a screen of dead scroll after the push).
+
+   But .people still ends up below the release pixel, by TWO amounts that
+   add: one viewport (the rail's bottom only reaches the fold at the release)
+   plus the pin distance (ScrollTrigger's inserted padding sits BELOW .why,
+   so it pushes .people down as well). So JS writes height:0 and a negative
+   margin-bottom of (vh + dist), lifting .people onto the release pixel.
+
+   Every part is load-bearing and each omission has its own symptom: no lift
+   at all is a blank screen between the reveal and the section; lifting only
+   vh leaves the section dropping back and rising a second time from below;
+   any height is dead scroll. The geometry, with measured numbers, is written
+   out in why-to-people.js (THE SPACER).
+
+   display:none by default is what makes the whole transition optional. With
+   no GSAP, no JS, or reduced motion this section contributes no height and
+   .people follows .why as an ordinary block, in its authored position. */
+.w2p { display: none; }
+.w2p--live { display: block; }
+
+/* THE TWO PANELS — A CURTAIN REVEAL.
+
+   The reel is a CURTAIN drawn back from the left. It stays exactly where it
+   is, still painting its last frame, and is progressively cut away from the
+   left edge of the viewport rightward. The people section sits UNDERNEATH
+   it, fixed at its final position, fully laid out and completely still from
+   the first frame - it is uncovered, never moved and never grown.
+
+   So there are two layers and only one moving thing on screen: the curtain's
+   edge.
+
+       reel on top, being cut away from the left
+       people underneath, static, revealed in the space it gives up
+
+   WHY THE REVEALED LAYER MUST NOT MOVE. This is what separates a curtain
+   reveal from a slide. If the layer underneath translated or its content
+   shifted, the eye would track the moving type and read "a panel arrived".
+   Because the type is already exactly where it will finally sit, the eye
+   reads "the thing on top was pulled away, and this was behind it all
+   along". A transform on .people would undo the effect even with the clip
+   running perfectly.
+
+   WHY THE CURTAIN MUST NOT MOVE EITHER. Translating the reel out to the
+   left would empty the right-hand side of the screen before the reveal got
+   there - a growing band of bare ground between a departing panel and an
+   arriving edge. Cut in place, every pixel the reveal has not yet reached is
+   still real footage, and the two layers stay in contact the whole way.
+
+   ONE custom property, --w2p, running 0 -> 1 across the pin, drives the
+   curtain's edge. The revealed layer reads no value at all, which is the
+   strongest possible guarantee that it cannot drift: there is nothing about
+   it to animate.
+
+   Scoped to .is-pushing, added by why-to-people.js only for the stretch the
+   pin is actually engaged and removed the moment it releases. Nothing here
+   is scoped to .w2p--live, which is present from page load: during normal
+   scrolling both sections must keep their authored stacking and position
+   exactly as they are, or the fixed people panel below would be pinned to
+   the viewport for the entire page. */
+
+/* THE CURTAIN. .why is the layer on top, and the clip is what draws it back.
+
+   inset() with the LEFT edge growing: `inset(0 0 0 X)` cuts X off the left
+   of the box, so the reel's visible region starts at the reveal edge and
+   runs to the right edge of the screen. At --w2p 0 nothing is cut and the
+   reel is whole; at 1 the whole width is cut and the reel is gone.
+
+   The clip goes on the SECTION, not on .why-scrub__stage inside it. The
+   section is the thing carrying the opaque #05121D ground (see below), so
+   clipping the stage alone would draw the curtain back off the footage and
+   leave the ground behind it standing - a dark panel where the reel used to
+   be, with the reveal apparently doing nothing. Clipping the section takes
+   the ground and the footage together, which is what a curtain does.
+
+   Held in place, not translated: see the note above. */
+.why.is-pushing {
+  clip-path: inset(0 0 0 calc(var(--w2p, 0) * 100%));
+  will-change: clip-path;
+}
+
+/* The stage keeps its own stacking order under the section's clip. */
+.why.is-pushing .why-scrub__stage { z-index: 3; }
+
+/* Pinning takes .why out of normal flow (position:fixed), and an out-of-flow
+   .why no longer covers the sections that follow it in the document the way
+   a 500svh block did. During the push that let the CLOSING CTA BAND further
+   down the page paint through the reel — its "Ready to" line appeared across
+   the lower left of the footage, on top of the ship.
+
+   The section needs to be its own opaque backdrop for the stretch it is
+   pinned, so nothing downstream can show through it. Same ground the rail
+   carries normally, so there is no colour change as the pin engages. */
+.why.is-pushing {
+  background: #05121D;
+  /* AND it has to win the stacking contest, not just be opaque. Pinning
+     makes .why position:fixed with no z-index of its own, and an
+     out-of-flow box at z-index:auto loses to painted content that comes
+     LATER in the document - so the closing CTA band downstream drew over
+     the reel regardless of the ground underneath it. An explicit z-index
+     puts the pinned section above everything it is being pushed past.
+
+     Both are needed: the z-index decides who wins, the background is what
+     there is to win with. */
+  position: fixed;                /* restated: the pin sets this, and the
+                                     z-index below only applies to a
+                                     positioned box */
+  z-index: 5;
+}
+
+/* THE REVEALED LAYER. Fixed to the viewport at its FINAL position for the
+   pin only, fully laid out from the first frame, and then left alone.
+
+   NOTHING IS ANIMATED HERE. No transform, no clip, no opacity - deliberately
+   and load-bearing. Every frame of the reveal shows this layer in exactly
+   the position it will occupy when the pin releases, so the hand-off at the
+   end is not a hand-off at all: the curtain finishes cutting away and what
+   is left standing is already the finished section, in place, unmoved.
+
+   z-index BELOW the pinned .why (z-index 5), which is the whole inversion
+   that makes this a curtain rather than a fill: the reel is on top being
+   cut away, and this is what has been sitting behind it. */
+.people.is-pushed-in {
+  position: fixed;
+  inset: 0;
+  z-index: 4;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  background: var(--surface-page);
+}
+
+/* The curtain's edge is the one moving thing on screen, and on a
+   fractional-DPR display a clip boundary landing between device pixels
+   shimmers as it travels. Promoting the clipped layer keeps the edge
+   resolving on whole pixels for the length of the reveal. */
+.why.is-pushing { backface-visibility: hidden; }
+
+/* SPENT. Past the end of the push .why has nothing left to show - the reel
+   has played out, the CTA has been read, and the whole section has been
+   pushed off the left edge. But the RAIL is 500svh tall and the pin engages
+   a viewport before its bottom edge, so the element still physically covers
+   the fold for that last stretch, and its #05121D ground paints straight
+   over the people section that has been pulled up underneath it.
+
+   Hiding it is what makes the hand-off clean. visibility rather than display
+   so the sticky stage inside keeps its layout and its compositor layer, and
+   scrolling back up restores the section without a re-layout or a re-decode
+   of the frame the reel was holding. why-to-people.js adds this only past
+   the end and removes it the moment the pin is live again. */
+.why.is-spent { visibility: hidden; }
+
+/* Reduced motion: no push at all. The spacer never goes live (the script
+   bails before it), and these are here so that a preference changed
+   mid-session cannot leave a panel stranded off-screen. */
+@media (prefers-reduced-motion: reduce) {
+  /* none, not a 0-inset form: a clip-path of any kind establishes a
+     containing block and clips descendants, and with the effect off there
+     is nothing here that should be clipped. */
+  .why.is-pushing { clip-path: none; }
+  .people.is-pushed-in {
+    position: static;
+    overflow-y: visible;
+  }
 }
 
 /* --- 08 The people ------------------------------------------------------ */
 
 .people { padding-block: var(--section-y); background: var(--surface-page); }
 
-/* Rail + content. The rail sits hard against the left edge of the shell and
-   the content column runs from there to the right edge — so the portraits end
-   flush right, as in the reference, rather than centred in the page. */
+/* Rail + content. The rail sits hard against the left edge of the shell; a
+   wide rail column and a generous gap push the content column well right of
+   centre, so the heading and the faces read as a column of their own rather
+   than as a block starting near the page's left margin. */
 
 .people__layout { display: grid; gap: var(--s-5); }
 @media (min-width: 900px) {
   .people__layout {
-    grid-template-columns: minmax(10rem, 15rem) 1fr;
-    gap: var(--s-7);
+    grid-template-columns: minmax(10rem, 22rem) 1fr;
+    gap: var(--s-8);
     align-items: start;
   }
 }
@@ -8626,9 +10158,13 @@ main {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: var(--s-5);
+  /* Two faces only, so the grid does not need the full content column. Cap it
+     and the portraits stop swallowing the section; the heading and the panel
+     below get their share of the screen back. */
+  max-width: 36rem;
 }
 @media (min-width: 900px) {
-  .roster { gap: var(--s-6); }
+  .roster { gap: var(--s-6); max-width: 42rem; }
 }
 
 .roster__portrait {
@@ -8670,17 +10206,738 @@ main {
   text-transform: uppercase;
   color: var(--text-muted);
 }
-.panel__list {
+
+/* --- The panel infographic ----------------------------------------------
+   Three figures and one proportion bar. The bar is drawn at the literal
+   share the figures state (80 / 20), so it is the data at true scale rather
+   than an illustration of it; it is aria-hidden because the same numbers are
+   already read from the <dl> above it.
+
+   Teal marks the clinical share throughout - bar segment, key swatch, group
+   dot and the 80% figure - so the colour itself carries the reading and the
+   legend is a confirmation rather than the only key. Navy-grey carries the
+   operational side; the pair is distinguishable without relying on hue alone
+   because each segment is also labelled and counted. */
+.panel__viz {
+  margin-bottom: var(--s-7);
+  padding-bottom: var(--s-5);
+  border-bottom: 1px solid var(--border);
+}
+
+.panel__figures {
   display: grid;
-  gap: 0 var(--s-6);
+  grid-template-columns: repeat(3, auto);
+  justify-content: start;
+  gap: var(--s-6);
+  margin: 0 0 var(--s-5);
+}
+@media (min-width: 720px) { .panel__figures { gap: var(--s-7); } }
+
+/* Label ABOVE the numeral. The numerals are the thing being compared, so
+   they want to sit on one line with nothing between them; putting the label
+   first is what frees that line. dl semantics keep the pairing for AT. */
+.panel__figureLabel {
+  font-size: var(--t-micro);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: var(--s-2);
+}
+.panel__figureNum {
+  margin: 0;
+  font-size: var(--t-h3);
+  font-weight: 700;
+  line-height: 1;
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+}
+/* The + and % ride smaller and lighter so the digits keep the weight. */
+.panel__plus {
+  font-size: 0.6em;
+  font-weight: 600;
+  vertical-align: 0.35em;
+  margin-left: 0.05em;
+}
+
+.panel__bar {
+  display: flex;
+  height: 8px;
+  gap: 2px;
+  margin-bottom: var(--s-3);
+  max-width: 34rem;
+}
+.panel__barSeg {
+  flex: 0 0 var(--seg);
+  border-radius: 1px;
+}
+.panel__barSeg--med { background: var(--accent-2); }
+.panel__barSeg--ops { background: var(--text-muted); }
+
+.panel__barKey {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-3) var(--s-5);
+  font-size: var(--t-micro);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+  margin: 0;
+}
+/* The swatch is the same two colours as the bar, drawn as a leading square so
+   the key reads against the bar without a connecting line. */
+.panel__key::before {
+  content: "";
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 1px;
+  margin-right: 0.5em;
+  vertical-align: 0.05em;
+}
+.panel__key--med::before { background: var(--accent-2); }
+.panel__key--ops::before { background: var(--text-muted); }
+
+/* --- The panel list ------------------------------------------------------
+   Two groups, each a titled run of rows. Name and note sit in one row at
+   width and stack below it, so the note never squeezes the name to two
+   lines on a phone. */
+.panel__group + .panel__group { margin-top: var(--s-6); }
+
+.panel__groupTitle {
+  display: flex;
+  align-items: center;
+  font-size: var(--t-micro);
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-primary);
+  margin-bottom: var(--s-3);
+}
+.panel__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 1px;
+  margin-right: 0.7em;
+  flex: none;
+}
+.panel__dot--med { background: var(--accent-2); }
+.panel__dot--ops { background: var(--text-muted); }
+
+/* The team count as a trailing chip. It sits on the heading rather than in
+   the bar key because it counts TEAMS, while the bar splits PEOPLE - two
+   different denominators that must not share one graphic. */
+.panel__groupCount {
+  margin-left: 0.6em;
+  padding: 0.1em 0.45em;
+  border-radius: 2px;
+  background: var(--surface-sunken);
+  color: var(--text-muted);
+  font-size: 0.95em;
+  font-weight: 700;
+  letter-spacing: 0;
+}
+
+.panel__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
   border-top: 1px solid var(--border);
 }
-@media (min-width: 720px) { .panel__list { grid-template-columns: 1fr 1fr; } }
-.panel__list li {
+.panel__row {
+  display: grid;
+  gap: 0.2em;
   padding-block: var(--s-3);
   border-bottom: 1px solid var(--border);
-  color: var(--text-secondary);
+}
+/* At width the note runs beside the name on a fixed second column, so every
+   note in the group starts on the same vertical - the run reads as a table
+   of teams rather than as nine little paragraphs. */
+@media (min-width: 720px) {
+  .panel__row {
+    grid-template-columns: minmax(14rem, 18rem) 1fr;
+    gap: 0 var(--s-5);
+    align-items: baseline;
+  }
+}
+.panel__rowName {
   font-size: var(--t-small);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+.panel__rowNote {
+  font-size: var(--t-small);
+  color: var(--text-secondary);
+}
+
+/* --- 08b Presence & network ---------------------------------------------
+
+   The reach claim drawn: a stat rail and a stylised map of India, sitting
+   between .people and .partners. Numbered 08b because it is inserted into a
+   finished sequence and renumbering every following block would churn the
+   file for nothing; see index.html for what the section is and where its
+   figures come from.
+
+   GROUND. --surface-sunken, deliberately, because it sits between two
+   sections that both paint --surface-page (.people) and --surface-sunken
+   (.partners). Taking the sunken ground here means the page steps
+   page -> sunken -> sunken rather than page -> page -> sunken, so this
+   section and the partner bands read as one "our network" movement with a
+   single tonal change into it, instead of two separate grey blocks.
+
+   NO JS. Everything below rests correctly with no script: pins are placed by
+   CSS from their data attributes via the same custom-property trick used
+   elsewhere on the page, and the entrance uses the existing [data-reveal]
+   observer in hero.js. With no JS the section is fully laid out and readable
+   and only the fade-up is absent, matching the resting contract every other
+   section on this page keeps. */
+
+.presence {
+  padding-block: var(--section-y);
+  background: var(--surface-sunken);
+  /* clip, not hidden: it cannot trap the page scroll (see .doubts). Pins
+     carry labels that can sit near the box edge at small sizes. */
+  overflow: clip;
+}
+
+/* Rail left, map right - the mirror of .people above, which puts its rail
+   left and its faces right, so the two sections share a spine. */
+.presence__layout { display: grid; gap: var(--s-7); }
+
+@media (min-width: 900px) {
+  .presence__layout {
+    /* The map column is given the larger share: it is the thing the section
+       exists to show, and the rail is text that reads fine narrow. */
+    grid-template-columns: minmax(15rem, 22rem) 1fr;
+    align-items: center;
+
+    /* ONLY THE MAP SITS IN FROM THE RAIL, and it is the GAP that moves it -
+       not an indent on the grid. An indent would carry the text rail right
+       along with the map; the rail is meant to start on the section's own
+       left edge, in line with every other section head on the page.
+
+       So the rail keeps its natural position and the gap does the work. It is
+       clamped and in vw so it scales with the shell instead of eating the
+       narrow end: measured 3rem at the 900px breakpoint, ~5.3rem at 1280 and
+       ~6.3rem at 1440. Combined with justify-self:end on the wrapper, the map
+       ends up pushed right and squared with the page's right edge. */
+    gap: clamp(3rem, -2.6rem + 9.9vw, 12rem);
+  }
+}
+
+/* --- The rail ----------------------------------------------------------- */
+
+/* Matched to .people__tier, not to the other section eyebrows on the page:
+   this section sits directly under the team block and the two rails read as a
+   pair, so the label that opens each one has to be the same size, weight and
+   ink. Same reason .presence__note takes --t-small below. */
+.presence__eyebrow {
+  margin: 0 0 var(--s-4);
+  font-size: var(--t-micro);
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-primary);
+}
+
+.presence__title { margin-bottom: var(--s-4); max-width: 18ch; }
+
+.presence__note {
+  font-size: var(--t-small);
+  color: var(--text-secondary);
+  max-width: 46ch;
+  margin-bottom: var(--s-6);
+}
+
+/* Two-up figures. The page already has a five-across stat band in .doubts;
+   this is deliberately a 2x2 block instead, so the two do not read as the
+   same component repeated - and so the figures stay large in a narrow
+   column rather than shrinking to fit one row. */
+.presence__stats {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--s-5) var(--s-4);
+  margin: 0 0 var(--s-6);
+  padding-top: var(--s-5);
+  border-top: 1px solid var(--border-strong);
+}
+
+.presence__stat { margin: 0; }
+
+.presence__statFigure {
+  font-family: var(--font-display);
+  font-size: clamp(1.75rem, 1.3rem + 1.6vw, 2.5rem);
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  color: var(--text-primary);
+}
+
+/* The plus is a qualifier, not part of the number: smaller, teal, raised. */
+.presence__statPlus {
+  font-size: 0.55em;
+  vertical-align: 0.45em;
+  margin-left: 0.04em;
+  color: var(--accent-2-ink);
+}
+
+.presence__statLabel {
+  margin: var(--s-2) 0 0;
+  font-size: var(--t-micro);
+  line-height: 1.4;
+  color: var(--text-muted);
+}
+
+/* PLANNED, not live. The 10 PEME centres are a roadmap item in the client's
+   own deck, and this pill is what keeps the figure honest beside three
+   figures that are current. Do not remove it without the client confirming
+   the centres are open. */
+.presence__statFlag {
+  display: inline-block;
+  margin-left: 0.35em;
+  padding: 0.1em 0.45em;
+  border: 1px solid var(--border-strong);
+  border-radius: 999px;
+  font-size: 0.85em;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+.presence__offices {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.4em;
+  font-size: var(--t-small);
+  color: var(--text-secondary);
+}
+
+.presence__officesLabel {
+  font-size: var(--t-micro);
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-right: 0.2em;
+}
+
+.presence__officesDot { color: var(--border-strong); }
+
+/* --- The map ------------------------------------------------------------ */
+
+.presence__mapWrap {
+  /* Hard right, not centred: centring inside a column wider than the cap left
+     a band of dead space against the section's right edge while the map sat
+     short of it. Ending where the column ends squares the map's right edge
+     with the rest of the page. */
+  justify-self: end;
+  width: 100%;
+  /* Wider than the drawn map it replaced: the supplied artwork is LANDSCAPE
+     (1536x1024), so at an equal width it stands far shorter, and the pin
+     labels need the extra scale to stay legible. */
+  max-width: 48rem;
+  /* Kandla sits far enough west that its label starts near the box edge, so
+     the WRAPPER is inset. Padding the map box itself would change the
+     percentage positioning context every pin is placed against and silently
+     shift all sixteen off the coastline. */
+  padding-inline: var(--s-4);
+}
+
+/* THE POSITIONING CONTEXT. Aspect-ratio matched to the SVG viewBox
+   (100 x 116) so the box is exactly the drawing's shape: a pin at data-y="50"
+   then sits at the drawing's vertical middle, with no letterboxing to
+   correct for. Change one and you must change the other. */
+.presence__map {
+  position: relative;
+  /* The artwork's own 1536x1024. Pins are placed as percentages of THIS box,
+     so the box must keep the image's exact ratio or every pin drifts off the
+     coastline. If the artwork is ever replaced, change this to match it. */
+  aspect-ratio: 1536 / 1024;
+  width: 100%;
+}
+
+.presence__art {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  /* contain, not cover: the pins are registered to the whole artwork, so it
+     must never be cropped. */
+  object-fit: contain;
+}
+
+.presence__list { position: absolute; inset: 0; }
+
+/* EACH PIN IS PLACED FROM --x / --y, which THE PIN COORDINATE TABLE at the
+   foot of this block sets per pin by matching its data-x / data-y attribute.
+
+   Why not read the attribute directly? attr() can only produce a string in
+   any browser shipping today - typed attr(data-x %) is not usable yet - so
+   the mapping has to be written out. The table is the cost of keeping the
+   markup declarative and script-free; the alternative is an inline style per
+   pin, which puts presentation back in the HTML. */
+.presence__pin {
+  position: absolute;
+  left: var(--x, 50%);
+  top: var(--y, 50%);
+  display: flex;
+  align-items: center;
+  gap: 0.4em;
+  /* The DOT is the coordinate, so the pin is anchored on the dot's centre
+     and the label hangs to its right. */
+  transform: translate(-0.3rem, -50%);
+  white-space: nowrap;
+}
+
+.presence__pinDot {
+  flex: none;
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background: var(--accent-2-ink);
+  /* A soft halo so a dot that lands on the outline stroke stays legible. */
+  box-shadow: 0 0 0 0.2rem color-mix(in srgb, var(--surface-sunken) 82%, transparent);
+}
+
+.presence__pinName {
+  /* Floor raised from 0.5rem: on the landscape artwork the labels sit closer
+     together, so anything smaller stops being readable before it stops
+     colliding. */
+  font-size: clamp(0.625rem, 0.45rem + 0.55vw, 0.8125rem);
+  line-height: 1.2;
+  font-weight: 600;
+  color: var(--text-primary);
+  /* Most labels overlap the artwork itself, which is a mid-blue relief with
+     white borders running through it - grey-on-blue loses the type. A tinted
+     plate lifts every label off whatever it happens to sit on, ground and
+     landmass alike, without boxing it in a visible chip. */
+  padding: 0.08em 0.3em;
+  border-radius: var(--radius);
+  background: color-mix(in srgb, var(--surface-sunken) 86%, transparent);
+}
+
+.presence__pinTag { font-weight: 400; color: var(--text-muted); }
+
+/* The HQ is the one sourced location on this map, and it is the only pin
+   given weight: brand blue, larger, its name in full ink. */
+.presence__pin[data-hq] .presence__pinDot {
+  width: 0.7rem;
+  height: 0.7rem;
+  background: var(--accent);
+  box-shadow: 0 0 0 0.25rem color-mix(in srgb, var(--accent) 18%, transparent);
+}
+
+.presence__pin[data-hq] .presence__pinName {
+  color: var(--text-primary);
+  font-weight: 700;
+}
+
+/* THE PIN COORDINATE TABLE.
+   The data-x/data-y attributes in the HTML are the readable source of truth;
+   these rules are the mechanical translation of them into positions, because
+   CSS cannot yet read a number out of an attribute. When you change a pin in
+   the HTML, change its pair here - and when you replace the city list
+   wholesale, replace this table wholesale.
+
+   Written as attribute selectors rather than inline styles so the markup
+   stays declarative data and all the presentation lives in this file. */
+.presence__pin[data-x="24.0"] { --x: 24.0%; }
+.presence__pin[data-x="27.5"] { --x: 27.5%; }
+.presence__pin[data-x="29.5"] { --x: 29.5%; }
+.presence__pin[data-x="31.5"] { --x: 31.5%; }
+.presence__pin[data-x="31.8"] { --x: 31.8%; }
+.presence__pin[data-x="33.5"] { --x: 33.5%; }
+.presence__pin[data-x="36.0"] { --x: 36.0%; }
+.presence__pin[data-x="36.5"] { --x: 36.5%; }
+.presence__pin[data-x="38.5"] { --x: 38.5%; }
+.presence__pin[data-x="40.5"] { --x: 40.5%; }
+.presence__pin[data-x="41.0"] { --x: 41.0%; }
+.presence__pin[data-x="42.5"] { --x: 42.5%; }
+.presence__pin[data-x="45.8"] { --x: 45.8%; }
+.presence__pin[data-x="51.0"] { --x: 51.0%; }
+.presence__pin[data-x="55.0"] { --x: 55.0%; }
+.presence__pin[data-x="61.5"] { --x: 61.5%; }
+
+.presence__pin[data-y="27.0"] { --y: 27.0%; }
+.presence__pin[data-y="46.5"] { --y: 46.5%; }
+.presence__pin[data-y="47.0"] { --y: 47.0%; }
+.presence__pin[data-y="52.5"] { --y: 52.5%; }
+.presence__pin[data-y="57.5"] { --y: 57.5%; }
+.presence__pin[data-y="59.0"] { --y: 59.0%; }
+.presence__pin[data-y="61.0"] { --y: 61.0%; }
+.presence__pin[data-y="62.0"] { --y: 62.0%; }
+.presence__pin[data-y="64.5"] { --y: 64.5%; }
+.presence__pin[data-y="68.5"] { --y: 68.5%; }
+.presence__pin[data-y="73.5"] { --y: 73.5%; }
+.presence__pin[data-y="75.0"] { --y: 75.0%; }
+.presence__pin[data-y="76.5"] { --y: 76.5%; }
+.presence__pin[data-y="81.5"] { --y: 81.5%; }
+.presence__pin[data-y="86.0"] { --y: 86.0%; }
+.presence__pin[data-y="88.5"] { --y: 88.5%; }
+
+/* WHICH SIDE A LABEL HANGS ON.
+   Default is east - label to the right of its dot. Two exceptions, both set
+   in the markup with data-side rather than matched on an x value here, so a
+   pin that moves keeps its side without a second edit in this file:
+
+     data-side="w"  label LEFT of the dot. For the eastern seaboard, whose
+                    labels would otherwise run past the box and be clipped.
+     data-side="s"  label BELOW the dot, and
+     data-side="n"  label ABOVE it. Both for the crowded southern interior,
+                    where a sideways label collides with a neighbour. */
+.presence__pin[data-side="w"] {
+  flex-direction: row-reverse;
+  transform: translate(calc(-100% + 0.3rem), -50%);
+}
+
+.presence__pin[data-side="s"] {
+  flex-direction: column;
+  align-items: center;
+  gap: 0.15em;
+  transform: translate(-50%, -0.25rem);
+}
+
+.presence__pin[data-side="n"] {
+  flex-direction: column-reverse;
+  align-items: center;
+  gap: 0.15em;
+  transform: translate(-50%, calc(-100% + 0.25rem));
+}
+
+.presence__mapFoot {
+  margin-top: var(--s-4);
+  font-size: var(--t-micro);
+  line-height: 1.5;
+  color: var(--text-muted);
+  text-align: center;
+  max-width: 44ch;
+  margin-inline: auto;
+}
+
+/* Below 560px the labels collide at any size that keeps them readable, so
+   the map becomes dots-only and the cities are carried by the caption. The
+   aria-label on the list still names every one for a screen reader. */
+@media (max-width: 560px) {
+  /* The artwork is landscape and the column is narrow, so at this width the
+     map would shrink to a thumbnail. Letting the wrapper run the full column
+     keeps the landmass large enough for the dots to mean anything. */
+  .presence__mapWrap { max-width: none; padding-inline: 0; }
+
+  .presence__pinName { display: none; }
+  /* With no labels there is no side to hang them on, so every pin - including
+     the data-side="w" ones - centres on its own coordinate. */
+  .presence__pin,
+  .presence__pin[data-side="w"] { transform: translate(-50%, -50%); }
+  .presence__stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+
+/* --- 09 Partner network -------------------------------------------------
+   The provider network as its own evidence: two bands of logo plates running
+   in OPPOSITE directions, continuously, behind a centred heading.
+
+   WHY TWO ROWS THAT DISAGREE. One row moving alone reads as a slideshow the
+   reader is expected to wait out. Two rows travelling against each other read
+   as a FIELD — there is no start and no end to wait for, so the eye takes the
+   band as a texture of names rather than a queue of them. That is the right
+   impression for a network claim: the point is 1,800+, not these fifteen.
+
+   THE LOGOS ARE THIRD-PARTY MARKS, so each plate is a plain white card with
+   the mark centred and the name set under it. The name is TEXT, not part of
+   the image: three of the fifteen marks (Sunshine, Manipal and the 75-year
+   mark) are wordless symbols nobody outside the trade will place, and a
+   logo-only band would leave those three anonymous.
+
+   MASKED, NOT CROPPED, at both ends — see .partners__frame. A hard edge makes
+   the band look like a filmstrip that has been cut; a fade makes the plates
+   arrive from and leave into the page's own ground.
+
+   RESTING CONTRACT. Same as the process band: if js/partners-marquee.js never
+   runs — no JS, a throw, reduced motion — .partners--live is never added and
+   each row stays an ordinary horizontal scroller the reader swipes, with the
+   duplicate set hidden so every partner appears exactly once. Nothing is
+   missing from the page and nothing is unreachable. */
+
+.partners {
+  padding-block: var(--section-y);
+  background: var(--surface-sunken);
+  overflow: hidden;
+}
+
+/* Centred, unlike every other section head on the page. The screenshot this
+   follows centres its heading over the bands, and it is the one composition
+   here with no left-hand rail or column to align to — the bands are
+   full-bleed, so a left-set heading would have nothing under it to justify
+   the edge. */
+.partners__head {
+  text-align: center;
+  margin-bottom: var(--s-7);
+}
+
+/* The pill. A label this short reads as a stray line without an enclosure,
+   and the enclosure is what makes it a section marker rather than a caption.
+   Inline-block so the tint wraps the text and not the centred line box. */
+.partners__eyebrow {
+  display: inline-block;
+  margin-bottom: var(--s-4);
+  padding: var(--s-2) var(--s-4);
+  border-radius: 999px;
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  font-size: var(--t-micro);
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--accent-2-ink);
+}
+
+/* max-width in ch on the element itself, then re-centred: .section-title caps
+   at 24ch and is left-set by default, which would pull this off centre. */
+.partners__title {
+  max-width: 26ch;
+  margin-inline: auto;
+}
+
+.partners__note {
+  margin: var(--s-4) auto 0;
+  max-width: 52ch;
+  color: var(--text-secondary);
+}
+
+/* ---- The bands --------------------------------------------------------- */
+
+.partners__bands {
+  display: grid;
+  gap: var(--s-4);
+}
+
+/* FULL-BLEED, out past the shell's gutters. The band is a texture, and a
+   texture that stops at a margin reads as a boxed widget. 100vw against a
+   centred container, with the scrollbar's own width already excluded by
+   using the viewport unit on both sides equally.
+
+   The mask is what ends it instead: opaque across the middle, transparent at
+   both bezels, so plates dissolve into the section's ground rather than being
+   guillotined by an edge. */
+.partners__frame {
+  position: relative;
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  -webkit-mask-image: linear-gradient(90deg,
+    transparent 0, #000 8%, #000 92%, transparent 100%);
+          mask-image: linear-gradient(90deg,
+    transparent 0, #000 8%, #000 92%, transparent 100%);
+}
+.partners__frame::-webkit-scrollbar { display: none; }
+
+/* WHILE THE BAND IS DRIVEN it is no longer a scroller: the transform owns the
+   offset, and leaving it scrollable would let a swipe fight the animation and
+   desynchronise the two rows. Touch gets the marquee instead, which is the
+   same thing the process band does. */
+.partners--live .partners__frame {
+  overflow-x: hidden;
+  touch-action: pan-y;
+}
+
+.partners__track {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  gap: var(--s-4);
+  width: max-content;
+  /* Promoted before the first transform write, so the first frame of motion
+     does not pay for the layer being created. */
+  will-change: transform;
+}
+
+/* ---- One plate --------------------------------------------------------- */
+
+.partners__plate {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--s-2);
+  width: 12.5rem;
+  padding: var(--s-3) var(--s-4) var(--s-4);
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 1px 2px rgba(var(--rgb-deep), 0.04);
+}
+
+/* THE DUPLICATE SET only exists to close the loop, so it is shown only while
+   the strips are actually being driven. With no JS — or reduced motion, or a
+   throw — nothing is translating, and showing it would simply list every
+   partner twice down a strip the reader is scrolling by hand.
+
+   DECLARED AFTER .partners__plate, not before. Both selectors are one class,
+   so they carry the same specificity and the later rule wins: with this block
+   above, .partners__plate{display:flex} overrode the clone's display:none and
+   all thirty plates rendered at rest. Measured — that is exactly what the
+   resting-state check caught. */
+.partners__plate--clone { display: none; }
+.partners--live .partners__plate--clone { display: flex; }
+
+/* FIXED BOX, object-fit: contain. The fifteen marks are wildly different
+   shapes — a 341x102 wordmark next to a 779x833 square — and letting each
+   one size itself would make the tall ones dominate and the wide ones vanish.
+   A constant box with the mark fitted inside it gives them all the same
+   optical weight, which is the only way a logo wall reads as a set of peers. */
+.partners__logo {
+  display: block;
+  width: 100%;
+  height: auto;
+  /* The artwork is pre-normalised: every file is one 560x224 canvas with the
+     mark scaled to a constant INK AREA and centred (see assets/partners).
+     That is done in the image rather than here because object-fit cannot do
+     it — contain against a fixed height scales a wide wordmark to full width
+     while a tall mark only ever reaches full height, so wide marks came out
+     visibly heavier than tall ones. Identical aspect on every file means the
+     box below simply holds them, and no plate favours its neighbour. */
+  aspect-ratio: 560 / 224;
+  object-fit: contain;
+  object-position: center;
+}
+
+.partners__name {
+  margin: 0;
+  font-size: var(--t-micro);
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: var(--text-muted);
+  text-align: center;
+  line-height: 1.25;
+}
+
+/* The footnote under the bands. Carries the real number, because fifteen
+   plates are a sample and the claim is the network. */
+.partners__foot {
+  margin: var(--s-6) 0 0;
+  text-align: center;
+  font-size: var(--t-small);
+  color: var(--text-muted);
+}
+
+@media (max-width: 640px) {
+  .partners__plate { width: 10.5rem; padding: var(--s-3) var(--s-4); }
+}
+
+/* Reduced motion is handled by the script standing down (no .partners--live),
+   which leaves the two rows as ordinary swipeable scrollers. Nothing here
+   needs a prefers-reduced-motion block of its own — but the mask would still
+   suggest motion that is not happening, so it is squared off. */
+@media (prefers-reduced-motion: reduce) {
+  .partners__frame {
+    -webkit-mask-image: none;
+            mask-image: none;
+  }
 }
 
 /* --- 09 Closing CTA band ------------------------------------------------ */
@@ -8714,7 +10971,7 @@ main {
   font-family: var(--font-editorial);
   /* A notch under --t-display: large enough to close the page, small enough
      that it does not out-shout the section titles above it. */
-  font-size: clamp(2.0rem, 1.1rem + 3.1vw, 3.4rem);
+  font-size: clamp(1.5rem, 0.8rem + 2.1vw, 2.4rem);
   line-height: 0.94;
   letter-spacing: -0.02em;
   font-weight: 700;
@@ -8722,7 +10979,7 @@ main {
   color: var(--text-primary);
   margin: 0;
   /* The <br> is the only break allowed: without this the 12ch cap could wrap
-     "the next case." onto a third line at narrow column widths. */
+     "your case management." onto a third line at narrow column widths. */
   max-width: none;
   white-space: nowrap;
 }
@@ -8764,8 +11021,6 @@ main {
 @media (max-width: 899px) {
   .cta-band__link { min-width: 0; width: 100%; }
 }
-
-
 
 /* ==========================================================================
    Floating controls - WhatsApp + back to top
@@ -9069,8 +11324,8 @@ html.pl-lock body {
    `body { overflow-x: hidden }` in the reset does NOT clip here. When <html>
    is `overflow: visible`, the BODY's overflow value is propagated to the
    viewport and the body itself is then treated as `visible` — so the body
-   stops being a clipping box and the wide marquee tracks (.why__track,
-   .process__track) leak past the right edge. The page really is scrollable
+   stops being a clipping box and the wide marquee track
+   (.process__track) leaks past the right edge. The page really is scrollable
    sideways: at 390px the document scrolls 422px to the right, which is the
    band of page background that shows up beside the design.
 
@@ -9086,6 +11341,25 @@ html.pl-lock body {
   /* The clip needs an origin that is the padding box, otherwise a descendant
      with a transform can still paint outside it. */
   html { overflow-clip-margin: 0; }
+
+  /* The reset sets `body { overflow-x: hidden }`. On DESKTOP that is
+     harmless: <html> is `overflow: visible`, so the body's overflow
+     propagates up to the viewport and the body itself is not a scroll
+     container. Here it is NOT harmless — clipping <html> above stops that
+     propagation, so the body keeps its own `overflow-x: hidden`, which
+     computes `overflow-y` to `auto` and makes the BODY a scroll container.
+
+     Any `position: sticky` descendant then sticks to the body's scrollport
+     instead of the viewport, and a pinned stage simply scrolls away — which
+     is exactly what the Why US reel did at <=1023px.
+
+     `clip` on the body gives the same horizontal guard with no scroll
+     container, so sticky resolves against the viewport again. */
+  body {
+    overflow-x: hidden; /* fallback for engines without `clip` */
+    overflow-x: clip;
+    overflow-clip-margin: 0;
+  }
 }
 
 /* --- 2. The takeover must fill the LARGEST viewport, not the smallest -----

@@ -809,9 +809,19 @@
 
     gsap.set(stmt, { xPercent: -50, yPercent: -50, x: startX, scale: 0.62, opacity: 1 });
 
+    /* The radius goes with the edge it belongs to. In state 1 the panel's
+       leading edge is a real, visible edge inside the stage, so it carries a
+       rounded corner (see .doubts--live .doubts__panel). Once left hits 0 that
+       edge IS the stage's edge, and a curve there would leave a sliver of pale
+       page ground showing in the corner of a field that is meant to be
+       full-bleed. Tweening it to 0 on the SAME tween as `left` means the
+       corner is exactly as square as the edge is arrived: no separate beat to
+       notice, and no frame where the fill is home but still rounded. */
     tl.to(panel, {
         left: 0,
         width: stageW + overshoot,
+        borderTopLeftRadius: 0,
+        borderBottomLeftRadius: 0,
         duration: 0.24
       }, 0.06)
       // The statement slides to the true centre and grows as the fill takes

@@ -321,6 +321,21 @@
      frame. */
   var visible = false;
 
+  /* PAUSED WHILE THE READER IS ON IT.
+
+     A band that keeps sliding under the cursor is telling the reader they
+     cannot have the card they just reached for. Hovering a card — or tabbing
+     a link inside one — holds the strip exactly where it is: no rewind, no
+     easing, the offset is simply not advanced, so letting go resumes on the
+     same sub-pixel it stopped on.
+
+     Kept out of the phase machine on purpose. The turnaround (fade out,
+     reset, fade in) is a state the band is IN, not motion it is doing, and
+     freezing halfway through a fade would leave a half-lit band under the
+     cursor. So a pause that lands mid-turnaround lets that finish and takes
+     effect on the run that follows. */
+  var paused = false;
+
   function sync() {
     /* NOT UNTIL THE READER IS ACTUALLY HERE.
 
@@ -337,7 +352,7 @@
        frame is genuinely on screen. The generous margin still does its real
        job — it keeps the strip running while the section is only just off the
        fold, so scrolling back up and down again never shows a dead band. */
-    if (seeded && visible && !document.hidden) start(); else stop();
+    if (seeded && visible && !paused && !document.hidden) start(); else stop();
   }
 
   /* THE BAND STARTS FROM CARD 01, WHEN THE READER ARRIVES.
@@ -395,6 +410,43 @@
     seeded = true;
     visible = true;
   }
+
+  /* THE HOVER ITSELF.
+
+     On the frame rather than on each card, so crossing the gap between two
+     cards is not a stutter of resume-and-pause; and on pointerenter/leave
+     rather than mouseover/out, so it does not re-fire on every child element
+     the pointer crosses inside the band.
+
+     TOUCH IS EXCLUDED. A finger's pointerenter fires on tap and its
+     pointerleave may never arrive, which would leave the band stopped for the
+     rest of the visit. On touch the strip is a scroller the reader drags
+     anyway, so there is nothing for a pause to add.
+
+     focusin/focusout carry the same behaviour to the keyboard: a reader
+     tabbing into the band holds it still while they are inside it. */
+  if (window.PointerEvent) {
+    frame.addEventListener('pointerenter', function (e) {
+      if (e.pointerType === 'touch') return;
+      paused = true;
+      sync();
+    });
+    frame.addEventListener('pointerleave', function (e) {
+      if (e.pointerType === 'touch') return;
+      paused = false;
+      sync();
+    });
+  } else {
+    frame.addEventListener('mouseenter', function () { paused = true; sync(); });
+    frame.addEventListener('mouseleave', function () { paused = false; sync(); });
+  }
+
+  frame.addEventListener('focusin', function () { paused = true; sync(); });
+  frame.addEventListener('focusout', function (e) {
+    if (frame.contains(e.relatedTarget)) return;
+    paused = false;
+    sync();
+  });
 
   /* Hidden tab: stop outright rather than relying on rAF's own throttling,
      so a backgrounded page costs nothing at all. */

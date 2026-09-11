@@ -86,7 +86,7 @@
       ],
       "knowsAbout": [
         "Maritime medical case management",
-        "Crew claims management",
+        "Crew case management",
         "Maritime telemedicine",
         "Occupational health and safety",
         "Medico-legal services"
@@ -621,6 +621,52 @@
        short laptop viewport. No data-bar-ink: the ground is pure white. -->
   <section class="services" id="services" aria-labelledby="services-h">
 
+    <!-- THE ATMOSPHERE. Purely decorative, entirely CSS + one inline SVG, and
+         aria-hidden: no raster image, nothing for a screen reader to read.
+
+         Four layers, painted back to front, all inside .services__sky so the
+         section keeps its single ground token and the content stays at z:1:
+
+           1. .services__sky itself   the mesh of soft radial gradients that
+                                      makes the white-to-pale-cyan ground
+           2. .services__blob x3      large blurred organic shapes, drifting
+                                      very slowly, that put the diffuse blue
+                                      light behind the row of cards
+           3. the inline SVG          the subtle curved white lines running
+                                      across the section
+         The cards' backdrop-filter samples all of it - that is what gives the
+         glass something to actually blur. -->
+    <div class="services__sky" aria-hidden="true">
+      <span class="services__blob services__blob--a"></span>
+      <span class="services__blob services__blob--b"></span>
+      <span class="services__blob services__blob--c"></span>
+      <svg class="services__waves" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice" focusable="false">
+        <defs>
+          <linearGradient id="svcWaveA" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0" stop-color="#fff" stop-opacity="0"/>
+            <stop offset=".45" stop-color="#fff" stop-opacity=".95"/>
+            <stop offset="1" stop-color="#fff" stop-opacity="0"/>
+          </linearGradient>
+          <linearGradient id="svcWaveB" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0" stop-color="#bfe4f5" stop-opacity="0"/>
+            <stop offset=".5" stop-color="#9fd4ee" stop-opacity=".5"/>
+            <stop offset="1" stop-color="#bfe4f5" stop-opacity="0"/>
+          </linearGradient>
+        </defs>
+        <!-- Broad soft bands, then the fine white contour lines over them. -->
+        <path d="M-60 300 C 260 170, 620 250, 900 190 S 1420 120, 1680 210 L 1680 900 L -60 900 Z" fill="#eaf6fd" opacity=".55"/>
+        <path d="M-60 470 C 300 350, 640 470, 980 400 S 1440 320, 1680 400 L 1680 900 L -60 900 Z" fill="#e2f2fc" opacity=".5"/>
+        <path d="M-60 640 C 340 540, 700 660, 1060 590 S 1460 540, 1680 600 L 1680 900 L -60 900 Z" fill="#f4fbff" opacity=".65"/>
+        <g fill="none" stroke-width="1.8">
+          <path d="M-60 250 C 280 130, 640 220, 940 150 S 1430 70, 1680 165" stroke="url(#svcWaveA)"/>
+          <path d="M-60 340 C 300 220, 660 320, 980 245 S 1450 175, 1680 265" stroke="url(#svcWaveB)"/>
+          <path d="M-60 520 C 320 405, 690 525, 1020 450 S 1470 385, 1680 455" stroke="url(#svcWaveA)"/>
+          <path d="M-60 700 C 360 600, 720 720, 1080 650 S 1490 605, 1680 660" stroke="url(#svcWaveA)"/>
+          <path d="M-60 800 C 380 715, 740 820, 1120 760 S 1500 720, 1680 770" stroke="url(#svcWaveB)"/>
+        </g>
+      </svg>
+    </div>
+
     <div class="services__inner">
 
       <!-- THE WORDMARK.
@@ -632,6 +678,20 @@
            The h2 carries the accessible name; every word span is aria-hidden
            and the real string is in .u-visually-hidden, so a screen reader
            hears "What we do" once, not three fragmented words. -->
+      <!-- THE WORDMARK ROW. A positioning context holding the mark and the
+           top-right paragraph together, and the first of .services__inner's two
+           distributed rows.
+
+           It exists so .services__aside can be positioned against THIS box
+           rather than against the section: the row is placed by the inner's own
+           distribution, so the paragraph follows the wordmark wherever the free
+           space puts it - no hand-computed offset to keep in sync.
+
+           The <h2> itself is untouched. js/services.js measures its WIDTH as
+           the words' travel distance, so its geometry has to stay exactly as it
+           was; this wrapper goes around it, not through it. -->
+      <div class="services__row">
+
       <h2 class="services__wordmark" id="services-h">
         <span class="visually-hidden">What we do</span>
 
@@ -666,6 +726,7 @@
           <span class="services__ctaArrow" aria-hidden="true">&rarr;</span>
         </a>
       </div>
+      </div><!-- /.services__row -->
 
       <!-- The reference's four ruled columns become our four glass cards, in
            the same slot and the same 4-across rhythm.
@@ -680,8 +741,12 @@
       <ol class="services__grid">
         <li class="service" id="claims">
           <span class="service__sheen" aria-hidden="true"></span>
+          <!-- The frosted orb. Decorative - the service is named by the h3
+               immediately below it, so the icon adds nothing to the accessible
+               name and is hidden rather than labelled twice. Depicts a claim document. -->
+          <span class="service__orb" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><path d="M9 13h6M9 17h4"/></svg></span>
           <p class="service__num">01</p>
-          <h3 class="service__title">Claims management</h3>
+          <h3 class="service__title">Case management</h3>
           <p class="service__get">
             A claim documented from the first hour, so it settles instead of
             being disputed.
@@ -692,10 +757,16 @@
             <li>Employer negotiation</li>
             <li>Final settlement</li>
           </ul>
+
+          <span class=service__go aria-hidden=true><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h13M12.5 6l6 6-6 6"/></svg></span>
         </li>
 
         <li class="service" id="advisory">
           <span class="service__sheen" aria-hidden="true"></span>
+          <!-- The frosted orb. Decorative - the service is named by the h3
+               immediately below it, so the icon adds nothing to the accessible
+               name and is hidden rather than labelled twice. Depicts a pair of legal scales. -->
+          <span class="service__orb" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18M7 21h10M12 6l7 2M12 6 5 8"/><path d="M5 8 2.5 14.5a3 3 0 0 0 5 0z"/><path d="m19 8-2.5 6.5a3 3 0 0 0 5 0z"/></svg></span>
           <p class="service__num">02</p>
           <h3 class="service__title">Claims advisory &amp; legal</h3>
           <p class="service__get">
@@ -707,10 +778,16 @@
             <li>MLC &amp; ILO alignment</li>
             <li>Medico-legal mediation</li>
           </ul>
+
+          <span class=service__go aria-hidden=true><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h13M12.5 6l6 6-6 6"/></svg></span>
         </li>
 
         <li class="service" id="budgeting">
           <span class="service__sheen" aria-hidden="true"></span>
+          <!-- The frosted orb. Decorative - the service is named by the h3
+               immediately below it, so the icon adds nothing to the accessible
+               name and is hidden rather than labelled twice. Depicts a hand supporting a medical cross. -->
+          <span class="service__orb" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 15.5c2-1.6 4-1.6 6 0l2.2 1.7h3.1a1.6 1.6 0 0 1 0 3.2H8.6"/><path d="M10.7 17.2h2.6"/><path d="M14 17.2l5.4-2.6a1.7 1.7 0 0 1 2.2 2.4l-4.9 3.6a4 4 0 0 1-2.4.8H8.6"/><circle cx="14" cy="7" r="4.2"/><path d="M14 5.2v3.6M12.2 7h3.6"/></svg></span>
           <p class="service__num">03</p>
           <h3 class="service__title">Medical welfare budgeting</h3>
           <p class="service__get">
@@ -723,10 +800,16 @@
             <li>Evacuation contingency</li>
             <li>Data-driven forecasting</li>
           </ul>
+
+          <span class=service__go aria-hidden=true><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h13M12.5 6l6 6-6 6"/></svg></span>
         </li>
 
         <li class="service" id="telemedicine">
           <span class="service__sheen" aria-hidden="true"></span>
+          <!-- The frosted orb. Decorative - the service is named by the h3
+               immediately below it, so the icon adds nothing to the accessible
+               name and is hidden rather than labelled twice. Depicts a doctor on a video consultation. -->
+          <span class="service__orb" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="4" width="14" height="13" rx="2.4"/><path d="m16.5 9.5 5-2.6v8.2l-5-2.6z"/><circle cx="9.5" cy="9" r="2"/><path d="M6 14.2a3.8 3.8 0 0 1 7 0"/></svg></span>
           <p class="service__num">04</p>
           <h3 class="service__title">Telemedicine</h3>
           <p class="service__get">
@@ -739,6 +822,8 @@
             <li>Wearable diagnostics</li>
             <li>Diversion avoidance</li>
           </ul>
+
+          <span class=service__go aria-hidden=true><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h13M12.5 6l6 6-6 6"/></svg></span>
         </li>
       </ol>
     </div>
@@ -778,12 +863,34 @@
        before. -->
   <section class="process" id="process" aria-labelledby="process-h">
 
-    <!-- 1. THE HEADER. Ordinary flow, never pinned, never animated. -->
+    <!-- 1. THE HEADER. Ordinary flow, never pinned, never animated.
+
+         THE WATCH LINK sits at the header's bottom right, opposite the title:
+         the same five stages, shown running, rather than read as a list.
+
+         IT IS DELIBERATELY NOT IN THE BAND'S FOOT. --band-foot exists only so
+         the last card's copy clears the fold, and the section is sized to be
+         exactly one viewport tall so process-to-cases.js's 'bottom bottom'
+         trigger fires where it should. Anything added under the band pushes
+         that off. The header row is ordinary flow and has the room.
+
+         WHERE IT POINTS. services.html#process-film — the video section on
+         the Services process page. That section does not exist yet; the
+         anchor is written now so the link is correct the moment it lands, and
+         until then it resolves to the process page itself rather than to
+         nothing. Nothing here plays or loads video: this is a link. -->
     <div class="shell process__header">
-      <p class="eyebrow process__eyebrow">How our case runs</p>
-      <h2 class="section-title process__title" id="process-h">
-        One case, five stages, one point of contact
-      </h2>
+      <div class="process__headerText">
+        <p class="eyebrow process__eyebrow">How our case runs</p>
+        <h2 class="section-title process__title" id="process-h">
+          One case, five stages, one point of contact
+        </h2>
+      </div>
+
+      <a class="process__watch" href="services.html#process-film">
+        <span class="process__watchLabel">Watch the process</span>
+        <span class="process__watchArrow" aria-hidden="true">&rarr;</span>
+      </a>
     </div>
 
     <div class="process__body">
@@ -1132,7 +1239,7 @@
         <!-- Full-width bar pinned to the foot of the plate, as in the
              reference composition. Inside .case__reveal, so it is not on
              screen while the camera is still travelling. -->
-        <a class="case__cta" href="#contact">
+        <a class="case__cta" href="case-studies.html">
           <span>Read the full case</span>
           <span class="case__cta-arrow" aria-hidden="true">&rarr;</span>
         </a>
@@ -1149,15 +1256,14 @@
             <h3 class="case__title">Surgery re-quoted from INR&nbsp;7.75&nbsp;lakh down to INR&nbsp;2.55&nbsp;lakh</h3>
             <p class="case__result">Negotiated against market rate -
               <span class="case__figureNum">3.8&times;</span> inflation removed</p>
-            <!-- Decorative line-art plate. aria-hidden and pointer-events:none:
-                 it carries no information the copy does not already state. -->
-            <span class="case__art" aria-hidden="true">
-              <svg viewBox="0 0 120 120" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M60 14 88 30v34L60 80 32 64V30Z" stroke-dasharray="3 4"/>
-                <path d="M60 14v66M32 30l28 16 28-16"/>
-                <circle cx="60" cy="46" r="9" stroke-dasharray="2 3"/>
-                <path d="M26 92h68M34 102h52" stroke-dasharray="3 4"/>
-              </svg>
+            <!-- PHOTOGRAPHIC PLATE. Sits at the row's right edge, behind both
+                 the copy and the line-art, faded into the plate's own tint by
+                 a mask so it never reads as a pasted-in thumbnail. Decorative:
+                 aria-hidden with an empty alt, since the copy already states
+                 everything the picture shows. Hidden under 1040px with the
+                 art, where the rows are ordinary stacked blocks. -->
+            <span class="case__photo" aria-hidden="true">
+              <img src="assets/cases/case-surgery.jpg" alt="" loading="lazy" decoding="async">
             </span>
           </article>
         </li>
@@ -1168,14 +1274,8 @@
             <h3 class="case__title">Rehabilitation moved to independent specialists</h3>
             <p class="case__result">Provider referral -
               <span class="case__figureNum">60%</span> therapy cost reduction</p>
-            <span class="case__art" aria-hidden="true">
-              <svg viewBox="0 0 120 120" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M60 96V44" />
-                <path d="M60 62c0-12 9-22 21-24-1 13-9 22-21 24Z" stroke-dasharray="3 4"/>
-                <path d="M60 54c0-11-8-20-19-22 1 12 8 20 19 22Z" stroke-dasharray="3 4"/>
-                <path d="M42 96h36l-5 12H47Z" stroke-dasharray="2 3"/>
-                <path d="M30 108h60"/>
-              </svg>
+            <span class="case__photo" aria-hidden="true">
+              <img src="assets/cases/case-review.jpg" alt="" loading="lazy" decoding="async">
             </span>
           </article>
         </li>
@@ -1186,13 +1286,8 @@
             <h3 class="case__title">Consultation fees brought back in line with market rates</h3>
             <p class="case__result">Cost negotiation -
               <span class="case__figureNum">65%</span> fees reduced</p>
-            <span class="case__art" aria-hidden="true">
-              <svg viewBox="0 0 120 120" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round">
-                <rect x="38" y="20" width="44" height="80" rx="5" stroke-dasharray="3 4"/>
-                <path d="M48 38h24M48 52h24M48 66h14"/>
-                <circle cx="60" cy="88" r="5" stroke-dasharray="2 3"/>
-                <path d="M92 44l14 10-14 10" stroke-dasharray="2 3"/>
-              </svg>
+            <span class="case__photo" aria-hidden="true">
+              <img src="assets/cases/case-consult.jpg" alt="" loading="lazy" decoding="async">
             </span>
           </article>
         </li>
@@ -1202,215 +1297,211 @@
     </div>
   </section>
 
+  <!-- 07b - The lift from "Case studies" into "Why MedShield" ...........
+       The scroll distance the lift is spent over, and nothing else.
+
+       Case studies is an ordinary block section, so it has no spare rail to
+       take this out of, and .why's own 500svh is fully committed to the reel
+       (why-scrub.js holds on frame 0 for the opening slice and parks the CTA
+       across the last third). Taking the lift out of either would eat scroll
+       one of them needs, so it claims its own.
+
+       cases-to-why.js pins across it and drives one gesture over it - Case
+       studies being cut away upward off the top of the fold while .why is
+       uncovered underneath it, already at its final position. The reel is
+       the thing standing still; Case studies is the curtain being drawn up.
+       Same mechanism as .w2p below, turned through ninety degrees.
+
+       display:none until the script takes it (.c2w--live), exactly as .p2c
+       and .w2p are: with no GSAP, no JS or reduced motion this contributes
+       no height and the two sections simply follow one another as normal
+       blocks. -->
+  <section class="c2w" aria-hidden="true"></section>
+
   <!-- 08 - Why MedShield ........................................ -->
-  <!-- Editorial split: a fixed left rail (eyebrow, heading, the four support
-       points, the "what we are not" answer), a fixed headline block top-right,
-       and a three-up card carousel anchored to the LOWER-RIGHT quadrant. Only
-       the carousel moves - the rail and headline never translate. Card content
-       is unchanged from the previous five-across grid; only its layout,
-       styling and motion are new. -->
-  <section class="why" id="why" aria-labelledby="why-h">
-    <div class="shell why__layout">
+  <!-- A scroll-scrubbed drone reel: the camera pulls back from the deck of a
+       ship up through the cloud layer as the reader scrolls. The section is a
+       tall rail (its height IS the timeline) with a one-viewport sticky stage
+       pinned inside it; why-scrub.js paints one of 240 pre-decoded frames
+       into the canvas per scroll tick, and holds on the first frame for the
+       opening slice of the rail so the section arrives and settles before the
+       camera moves.
 
-      <!-- LEFT RAIL - fixed. Never animates. -->
-      <div class="why__rail">
-        <p class="eyebrow">Why MedShield</p>
-        <h2 class="why__rail-title" id="why-h">Why<br>us</h2>
+       The Why US copy that used to live here - the rail, the headline and the
+       nine cards - has been taken out for now while the reel is established.
+       .why-scrub__overlay is the layer it comes back into, sitting above the
+       canvas. -->
+  <section class="why" id="why" data-why-scrub aria-labelledby="why-h">
+    <div class="why-scrub__stage">
+      <!-- Painted by why-scrub.js. aria-hidden: it is decorative footage, and
+           the section is labelled above. -->
+      <canvas class="why-scrub__canvas" aria-hidden="true"></canvas>
 
-        <ul class="why__points">
-          <li>Lower medical &amp; operational spend</li>
-          <li>Fewer disputed claims</li>
-          <li>Faster return to work</li>
-          <li>One secure record per seafarer</li>
-          <li>Crew who feel looked after</li>
+      <!-- Stands in until the first frame is decoded, and IS the section
+           under reduced motion and with JS off. -->
+      <img class="why-scrub__poster" src="assets/why-us/scrub-poster.webp"
+           alt="Aerial view of a cruise ship under way in open sea."
+           decoding="async" fetchpriority="low" width="1280" height="720">
+
+      <!-- Copy layer. Centred over the reel and lifted into place on entry:
+           the block starts below its resting line and rises as the section
+           reaches the viewport, so the tagline arrives with the footage
+           rather than being there before it. why-scrub.js drives the lift
+           through --why-in; CSS does the moving. -->
+      <div class="why-scrub__overlay">
+        <div class="why-scrub__copy">
+          <p class="eyebrow eyebrow--onDark why-scrub__eyebrow">Why MedShield</p>
+          <!-- Broken by hand into four near-equal lines so the block stacks
+               as a solid centred slab. The breaks are explicit rather than
+               left to wrapping: at this weight and leading an orphaned word
+               on the last line collapses the shape the whole treatment
+               depends on. -->
+          <h2 class="why-scrub__display" id="why-h">What changes<br>when you bring<br><span class="why-scrub__brand">MedShield</span><br>onboard.</h2>
+        </div>
+
+        <!-- THE POINTS. They arrive in PAIRS - one to the left of the hull
+             and one to the right, together on the same beat - then both
+             drift up and out through the top, the same gesture as the
+             tagline above, so the section reads as one continuous upward
+             movement rather than a list.
+
+             Each one swings in on a small curve rather than a straight
+             slide: it starts low and further out toward its own edge, and
+             arcs inward and up to its resting line beside the ship.
+
+             Four pairs, then the ninth point closes the sequence on its own,
+             centred over the hull.
+
+             The pairs start as the tagline is halfway out, so the two
+             overlap briefly and the frame is never empty.
+
+             why-scrub.js writes --why-pt (0..1 across that PAIR's slot, so
+             both halves move in lockstep) onto each <li>; CSS turns it into
+             the travel. No card chrome - a heading and one line straight on
+             the footage. -->
+        <ul class="why-pts" aria-label="What MedShield changes">
+          <li class="why-pt" tabindex="0" data-why-side="left" data-why-pair="0">
+            <svg class="why-pt__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20V13"/><path d="M9 20V8.5"/><path d="M14 20v-5"/><circle cx="17.8" cy="7.8" r="3.3"/><path d="M20.2 10.2 22 12"/></svg>
+            <h3 class="why-pt__title">Providers chosen by index, not by habit</h3>
+            <p class="why-pt__body">A multi-parameter score ranks every facility on expertise, success rate, accreditation, response time and pre-negotiated price.</p>
+            <p class="why-pt__more">The index is rebuilt from outcomes, not from reputation. Every facility on the panel is re-scored on each closed case, so a centre that slips on response time or success rate falls down the ranking before the next seafarer is sent there.</p>
+          </li>
+          <li class="why-pt" tabindex="0" data-why-side="right" data-why-pair="0">
+            <svg class="why-pt__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v16"/><path d="M6.5 20h11"/><path d="M4 8h16"/><path d="M4 8 1.8 13a2.6 2.6 0 0 0 4.4 0Z"/><path d="M20 8l-2.2 5a2.6 2.6 0 0 0 4.4 0Z"/></svg>
+            <h3 class="why-pt__title">No vested interest in where you are treated</h3>
+            <p class="why-pt__body">We own no hospital and no PEME centre. When one vendor both examines and treats, recovery runs longer - we have seen 40% longer.</p>
+            <p class="why-pt__more">Independence is structural, not a policy line. Because we earn nothing from the treating facility, the only thing steering the referral is the case itself - which is what keeps a straightforward injury from turning into an extended, billable recovery.</p>
+          </li>
+          <li class="why-pt" tabindex="0" data-why-side="left" data-why-pair="1">
+            <svg class="why-pt__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="5" cy="6" r="2.2"/><circle cx="5" cy="18" r="2.2"/><circle cx="19" cy="12" r="2.6"/><path d="M7.1 7 16.6 11"/><path d="M7.1 17 16.6 13"/></svg>
+            <h3 class="why-pt__title">A proprietary selection engine, not a directory</h3>
+            <p class="why-pt__body">Our own scoring model reads the case and returns the facility that fits it, on a platform staffed 24/7/365.</p>
+            <p class="why-pt__more">A directory lists who exists; the engine reads the diagnosis, the port, the vessel's schedule and the crew member's insurer, then returns the facility that fits all four. The desk behind it is staffed around the clock, so the answer comes back in minutes at any hour, in any time zone.</p>
+          </li>
+          <li class="why-pt" tabindex="0" data-why-side="right" data-why-pair="1">
+            <svg class="why-pt__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3v5a4.5 4.5 0 0 0 9 0V3"/><path d="M4.2 3h2.2"/><path d="M14 3h2.2"/><path d="M10.5 12.5v2a4.5 4.5 0 0 0 9 0v-1.2"/><circle cx="19.2" cy="10.6" r="2.1"/></svg>
+            <h3 class="why-pt__title">Eighty per cent of the panel are doctors</h3>
+            <p class="why-pt__body">130+ subject-matter experts across nine disciplines, founded and run by clinicians.</p>
+            <p class="why-pt__more">Cases are read by clinicians in the relevant discipline - orthopaedics, cardiology, psychiatry and six more - rather than by coordinators passing files along. The company was founded by practising doctors, and the clinical majority on the panel is deliberate.</p>
+          </li>
+          <li class="why-pt" tabindex="0" data-why-side="left" data-why-pair="2">
+            <svg class="why-pt__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="9" r="5.5"/><path d="M9.6 13.6 8.5 21l3.5-2 3.5 2-1.1-7.4"/><path d="M10.2 9l1.3 1.3 2.4-2.5"/></svg>
+            <h3 class="why-pt__title">The most accredited organisation in Asia</h3>
+            <p class="why-pt__body">ISO 45001, held by no other Indian company in maritime health and safety. Plus ISO 9001 and Chamber of Commerce affiliations.</p>
+            <p class="why-pt__more">ISO 45001 is the occupational health and safety standard, and no other Indian company in maritime health and safety holds it. Alongside ISO 9001 for quality management and our Chamber of Commerce affiliations, it means our processes are audited by outside bodies, not self-declared.</p>
+          </li>
+          <li class="why-pt" tabindex="0" data-why-side="right" data-why-pair="2">
+            <svg class="why-pt__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9.5" cy="9.5" r="6.5"/><path d="M9.5 6.6v5.8"/><path d="M7.6 10.6l1.9 1.9 1.9-1.9"/><path d="M15 17.5h6"/><path d="M18 14.5v6"/></svg>
+            <h3 class="why-pt__title">Lower medical spend</h3>
+            <p class="why-pt__body">Treatment costed and approved against pre-negotiated rates before delivery.</p>
+            <p class="why-pt__more">Rates are agreed with each facility before a case ever arrives, and every line of treatment is costed and approved against them in advance. Owners see the bill before it is incurred rather than disputing it afterwards - which is where most of the overspend in crew healthcare has always hidden.</p>
+          </li>
+          <li class="why-pt" tabindex="0" data-why-side="left" data-why-pair="3">
+            <svg class="why-pt__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8Z"/><path d="M14 3v5h5"/><path d="M9 14.5l2 2 4-4"/></svg>
+            <h3 class="why-pt__title">Fewer disputed claims</h3>
+            <p class="why-pt__body">The file is complete from hour one, not reconstructed at settlement.</p>
+            <p class="why-pt__more">Reports, imaging, invoices and fitness certificates are gathered as the case runs, in the format P&I clubs and insurers ask for. Nothing has to be chased months later from a hospital that has moved on, so claims settle on the record instead of on argument.</p>
+          </li>
+          <li class="why-pt" tabindex="0" data-why-side="right" data-why-pair="3">
+            <svg class="why-pt__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8.5 4.5L4.5 8.5l4 4"/><path d="M4.5 8.5h9a6 6 0 0 1 6 6v1"/><path d="M3.5 20.5h17"/></svg>
+            <h3 class="why-pt__title">Faster return to work</h3>
+            <p class="why-pt__body">Treatment monitored and fitness-to-work coordinated, closing the gap to sign-on.</p>
+            <p class="why-pt__more">We stay with the case after discharge: treatment is monitored, follow-ups are booked, and the fitness-to-work examination is coordinated the moment the seafarer is ready for it. The days normally lost between recovery and sign-on simply do not accumulate.</p>
+          </li>
+          <li class="why-pt" tabindex="0" data-why-side="centre" data-why-pair="4">
+            <svg class="why-pt__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="7" cy="7.5" r="2.6"/><circle cx="15.5" cy="7.5" r="2.6"/><path d="M2.6 15.5a4.4 4.4 0 0 1 8.8 0"/><path d="M13 15.5a4.4 4.4 0 0 1 8.4-1.8"/><path d="M21.5 12.4v3h-3"/></svg>
+            <h3 class="why-pt__title">Lower operational cost</h3>
+            <p class="why-pt__body">One case team replaces overseas coordinators kept on standby for crew healthcare.</p>
+            <p class="why-pt__more">One case team covers every port, so there is no network of overseas coordinators to retain, brief and pay for standby time. The fixed cost of being ready everywhere becomes a variable cost paid only on the cases that actually occur.</p>
+          </li>
         </ul>
 
-        <!-- Deliberately a distinct block: this paragraph tells a superintendent
-             he does not have to displace an incumbent vendor to hire MedShield -
-             the most common procurement objection in this category. -->
-        <aside class="notus">
-          <span class="notus__icon" aria-hidden="true">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="m12 2 8 3.5v5c0 6-3.5 9.5-8 11.5-4.5-2-8-5.5-8-11.5v-5Z"/></svg>
-          </span>
-          <div>
-            <h3 class="notus__title">What we are not.</h3>
-            <p class="notus__body">
-              Not a hospital, a clinic, a pharmacy or an insurer. Not a cruise booking
-              company, a medical tourism agency or a crew recruiter. We are the
-              independent case owner from incident to outcome.
-            </p>
-          </div>
-        </aside>
-      </div>
+        <!-- THE CLOSE. The nine points state what changes; this is the one
+             thing to do about it, so it reads as the end of the sequence
+             rather than a tenth point: no icon, no body copy, just the line
+             and the button.
 
-      <!-- TOP RIGHT - fixed headline. Never animates. -->
-      <header class="why__head">
-        <h2 class="why__display">What changes when you<br>bring <span class="why__display-brand">MedShield</span> onboard.</h2>
-        <p class="why__lede">
-          One accountable partner. One complete record. Outcomes that land on both
-          sides - a lower cost of care for the owner, a better-handled
-          recovery for the seafarer.
-        </p>
-      </header>
+             It is NOT a .why-pt and not in the <ul> above. Two reasons.
+             The list is a list of claims and a link is not one of them. And
+             every point is built to drift up and out through the top - which
+             is right for a statement being read in passing and wrong for a
+             control being aimed at. This one rises in on the same gesture
+             and then PARKS: --why-cta runs 0 -> 1 across the stretch of the
+             rail after the points are done (the tail the reel was otherwise
+             playing out alone) and stays at 1, so the button is still under
+             the cursor when the reader reaches for it.
 
-      <!-- BOTTOM RIGHT - the carousel. Three cards visible of nine, advancing
-           left on a loop. Cards 01-05 are the operational case for MedShield;
-           06-09 are the business outcomes that follow from it, each written so
-           the owner's benefit and the seafarer's benefit sit in the same card.
-           The viewport clips; why.js drives it and is card-count agnostic. -->
-      <div class="why__carousel" data-why-carousel>
-        <div class="why__viewport">
-          <div class="why__track">
-          <article class="why-card">
-            <span class="why-card__sheen" aria-hidden="true"></span>
-            <figure class="why-card__figure">
-              <img src="assets/why-us/1.png" alt="Illustration of a rising bar chart with an upward arrow." loading="lazy" decoding="async" width="1536" height="1024">
-            </figure>
-            <p class="why-card__num">01</p>
-            <h3 class="why-card__title">Lower medical spend</h3>
-            <p class="why-card__body">Treatment costed and approved against pre-negotiated rates before delivery.</p>
-            <span class="why-card__spacer" aria-hidden="true"></span>
-            <div class="why-card__foot">
-              <span class="why-card__tag">Cost assurance</span>
-              <span class="why-card__go" aria-hidden="true">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h13"/><path d="m12.5 5.5 6.5 6.5-6.5 6.5"/></svg>
-              </span>
-            </div>
-          </article>
-          <article class="why-card">
-            <span class="why-card__sheen" aria-hidden="true"></span>
-            <figure class="why-card__figure">
-              <img src="assets/why-us/2.png" alt="Illustration of a folder of documents with a verified check mark." loading="lazy" decoding="async" width="1536" height="1024">
-            </figure>
-            <p class="why-card__num">02</p>
-            <h3 class="why-card__title">Fewer disputed claims</h3>
-            <p class="why-card__body">The file is complete from hour one, not reconstructed at settlement.</p>
-            <span class="why-card__spacer" aria-hidden="true"></span>
-            <div class="why-card__foot">
-              <span class="why-card__tag">Complete evidence</span>
-              <span class="why-card__go" aria-hidden="true">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h13"/><path d="m12.5 5.5 6.5 6.5-6.5 6.5"/></svg>
-              </span>
-            </div>
-          </article>
-          <article class="why-card">
-            <span class="why-card__sheen" aria-hidden="true"></span>
-            <figure class="why-card__figure">
-              <img src="assets/why-us/3.png" alt="Illustration of three figures linked by orbiting rings." loading="lazy" decoding="async" width="1536" height="1024">
-            </figure>
-            <p class="why-card__num">03</p>
-            <h3 class="why-card__title">Faster decisions</h3>
-            <p class="why-card__body">A doctor and a case manager on the same call.</p>
-            <span class="why-card__spacer" aria-hidden="true"></span>
-            <div class="why-card__foot">
-              <span class="why-card__tag">Live collaboration</span>
-              <span class="why-card__go" aria-hidden="true">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h13"/><path d="m12.5 5.5 6.5 6.5-6.5 6.5"/></svg>
-              </span>
-            </div>
-          </article>
-          <article class="why-card">
-            <span class="why-card__sheen" aria-hidden="true"></span>
-            <figure class="why-card__figure">
-              <img src="assets/why-us/4.png" alt="Illustration of a shield carrying a check mark." loading="lazy" decoding="async" width="1536" height="1024">
-            </figure>
-            <p class="why-card__num">04</p>
-            <h3 class="why-card__title">Regulatory confidence</h3>
-            <p class="why-card__body">MLC and ILO obligations documented as the case runs.</p>
-            <span class="why-card__spacer" aria-hidden="true"></span>
-            <div class="why-card__foot">
-              <span class="why-card__tag">Full compliance</span>
-              <span class="why-card__go" aria-hidden="true">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h13"/><path d="m12.5 5.5 6.5 6.5-6.5 6.5"/></svg>
-              </span>
-            </div>
-          </article>
-          <article class="why-card">
-            <span class="why-card__sheen" aria-hidden="true"></span>
-            <figure class="why-card__figure">
-              <img src="assets/why-us/5.png" alt="Illustration of a person, a folder and a database held in a cloud." loading="lazy" decoding="async" width="1536" height="1024">
-            </figure>
-            <p class="why-card__num">05</p>
-            <h3 class="why-card__title">One record per seafarer</h3>
-            <p class="why-card__body">Across vessels, ports and years.</p>
-            <span class="why-card__spacer" aria-hidden="true"></span>
-            <div class="why-card__foot">
-              <span class="why-card__tag">Secure continuity</span>
-              <span class="why-card__go" aria-hidden="true">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h13"/><path d="m12.5 5.5 6.5 6.5-6.5 6.5"/></svg>
-              </span>
-            </div>
-          </article>
-          <article class="why-card">
-            <span class="why-card__sheen" aria-hidden="true"></span>
-            <figure class="why-card__figure">
-              <img src="assets/why-us/6.png" alt="Illustration of a stethoscope around a heart carrying a pulse line." loading="lazy" decoding="async" width="1536" height="1024">
-            </figure>
-            <p class="why-card__num">06</p>
-            <h3 class="why-card__title">Enhanced crew satisfaction</h3>
-            <p class="why-card__body">Crew see their care handled promptly. Owners get a retention argument that costs no wage rise.</p>
-            <span class="why-card__spacer" aria-hidden="true"></span>
-            <div class="why-card__foot">
-              <span class="why-card__tag">Crew retention</span>
-              <span class="why-card__go" aria-hidden="true">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h13"/><path d="m12.5 5.5 6.5 6.5-6.5 6.5"/></svg>
-              </span>
-            </div>
-          </article>
-          <article class="why-card">
-            <span class="why-card__sheen" aria-hidden="true"></span>
-            <figure class="why-card__figure">
-              <img src="assets/why-us/7.png" alt="Illustration of concentric discs orbited by spheres." loading="lazy" decoding="async" width="1536" height="1024">
-            </figure>
-            <p class="why-card__num">07</p>
-            <h3 class="why-card__title">Data held securely</h3>
-            <p class="why-card__body">Crew medical information handled to GDPR and HIPAA standards where applicable.</p>
-            <span class="why-card__spacer" aria-hidden="true"></span>
-            <div class="why-card__foot">
-              <span class="why-card__tag">GDPR &amp; HIPAA</span>
-              <span class="why-card__go" aria-hidden="true">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h13"/><path d="m12.5 5.5 6.5 6.5-6.5 6.5"/></svg>
-              </span>
-            </div>
-          </article>
-          <article class="why-card">
-            <span class="why-card__sheen" aria-hidden="true"></span>
-            <figure class="why-card__figure">
-              <img src="assets/why-us/9.png" alt="Illustration of a padlock resting on a lit platform." loading="lazy" decoding="async" width="1536" height="1024">
-            </figure>
-            <p class="why-card__num">08</p>
-            <h3 class="why-card__title">Faster return to work</h3>
-            <p class="why-card__body">Treatment monitored and fitness-to-work coordinated, closing the gap to sign-on.</p>
-            <span class="why-card__spacer" aria-hidden="true"></span>
-            <div class="why-card__foot">
-              <span class="why-card__tag">Back on board</span>
-              <span class="why-card__go" aria-hidden="true">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h13"/><path d="m12.5 5.5 6.5 6.5-6.5 6.5"/></svg>
-              </span>
-            </div>
-          </article>
-          <article class="why-card">
-            <span class="why-card__sheen" aria-hidden="true"></span>
-            <figure class="why-card__figure">
-              <img src="assets/why-us/8.png" alt="Illustration of a return arrow above a check mark on a platform." loading="lazy" decoding="async" width="1536" height="1024">
-            </figure>
-            <p class="why-card__num">09</p>
-            <h3 class="why-card__title">Lower operational cost</h3>
-            <p class="why-card__body">One case team replaces overseas coordinators kept on standby for crew healthcare.</p>
-            <span class="why-card__spacer" aria-hidden="true"></span>
-            <div class="why-card__foot">
-              <span class="why-card__tag">One case team</span>
-              <span class="why-card__go" aria-hidden="true">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h13"/><path d="m12.5 5.5 6.5 6.5-6.5 6.5"/></svg>
-              </span>
-            </div>
-          </article>
-          </div>
+             pointer-events is restored here specifically. .why-pts and this
+             layer are transparent to the cursor so the reel behind them
+             stays scrollable and the point text never eats a drag; the
+             button is the one thing in the band that must be clickable. -->
+        <div class="why-cta" data-why-cta>
+          <p class="why-cta__line">Bring MedShield onboard.</p>
+
+          <!-- WHAT WE ARE NOT. This copy lived in the old Why Us left rail
+               (as .notus, an aside beside the five-point list) and was lost
+               when the section was rebuilt around the reel. It belongs here
+               rather than back in a rail because it answers the objection a
+               superintendent raises at exactly this moment - immediately
+               after being asked to bring MedShield onboard, and immediately
+               before the button that does it: he does not have to displace
+               an incumbent vendor to hire us.
+
+               A negative definition, so it is deliberately not styled like
+               the nine points above it. Those are claims; this is the
+               boundary around them. Smaller, lighter, and set as running
+               prose rather than a titled block, so it reads as a caveat
+               spoken under the headline instead of a tenth claim. -->
+          <p class="why-cta__notus">
+            <strong class="why-cta__notus-lead">What we are not.</strong>
+            Not a hospital, a clinic, a pharmacy or an insurer. Not a cruise
+            booking company, a medical tourism agency or a crew recruiter.
+            We are the independent case owner from incident to outcome.
+          </p>
+
+          <a class="btn btn--ghost btn--sm why-cta__btn" href="contact.html">Talk to our case desk</a>
         </div>
       </div>
-
     </div>
   </section>
+
+  <!-- 08b - Why -> People push .................................. -->
+  <!-- The scroll distance the push is spent over, and nothing else. The why
+       rail's own length is fully committed to the reel: it ends with the
+       stage still pinned, the reel on its last frame and the CTA parked. If
+       the push were taken out of that rail it would have to eat the tail the
+       button is parked in, so the two would fight over the same scroll.
+
+       This claims its own instead. why-to-people.js pins across it and
+       drives one gesture over it - .why's stage leaving to the left while
+       .people arrives behind it from the right, moving together and at the
+       same rate, so the incoming section reads as the thing DOING the
+       pushing rather than as a panel that happens to slide in.
+
+       display:none until the script takes it (.w2p--live), exactly as .p2c
+       is: with no GSAP, no JS or reduced motion this contributes no height
+       and the two sections simply follow one another as normal blocks. -->
+  <section class="w2p" aria-hidden="true"></section>
 
   <!-- 09 - The people ........................................... -->
   <section class="people" id="about" aria-labelledby="people-h">
@@ -1443,10 +1534,10 @@
               <picture>
                 <source type="image/webp"
                         srcset="assets/people/desikan.webp 560w, assets/people/desikan@2x.webp 1120w"
-                        sizes="(min-width: 900px) 30vw, 45vw">
+                        sizes="(min-width: 900px) 22rem, 45vw">
                 <img src="assets/people/desikan.jpg"
                      srcset="assets/people/desikan.jpg 560w, assets/people/desikan@2x.jpg 1120w"
-                     sizes="(min-width: 900px) 30vw, 45vw"
+                     sizes="(min-width: 900px) 22rem, 45vw"
                      alt="Dr. Desikan Setlur, founder and chief executive of MedShield."
                      width="560" height="700" loading="lazy" decoding="async">
               </picture>
@@ -1460,10 +1551,10 @@
               <picture>
                 <source type="image/webp"
                         srcset="assets/people/princi.webp 560w, assets/people/princi@2x.webp 1120w"
-                        sizes="(min-width: 900px) 30vw, 45vw">
+                        sizes="(min-width: 900px) 22rem, 45vw">
                 <img src="assets/people/princi.jpg"
                      srcset="assets/people/princi.jpg 560w, assets/people/princi@2x.jpg 1120w"
-                     sizes="(min-width: 900px) 30vw, 45vw"
+                     sizes="(min-width: 900px) 22rem, 45vw"
                      alt="Dr. Princi Singh, co-founder and chief operating officer of MedShield."
                      width="560" height="700" loading="lazy" decoding="async">
               </picture>
@@ -1473,29 +1564,604 @@
           </li>
         </ul>
 
-        <!-- Nine teams, not nine individuals. The ten individual doctor bios in
-             the client folder belong on that same inner team page: on the
-             homepage they cost scroll and date quickly as people move. -->
+        <!-- Nine TEAMS, not nine individuals. The ten individual doctor bios
+             in the client folder belong on the inner team page: on the
+             homepage they cost scroll and date quickly as people move.
+
+             WHY THE SPLIT. The client's own SME brief (client contents/
+             "TEAM - SME PANEL_ (1).docx") describes nine teams, and the
+             distinction that matters to a reader deciding whether to trust
+             the desk is which of them are clinical. Seven read a case
+             medically; two - medico-legal and technology - carry it. Listing
+             all nine flat hides exactly the fact the site claims elsewhere
+             ("eighty per cent of the panel are doctors"), so the split is
+             the claim made visible rather than a new assertion.
+
+             WHY A BAR AND NOT A CHART. The only figures the supplied
+             material actually supports are 130+ experts, nine teams, 24/7
+             cover and the 80/20 split of the experts. A bar drawn at that
+             literal 80/20 is the dataset at true proportion; anything more
+             elaborate would be decorating four numbers.
+
+             THE DENOMINATORS ARE NOT INTERCHANGEABLE. 80/20 splits PEOPLE
+             (the client's "80% medical, 20% cross-functional"); 7-and-2
+             splits TEAMS, which is 78/22. The bar carries the people split
+             and the team counts sit on the group headings, so no graphic
+             claims one number is the other. -->
         <div class="panel">
           <div class="panel__head">
             <h3 class="panel__title">The SME panel</h3>
-            <p class="panel__sub">130+ experts, nine disciplines</p>
+            <p class="panel__sub">Who reads your case</p>
           </div>
-          <ul class="panel__list">
-            <li>Maritime medical specialists and super-specialists</li>
-            <li>Telemedicine</li>
-            <li>Healthcare and claims</li>
-            <li>Clinical findings correlation</li>
-            <li>Treatment plan analysis</li>
-            <li>Global pharmacology</li>
-            <li>Occupational preventive health</li>
-            <li>Medico-legal and arbitration</li>
-            <li>Technology, 24/7</li>
-          </ul>
+
+          <!-- The infographic strip: three figures, then one proportion bar
+               drawn at the share those figures describe. -->
+          <div class="panel__viz">
+            <dl class="panel__figures">
+              <div class="panel__figure">
+                <dt class="panel__figureLabel">Experts on call</dt>
+                <dd class="panel__figureNum">130<span class="panel__plus">+</span></dd>
+              </div>
+              <div class="panel__figure">
+                <dt class="panel__figureLabel">Specialist teams</dt>
+                <dd class="panel__figureNum">9</dd>
+              </div>
+              <div class="panel__figure">
+                <dt class="panel__figureLabel">Cover</dt>
+                <dd class="panel__figureNum">24<span class="panel__plus">/7</span></dd>
+              </div>
+            </dl>
+
+            <!-- The bar splits the 130+ EXPERTS, not the nine teams. The
+                 client's figure ("80% medical, 20% cross-functional" - About
+                 Us, 16 Dec 24) is a headcount, and 7 of 9 teams is 78/22,
+                 not 80/20. Keying an 80/20 bar to the team counts would fuse
+                 two different denominators into one graphic, so the bar
+                 carries people and the team counts sit on the group headings
+                 below, where they describe teams. -->
+            <div class="panel__bar" aria-hidden="true">
+              <span class="panel__barSeg panel__barSeg--med" style="--seg: 80%"></span>
+              <span class="panel__barSeg panel__barSeg--ops" style="--seg: 20%"></span>
+            </div>
+            <p class="panel__barKey">
+              <span class="panel__key panel__key--med">80% medical specialists</span>
+              <span class="panel__key panel__key--ops">20% cross-functional</span>
+            </p>
+          </div>
+
+          <!-- Each team carries the one line that says what it actually does,
+               condensed from the client's SME brief. A bare name list made
+               the reader guess at "clinical findings correlation"; the line
+               is what turns the list into evidence. -->
+          <div class="panel__group">
+            <h4 class="panel__groupTitle">
+              <span class="panel__dot panel__dot--med" aria-hidden="true"></span>
+              Medical teams <span class="panel__groupCount">7</span>
+            </h4>
+            <ul class="panel__list">
+              <li class="panel__row">
+                <span class="panel__rowName">Maritime medical specialists</span>
+                <span class="panel__rowNote">Chronic conditions, injury and mental health at sea</span>
+              </li>
+              <li class="panel__row">
+                <span class="panel__rowName">Telemedicine</span>
+                <span class="panel__rowNote">Remote consultation wherever the vessel is</span>
+              </li>
+              <li class="panel__row">
+                <span class="panel__rowName">Healthcare and claims</span>
+                <span class="panel__rowNote">Medical, disability and life claims, handled together</span>
+              </li>
+              <li class="panel__row">
+                <span class="panel__rowName">Clinical findings correlation</span>
+                <span class="panel__rowNote">Findings, diagnosis and claim read against each other</span>
+              </li>
+              <li class="panel__row">
+                <span class="panel__rowName">Treatment plan analysis</span>
+                <span class="panel__rowNote">Proposed plans reviewed on clinical merit and cost</span>
+              </li>
+              <li class="panel__row">
+                <span class="panel__rowName">Global pharmacology</span>
+                <span class="panel__rowNote">Drug protocols and supply held to international standards</span>
+              </li>
+              <li class="panel__row">
+                <span class="panel__rowName">Occupational preventive health</span>
+                <span class="panel__rowNote">Programmes that cut workplace risk before a case starts</span>
+              </li>
+            </ul>
+          </div>
+
+          <div class="panel__group">
+            <h4 class="panel__groupTitle">
+              <span class="panel__dot panel__dot--ops" aria-hidden="true"></span>
+              Non-medical teams <span class="panel__groupCount">2</span>
+            </h4>
+            <ul class="panel__list">
+              <li class="panel__row">
+                <span class="panel__rowName">Medico-legal and arbitration</span>
+                <span class="panel__rowNote">Disputes resolved against international maritime standards</span>
+              </li>
+              <li class="panel__row">
+                <span class="panel__rowName">Technology, 24/7</span>
+                <span class="panel__rowNote">Secure infrastructure, data confidentiality, uptime</span>
+              </li>
+            </ul>
+          </div>
         </div>
       </div>
 
     </div>
+  </section>
+
+  <!-- 10 - Presence & network ................................... -->
+  <!-- WHAT THIS IS. The reach claim drawn instead of asserted: a stylised
+       map of India with a pin per point-of-presence, a stat rail beside it,
+       and the international offices listed under the rail.
+
+       WHERE THE NUMBERS COME FROM. All four are the client's own, and all
+       four already appear elsewhere on this page (see .doubts__stats), so
+       nothing here is a new claim:
+
+         17+ cities     "Direct Point-of-Presence in 17+ cities across
+                        India" - client contents/Company Profile.pdf
+         45+ locations  "A strong presence in 45+ locations across India,
+                        along with offices in Singapore and the UAE"
+                        - client contents/About Us - 16 Dec 24_.docx
+         1,800+         partner hospitals, clinics, labs and pharmacies
+                        - Company Profile.pdf and About Us, agreeing
+         10 PEME        "We are establishing 10 PEME Centers across key
+                        cities in India" - client contents/Maritime
+                        Healthcare 17Slide V.2.pptx, the roadmap slide.
+                        Flagged as PLANNED in the copy because it is a
+                        roadmap item, not a live capability.
+
+       [CONFIRM] THE CITY LIST IS NOT SOURCED. This is the one thing in this
+       section the client's material does not support. No supplied document
+       names the 17 cities or the 45 locations - slide 4 of the Maritime
+       Healthcare deck carries a literal "xxxxxxxxxxxx" placeholder exactly
+       where that list belongs. The only cities named anywhere in the folder
+       are Chennai (the HQ, from Company Profile.pdf) and New Delhi,
+       Chandigarh and Puducherry - and those three come from SME doctor
+       biographies, not from a network list.
+
+       So the pins below are a PLACEHOLDER SET, chosen as the major Indian
+       ports and seafarer recruitment hubs a maritime point-of-presence
+       network would sensibly follow. Chennai is real. The rest are inferred
+       and must be replaced before this ships.
+
+       Every pin lives in ONE list - the <li> items inside .presence__list,
+       each carrying data-x/data-y as percentages of the map box. Swapping in
+       the client's real cities means editing that list and nothing else. Do
+       not hard-code pin positions anywhere else.
+
+       WHY AN IMAGE AND NOT A MAP LIBRARY. A tile map (Leaflet, Mapbox) would
+       pull a runtime, a request per tile and a third-party key onto a page
+       that otherwise ships none, all to show sixteen static points. The
+       client supplied the artwork, so it is one lazy-loaded image instead.
+
+       PIN COORDINATES ARE READ OFF THE ARTWORK, NOT COMPUTED. The supplied
+       map is a 3D extruded view in a slight perspective, so latitude and
+       longitude do not map linearly onto it - a projection would put the
+       coastal cities in the sea. Each pin's data-x/data-y was instead read
+       against a percentage grid laid over the image and checked to land on
+       opaque landmass pixels.
+
+       That has a consequence worth knowing: the pins are registered to THIS
+       artwork at THIS aspect ratio. Replacing map.png with a different
+       rendering, or changing .presence__map's aspect-ratio, moves every pin
+       off its city and all sixteen must be re-read.
+
+       THE MAP IS INDICATIVE, NOT A SURVEY BOUNDARY. It is marked alt="" and
+       aria-hidden for that reason - the pin list, not the picture, is the
+       accessible record of where MedShield is.
+
+       [CONFIRM] IMAGE RIGHTS. The artwork came from the client. They should
+       confirm they hold a licence to publish it, as it is the kind of stock
+       3D render that is usually licensed rather than owned. -->
+  <!-- [CONFIRM] The asset folder is spelled "Prescence and network" in the
+       upload. Left exactly as supplied so the path resolves; worth
+       correcting to "Presence" on both disk and in the src below. -->
+  <section class="presence" id="presence" aria-labelledby="presence-h">
+    <div class="shell presence__layout">
+
+      <!-- The rail: claim, then figures, then offices. Same shape as the
+           .people rail above it - a heading and one line - so the two
+           sections read as a pair. -->
+      <div class="presence__rail">
+        <p class="presence__eyebrow" data-reveal>Presence &amp; network</p>
+        <h2 class="section-title presence__title" id="presence-h" data-reveal
+            style="--reveal-delay:.06s">
+          On the ground where your crew lands.
+        </h2>
+        <p class="presence__note" data-reveal style="--reveal-delay:.12s">
+          A case moves only as fast as the nearest accredited bed. We hold
+          direct points of presence in the port and recruitment cities crew
+          actually move through - so admission, rates and reporting are
+          settled locally, not negotiated from a desk several time zones away.
+        </p>
+
+        <dl class="presence__stats" data-reveal style="--reveal-delay:.18s">
+          <div class="presence__stat">
+            <dt class="presence__statFigure">17<span class="presence__statPlus">+</span></dt>
+            <dd class="presence__statLabel">Cities with direct point-of-presence</dd>
+          </div>
+          <div class="presence__stat">
+            <dt class="presence__statFigure">45<span class="presence__statPlus">+</span></dt>
+            <dd class="presence__statLabel">Locations across India</dd>
+          </div>
+          <div class="presence__stat">
+            <dt class="presence__statFigure">1,800<span class="presence__statPlus">+</span></dt>
+            <dd class="presence__statLabel">Hospitals, clinics, labs &amp; pharmacies</dd>
+          </div>
+          <div class="presence__stat">
+            <dt class="presence__statFigure">10</dt>
+            <dd class="presence__statLabel">
+              PEME centres <span class="presence__statFlag">planned</span>
+            </dd>
+          </div>
+        </dl>
+
+        <!-- The international line. Kept as prose under the figures rather
+             than as three more pins, because the map is of India and these
+             three are not on it. -->
+        <p class="presence__offices" data-reveal style="--reveal-delay:.24s">
+          <span class="presence__officesLabel">Offices</span>
+          India <span class="presence__officesDot" aria-hidden="true">&middot;</span>
+          Singapore <span class="presence__officesDot" aria-hidden="true">&middot;</span>
+          UAE
+        </p>
+      </div>
+
+      <!-- The map. .presence__map is the positioning context and holds the
+           artwork's aspect ratio; each pin is placed inside it from its own
+           data-x/data-y, so image and pins scale together and stay
+           registered at any width. -->
+      <div class="presence__mapWrap" data-reveal style="--reveal-delay:.1s">
+        <div class="presence__map">
+
+          <!-- THE MAP ARTWORK, supplied by the client
+               (assets/Prescence and network/map.png - the folder spelling is
+               the client's and is left as uploaded).
+
+               DECORATIVE, so alt="" and aria-hidden: the pin list below is
+               the accessible record of where MedShield is, and a screen
+               reader gaining "3D relief map of India" here would add nothing
+               a sighted reader gets from the labels.
+
+               WHY NOT A BACKGROUND-IMAGE. It is an <img> so it is a real
+               resource the browser can prioritise, size and lazy-load, and so
+               the intrinsic ratio below is enforced by the element itself.
+
+               The artwork is a 3D extruded view with a slight perspective, so
+               pin coordinates CANNOT be derived from latitude and longitude -
+               they are read off the artwork directly. See the pin list. -->
+          <img class="presence__art"
+               src="assets/Prescence and network/map.png"
+               alt="" aria-hidden="true" decoding="async" loading="lazy"
+               width="1536" height="1024">
+
+          <!-- THE PIN LIST - the single source of truth for this map.
+               data-x / data-y are percentages of this box. Replace the whole
+               list when the client supplies the real cities. data-hq marks
+               the headquarters, the one entry here that IS sourced. -->
+          <ul class="presence__list" aria-label="MedShield points of presence in India">
+            <li class="presence__pin" data-x="45.8" data-y="73.5" data-hq>
+              <span class="presence__pinDot" aria-hidden="true"></span>
+              <span class="presence__pinName">Chennai<span class="presence__pinTag"> - HQ</span></span>
+            </li>
+            <li class="presence__pin" data-x="29.5" data-y="59.0" data-side="w">
+              <span class="presence__pinDot" aria-hidden="true"></span>
+              <span class="presence__pinName">Mumbai</span>
+            </li>
+            <li class="presence__pin" data-x="36.5" data-y="27.0">
+              <span class="presence__pinDot" aria-hidden="true"></span>
+              <span class="presence__pinName">New Delhi</span>
+            </li>
+            <li class="presence__pin" data-x="36.0" data-y="86.0" data-side="w">
+              <span class="presence__pinDot" aria-hidden="true"></span>
+              <span class="presence__pinName">Kochi</span>
+            </li>
+            <li class="presence__pin" data-x="51.0" data-y="62.0">
+              <span class="presence__pinDot" aria-hidden="true"></span>
+              <span class="presence__pinName">Visakhapatnam</span>
+            </li>
+            <li class="presence__pin" data-x="61.5" data-y="52.5" data-side="w">
+              <span class="presence__pinDot" aria-hidden="true"></span>
+              <span class="presence__pinName">Kolkata</span>
+            </li>
+            <li class="presence__pin" data-x="24.0" data-y="46.5" data-side="n">
+              <span class="presence__pinDot" aria-hidden="true"></span>
+              <span class="presence__pinName">Kandla</span>
+            </li>
+            <li class="presence__pin" data-x="41.0" data-y="88.5">
+              <span class="presence__pinDot" aria-hidden="true"></span>
+              <span class="presence__pinName">Thoothukudi</span>
+            </li>
+            <li class="presence__pin" data-x="31.5" data-y="68.5" data-side="w">
+              <span class="presence__pinDot" aria-hidden="true"></span>
+              <span class="presence__pinName">Goa</span>
+            </li>
+            <li class="presence__pin" data-x="33.5" data-y="75.0" data-side="w">
+              <span class="presence__pinDot" aria-hidden="true"></span>
+              <span class="presence__pinName">Mangaluru</span>
+            </li>
+            <li class="presence__pin" data-x="42.5" data-y="64.5">
+              <span class="presence__pinDot" aria-hidden="true"></span>
+              <span class="presence__pinName">Hyderabad</span>
+            </li>
+            <li class="presence__pin" data-x="40.5" data-y="76.5">
+              <span class="presence__pinDot" aria-hidden="true"></span>
+              <span class="presence__pinName">Bengaluru</span>
+            </li>
+            <li class="presence__pin" data-x="31.8" data-y="61.0" data-side="s">
+              <span class="presence__pinDot" aria-hidden="true"></span>
+              <span class="presence__pinName">Pune</span>
+            </li>
+            <li class="presence__pin" data-x="27.5" data-y="47.0">
+              <span class="presence__pinDot" aria-hidden="true"></span>
+              <span class="presence__pinName">Ahmedabad</span>
+            </li>
+            <li class="presence__pin" data-x="55.0" data-y="57.5">
+              <span class="presence__pinDot" aria-hidden="true"></span>
+              <span class="presence__pinName">Bhubaneswar</span>
+            </li>
+            <li class="presence__pin" data-x="38.5" data-y="81.5" data-side="w">
+              <span class="presence__pinDot" aria-hidden="true"></span>
+              <span class="presence__pinName">Coimbatore</span>
+            </li>
+          </ul>
+        </div>
+
+        <!-- The honest caption. The figure above the map says 17+; the map
+             draws sixteen. This says so, rather than letting a reader count
+             and find the discrepancy themselves. -->
+        <p class="presence__mapFoot">
+          Indicative map. Pins show principal port and recruitment cities;
+          the full network runs to 45+ locations.
+        </p>
+      </div>
+
+    </div>
+  </section>
+
+
+  <!-- 09 - Partner network ...................................... -->
+  <!-- WHAT THIS IS. The provider network shown rather than asserted: two
+       bands of logo plates running in opposite directions, continuously.
+
+       WHERE THE NAMES COME FROM. The client's own brand deck (client
+       contents/MedShield - Brand Portfolio.pptx, slides 8-9, titled "Key
+       Partners"), which is the only place in the supplied material that names
+       any partner at all. The logos here are extracted from those two slides;
+       nothing is invented and nothing is sourced from the open web.
+
+       [CONFIRM] TRADEMARK CLEARANCE. These are third-party marks. Showing
+       them implies an endorsement relationship, and a pitch deck is a
+       narrower audience than a public site. The client should confirm they
+       hold permission to display each one before this ships.
+
+       [CONFIRM] THE 75-YEAR MARK carries no company name anywhere in the
+       artwork - the deck slide is logos only, with no caption - so its owner
+       cannot be established from the supplied material and its plate is
+       labelled by the mark's own words. The client should name it.
+
+       THE SET IS A SAMPLE, NOT THE NETWORK. Fifteen plates against a claim of
+       1,800+ entities, which is why the line under the bands carries the real
+       number - see .partners__foot in style.css.
+
+       ORDER IS NOT A RANKING. Hospitals run in the top band and the pharmacy
+       and diagnostics names in the lower one, which is a grouping; within
+       each, order is chosen so adjacent plates differ in shape and colour. -->
+  <section class="partners" id="partners" aria-labelledby="partners-h">
+    <div class="shell partners__head">
+      <p class="partners__eyebrow">Our network</p>
+      <h2 class="section-title partners__title" id="partners-h">
+        Trusted by leading hospitals and pharmacies across India
+      </h2>
+      <p class="partners__note">
+        Your crew is treated inside accredited networks we already hold
+        relationships with - so admission, rates and reporting are settled
+        before the case starts.
+      </p>
+    </div>
+
+    <div class="partners__bands">
+      <!-- Row one runs LEFT, row two runs RIGHT. The direction is the
+           script's to set (data-dir); CSS never animates these. -->
+      <div class="partners__frame" data-dir="left">
+        <ul class="partners__track" aria-label="Partner hospitals">
+          <li class="partners__plate">
+            <img class="partners__logo" src="assets/partners/apollo.png"
+                 alt="Apollo Hospitals logo" width="560" height="224"
+                 loading="lazy" decoding="async">
+            <p class="partners__name">Apollo Hospitals</p>
+          </li>
+          <li class="partners__plate">
+            <img class="partners__logo" src="assets/partners/fortis.png"
+                 alt="Fortis Healthcare logo" width="560" height="224"
+                 loading="lazy" decoding="async">
+            <p class="partners__name">Fortis Healthcare</p>
+          </li>
+          <li class="partners__plate">
+            <img class="partners__logo" src="assets/partners/max-healthcare.png"
+                 alt="Max Healthcare logo" width="560" height="224"
+                 loading="lazy" decoding="async">
+            <p class="partners__name">Max Healthcare</p>
+          </li>
+          <li class="partners__plate">
+            <img class="partners__logo" src="assets/partners/medanta.png"
+                 alt="Medanta logo" width="560" height="224"
+                 loading="lazy" decoding="async">
+            <p class="partners__name">Medanta</p>
+          </li>
+          <li class="partners__plate">
+            <img class="partners__logo" src="assets/partners/manipal.png"
+                 alt="Manipal Hospitals logo" width="560" height="224"
+                 loading="lazy" decoding="async">
+            <p class="partners__name">Manipal Hospitals</p>
+          </li>
+          <li class="partners__plate">
+            <img class="partners__logo" src="assets/partners/aster-cmi.png"
+                 alt="Aster CMI Hospital logo" width="560" height="224"
+                 loading="lazy" decoding="async">
+            <p class="partners__name">Aster CMI Hospital</p>
+          </li>
+          <li class="partners__plate">
+            <img class="partners__logo" src="assets/partners/kauvery.png"
+                 alt="Kauvery Hospital logo" width="560" height="224"
+                 loading="lazy" decoding="async">
+            <p class="partners__name">Kauvery Hospital</p>
+          </li>
+          <li class="partners__plate">
+            <img class="partners__logo" src="assets/partners/hinduja.png"
+                 alt="P. D. Hinduja Hospital logo" width="560" height="224"
+                 loading="lazy" decoding="async">
+            <p class="partners__name">P. D. Hinduja Hospital</p>
+          </li>
+          <li class="partners__plate partners__plate--clone" aria-hidden="true">
+            <img class="partners__logo" src="assets/partners/apollo.png"
+                 alt="" width="560" height="224"
+                 loading="lazy" decoding="async">
+            <p class="partners__name">Apollo Hospitals</p>
+          </li>
+          <li class="partners__plate partners__plate--clone" aria-hidden="true">
+            <img class="partners__logo" src="assets/partners/fortis.png"
+                 alt="" width="560" height="224"
+                 loading="lazy" decoding="async">
+            <p class="partners__name">Fortis Healthcare</p>
+          </li>
+          <li class="partners__plate partners__plate--clone" aria-hidden="true">
+            <img class="partners__logo" src="assets/partners/max-healthcare.png"
+                 alt="" width="560" height="224"
+                 loading="lazy" decoding="async">
+            <p class="partners__name">Max Healthcare</p>
+          </li>
+          <li class="partners__plate partners__plate--clone" aria-hidden="true">
+            <img class="partners__logo" src="assets/partners/medanta.png"
+                 alt="" width="560" height="224"
+                 loading="lazy" decoding="async">
+            <p class="partners__name">Medanta</p>
+          </li>
+          <li class="partners__plate partners__plate--clone" aria-hidden="true">
+            <img class="partners__logo" src="assets/partners/manipal.png"
+                 alt="" width="560" height="224"
+                 loading="lazy" decoding="async">
+            <p class="partners__name">Manipal Hospitals</p>
+          </li>
+          <li class="partners__plate partners__plate--clone" aria-hidden="true">
+            <img class="partners__logo" src="assets/partners/aster-cmi.png"
+                 alt="" width="560" height="224"
+                 loading="lazy" decoding="async">
+            <p class="partners__name">Aster CMI Hospital</p>
+          </li>
+          <li class="partners__plate partners__plate--clone" aria-hidden="true">
+            <img class="partners__logo" src="assets/partners/kauvery.png"
+                 alt="" width="560" height="224"
+                 loading="lazy" decoding="async">
+            <p class="partners__name">Kauvery Hospital</p>
+          </li>
+          <li class="partners__plate partners__plate--clone" aria-hidden="true">
+            <img class="partners__logo" src="assets/partners/hinduja.png"
+                 alt="" width="560" height="224"
+                 loading="lazy" decoding="async">
+            <p class="partners__name">P. D. Hinduja Hospital</p>
+          </li>
+        </ul>
+      </div>
+
+      <div class="partners__frame" data-dir="right">
+        <ul class="partners__track" aria-label="Partner hospitals and pharmacies">
+          <li class="partners__plate">
+            <img class="partners__logo" src="assets/partners/srmc-chennai.png"
+                 alt="Sri Ramachandra, Chennai logo" width="560" height="224"
+                 loading="lazy" decoding="async">
+            <p class="partners__name">Sri Ramachandra, Chennai</p>
+          </li>
+          <li class="partners__plate">
+            <img class="partners__logo" src="assets/partners/sunshine.png"
+                 alt="Sunshine Hospitals logo" width="560" height="224"
+                 loading="lazy" decoding="async">
+            <p class="partners__name">Sunshine Hospitals</p>
+          </li>
+          <li class="partners__plate">
+            <img class="partners__logo" src="assets/partners/excellence-75.png"
+                 alt="75 Years in Patient Care logo" width="560" height="224"
+                 loading="lazy" decoding="async">
+            <p class="partners__name">75 Years in Patient Care</p>
+          </li>
+          <li class="partners__plate">
+            <img class="partners__logo" src="assets/partners/tata-1mg.png"
+                 alt="TATA 1mg logo" width="560" height="224"
+                 loading="lazy" decoding="async">
+            <p class="partners__name">TATA 1mg</p>
+          </li>
+          <li class="partners__plate">
+            <img class="partners__logo" src="assets/partners/netmeds.png"
+                 alt="Netmeds logo" width="560" height="224"
+                 loading="lazy" decoding="async">
+            <p class="partners__name">Netmeds</p>
+          </li>
+          <li class="partners__plate">
+            <img class="partners__logo" src="assets/partners/medplus.png"
+                 alt="MedPlus logo" width="560" height="224"
+                 loading="lazy" decoding="async">
+            <p class="partners__name">MedPlus</p>
+          </li>
+          <li class="partners__plate">
+            <img class="partners__logo" src="assets/partners/pharmeasy.png"
+                 alt="PharmEasy logo" width="560" height="224"
+                 loading="lazy" decoding="async">
+            <p class="partners__name">PharmEasy</p>
+          </li>
+          <li class="partners__plate partners__plate--clone" aria-hidden="true">
+            <img class="partners__logo" src="assets/partners/srmc-chennai.png"
+                 alt="" width="560" height="224"
+                 loading="lazy" decoding="async">
+            <p class="partners__name">Sri Ramachandra, Chennai</p>
+          </li>
+          <li class="partners__plate partners__plate--clone" aria-hidden="true">
+            <img class="partners__logo" src="assets/partners/sunshine.png"
+                 alt="" width="560" height="224"
+                 loading="lazy" decoding="async">
+            <p class="partners__name">Sunshine Hospitals</p>
+          </li>
+          <li class="partners__plate partners__plate--clone" aria-hidden="true">
+            <img class="partners__logo" src="assets/partners/excellence-75.png"
+                 alt="" width="560" height="224"
+                 loading="lazy" decoding="async">
+            <p class="partners__name">75 Years in Patient Care</p>
+          </li>
+          <li class="partners__plate partners__plate--clone" aria-hidden="true">
+            <img class="partners__logo" src="assets/partners/tata-1mg.png"
+                 alt="" width="560" height="224"
+                 loading="lazy" decoding="async">
+            <p class="partners__name">TATA 1mg</p>
+          </li>
+          <li class="partners__plate partners__plate--clone" aria-hidden="true">
+            <img class="partners__logo" src="assets/partners/netmeds.png"
+                 alt="" width="560" height="224"
+                 loading="lazy" decoding="async">
+            <p class="partners__name">Netmeds</p>
+          </li>
+          <li class="partners__plate partners__plate--clone" aria-hidden="true">
+            <img class="partners__logo" src="assets/partners/medplus.png"
+                 alt="" width="560" height="224"
+                 loading="lazy" decoding="async">
+            <p class="partners__name">MedPlus</p>
+          </li>
+          <li class="partners__plate partners__plate--clone" aria-hidden="true">
+            <img class="partners__logo" src="assets/partners/pharmeasy.png"
+                 alt="" width="560" height="224"
+                 loading="lazy" decoding="async">
+            <p class="partners__name">PharmEasy</p>
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    <p class="shell partners__foot">
+      A sample of the 1,800+ hospitals, clinics, laboratories and pharmacies
+      in the MedShield network.
+    </p>
   </section>
 
   <!-- 10 - Closing CTA band ..................................... -->
@@ -1504,7 +2170,7 @@
       <!-- Three columns on desktop: the statement carries the band, the one
            line of copy sits in the middle, and the single action closes it on
            the right as an underlined arrow link rather than a button pair. -->
-      <h2 class="cta-band__title" id="cta-h">Let's take<br>the next case.</h2>
+      <h2 class="cta-band__title" id="cta-h">Let's transform<br>your case management.</h2>
       <p class="cta-band__sub">
         If this is how you want your crew cases handled - send us your
         fleet profile and we'll come back with a proposal.
@@ -1767,7 +2433,7 @@
         <nav class="site-footer__links" aria-label="Footer services">
           <p class="site-footer__cap" id="ft-svc">Services</p>
           <ul aria-labelledby="ft-svc">
-            <li><a class="site-footer__link" href="services.html#claims">Claims management</a></li>
+            <li><a class="site-footer__link" href="services.html#claims">Case management</a></li>
             <li><a class="site-footer__link" href="services.html#advisory">Claims advisory</a></li>
             <li><a class="site-footer__link" href="services.html#budgeting">Welfare budgeting</a></li>
             <li><a class="site-footer__link" href="services.html#telemedicine">Telemedicine</a></li>
@@ -1934,9 +2600,24 @@
 <script src="js/vendor/ScrollTrigger.min.js" defer></script>
 <script src="js/doubts.js" defer></script>
 <script src="js/services.js" defer></script>
-<script src="js/why.js" defer></script>
+<script src="js/why-scrub.js" defer></script>
+<!-- The push out of the reel and into the people section. Loads after
+     why-scrub.js: it pins .why, whose sticky stage that file drives, and
+     both are defer, so document order is execution order. -->
+<script src="js/why-to-people.js" defer></script>
 <script src="js/process-marquee.js" defer></script>
+<!-- The partner logo bands. Independent of every other section script: it
+     owns only its own two strips, is driven by rAF rather than ScrollTrigger,
+     and takes part in no pin or hand-off — so its position in this list does
+     not matter. -->
+<script src="js/partners-marquee.js" defer></script>
 <script src="js/process-to-cases.js" defer></script>
+<!-- The lift out of Case studies and into the reel. Loads LAST, after
+     process-to-cases.js: that file pins #process directly above .cases and
+     measures the two against each other, and this one pins .cases itself, so
+     the pin above it has to exist and be measured first. Both are defer, so
+     document order is execution order. -->
+<script src="js/cases-to-why.js" defer></script>
 
 </body>
 </html>
