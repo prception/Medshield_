@@ -83,8 +83,8 @@
   /* Frame count, and the two encodes. Same footage and same frame count;
      only the width differs. */
   var COUNT = 381;
-  var SRC_LG = 'assets/why-us/scrub-1440.mp4';
-  var SRC_SM = 'assets/why-us/scrub-900.mp4';
+  var SRC_LG = 'assets/why-us/scrub-1920.mp4';
+  var SRC_SM = 'assets/why-us/scrub-1280.mp4';
 
   /* THE SOURCE IS A VIDEO, NOT 240 IMAGES.
 
@@ -128,23 +128,30 @@
      `ffmpeg -i in.mp4 -vf scale=1280:-2 out.mp4` will look identical in a
      player and scrub visibly worse here. The exact commands:
 
-       ffmpeg -i video.mp4 -an          -vf "minterpolate=fps=48:mi_mode=mci:mc_mode=aobmc:vsbmc=1,scale=1440:-2"          -c:v libx264 -profile:v high -pix_fmt yuv420p          -g 1 -keyint_min 1 -sc_threshold 0 -crf 24          -preset slow -movflags +faststart scrub-1440.mp4
-       (same with scale=900:-2 and -crf 25 for scrub-900.mp4)
+       ffmpeg -i video.mp4 -an          -vf "minterpolate=fps=48:mi_mode=mci:mc_mode=aobmc:vsbmc=1"          -c:v libx264 -profile:v high -pix_fmt yuv420p          -g 1 -keyint_min 1 -sc_threshold 0 -crf 21          -preset slow -movflags +faststart scrub-1920.mp4
+       (add scale=1280:-2 and use -crf 22 for scrub-1280.mp4)
 
-     RESOLUTION. 1440 wide, not the 1280 the webp set used. The stage is a
-     full-bleed canvas, so on a 1440px viewport a 1280 source is being
-     UPSCALED — the reason the first encode looked soft. The old frames were
-     1280 because 240 stills at more than that was not affordable; one video
-     is not under that constraint, so the encode is sized to the canvas
-     instead. 1600 was tried and is indistinguishable at this stage size
-     while costing ~0.7MB more.
+     RESOLUTION AND THE TRADE IT MAKES. Desktop is the source's full
+     1920x1080 at CRF 21; mobile is 1280 at CRF 22. Earlier passes at
+     1280/CRF27 and 1440/CRF24 were chosen to keep the files small and both
+     read as soft on a full-bleed stage — the canvas covers the viewport, so
+     anything below the display width is being upscaled before compression
+     is even considered.
 
-     CRF. 24 desktop / 25 mobile. The first pass used 27/29 to keep the file
-     small, which on top of the upscale is what made the deck detail mushy.
-     Aerial water is the hard case for x264 — thousands of small moving
-     highlights in the wake, all of them expensive — so the CRF matters more
-     here than the numbers suggest. 21 was tried: 24MB, and not visibly
-     better than 24 at this size.
+     This is a DELIBERATE trade against scrub rate, and it is worth being
+     explicit about because it is the opposite of what the image version
+     optimised for. Every frame scrubbed past is decoded on demand, and
+     decode cost scales with resolution: measured in Chromium, ~28ms/frame
+     at 1280 (~34fps) against ~57ms at 1920 (~18fps). The 240-webp version
+     scrubbed at ~60fps because its frames were already decoded — painting
+     was a blit. Caching decoded frames to get that back was measured and
+     rejected: 381 ImageBitmaps at 1080p is ~3GB, and even a 60-frame
+     rolling window is ~475MB and cannot refill ahead of a scroll.
+
+     So the reel is sharp and scrubs at roughly a third of the frame
+     version's rate. If it ever needs to feel smoother instead, the lever is
+     resolution, not code — drop SRC_LG to the 1280 encode and the rate
+     roughly doubles.
 
      COUNT must match the interpolated frame count, not the source's. If the
      fps above changes, change COUNT with it or the reel will run short of
