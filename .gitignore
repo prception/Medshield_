@@ -30,20 +30,11 @@ Thumbs.db
 _Thumbs.db
 .DS_Store
 
-# Raw frame exports for the Why Us scroll-scrub reel.
-# scroll-video/ is the ezgif PNG source (343MB); 1-9.png are earlier stills.
-# Both are superseded by the webp sets below, which ARE committed and ARE what
-# why-scrub.js loads:
-#   assets/why-us/scrub/      f-001..240.webp  (desktop, >900px)
-#   assets/why-us/scrub-sm/   f-001..240.webp  (mobile)
-# Kept locally as the conversion source; never deployed - GitHub Pages caps
-# published sites at 1GB.
-assets/why-us/scroll-video/
+# Earlier stills for the Why Us section, referenced by nothing. Kept locally.
 assets/why-us/[0-9].png
 
-# Superseded by the all-keyframe mp4s (scrub-1280.mp4 / scrub-720.mp4).
-# why-scrub.js seeks the video now; these 480 webp frames are no longer
-# fetched. Kept locally as the encode source.
-assets/why-us/scrub/
-assets/why-us/scrub-sm/
+# video.mp4 is the ENCODE SOURCE for the Why Us reel, not a deployed asset:
+# scrub-1280.mp4 and scrub-720.mp4 are generated from it (see why-scrub.js
+# for the ffmpeg commands). Kept locally so the reel can be re-encoded;
+# never deployed.
 assets/why-us/video.mp4

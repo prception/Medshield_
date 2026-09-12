@@ -2,7 +2,7 @@
    WHY US — scroll-scrubbed reel
    ==========================================================================
    The section is a tall rail with a 100svh sticky stage inside it. The stage
-   holds one <canvas>; scroll position picks which of the 192 drone frames is
+   holds one <canvas>; scroll position picks which of the 381 drone frames is
    painted into it. Scrolling the rail flies the camera from the ship's deck
    up through the cloud layer.
 
@@ -82,7 +82,7 @@
 
   /* Frame count, and the two encodes. Same footage and same frame count;
      only the width differs. */
-  var COUNT = 192;
+  var COUNT = 381;
   var SRC_LG = 'assets/why-us/scrub-1280.mp4';
   var SRC_SM = 'assets/why-us/scrub-720.mp4';
 
@@ -92,8 +92,17 @@
      bitmaps and scrubbing was a blit out of memory — ideal to paint, but it
      meant 240 HTTP requests and ~16MB before the reel could run end to end,
      and on GitHub Pages the section spent most of its time on the poster
-     waiting for them. The same 8 seconds of footage as H.264 is 5.4MB, and
-     it streams: the browser can paint early and keep buffering.
+     waiting for them. The same 8 seconds of footage as H.264 streams, so the
+     browser can paint early and keep buffering.
+
+     FRAME COUNT. The source is 24fps — 192 frames, which is 48 FEWER than
+     the webp set it replaced, and over a 4500px rail that is ~23px of scroll
+     per frame. Coarse enough to read as stepping when scrubbing slowly,
+     which is exactly when the reader is paying attention. Both encodes are
+     therefore motion-interpolated to 48fps (381 frames, ~12px of scroll
+     each) before the keyframe pass. Interpolation is safe on this footage:
+     it is a slow continuous pull-back with no cuts and no fast local motion,
+     which is the case optical flow handles well — the wake stays clean.
 
      The catch, and the reason this was images in the first place, is that
      seeking a normal video is not frame-accurate. Video compresses by
@@ -114,8 +123,12 @@
      `ffmpeg -i in.mp4 -vf scale=1280:-2 out.mp4` will look identical in a
      player and scrub visibly worse here. The exact commands:
 
-       ffmpeg -i video.mp4 -an -vf scale=1280:-2 -c:v libx264 -profile:v high          -pix_fmt yuv420p -g 1 -keyint_min 1 -sc_threshold 0 -crf 26          -preset slow -movflags +faststart scrub-1280.mp4
-       (same with scale=720:-2 and -crf 28 for scrub-720.mp4)
+       ffmpeg -i video.mp4 -an          -vf "minterpolate=fps=48:mi_mode=mci:mc_mode=aobmc:vsbmc=1,scale=1280:-2"          -c:v libx264 -profile:v high -pix_fmt yuv420p          -g 1 -keyint_min 1 -sc_threshold 0 -crf 27          -preset slow -movflags +faststart scrub-1280.mp4
+       (same with scale=720:-2 and -crf 29 for scrub-720.mp4)
+
+     COUNT must match the interpolated frame count, not the source's. If the
+     fps above changes, change COUNT with it or the reel will run short of
+     the footage or off the end of it.
 
      THE HOST MUST SUPPORT RANGE REQUESTS. Seeking needs HTTP 206; on a
      server that answers plain 200 the browser reports video.seekable as an
@@ -397,7 +410,7 @@
       ctx.drawImage(img, (cw - dw) * 0.5, (ch - dh) * 0.5, dw, dh);
     }
 
-    /* Asks the decoder for `wanted` and paints whatever is on the video now.
+    /* Asks the decoder for `wanted`.
 
        ONE SEEK AT A TIME. Assigning currentTime while a seek is already
        running makes the browser abandon the first — during a fast scrub that
@@ -423,6 +436,33 @@
           try { video.currentTime = t; } catch (e) { seeking = false; }
         }
       }
+    }
+
+    /* ---- painting on the decoder's own cadence --------------------------
+       'seeked' fires once the seek RESOLVES, but the decoder often has a new
+       frame up before that — and during a fast scrub, where requests are
+       being coalesced, waiting only for 'seeked' means the canvas holds one
+       stale frame across several dropped positions. That is the stepping the
+       reel is trying not to do.
+
+       requestVideoFrameCallback fires whenever a new frame is actually
+       presented, which is the earliest moment there is something new to
+       blit. Painting from here instead of only from 'seeked' turns those
+       coalesced seeks into a continuous sweep: every frame the decoder
+       manages to produce reaches the canvas, rather than only the ones a
+       completed seek happened to land on.
+
+       Not available everywhere (Firefox, older Safari). Where it is missing
+       the 'seeked' handler alone still paints every landed frame, which is
+       the behaviour this section already shipped with — so this is a pure
+       upgrade, never a dependency. */
+    var hasRVFC = typeof video.requestVideoFrameCallback === 'function';
+    function onVideoFrame() {
+      if (armed) {
+        paint(video);
+        measureHull();
+      }
+      video.requestVideoFrameCallback(onVideoFrame);
     }
 
     /* The decoder has landed on a frame: put it on the canvas, then chase
@@ -487,6 +527,7 @@
          get something on the canvas. Leaving it unset is what makes the
          render() below a real request rather than a no-op. */
       if (wanted !== 0) render();
+      if (hasRVFC) video.requestVideoFrameCallback(onVideoFrame);
       wake();
     }
     video.addEventListener('seeked', armOnce);
