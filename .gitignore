@@ -29,3 +29,14 @@ tmc.html
 Thumbs.db
 _Thumbs.db
 .DS_Store
+
+# Raw frame exports for the Why Us scroll-scrub reel.
+# scroll-video/ is the ezgif PNG source (343MB); 1-9.png are earlier stills.
+# Both are superseded by the webp sets below, which ARE committed and ARE what
+# why-scrub.js loads:
+#   assets/why-us/scrub/      f-001..240.webp  (desktop, >900px)
+#   assets/why-us/scrub-sm/   f-001..240.webp  (mobile)
+# Kept locally as the conversion source; never deployed - GitHub Pages caps
+# published sites at 1GB.
+assets/why-us/scroll-video/
+assets/why-us/[0-9].png
