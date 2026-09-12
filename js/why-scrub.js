@@ -2,9 +2,14 @@
    WHY US — scroll-scrubbed reel
    ==========================================================================
    The section is a tall rail with a 100svh sticky stage inside it. The stage
-   holds one <canvas>; scroll position picks which of the 240 drone frames is
+   holds one <canvas>; scroll position picks which of the 192 drone frames is
    painted into it. Scrolling the rail flies the camera from the ship's deck
    up through the cloud layer.
+
+   The frames come from an all-keyframe mp4 that is never added to the DOM
+   and never played — it is seeked, and each landed frame is blitted to the
+   canvas. See THE SOURCE IS A VIDEO, below, for why it is encoded that way
+   and what breaks if it is not.
 
    THE TAGLINE
    The copy is not part of the reel — it is a layer over it that DRIFTS
@@ -42,32 +47,25 @@
    reel is already mid-flight the instant the section touches the top of the
    viewport and the arrival reads as a jump cut.
 
-   WHY A CANVAS AND NOT 240 STACKED <img>
-   Swapping opacity on 240 layered images keeps every one of them live in the
-   compositor; the browser holds 240 full-viewport layers and the section
-   janks on any machine without a lot of VRAM. One canvas is one layer, and
-   drawImage of an already-decoded bitmap is a blit — cheap enough to do
-   every frame at 144Hz.
+   WHY A CANVAS AND NOT A VISIBLE <video>
+   A <video> cannot be made to cover the stage the way these frames must
+   without object-fit games, and more importantly the reader would be able to
+   hit its controls and its own playback state. Painting to a canvas keeps
+   the element inert and the geometry ours — the cover crop in paint() is the
+   same one background-size:cover would do.
 
-   WHY THE FRAMES ARE DECODED UP FRONT
-   The single biggest cause of stutter in a scrubbed reel is decoding on the
-   scroll thread. An <img> that has downloaded is NOT ready to paint — the
-   first drawImage of it triggers a synchronous decode, which is exactly the
-   hitch you feel as you scrub past a frame for the first time. So every
-   frame is fetched AND decode()d before the reel is armed, and what is
-   cached is the decoded bitmap. After that a scrub touches nothing but
-   drawImage.
+   SEEKING, NOT DECODING UP FRONT
+   The image version decoded all 240 bitmaps before arming, which made every
+   scrub a pure blit but cost 240 requests and ~16MB. Here the decoder does
+   the work on demand: render() asks for a time, 'seeked' paints what landed.
+   Only one seek is ever in flight — see render() for why assigning
+   currentTime during a seek is what makes a fast scrub go still.
 
-   LOADING ORDER
-   Frames load sequentially, not all at once: 240 parallel requests saturate
-   the connection and the first frame — the one actually needed to show
-   anything — lands last. Sequential loading means frame 0 is ready almost
-   immediately, so the stage can paint its first frame while the rest of the
-   reel streams in behind it.
-
-   The whole set only starts loading when the section is within a couple of
-   viewports of being reached, so the reel never competes with the hero for
-   bandwidth on first paint.
+   LOADING
+   One request, streamed, started when the section is within a couple of
+   viewports. The reel arms on the first decoded frame rather than waiting
+   for the whole file, so the stage fills early and the rest buffers behind
+   it — which is the behaviour the 240-file version could not have.
 
    LENIS
    smooth-scroll.js takes the page off native scrolling and re-emits a window
@@ -82,11 +80,50 @@
 (function () {
   'use strict';
 
-  /* Frame count and the path template. Both sets are the same length; only
-     the width differs. */
-  var COUNT = 240;
-  var DIR_LG = 'assets/why-us/scrub/';
-  var DIR_SM = 'assets/why-us/scrub-sm/';
+  /* Frame count, and the two encodes. Same footage and same frame count;
+     only the width differs. */
+  var COUNT = 192;
+  var SRC_LG = 'assets/why-us/scrub-1280.mp4';
+  var SRC_SM = 'assets/why-us/scrub-720.mp4';
+
+  /* THE SOURCE IS A VIDEO, NOT 240 IMAGES.
+
+     It used to be 240 separate .webp frames. That decoded to an array of
+     bitmaps and scrubbing was a blit out of memory — ideal to paint, but it
+     meant 240 HTTP requests and ~16MB before the reel could run end to end,
+     and on GitHub Pages the section spent most of its time on the poster
+     waiting for them. The same 8 seconds of footage as H.264 is 5.4MB, and
+     it streams: the browser can paint early and keep buffering.
+
+     The catch, and the reason this was images in the first place, is that
+     seeking a normal video is not frame-accurate. Video compresses by
+     storing most frames as deltas from an earlier one, so setting
+     currentTime lands the decoder on the nearest KEYFRAME and it must then
+     decode forward to the target. With a keyframe every 2s a backward scrub
+     re-decodes dozens of frames and the reel stutters exactly where the
+     reader is being most deliberate.
+
+     So both files are encoded with EVERY frame a keyframe (-g 1
+     -keyint_min 1 -sc_threshold 0). That throws away inter-frame
+     compression — which is why 5.4MB rather than ~1MB — but it buys random
+     access: every currentTime lands on a frame that stands alone and needs
+     no history to decode. Re-encoding from a normal 4-keyframe mp4 is not
+     optional; the seek behaviour is the whole point.
+
+     If these files are ever regenerated, keep those flags. A plain
+     `ffmpeg -i in.mp4 -vf scale=1280:-2 out.mp4` will look identical in a
+     player and scrub visibly worse here. The exact commands:
+
+       ffmpeg -i video.mp4 -an -vf scale=1280:-2 -c:v libx264 -profile:v high          -pix_fmt yuv420p -g 1 -keyint_min 1 -sc_threshold 0 -crf 26          -preset slow -movflags +faststart scrub-1280.mp4
+       (same with scale=720:-2 and -crf 28 for scrub-720.mp4)
+
+     THE HOST MUST SUPPORT RANGE REQUESTS. Seeking needs HTTP 206; on a
+     server that answers plain 200 the browser reports video.seekable as an
+     empty range, every currentTime assignment silently clamps to 0, and the
+     reel sits on frame 0 forever with no error anywhere. GitHub Pages does
+     support ranges. Python's http.server does NOT — so testing this section
+     over `python -m http.server` reproduces exactly that dead-scrub symptom
+     and the code is not at fault. */
 
   /* Fraction of the rail's travel spent parked on frame 0 before the camera
      moves. Kept very short deliberately: the reel is meant to START as the
@@ -232,11 +269,6 @@
   var CTA_START = PTS_END - 0.06;
   var CTA_END = PTS_END + 0.08;
 
-  function pad(n) {
-    /* 1 -> "001". The encoder wrote three-digit names. */
-    return (n < 10 ? '00' : n < 100 ? '0' : '') + n;
-  }
-
   function init() {
     var section = document.querySelector('[data-why-scrub]');
     if (!section) return;
@@ -286,19 +318,49 @@
     var ctx = canvas.getContext('2d', { alpha: false });
     if (!ctx) return;
 
-    var dir = window.innerWidth <= SM_MAX ? DIR_SM : DIR_LG;
+    var src = window.innerWidth <= SM_MAX ? SRC_SM : SRC_LG;
 
-    /* Decoded bitmaps, indexed 0..COUNT-1. Sparse until loading finishes. */
-    var frames = new Array(COUNT);
-    var loadedTo = -1;          /* every frame 0..loadedTo is decoded */
+    /* The reel source. Never added to the DOM: it is only ever a drawImage
+       source, so it needs no box, no styling and no compositor layer. The
+       canvas is still what the reader sees.
+
+       playsinline + muted: iOS refuses to load or seek an inline video
+       without both, and treats a bare <video> as fullscreen-on-play. There
+       is no audio track in either file, but muted is what unlocks the
+       autoplay/seek policy, so it is set regardless.
+
+       preload=auto because the whole point is to have frames ready to seek
+       to before the reader arrives. */
+    var video = document.createElement('video');
+    video.muted = true;
+    video.defaultMuted = true;
+    video.playsInline = true;
+    video.setAttribute('playsinline', '');
+    video.setAttribute('webkit-playsinline', '');
+    video.preload = 'auto';
+
+    var duration = 0;           /* seconds; from metadata */
     var started = false;
-    var armed = false;          /* true once frame 0 can be painted */
+    var armed = false;          /* true once the first frame can be painted */
+    var seeking = false;        /* a seek is in flight */
+    var pendingT = -1;          /* time requested while one was in flight */
 
-    /* Nearest frame the scrubber WANTS. Painted as soon as it exists; until
-       then the last frame that does exist stands in, so the reel degrades to
-       a lower frame rate while loading rather than going blank. */
+    /* Nearest frame the scrubber WANTS, and the one currently on the canvas.
+       Kept in FRAME units, as when this was an image sequence, so everything
+       downstream — the hull tracker, the repaint guard — is unchanged. */
     var wanted = 0;
     var painted = -1;
+
+    /* Frame index -> the time to seek to. Aimed at the MIDDLE of the frame's
+       slot rather than its leading edge: landing exactly on a boundary is
+       ambiguous once floating point is involved and can decode either side
+       of it, which shows up as the reel flickering between two frames while
+       the scroll position is not even moving. */
+    function timeOf(i) {
+      if (!duration) return 0;
+      var t = (i + 0.5) * (duration / COUNT);
+      return t < 0 ? 0 : t > duration - 1e-3 ? duration - 1e-3 : t;
+    }
 
     /* ---- sizing -------------------------------------------------------
        The canvas backing store is sized to the stage in device pixels and
@@ -324,8 +386,8 @@
 
     function paint(img) {
       if (!img) return;
-      var iw = img.naturalWidth || img.width;
-      var ih = img.naturalHeight || img.height;
+      var iw = img.videoWidth || img.naturalWidth || img.width;
+      var ih = img.videoHeight || img.naturalHeight || img.height;
       if (!iw || !ih) return;
 
       /* cover: scale so the image fills both axes, then centre the overflow. */
@@ -335,79 +397,110 @@
       ctx.drawImage(img, (cw - dw) * 0.5, (ch - dh) * 0.5, dw, dh);
     }
 
-    /* Paints `wanted` if it is decoded, else the nearest earlier frame that
-       is. Returns nothing; cheap enough to call every rAF. */
+    /* Asks the decoder for `wanted` and paints whatever is on the video now.
+
+       ONE SEEK AT A TIME. Assigning currentTime while a seek is already
+       running makes the browser abandon the first — during a fast scrub that
+       is a stream of cancelled seeks and the picture stops updating
+       altogether. So a seek in flight parks the newest request in pendingT
+       and 'seeked' fires it. Intermediate positions are DROPPED, not queued:
+       the reader only wants the frame they landed on, and replaying a queue
+       would run the reel behind the scroll.
+
+       The canvas keeps showing the previous frame while a seek resolves,
+       which is the same graceful degradation the image version had while
+       frames were still loading — a lower frame rate, never a blank stage. */
     function render() {
-      var i = wanted;
-      if (!frames[i]) {
-        /* Fall back to the newest frame we actually have. */
-        i = loadedTo;
-        if (i < 0) return;
+      if (!armed) return;
+
+      if (wanted !== painted) {
+        var t = timeOf(wanted);
+        if (seeking) {
+          pendingT = t;
+        } else {
+          seeking = true;
+          painted = wanted;
+          try { video.currentTime = t; } catch (e) { seeking = false; }
+        }
       }
-      if (i === painted) return;
-      painted = i;
-      paint(frames[i]);
     }
+
+    /* The decoder has landed on a frame: put it on the canvas, then chase
+       the scroll if it moved on while we were seeking. */
+    video.addEventListener('seeked', function () {
+      seeking = false;
+      paint(video);
+      measureHull();
+      if (pendingT >= 0) {
+        var t = pendingT;
+        pendingT = -1;
+        seeking = true;
+        try { video.currentTime = t; } catch (e) { seeking = false; }
+      }
+    });
 
     /* ---- loading ------------------------------------------------------
-       One request at a time, in order. decode() resolves only once the
-       bitmap is ready to paint, so nothing enters `frames` until it can be
-       blitted without a synchronous decode on the scroll thread.
+       One file, streamed. 'loadedmetadata' gives the duration the frame ->
+       time mapping needs; 'seeked' (above) arms the reel the first time a
+       real frame is on the canvas.
 
-       decode() is not in every browser this site targets, and it rejects on
-       some of them for images that will in fact paint fine, so the fallback
-       is to accept the image on load and let the first paint pay the decode
-       — degraded, not broken. */
-    function loadNext() {
-      var i = loadedTo + 1;
-      if (i >= COUNT) return;
-
-      var img = new Image();
-      img.decoding = 'async';
-      img.src = dir + 'f-' + pad(i + 1) + '.webp';
-
-      function accept() {
-        frames[i] = img;
-        loadedTo = i;
-
-        if (!armed) {
-          armed = true;
-          section.setAttribute('data-scrub-ready', '');
-          resize();
-          render();
-        } else if (i === wanted || wanted > loadedTo) {
-          /* The scrubber is ahead of the loader — repaint as frames land so
-             the reel visibly catches up instead of freezing. */
-          render();
-        }
-
-        loadNext();
-      }
-
-      function fail() {
-        /* Skip the bad frame rather than stalling the whole chain; the
-           renderer already tolerates gaps. */
-        loadedTo = i;
-        loadNext();
-      }
-
-      if (img.decode) {
-        img.decode().then(accept, function () {
-          /* decode() rejected — it may still be a perfectly good image. */
-          if (img.complete && img.naturalWidth) accept();
-          else { img.onload = accept; img.onerror = fail; }
-        });
-      } else {
-        img.onload = accept;
-        img.onerror = fail;
-      }
-    }
-
+       Nothing is ever played. The video is a seekable bitmap source and the
+       scroll position is the only thing that moves it. */
     function startLoading() {
       if (started) return;
       started = true;
-      loadNext();
+      video.src = src;
+      video.load();
     }
+
+    video.addEventListener('loadedmetadata', function () {
+      duration = video.duration || 0;
+      if (!duration || !isFinite(duration)) return;
+      resize();
+      /* Seek to frame 0 rather than trusting the poster frame: a video that
+         has metadata has not necessarily decoded anything paintable yet, and
+         drawImage of an undecoded video is a no-op that leaves the canvas
+         black. The first 'seeked' is what arms the section. */
+      seeking = true;
+      try { video.currentTime = timeOf(0); } catch (e) { seeking = false; }
+    });
+
+    /* First paintable frame. data-scrub-ready is what the stylesheet uses to
+       cross the poster out, so it must not be set until something is
+       genuinely on the canvas. */
+    function armOnce() {
+      if (armed || !duration) return;
+      armed = true;
+      section.setAttribute('data-scrub-ready', '');
+      resize();
+      paint(video);
+      measureHull();
+
+      /* The reel almost always finishes loading AFTER the loop has run and
+         settled — the spring reaches its target while the video is still
+         streaming, then the loop sleeps. Nothing else would wake it, so the
+         frame the reader is actually parked on would never be requested and
+         the stage would sit on frame 0 until the next scroll event.
+
+         painted is deliberately left at -1 by the arming paint: it records
+         what has been REQUESTED, and frame 0 was only ever a placeholder to
+         get something on the canvas. Leaving it unset is what makes the
+         render() below a real request rather than a no-op. */
+      if (wanted !== 0) render();
+      wake();
+    }
+    video.addEventListener('seeked', armOnce);
+    video.addEventListener('loadeddata', function () {
+      /* Some browsers deliver a decoded first frame without ever firing
+         'seeked' for the initial currentTime assignment. */
+      if (video.readyState >= 2) armOnce();
+    });
+
+    /* A video that cannot load leaves the poster in place — the section
+       degrades to the still, exactly as it does with JS off. */
+    video.addEventListener('error', function () {
+      section.removeAttribute('data-scrub-ready');
+    });
 
     /* ---- hull tracking --------------------------------------------------
        Reads the painted frame and reports the hull's half-width as a
@@ -423,12 +516,12 @@
 
     function measureHull() {
       if (!hullCtx || painted < 0 || painted === lastHullFrame) return;
-      var img = frames[painted];
-      if (!img) return;
+      if (!armed || video.readyState < 2) return;
+      var img = video;
       lastHullFrame = painted;
 
-      var iw = img.naturalWidth || img.width;
-      var ih = img.naturalHeight || img.height;
+      var iw = img.videoWidth;
+      var ih = img.videoHeight;
       if (!iw || !ih || !cw || !ch) return;
 
       /* Sample the SOURCE bitmap through the same cover geometry the stage
@@ -1107,6 +1200,11 @@
       if (next !== wanted) {
         wanted = next;
         if (armed) render();
+      } else if (armed && wanted !== painted) {
+        /* Same index, but the canvas is not showing it yet — the reel armed
+           mid-flight, or a seek was dropped during a fast scrub. Ask again;
+           render() is a no-op once the two agree. */
+        render();
       }
     }
 

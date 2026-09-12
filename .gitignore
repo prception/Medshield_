@@ -40,3 +40,10 @@ _Thumbs.db
 # published sites at 1GB.
 assets/why-us/scroll-video/
 assets/why-us/[0-9].png
+
+# Superseded by the all-keyframe mp4s (scrub-1280.mp4 / scrub-720.mp4).
+# why-scrub.js seeks the video now; these 480 webp frames are no longer
+# fetched. Kept locally as the encode source.
+assets/why-us/scrub/
+assets/why-us/scrub-sm/
+assets/why-us/video.mp4
