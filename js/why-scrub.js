@@ -83,8 +83,8 @@
   /* Frame count, and the two encodes. Same footage and same frame count;
      only the width differs. */
   var COUNT = 381;
-  var SRC_LG = 'assets/why-us/scrub-1280.mp4';
-  var SRC_SM = 'assets/why-us/scrub-720.mp4';
+  var SRC_LG = 'assets/why-us/scrub-1440.mp4';
+  var SRC_SM = 'assets/why-us/scrub-900.mp4';
 
   /* THE SOURCE IS A VIDEO, NOT 240 IMAGES.
 
@@ -119,12 +119,32 @@
      no history to decode. Re-encoding from a normal 4-keyframe mp4 is not
      optional; the seek behaviour is the whole point.
 
+     This is also why the files are not as small as a normal web video of the
+     same length: every frame is an I-frame, so the usual 10x win from
+     inter-frame compression is unavailable. Budget accordingly — dropping
+     CRF to claw back size costs visible quality fast.
+
      If these files are ever regenerated, keep those flags. A plain
      `ffmpeg -i in.mp4 -vf scale=1280:-2 out.mp4` will look identical in a
      player and scrub visibly worse here. The exact commands:
 
-       ffmpeg -i video.mp4 -an          -vf "minterpolate=fps=48:mi_mode=mci:mc_mode=aobmc:vsbmc=1,scale=1280:-2"          -c:v libx264 -profile:v high -pix_fmt yuv420p          -g 1 -keyint_min 1 -sc_threshold 0 -crf 27          -preset slow -movflags +faststart scrub-1280.mp4
-       (same with scale=720:-2 and -crf 29 for scrub-720.mp4)
+       ffmpeg -i video.mp4 -an          -vf "minterpolate=fps=48:mi_mode=mci:mc_mode=aobmc:vsbmc=1,scale=1440:-2"          -c:v libx264 -profile:v high -pix_fmt yuv420p          -g 1 -keyint_min 1 -sc_threshold 0 -crf 24          -preset slow -movflags +faststart scrub-1440.mp4
+       (same with scale=900:-2 and -crf 25 for scrub-900.mp4)
+
+     RESOLUTION. 1440 wide, not the 1280 the webp set used. The stage is a
+     full-bleed canvas, so on a 1440px viewport a 1280 source is being
+     UPSCALED — the reason the first encode looked soft. The old frames were
+     1280 because 240 stills at more than that was not affordable; one video
+     is not under that constraint, so the encode is sized to the canvas
+     instead. 1600 was tried and is indistinguishable at this stage size
+     while costing ~0.7MB more.
+
+     CRF. 24 desktop / 25 mobile. The first pass used 27/29 to keep the file
+     small, which on top of the upscale is what made the deck detail mushy.
+     Aerial water is the hard case for x264 — thousands of small moving
+     highlights in the wake, all of them expensive — so the CRF matters more
+     here than the numbers suggest. 21 was tried: 24MB, and not visibly
+     better than 24 at this size.
 
      COUNT must match the interpolated frame count, not the source's. If the
      fps above changes, change COUNT with it or the reel will run short of
