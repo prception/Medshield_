@@ -52,10 +52,54 @@
   var header = document.getElementById('site-header');
   if (!header) return;
 
-  /* The toggle is the only ink in the bar that flips -- the brand is a
-     full-colour PNG -- so it is the element the probe measures. Looked up
-     once; the element never changes, only its box, which is read live. */
+  /* The element the probe measures: the ink that actually has to stay
+     legible. Which control that IS depends on the breakpoint, because the bar
+     has two layouts.
+
+       >= 1024px  the desktop .nav-bar is shown and the toggle is
+                  display:none. The pills carry the ink, so the span from the
+                  first tab to the last CTA is what must be tested.
+       <  1024px  the .nav-bar is hidden and the hamburger is back, alone on
+                  the right, exactly as before.
+
+     A display:none element reports a 0x0 rect at the origin rather than
+     nothing at all, so a probe that simply kept measuring the toggle would
+     silently test the viewport's top-left corner on every desktop page and
+     paint the ink from whatever happened to sit there. Hence the visibility
+     check rather than a plain lookup: offsetParent is null precisely when the
+     element is display:none, which is the state we must not measure. */
   var toggle = header.querySelector('.nav-toggle');
+  var navBarLeft = header.querySelector('.nav-bar__col--left');
+  var navBarRight = header.querySelector('.nav-bar__col--right');
+
+  function shown(el) { return el && el.offsetParent !== null; }
+
+  /* The probed box, read live -- the layout can change under a resize, and
+     the pills' own widths change with the font. Returns null when nothing in
+     the bar is visible, which the callers already handle. */
+  /* Returns the boxes to test, in priority order -- NOT one box spanning the
+     whole bar.
+
+     Spanning both groups as a single rect was tried first and is wrong twice
+     over. A marked section has to cover the probe's FULL width to count, so
+     one bar-wide box demands a section span the entire viewport before the
+     ink may go light; and the span's midpoint lands on the centred logo,
+     which sits above the page, so the visibility test hit the <img> instead
+     of the section behind it and every ground read as pale.
+
+     Each control group is therefore probed on its own. The groups are narrow,
+     they sit over the page rather than over the logo, and the bar is a single
+     ink colour, so the first group that reports a dark ground settles it --
+     which is what the eye reads anyway: if the bar is over a dark hero, all
+     five pills need light ink. */
+  function probeBoxes() {
+    if (shown(navBarLeft) && shown(navBarRight)) {
+      return [navBarLeft.getBoundingClientRect(),
+              navBarRight.getBoundingClientRect()];
+    }
+    if (shown(toggle)) return [toggle.getBoundingClientRect()];
+    return [];
+  }
 
   /* The bars are narrower than their 44px tap target, and it is the BARS that
      have to stay legible. Insetting to the visible glyph stops a panel edge
@@ -103,10 +147,34 @@
      finds the CANDIDATES, since a marked section is often not the topmost
      element anywhere. This only rejects candidates that are covered. */
   function isVisibleAt(el, x) {
+    /* The header is lifted out of hit-testing so the probe sees the PAGE, not
+       the bar sitting on top of it.
+
+       Setting it on the header alone is not enough. pointer-events is
+       inherited, but the nav bar's controls re-assert `pointer-events: auto`
+       of their own (they have to: the bar's row is `none` so clicks fall
+       through to the hero between the pills). That declaration beats the
+       inherited `none`, so a pill under the probe point was still the
+       elementFromPoint hit and the section behind it was judged covered --
+       which silently depended on viewport width, since it only happened when
+       a pill, rather than a gap, sat at the span's midpoint. Every control is
+       therefore neutralised alongside the header, and each is restored to
+       whatever it actually had. */
     var prev = header.style.pointerEvents;
     header.style.pointerEvents = 'none';
+
+    var hits = header.querySelectorAll('.nav-bar a, .nav-bar button');
+    var saved = [];
+    for (var i = 0; i < hits.length; i++) {
+      saved.push(hits[i].style.pointerEvents);
+      hits[i].style.pointerEvents = 'none';
+    }
+
     var hit = document.elementFromPoint(x, PROBE_Y);
+
     header.style.pointerEvents = prev;
+    for (var j = 0; j < hits.length; j++) hits[j].style.pointerEvents = saved[j];
+
     if (!hit) return false;
     return hit === el || el.contains(hit) || hit.contains(el);
   }
@@ -133,22 +201,28 @@
      Nothing is cached: scrubbed sections change height and width as they
      animate, so every rect has to be read live. */
   function isOverDark() {
-    var box = toggle && toggle.getBoundingClientRect();
-    var left, right;
-    if (box) {
-      left = box.left + GLYPH_INSET;
-      right = box.right - GLYPH_INSET;
+    var boxes = probeBoxes();
+    var spans = [];
+    if (boxes.length) {
+      for (var b = 0; b < boxes.length; b++) {
+        spans.push([boxes[b].left + GLYPH_INSET, boxes[b].right - GLYPH_INSET]);
+      }
     } else {
-      left = window.innerWidth - 40;
-      right = window.innerWidth - 20;
+      spans.push([window.innerWidth - 40, window.innerWidth - 20]);
     }
 
-    var mid = (left + right) / 2;
     var marked = document.querySelectorAll('[data-bar-ink="light"]');
-    for (var i = 0; i < marked.length; i++) {
-      var r = marked[i].getBoundingClientRect();
-      if (r.top <= PROBE_Y && r.bottom > PROBE_Y && r.left <= left && r.right >= right) {
-        if (isVisibleAt(marked[i], mid)) return true;
+    /* Any control group over a dark ground carries the whole bar: the bar has
+       one ink colour, and a half-light bar is not a state the CSS can express. */
+    for (var s = 0; s < spans.length; s++) {
+      var left = spans[s][0];
+      var right = spans[s][1];
+      var mid = (left + right) / 2;
+      for (var i = 0; i < marked.length; i++) {
+        var r = marked[i].getBoundingClientRect();
+        if (r.top <= PROBE_Y && r.bottom > PROBE_Y && r.left <= left && r.right >= right) {
+          if (isVisibleAt(marked[i], mid)) return true;
+        }
       }
     }
     return false;
@@ -332,7 +406,11 @@
     var dark = isOverDark();
 
     if (!dark) {
-      var box = toggle && toggle.getBoundingClientRect();
+      /* Sampling looks at ONE group -- the left tabs on desktop, the toggle on
+         mobile. An unmarked photograph under the bar is full-bleed in every
+         case on this site, so the two groups would sample the same picture. */
+      var boxes = probeBoxes();
+      var box = boxes.length ? boxes[0] : null;
       if (box) {
         var left = box.left + GLYPH_INSET;
         var right = box.right - GLYPH_INSET;

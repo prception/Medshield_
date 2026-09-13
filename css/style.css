@@ -741,8 +741,26 @@ textarea:focus-visible,
   transition: transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
 
-/* Hidden state — set by hero.js when the user scrolls DOWN past the top. */
-.site-header.is-hidden { transform: translateY(-100%); }
+/* The bar does NOT travel with the page. position:absolute parks it at the
+   top of the DOCUMENT rather than the viewport, so it scrolls up out of view
+   with the hero and never slides back in part-way down. The header is a
+   direct child of <body> with no positioned ancestor, so this anchors to the
+   initial containing block — the top of the page — which is where it already
+   sat at rest. Declared after the block above so it wins without touching the
+   z-index, ink-inversion or glass rules that follow. */
+.site-header {
+  position: absolute;
+  /* Drops the bar clear of the viewport edge. The header is out of flow, so
+     this offset moves the bar ALONE — every section below keeps the exact
+     position it had when the bar sat flush at top:0. */
+  top: var(--s-4);
+}
+
+/* hero.js and nav.js still toggle .is-hidden on scroll direction. That tween
+   existed to retract a FIXED bar; an absolute one is already gone by then, so
+   the transform is neutralised here rather than pulled out of both scripts —
+   the same toggles also drive the menu and ink state, which stay as they are. */
+.site-header.is-hidden { transform: none; }
 
 /* Brand hidden once the page leaves the hero — set by hero.js past STUCK_AT.
 
@@ -1249,6 +1267,18 @@ textarea:focus-visible,
   /* Top-aligned: both blocks hang from the same line under the navbar, as
      the reference hangs RETAIL/INDUSTRIAL/OFFICE and its right paragraph. */
   align-items: start;
+  /* Pulled down out of the navbar and in toward the headline, so the pair
+     reads as an annotation ON the display type rather than as small print
+     hanging off the header. Sized against viewport HEIGHT because that is
+     what the void above it is made of.
+
+     Padding on the band, not margin on the blocks, so both halves move
+     together — and because the 1fr spacer sits BELOW this row, every pixel
+     added here is taken out of that void: the headline and the floor rail
+     do not move at all. */
+  /* Shifted visually only. transform takes no layout space, so the row keeps
+     its original height and NOTHING below it moves. */
+  transform: translateY(clamp(2rem, 10vh, 7rem));
 }
 
 /* Small category label, hard left. Not an eyebrow above a headline — it is a
@@ -1957,6 +1987,8 @@ html.hero-ready .hero__foot    { transition-delay: 1.15s; }
     padding-block: calc(5.25rem + var(--s-2)) var(--s-4);
   }
   .hero__inner { row-gap: var(--s-3); }
+  /* Height is scarce here, so the drop below the navbar is given back. */
+  .hero__annotations { transform: translateY(var(--s-2)); }
   .hero__display { font-size: 7.4vw; }
   .hero__note { font-size: 0.95rem; }
 }
@@ -8930,6 +8962,38 @@ main {
   inherits: false;
   initial-value: 0;
 }
+/* THE LAYER DEPTH, and the two inherited twins it needs.
+
+   --why-depth is per-element and must NOT inherit: each layer sets its own
+   and a child reading its parent's would collapse the parallax.
+
+   --why-bow-i and --why-side-i exist because --why-bow and --why-side above
+   are registered `inherits: false`, which is correct for them - they are
+   written per point and an inherited copy would leak between points - but
+   it means a CHILD of a point reads their INITIAL value, 0, not the value
+   sitting on its parent. The layered transform lives on the children, so
+   read straight it would evaluate to zero and the whole effect would be
+   silently dead rather than visibly wrong.
+
+   So the point re-publishes both as inheriting mirrors and the layers read
+   those. One extra assignment per point per frame for --why-bow-i, which is
+   the same cost as any other custom property write; --why-side-i is static
+   and set once by the side rules. */
+@property --why-depth {
+  syntax: '<number>';
+  inherits: false;
+  initial-value: 0;
+}
+@property --why-bow-i {
+  syntax: '<number>';
+  inherits: true;
+  initial-value: 0;
+}
+@property --why-side-i {
+  syntax: '<number>';
+  inherits: true;
+  initial-value: 0;
+}
 /* The hull anchor's DISTANCE from its fallback, as a percentage of the
    stage width. Inherited, unlike the rest: it is written once on the
    section and every point reads the same value. */
@@ -8986,28 +9050,63 @@ main {
   opacity: var(--why-pt-o, 0);
   /* --why-bow is the entry curve's MAGNITUDE, 0 at the resting line and 1
      at either end of the travel. It is written by why-scrub.js rather than
-     derived here with calc(): it is a raised cosine, which is flat at both
-     ends, and the polynomials calc() can express cheaply are not - see the
-     long note on bow() in that file for why that difference is the whole
-     of the "harsh finish" problem.
+     derived here with calc(): it is smootherstep over a held middle, which
+     is flat at both ends AND parked across the resting line, and the
+     polynomials calc() can express cheaply are neither - see the long note
+     on bow() in that file for why that difference is the whole of the
+     "harsh finish" problem and of the swimming that followed it.
 
      It is always positive, so multiplying by --why-side pushes the point
      OUTWARD, away from the hull, at both ends of its travel. Sign matters:
      an inward bow would swing the block across the ship on the way in,
      which is the one path it must not take.
 
-     7vw, not the 12vw the old polynomial used. A curve that is flat at both
-     ends spends far more of its range in the middle - at the same amplitude
-     this one would stand the point three times further off the hull through
-     the body of the approach. 7vw matches the old peak offset while keeping
-     the motion evenly spread. */
+     5.5vw, down from 7vw, and 12vw before that under the old polynomial. A
+     curve that is flat at both ends spends far more of its range in the
+     middle, so at the same amplitude it stands the point much further off
+     the hull through the body of the approach - where, because a point is
+     opaque across most of its slot, the reader can see all of it.
+
+     7vw put ~169px of lateral travel inside the visible window at 1440px,
+     which read as the block swimming toward the ship and back. Paired with
+     the hold zone bow() now carries (see BOW_HOLD in why-scrub.js), 5.5vw
+     brought the visible round trip back to ~108px - near the 126px the old
+     polynomial produced - and kept the peak rate where it was rather than
+     concentrating it. It also halved the overrun past the stage edge at
+     1200px, where the anchor leaves a point very little outward room.
+
+     4.6vw now, to stand the pair closer in. The term is the only thing that
+     moves a point away from its anchor, and bow() is non-negative and
+     multiplied by --why-side, so it always pushes OUTWARD from the standoff
+     the layout already holds (--why-hull + --why-gap). Shrinking it can
+     therefore only widen the gap to the hull, never close it, at any
+     viewport - the clearance floor is the anchor, not this number - and it
+     takes another bite out of the 1200px overrun as well. */
   /* THE ANCHOR RIDES IN HERE, NOT IN left/right.
 
-     --why-hull-d is how far the measured hull edge currently sits from the
-     fallback the layout is pinned to, in percent of the stage - always
-     negative or zero, since the fallback IS the widest case. Multiplying by
-     --why-side turns it into a signed offset that pulls both columns
-     inward, toward the centre, as the ship narrows.
+     --why-hull-d is how far the measured hull edge sat from the fallback
+     the layout is pinned to, in percent of the stage - always negative or
+     zero, since the fallback IS the widest case. Multiplying by --why-side
+     turns it into a signed offset that stands both columns off the hull as
+     it was when that point arrived.
+
+     SAT, not sits: this is FROZEN PER POINT, not the live measurement.
+     why-scrub.js samples the eased anchor once, on the frame a point enters
+     its slot, and writes that number onto the point itself - where, being a
+     local declaration, it shadows the inherited section value (the same
+     cascade rule the fallback note below depends on).
+
+     It has to be frozen, and the failure it fixes is specific. The hull
+     narrows as the drone climbs, so the live anchor keeps changing after
+     the reader stops: the scroll spring settles, but the reel's own ease is
+     still landing on its final frame, measureHull() keeps reporting a
+     narrower ship, and the value keeps gliding. Because the distance is
+     <= 0 and multiplied by --why-side, that pulls BOTH columns inward - a
+     point standing still slid toward the centre, measured at ~17vw on a
+     stopped scroll, then set off again from the wrong place. Sampled once,
+     every term in the transform below is a function of the point's own
+     travel and nothing else, so where the scroll leaves it is where it
+     stays.
 
      The unit is vw, NOT %. A percentage in a transform resolves against the
      ELEMENT'S OWN width, and the point is min(30%, 20.5rem) wide - about a
@@ -9032,7 +9131,7 @@ main {
      As a transform term it is composited like everything else, costs
      nothing to write every frame, and moves in lockstep with the rise. */
   transform:
-    translate3d(calc(var(--why-bow, 0) * var(--why-side) * 7vw
+    translate3d(calc(var(--why-bow, 0) * var(--why-side) * 4.6vw
                      + var(--why-hull-d, 0) * var(--why-side) * 1vw),
                 calc((0.5 - var(--why-pt, 0)) * 125svh),
                 0)
@@ -9081,19 +9180,22 @@ main {
      is the margin that absorbs both. */
   --why-gap: 2.1%;
 }
-/* Pinned to the FALLBACK, not to the live measurement: this is the static
-   layout position, and the live anchor reaches the point through
-   --why-hull-d in the transform above. Nothing here changes while the reel
-   scrubs, so none of it can trigger a layout pass. */
+/* Pinned to the FALLBACK, not to the measurement: this is the static layout
+   position, and the anchor reaches the point through --why-hull-d in the
+   transform above - frozen there per point, see the note on it. Nothing
+   here changes while the reel scrubs, so none of it can trigger a layout
+   pass. */
 .why-pt[data-why-side="left"] {
   right: calc(var(--why-hull) + var(--why-gap));
   text-align: right;
   --why-side: -1;
+  --why-side-i: -1;
 }
 .why-pt[data-why-side="right"] {
   left: calc(var(--why-hull) + var(--why-gap));
   text-align: left;
   --why-side: 1;
+  --why-side-i: 1;
 }
 
 /* The closing point has no partner and no side to swing from, so it rises
@@ -9110,6 +9212,7 @@ main {
   margin-left: calc(min(56%, 34rem) / -2);
   text-align: center;
   --why-side: 0;
+  --why-side-i: 0;
 }
 
 /* Promoted only while this point is actually on screen. A standing layer
@@ -9124,6 +9227,70 @@ main {
    Stroke-based on a 24x24 grid to match the icons the rest of the site
    already uses, and taking `currentColor` so it inherits the accent set
    below rather than carrying its own fill. */
+/* ---- THE LAYERED APPROACH ----------------------------------------------
+   The point does not arrive as one rigid slab. Its three layers - icon,
+   title, body - carry different amounts of the sideways travel, so the
+   block gathers itself as it settles and comes apart again as it leaves.
+   The reference site (unitedcarriers.com) does the same thing and it is
+   most of what makes their entrance read as a curve: their three layers
+   translate 100px, 150px and 200px over an identical duration and ease, so
+   the differing SPEEDS are what the eye reads as an arc, not any curved
+   path - there is no rotation or bezier in their code at all.
+
+   WHY OURS LAGS INWARD AND THEIRS PUSHES OUT
+
+   Theirs starts off screen and lands; the extra offset on a deep layer just
+   means it enters from further out, and there is nothing out there to
+   collide with. Ours has no such room. The point is anchored at
+   right: 66.3% + 2.1%, so at 1200px its outer edge already sits only 51px
+   from the stage edge, and the 7vw bow takes it 33px PAST that edge at full
+   travel. Adding an outward layer offset on top would deepen an overrun
+   that already exists.
+
+   So the depth is subtracted, not added: a deeper layer trails TOWARD the
+   ship rather than further from it. The parallax is identical to the eye -
+   it is the difference in travel between layers that reads, not its sign -
+   but it spends clearance instead of demanding it, and at full bow the body
+   layer sits 19px inboard of the icon rather than 19px further out.
+
+   It cannot foul the hull either. The lag is scaled by --why-bow, which is
+   zero at the resting line, so the layers are flush exactly when the point
+   is sitting beside the ship and being read. The lag only opens up at the
+   ends of the travel, where the point is out over open water and the whole
+   block is far from the hull anyway - measured, the deepest layer's inner
+   edge stays 65px clear of the hull edge at 1200px, its tightest case.
+
+   --why-depth is the only thing that varies per layer. Multiplying by
+   --why-side keeps the direction correct on both columns, and by --why-bow
+   ties it to the same eased magnitude the parent's bow uses, so the layers
+   accelerate and settle on the smootherstep curve rather than on a second,
+   unrelated one. It is a transform on an element that is already being
+   composited with its parent, so it costs no layout and no extra layer. */
+.why-pt__icon,
+.why-pt__title,
+.why-pt__body {
+  --why-depth: 0;
+  /* The -i twins, not --why-bow/--why-side: those are `inherits: false` and
+     a child reads their initial 0. See the @property block above. */
+  transform: translate3d(calc(var(--why-bow-i, 0) * var(--why-side-i, 0)
+                              * var(--why-depth) * -1vw), 0, 0);
+}
+/* The icon leads - it is the mark that announces the point, so it arrives
+   first and sits still while the copy catches up. The title follows, and
+   the body, being the most text and the last thing read, brings up the
+   rear. The ratios are the reference's 100/150/200 rescaled to the room we
+   actually have: 0 / 0.8 / 1.6vw against their 0/50/100px of relative
+   travel, which at 1440px is a near match in absolute terms. */
+.why-pt__title { --why-depth: 0.8; }
+.why-pt__body  { --why-depth: 1.6; }
+
+/* The centre point rises straight up the middle with --why-side: 0, so the
+   expression above collapses to zero and its layers never separate. That is
+   correct - it has no side to swing from and nothing to parallax against -
+   but it means the closing point arrives as one slab. Given a depth of its
+   own it would split vertically, which is a different motion from the one
+   the flanking points make, so it is deliberately left flush. */
+
 .why-pt__icon {
   display: block;
   width: 1.6rem;
@@ -9546,9 +9713,11 @@ main {
     left: 5%;
     right: 5%;
     text-align: center;
-    /* Same raised-cosine bow as the desktop rule - --why-bow is written by
-       why-scrub.js and read here unchanged - only the amplitude is smaller,
-       because on a phone the swing is a lean rather than a flank.
+    /* Same bow as the desktop rule - --why-bow is written by why-scrub.js
+       and read here unchanged, hold zone included - only the amplitude is
+       smaller, because on a phone the swing is a lean rather than a flank.
+       At 2.4vw the visible travel is already slight, so the hold is what
+       does the work here: the block parks rather than drifting.
 
        No --why-hull-d term: the columns have collapsed to a centred stack
        spanning 5%..95%, so the block is not anchored to the hull edge any
@@ -9567,6 +9736,26 @@ main {
     width: auto;
     margin-left: 0;
     text-align: center;
+  }
+  /* The layered approach is switched OFF here, and the reason is the text
+     alignment rather than the width. The layers are centred now, so a
+     sideways lag would slide the title and the body against a centred icon
+     - the block would shear down its own axis instead of gathering toward
+     an edge, which is not the same motion at all and reads as the copy
+     coming loose. The desktop version works because every layer is ragged
+     against one shared edge, so a difference in travel closes up along that
+     edge.
+
+     There is no room for it either: the block already spans 5%..95%, so the
+     0.8/1.6vw the layers would take has nowhere to go.
+
+     The reference site reaches the same conclusion by a different route -
+     it zeroes the x offset on any item it stacks (`d ? 0 : s ? -100 : 100`),
+     keeping the layering strictly for the flanking ones. */
+  .why-pt__icon,
+  .why-pt__title,
+  .why-pt__body {
+    transform: none;
   }
   /* No hover on a phone, so the card opens on tap through :focus-within -
      the point is focusable. Centred under the block whichever side it
@@ -9615,6 +9804,14 @@ main {
     margin-left: 0;
     text-align: left;
   }
+  /* The layers are flush here too. Nothing scrubs, so --why-bow keeps
+     whatever value it last held - and without this the title and body would
+     sit permanently offset from their icon in a static, normal-flow list. */
+  .why-pt__icon,
+  .why-pt__title,
+  .why-pt__body {
+    transform: none;
+  }
   /* Nothing is scrubbed and nothing hides: the expansion is simply the
      second paragraph of each point. */
   .why-pt .why-pt__more {
@@ -9632,6 +9829,11 @@ main {
 
 .no-js .why-pts { position: static; display: grid; gap: 1.5rem; }
 .no-js .why-pt { position: static; width: auto; opacity: 1; transform: none; }
+/* Same reason as the reduced-motion rule: no script means --why-bow is never
+   written, and the layers must sit flush in the static list. */
+.no-js .why-pt__icon,
+.no-js .why-pt__title,
+.no-js .why-pt__body { transform: none; }
 .no-js .why-pt__more {
   position: static;
   visibility: visible;
@@ -10408,7 +10610,12 @@ main {
   .presence__layout {
     /* The map column is given the larger share: it is the thing the section
        exists to show, and the rail is text that reads fine narrow. */
-    grid-template-columns: minmax(15rem, 22rem) 1fr;
+    /* Widened twice from the original 22rem: the figures run four-across at
+       the foot of the rail, and anything narrower compressed them to two
+       digits and a three-line label each. The prose above keeps its own
+       measure via max-width, so widening the column costs the paragraphs
+       nothing - it only buys room for the figures. */
+    grid-template-columns: minmax(24rem, 38rem) 1fr;
     align-items: center;
 
     /* ONLY THE MAP SITS IN FROM THE RAIL, and it is the GAP that moves it -
@@ -10421,26 +10628,68 @@ main {
        narrow end: measured 3rem at the 900px breakpoint, ~5.3rem at 1280 and
        ~6.3rem at 1440. Combined with justify-self:end on the wrapper, the map
        ends up pushed right and squared with the page's right edge. */
-    gap: clamp(3rem, -2.6rem + 9.9vw, 12rem);
+    gap: clamp(2rem, -0.9rem + 5.1vw, 5.5rem);
   }
 }
 
 /* --- The rail ----------------------------------------------------------- */
 
-/* Matched to .people__tier, not to the other section eyebrows on the page:
-   this section sits directly under the team block and the two rails read as a
-   pair, so the label that opens each one has to be the same size, weight and
-   ink. Same reason .presence__note takes --t-small below. */
+/* Sized to .people__tier - this section sits directly under the team block
+   and the two rails read as a pair, so the label opening each one keeps the
+   same size, weight and tracking.
+
+   THE INK, THOUGH, IS THE PAGE'S. Every other section label on this page is
+   .eyebrow in --accent-2-ink; this one was the single exception in plain
+   --text-primary, which read as a stray heading rather than as the section
+   marker it is. Teal here puts the section back in the palette the rest of
+   the page uses, and the pairing with .people__tier survives because that
+   pairing was ever only about scale. */
 .presence__eyebrow {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
   margin: 0 0 var(--s-4);
   font-size: var(--t-micro);
   font-weight: 700;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: var(--text-primary);
+  color: var(--accent-2-ink);
+}
+
+/* The trailing rule from the reference: a short hairline running off the
+   label. Raw --accent-2 is legal here because this is DECORATION and carries
+   no text - see the palette note on that token. It is capped rather than
+   flexed to the column so it stays a mark and does not become a divider. */
+.presence__eyebrow::after {
+  content: "";
+  flex: none;
+  width: clamp(2rem, 6vw, 4.5rem);
+  height: 1px;
+  background: linear-gradient(90deg,
+    var(--accent-2) 0%,
+    color-mix(in srgb, var(--accent-2) 25%, transparent) 100%);
 }
 
 .presence__title { margin-bottom: var(--s-4); max-width: 18ch; }
+
+/* The terminal period in brand teal, as in the reference. It is a <span> in
+   the markup rather than a ::after on the heading, because a generated full
+   stop is not in the accessible name and the sentence would be announced
+   without its end. */
+.presence__titleDot { color: var(--accent-2-ink); }
+
+/* The claim. Larger and in full ink so it holds the eye before the muted
+   explanation under it - one paragraph at a single weight let the claim
+   disappear into the body copy. */
+.presence__lede {
+  font-size: clamp(1.0625rem, 0.95rem + 0.45vw, 1.375rem);
+  line-height: 1.3;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  color: var(--text-primary);
+  max-width: 24ch;
+  margin: 0 0 var(--s-4);
+}
 
 .presence__note {
   font-size: var(--t-small);
@@ -10449,20 +10698,53 @@ main {
   margin-bottom: var(--s-6);
 }
 
-/* Two-up figures. The page already has a five-across stat band in .doubts;
-   this is deliberately a 2x2 block instead, so the two do not read as the
-   same component repeated - and so the figures stay large in a narrow
-   column rather than shrinking to fit one row. */
+/* ONE ROW OF FOUR, not the 2x2 this was. The figures are the base of the
+   section in the reference: a single band running the full width of the rail,
+   under the prose rather than inside its measure.
+
+   WHY IT ESCAPES THE RAIL. The prose column is capped around 46ch so it stays
+   readable, but four figures at that width would shrink to nothing. The band
+   is therefore allowed to run wider than the text above it - see the
+   .presence__layout override further down, which lets the rail's own grid
+   hand this row the full column. */
 .presence__stats {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: var(--s-5) var(--s-4);
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--s-5);
   margin: 0 0 var(--s-6);
+  /* A teal hairline opening the band, fading out to the right. It separates
+     the figures from the prose above without the hard grey rule this had
+     before, which cut the rail in two. Decoration only, so raw --accent-2 is
+     permitted here. */
   padding-top: var(--s-5);
-  border-top: 1px solid var(--border-strong);
+  border-top: 0;
+  background:
+    linear-gradient(90deg,
+      var(--accent-2) 0%,
+      color-mix(in srgb, var(--accent-2) 30%, transparent) 55%,
+      transparent 100%) top left / 100% 1px no-repeat;
 }
 
-.presence__stat { margin: 0; }
+/* A hairline BETWEEN the figures, not around them: the four are one rail of
+   measures, and a rule reads as a separator where a border would read as four
+   cards. The first drops its rule so the run does not open with a stray line. */
+.presence__stat {
+  margin: 0;
+  padding-left: var(--s-5);
+  border-left: 1px solid var(--border);
+}
+
+.presence__stat:first-child { padding-left: 0; border-left: 0; }
+
+/* The icon sits BESIDE the label text, not above it - the reference pairs a
+   small glyph with the words on one line, which keeps each figure to three
+   tight rows in a narrow column. */
+.presence__statIcon {
+  flex: none;
+  width: 1.5rem;
+  height: 1.5rem;
+  color: var(--accent-2-ink);
+}
 
 .presence__statFigure {
   font-family: var(--font-display);
@@ -10481,8 +10763,13 @@ main {
   color: var(--accent-2-ink);
 }
 
+/* Icon left, words right, aligned on their tops so a two-line label does not
+   drag the glyph down with it. */
 .presence__statLabel {
-  margin: var(--s-2) 0 0;
+  display: flex;
+  align-items: flex-start;
+  gap: var(--s-2);
+  margin: var(--s-4) 0 0;
   font-size: var(--t-micro);
   line-height: 1.4;
   color: var(--text-muted);
@@ -10492,18 +10779,30 @@ main {
    own deck, and this pill is what keeps the figure honest beside three
    figures that are current. Do not remove it without the client confirming
    the centres are open. */
+/* Teal, not grey: this is a qualifier on a figure, and the figures are teal
+   throughout this rail. A grey chip read as a disabled state rather than as
+   a note about timing. The tint is well under the ink it carries, so the
+   word itself still clears contrast on the section ground. */
 .presence__statFlag {
   display: inline-block;
   margin-left: 0.35em;
   padding: 0.1em 0.45em;
-  border: 1px solid var(--border-strong);
+  border: 1px solid color-mix(in srgb, var(--accent-2-ink) 38%, transparent);
+  background: color-mix(in srgb, var(--accent-2-ink) 7%, transparent);
   border-radius: 999px;
   font-size: 0.85em;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  color: var(--text-secondary);
+  color: var(--accent-2-ink);
   white-space: nowrap;
 }
+
+/* THE RAIL IS A GRID so the stats band can be handed the full column while
+   the prose above it keeps its own reading measure. Without this the band
+   would inherit nothing and the four figures would still be capped by the
+   widest paragraph. */
+.presence__rail { display: grid; justify-items: start; }
+.presence__rail > * { width: 100%; }
 
 .presence__offices {
   display: flex;
@@ -10514,16 +10813,20 @@ main {
   color: var(--text-secondary);
 }
 
+/* Matched to .presence__eyebrow above - both are micro-labels opening a line,
+   so both take the palette teal rather than one being grey. */
 .presence__officesLabel {
   font-size: var(--t-micro);
   font-weight: 700;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: var(--text-muted);
+  color: var(--accent-2-ink);
   margin-right: 0.2em;
 }
 
-.presence__officesDot { color: var(--border-strong); }
+/* The separators are DECORATION between city names, so raw --accent-2 is
+   permitted: no text sits on them. */
+.presence__officesDot { color: var(--accent-2); }
 
 /* --- The map ------------------------------------------------------------ */
 
@@ -10589,7 +10892,18 @@ main {
      and the label hangs to its right. */
   transform: translate(-0.3rem, -50%);
   white-space: nowrap;
+  /* The pin is the hover target, not the label: a reader aiming at a 0.5rem
+     dot would miss it, so the whole dot+label pair answers. */
+  cursor: default;
+  /* Stacking is the whole reason hover works on a crowded map. At rest every
+     pin shares one layer and the labels can tuck under a neighbour; the
+     hovered one is pulled to the top so its plate is never clipped by the
+     pin next to it. */
+  z-index: 1;
 }
+
+.presence__pin:hover,
+.presence__pin:focus-visible { z-index: 3; outline: none; }
 
 .presence__pinDot {
   flex: none;
@@ -10599,6 +10913,18 @@ main {
   background: var(--accent-2-ink);
   /* A soft halo so a dot that lands on the outline stroke stays legible. */
   box-shadow: 0 0 0 0.2rem color-mix(in srgb, var(--surface-sunken) 82%, transparent);
+  transition: box-shadow .18s ease, transform .18s ease;
+}
+
+/* HOVER. The halo opens into a teal ring and the dot grows slightly - the
+   coordinate stays exactly where it is, so nothing on the map appears to
+   move under the cursor. */
+.presence__pin:hover .presence__pinDot,
+.presence__pin:focus-visible .presence__pinDot {
+  transform: scale(1.15);
+  box-shadow:
+    0 0 0 0.2rem color-mix(in srgb, var(--surface-sunken) 88%, transparent),
+    0 0 0 0.42rem color-mix(in srgb, var(--accent-2-ink) 34%, transparent);
 }
 
 .presence__pinName {
@@ -10613,12 +10939,44 @@ main {
      white borders running through it - grey-on-blue loses the type. A tinted
      plate lifts every label off whatever it happens to sit on, ground and
      landmass alike, without boxing it in a visible chip. */
-  padding: 0.08em 0.3em;
-  border-radius: var(--radius);
-  background: color-mix(in srgb, var(--surface-sunken) 86%, transparent);
+  padding: 0.28em 0.6em;
+  /* A pill, not the page's 4px clinical radius: these sit ON the artwork as
+     floating chips rather than as panels ruled into the layout. */
+  border-radius: 999px;
+  background: color-mix(in srgb, #FFFFFF 92%, var(--surface-sunken));
+  box-shadow: 0 1px 2px rgb(16 32 56 / 0.10), 0 4px 12px rgb(16 32 56 / 0.06);
+  transition: background-color .18s ease, color .18s ease, box-shadow .18s ease;
 }
 
-.presence__pinTag { font-weight: 400; color: var(--text-muted); }
+/* HOVER. The plate goes solid brand blue with white type - readable against
+   every part of the artwork, and unmistakable as the one being pointed at. */
+.presence__pin:hover .presence__pinName,
+.presence__pin:focus-visible .presence__pinName {
+  background: var(--accent);
+  color: #FFFFFF;
+  box-shadow: 0 2px 4px rgb(16 32 56 / 0.14), 0 8px 20px rgb(0 80 160 / 0.22);
+}
+
+/* Keyboard users get a visible ring on the plate; mouse hover does not need
+   one because the colour flip already reads. */
+.presence__pin:focus-visible .presence__pinName {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* The HQ tag is its own chip beside the name, matching the reference - a
+   dark plate so it reads as a badge on the label, not as part of the city. */
+.presence__pinTag {
+  font-size: 0.82em;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #FFFFFF;
+  background: var(--text-primary);
+  padding: 0.3em 0.55em;
+  border-radius: 999px;
+  box-shadow: 0 1px 2px rgb(16 32 56 / 0.16);
+}
 
 /* The HQ is the one sourced location on this map, and it is the only pin
    given weight: brand blue, larger, its name in full ink. */
@@ -10706,14 +11064,173 @@ main {
   transform: translate(-50%, calc(-100% + 0.25rem));
 }
 
+/* --- The hover card ------------------------------------------------------
+   One card, moved and refilled per pin by js/presence-card.js. Everything
+   here is appearance only: WHERE it goes is the script's decision, because
+   choosing a side requires measuring the card against the map box and CSS
+   cannot measure. See that file's header.
+
+   POINTER-TRANSPARENT. The card can overlap the pins it sits beside, and a
+   card that swallowed the pointer would flicker - leave the pin, close the
+   card, re-enter the pin, open it again, forever. pointer-events:none breaks
+   that loop outright, and costs nothing because there is nothing in the card
+   to click. */
+.presence__card {
+  position: absolute;
+  z-index: 5;
+  width: min(15rem, 42%);
+  padding: var(--s-4);
+
+  /* GLASS. The card sits ON the artwork, so it is a translucent pane that
+     takes its colour from the map beneath it rather than a white box that
+     hides it. Three parts do the work and all three are needed:
+
+       1. a white fill well under full opacity, so the relief reads through;
+       2. backdrop-filter, which blurs and lifts what is behind the pane so
+          the type stays readable over a busy patch of coastline. Saturation
+          is pushed slightly because blurring alone leaves the blue flat;
+       3. a light top-left border and a soft inner highlight, which is what
+          makes a pane read as GLASS rather than as a semi-transparent div -
+          the eye wants an edge catching the light. */
+  background: rgb(255 255 255 / 0.62);
+  -webkit-backdrop-filter: blur(14px) saturate(160%);
+  backdrop-filter: blur(14px) saturate(160%);
+  border: 1px solid rgb(255 255 255 / 0.75);
+  border-radius: calc(var(--radius) * 3);
+  box-shadow:
+    /* the lit top edge, inside the pane */
+    inset 0 1px 0 rgb(255 255 255 / 0.85),
+    0 2px 8px rgb(16 32 56 / 0.10),
+    0 16px 40px rgb(16 32 56 / 0.18);
+  pointer-events: none;
+  /* Opens from slightly behind and just short of its resting place. The
+     script sets left/top, so the entrance is done with a transform - moving
+     left/top would fight the positioning it just calculated. */
+  opacity: 0;
+  transform: translateY(0.25rem) scale(0.97);
+  transition: opacity .16s ease, transform .16s ease;
+}
+
+.presence__card.is-open {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+
+/* NO BACKDROP-FILTER, NO GLASS. Without the blur the fill is simply 62% white
+   laid over a detailed blue relief, and the type sits on whatever happens to
+   be behind it - the one state this card must never be in. So where the
+   property is unsupported the pane goes nearly opaque and behaves like the
+   solid card it replaced. Written as a not-supports rule so the glass stays
+   the default and this is the exception, not the other way round. */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .presence__card {
+    background: rgb(255 255 255 / 0.97);
+    border-color: var(--border);
+  }
+}
+
+.presence__cardCity {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1.0625rem;
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+  color: var(--text-primary);
+}
+
+/* The one line that says what this city IS to MedShield - HQ, or a point of
+   presence. Teal, because it is the status and not the address. */
+.presence__cardRole {
+  margin: 0.15rem 0 var(--s-3);
+  font-size: var(--t-micro);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--accent-2-ink);
+}
+
+/* The seam between the heading and the rows. On glass a solid --border reads
+   as a drawn line across a transparent pane; a white rule below a darker one
+   reads as an edge in the material itself. */
+.presence__cardRows {
+  margin: 0;
+  padding-top: var(--s-3);
+  border-top: 1px solid rgb(16 32 56 / 0.10);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.7);
+  display: grid;
+  gap: var(--s-3);
+}
+
+.presence__cardRow { margin: 0; }
+
+/* Darker than the --text-muted this used on the old opaque card: the pane is
+   translucent over a mid-blue relief, so the lightest ink in the system no
+   longer clears contrast against the worst patch of artwork behind it. */
+.presence__cardRow dt {
+  margin: 0 0 0.15rem;
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+
+.presence__cardRow dd {
+  margin: 0;
+  font-size: var(--t-micro);
+  line-height: 1.45;
+  color: var(--text-primary);
+  /* The pins set white-space:nowrap on themselves; the card is a block of
+     prose and must be allowed to wrap. */
+  white-space: normal;
+}
+
+/* A reader who has asked for less motion still gets the card - it simply
+   appears rather than easing in. */
+@media (prefers-reduced-motion: reduce) {
+  .presence__card { transition: none; transform: none; }
+  .presence__card.is-open { transform: none; }
+}
+
+/* Sits under the map's RIGHT edge rather than centred: centred, it read as a
+   caption for the whole section; hard right it reads as a footnote on the
+   artwork, which is what it is. */
+/* The four-across band is the first thing to break as the rail narrows - the
+   figures hit two digits wide well before the layout stacks at 900px - so it
+   folds to 2x2 here, with the dividers moving to the new first column. */
+@media (max-width: 980px) {
+  .presence__stats { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--s-5) var(--s-4); }
+  .presence__stat:nth-child(odd) { padding-left: 0; border-left: 0; }
+  .presence__stat:nth-child(even) { padding-left: var(--s-4); border-left: 1px solid var(--border); }
+}
+
+/* Stacked layout: the rail is full-bleed again, so four across fits. */
+@media (max-width: 900px) {
+  .presence__stats { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--s-4); }
+  .presence__stat:nth-child(odd),
+  .presence__stat:nth-child(even) { padding-left: var(--s-4); border-left: 1px solid var(--border); }
+  .presence__stat:first-child { padding-left: 0; border-left: 0; }
+}
+
+@media (max-width: 680px) {
+  .presence__stats { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--s-5) var(--s-4); }
+  .presence__stat:nth-child(odd) { padding-left: 0; border-left: 0; }
+  .presence__stat:nth-child(even) { padding-left: var(--s-4); border-left: 1px solid var(--border); }
+}
+
 .presence__mapFoot {
   margin-top: var(--s-4);
   font-size: var(--t-micro);
   line-height: 1.5;
   color: var(--text-muted);
-  text-align: center;
-  max-width: 44ch;
-  margin-inline: auto;
+  max-width: 32ch;
+  margin-left: auto;
+  margin-right: 0;
+}
+
+@media (max-width: 900px) {
+  .presence__mapFoot { margin-inline: auto; text-align: center; }
 }
 
 /* Below 560px the labels collide at any size that keeps them readable, so
@@ -10725,12 +11242,44 @@ main {
      keeps the landmass large enough for the dots to mean anything. */
   .presence__mapWrap { max-width: none; padding-inline: 0; }
 
-  .presence__pinName { display: none; }
+  /* Hidden at rest, not removed: a touch/press on a dot still brings its own
+     label up, so the map keeps its one piece of interactivity at the width
+     where the caption is otherwise doing all the naming. visibility (not
+     display) so the plate can be revealed without relaying out the pin. */
+  .presence__pinName,
+  .presence__pinTag {
+    visibility: hidden;
+    position: absolute;
+    left: 50%;
+    bottom: calc(100% + 0.45rem);
+    transform: translateX(-50%);
+  }
+
+  .presence__pinTag { display: none; }
+
+  .presence__pin:hover .presence__pinName,
+  .presence__pin:focus-visible .presence__pinName,
+  .presence__pin:active .presence__pinName { visibility: visible; }
+
   /* With no labels there is no side to hang them on, so every pin - including
      the data-side="w" ones - centres on its own coordinate. */
   .presence__pin,
   .presence__pin[data-side="w"] { transform: translate(-50%, -50%); }
-  .presence__stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+
+  /* The map is small here and a card at 42% of it would be a column of two
+     words per line. It is allowed most of the width instead - the script's
+     clamp keeps it inside the box wherever the pin happens to be. */
+  .presence__card { width: min(13rem, 68%); padding: var(--s-3); }
+}
+
+/* A reader who has asked for less motion still gets the full hover answer -
+   the colour flip and the ring - just without the scale and the tween. */
+@media (prefers-reduced-motion: reduce) {
+  .presence__pinDot,
+  .presence__pinName { transition: none; }
+
+  .presence__pin:hover .presence__pinDot,
+  .presence__pin:focus-visible .presence__pinDot { transform: none; }
 }
 
 
@@ -11399,4 +11948,229 @@ html.pl-lock body {
   /* The section still clips, so nothing the picture gains can spill into the
      neighbouring sections — only past the stage's own svh edge. */
   .doubts--live { overflow-x: clip; overflow-y: clip; }
+}
+
+/* ==========================================================================
+   DESKTOP NAV BAR — 3 tabs / centred logo / 2 CTAs
+   --------------------------------------------------------------------------
+   Modelled on white-desert.com's bar. Three differences from the old layout:
+
+   1. The logo moves from the LEFT edge to the CENTRE of the bar, in its own
+      grid column, so the three tabs and the two CTAs balance around it.
+   2. Links are visible on desktop instead of living only behind the
+      hamburger. The overlay menu survives untouched as the MOBILE nav and as
+      the full site index — this bar is additive, it replaces nothing.
+   3. Every control is a "liquid glass" pill: a real refraction of whatever is
+      behind it, not a flat translucent fill. See the .lg rules below.
+
+   The bar keeps NO background of its own at any scroll position, exactly as
+   before, so the hero video still reads through it.
+   ========================================================================== */
+
+/* Three equal columns. The logo column is centred, so the mark sits on the
+   true horizontal centre of the viewport regardless of how wide the tab and
+   CTA groups happen to be — matching the reference, where the centred mark is
+   the axis the whole bar is composed around. */
+.nav-bar {
+  display: none;              /* desktop only; enabled in the query below */
+  flex: 1;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: var(--s-4);
+}
+
+/* The bar itself must not eat clicks on the media behind it. Only the
+   controls do — the reference does exactly this (pointer-events:none on the
+   row, auto on each button), and it is what lets the hero stay interactive
+   across the whole width of the header. */
+.nav-bar,
+.nav-bar__col { pointer-events: none; }
+.nav-bar .btn-tab,
+.nav-bar .btn-cta { pointer-events: auto; }
+
+.nav-bar__col { display: flex; align-items: center; gap: var(--s-3); min-width: 0; }
+.nav-bar__col--left  { justify-content: flex-start; }
+.nav-bar__col--mid   { justify-content: center; }
+.nav-bar__col--right { justify-content: flex-end; }
+
+/* --- The glass pill ------------------------------------------------------
+
+   Four stacked layers inside one clipping box, the reference's stack verbatim:
+
+     .lg__svg       the filter definition (feTurbulence -> blur -> displace)
+     .lg__filter    backdrop-blur, then displaced by that filter — the refraction
+     .lg__overlay   a whisper of tint so the glass has a body
+     .lg__specular  an inset highlight faking a lit top-left edge
+
+   The displacement map is what separates this from ordinary frosted glass:
+   the background is not merely blurred, it is pushed around by fractal noise,
+   so edges behind the pill bend the way they would through real glass. */
+.lg {
+  position: relative;
+  border-radius: 0.125rem;
+  overflow: clip;
+  isolation: isolate;
+  transition: border-radius 0.3s cubic-bezier(0.5, 1, 0.89, 1);
+}
+
+/* Zero-sized: it carries only <defs>, never paints. */
+.lg__svg { position: absolute; width: 0; height: 0; pointer-events: none; }
+
+.lg__filter,
+.lg__overlay,
+.lg__specular {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+}
+.lg__filter  { z-index: 0; backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px); }
+.lg__overlay { z-index: 1; background: rgba(var(--rgb-on-deep), 0.05); }
+
+/* The lit edge. Two insets: a 1px hard highlight on the top-left corner, and
+   a soft 5px bloom all round. Removing it on hover (below) is the reference's
+   trick — the pill appears to "settle" under the cursor. */
+.lg__specular {
+  z-index: 2;
+  box-shadow:
+    inset 1px 1px 0 rgba(255, 255, 255, 0.2),
+    inset 0 0 5px  rgba(255, 255, 255, 0.2);
+  transition: opacity 0.3s cubic-bezier(0.5, 1, 0.89, 1);
+}
+
+/* --- Buttons -------------------------------------------------------------
+   Content sits at z-index 3, above all four glass layers. */
+.nav-bar .btn-tab,
+.nav-bar .btn-cta {
+  position: relative;
+  z-index: 3;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  /* The reference sizes every bar control identically: a fixed 7.5rem box at
+     a 2.5rem min-height with 1rem of inline padding (--size-75 / --size-25 /
+     --size-1), so the tabs and CTAs form an even rhythm across the bar rather
+     than each shrink-wrapping its own label. */
+  width: 7.5rem;
+  min-height: 2.5rem;
+  padding-inline: 1rem;
+  font-family: var(--font-body);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  line-height: 1.5;
+  white-space: nowrap;
+  color: var(--text-on-deep);
+  text-decoration: none;
+  background: rgba(var(--rgb-deep), 0.20);
+  /* --btn-border in the reference: a .03125rem hairline at 20% white. It is
+     what separates a pill from the video behind it when the glass refraction
+     alone is too subtle to read. */
+  border: 0.03125rem solid rgba(var(--rgb-on-deep), 0.2);
+  /* --radius-0125. The pill's own corner, not the glass box's, so the fill
+     and the hairline round together at .125rem as they do in the bar. */
+  border-radius: 0.125rem;
+  cursor: pointer;
+  transition: background-color 0.3s cubic-bezier(0.5, 1, 0.89, 1),
+              color 0.3s cubic-bezier(0.5, 1, 0.89, 1);
+}
+.nav-bar .btn-cta { background: rgba(var(--rgb-deep), 0.15); }
+
+/* Hover: the radius opens up, the specular highlight drops away, and the pill
+   floods with the brand blue. Every control in the bar behaves the same way —
+   tabs and CTAs alike — so hover is the one and only state that fills a pill,
+   now that the current page no longer marks itself. */
+@media (hover: hover) and (pointer: fine) {
+  .nav-bar .lg:hover { border-radius: 0.275rem; }
+  .nav-bar .lg:hover .lg__specular { opacity: 0; }
+  .nav-bar .btn-tab:hover,
+  .nav-bar .btn-cta:hover,
+  .nav-bar .lg:hover .btn-tab,
+  .nav-bar .lg:hover .btn-cta {
+    background: var(--accent);
+    border-color: var(--accent);
+    border-radius: 0.275rem;
+    color: var(--text-on-deep);
+  }
+}
+
+/* The glass box clips to the same .125rem as the pill inside it, so the
+   refraction stops exactly at the hairline instead of bleeding past a square
+   corner. .lg is inline-flex so it wraps the 7.5rem control without adding a
+   second box model around it. */
+.nav-bar .lg {
+  display: inline-flex;
+  border-radius: 0.125rem;
+}
+
+/* --- Ink inversion -------------------------------------------------------
+   bar-ink.js flips .is-on-light when a PALE section is under the bar. The
+   glass pills are built for a dark ground, so over light sections they invert:
+   dark ink, a dark translucent fill, and a dark specular edge. Without this
+   the pills went white-on-white exactly as the old bare hamburger did. */
+.site-header.is-on-light .nav-bar .btn-tab,
+.site-header.is-on-light .nav-bar .btn-cta {
+  color: var(--text-primary);
+  background: rgba(var(--rgb-deep), 0.06);
+  /* The hairline inverts with the ink: 20% white over the video would be
+     invisible on a pale section, so it becomes a dark hairline there. */
+  border-color: rgba(var(--rgb-deep), 0.12);
+}
+.site-header.is-on-light .nav-bar .lg__overlay { background: rgba(var(--rgb-deep), 0.04); }
+.site-header.is-on-light .nav-bar .lg__specular {
+  box-shadow:
+    inset 1px 1px 0 rgba(var(--rgb-deep), 0.10),
+    inset 0 0 5px  rgba(var(--rgb-deep), 0.10);
+}
+/* Over a pale section the hover fill is the same blue — it has enough contrast
+   against both grounds, so only the resting state needed inverting. */
+@media (hover: hover) and (pointer: fine) {
+  .site-header.is-on-light .nav-bar .btn-tab:hover,
+  .site-header.is-on-light .nav-bar .btn-cta:hover,
+  .site-header.is-on-light .nav-bar .lg:hover .btn-tab,
+  .site-header.is-on-light .nav-bar .lg:hover .btn-cta {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: var(--text-on-deep);
+  }
+}
+/* The bar's own brand anchor — the centre column's logo. */
+.nav-bar .brand {
+  pointer-events: auto;
+  display: inline-flex;
+  align-items: center;
+  text-decoration: none;
+}
+
+/* .is-scrolled fades the HERO logo away on the homepage. The bar's centred
+   mark is the nav's own axis, not part of the hero composition, so it must
+   NOT inherit that fade — without this it vanished on scroll and left a hole
+   between the tabs and the CTAs. */
+.site-header.is-scrolled .nav-bar .brand { opacity: 1; pointer-events: auto; }
+
+/* --- Layout switch -------------------------------------------------------
+   Below 1024px the bar collapses back to the original brand-left /
+   hamburger-right arrangement and the overlay menu carries navigation. The
+   five pills do not fit a phone, and the reference makes the same switch. */
+@media (min-width: 1024px) {
+  .nav-bar { display: grid; }
+
+  /* The centred logo now lives inside the bar's middle column, so the
+     original left-edge .brand is redundant — and the toggle with it, since
+     every link is visible. Both stay in the DOM for the mobile layout. */
+  .site-header__inner > .brand,
+  .site-header__inner > .nav-toggle { display: none; }
+
+  /* The mark is the bar's centrepiece, so it is deliberately the largest
+     thing in it — taller than the old left-edge logo, not smaller. The bar's
+     min-height is 5.25rem and the pills are 2.25rem, so 3.6rem leaves the
+     mark clear air above and below while still reading as the dominant
+     element between the two control groups. */
+  .nav-bar .brand__mark { height: 3.6rem; }
+}
+
+/* Reduced motion: keep the colour changes, drop the geometry morph. */
+@media (prefers-reduced-motion: reduce) {
+  .lg, .lg__specular, .nav-bar .btn-tab, .nav-bar .btn-cta { transition: none; }
 }

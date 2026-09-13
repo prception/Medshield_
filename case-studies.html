@@ -59,6 +59,56 @@
 
 <header class="site-header" id="site-header">
   <div class="site-header__inner">
+    <!-- Desktop nav: three tabs left, logo centred, two CTAs right.
+         Mirrors white-desert.com. Hidden below 1024px, where the brand +
+         hamburger + overlay menu below take over unchanged. -->
+    <div class="nav-bar">
+      <nav class="nav-bar__col nav-bar__col--left" aria-label="Primary">
+        <span class="lg">
+          <svg class="lg__svg" aria-hidden="true" focusable="false"><defs><filter id="lgL0" x="0%" y="0%" width="100%" height="100%"><feTurbulence type="fractalNoise" baseFrequency="0.008 0.008" numOctaves="2" seed="100" result="noise"></feTurbulence><feGaussianBlur in="noise" stdDeviation="2" result="blurred"></feGaussianBlur><feDisplacementMap in="SourceGraphic" in2="blurred" scale="40" xChannelSelector="R" yChannelSelector="G"></feDisplacementMap></filter></defs></svg>
+          <span class="lg__filter" style="filter:url(#lgL0)"></span>
+          <span class="lg__overlay"></span>
+          <span class="lg__specular"></span>
+          <a class="btn-tab" href="index.html">Home</a>
+        </span>
+        <span class="lg">
+          <svg class="lg__svg" aria-hidden="true" focusable="false"><defs><filter id="lgL1" x="0%" y="0%" width="100%" height="100%"><feTurbulence type="fractalNoise" baseFrequency="0.008 0.008" numOctaves="2" seed="100" result="noise"></feTurbulence><feGaussianBlur in="noise" stdDeviation="2" result="blurred"></feGaussianBlur><feDisplacementMap in="SourceGraphic" in2="blurred" scale="40" xChannelSelector="R" yChannelSelector="G"></feDisplacementMap></filter></defs></svg>
+          <span class="lg__filter" style="filter:url(#lgL1)"></span>
+          <span class="lg__overlay"></span>
+          <span class="lg__specular"></span>
+          <a class="btn-tab" href="services.html">Services</a>
+        </span>
+        <span class="lg">
+          <svg class="lg__svg" aria-hidden="true" focusable="false"><defs><filter id="lgL2" x="0%" y="0%" width="100%" height="100%"><feTurbulence type="fractalNoise" baseFrequency="0.008 0.008" numOctaves="2" seed="100" result="noise"></feTurbulence><feGaussianBlur in="noise" stdDeviation="2" result="blurred"></feGaussianBlur><feDisplacementMap in="SourceGraphic" in2="blurred" scale="40" xChannelSelector="R" yChannelSelector="G"></feDisplacementMap></filter></defs></svg>
+          <span class="lg__filter" style="filter:url(#lgL2)"></span>
+          <span class="lg__overlay"></span>
+          <span class="lg__specular"></span>
+          <a class="btn-tab" href="about.html">About</a>
+        </span>
+      </nav>
+      <div class="nav-bar__col nav-bar__col--mid">
+        <a class="brand" href="index.html" aria-label="MedShield - home">
+          <img class="brand__mark" src="assets/M2.png" alt="" width="3682" height="930" decoding="async">
+        </a>
+      </div>
+      <div class="nav-bar__col nav-bar__col--right">
+        <span class="lg">
+          <svg class="lg__svg" aria-hidden="true" focusable="false"><defs><filter id="lgR0" x="0%" y="0%" width="100%" height="100%"><feTurbulence type="fractalNoise" baseFrequency="0.008 0.008" numOctaves="2" seed="100" result="noise"></feTurbulence><feGaussianBlur in="noise" stdDeviation="2" result="blurred"></feGaussianBlur><feDisplacementMap in="SourceGraphic" in2="blurred" scale="40" xChannelSelector="R" yChannelSelector="G"></feDisplacementMap></filter></defs></svg>
+          <span class="lg__filter" style="filter:url(#lgR0)"></span>
+          <span class="lg__overlay"></span>
+          <span class="lg__specular"></span>
+          <a class="btn-cta" href="case-studies.html" aria-current="page">Case Studies</a>
+        </span>
+        <span class="lg">
+          <svg class="lg__svg" aria-hidden="true" focusable="false"><defs><filter id="lgR1" x="0%" y="0%" width="100%" height="100%"><feTurbulence type="fractalNoise" baseFrequency="0.008 0.008" numOctaves="2" seed="100" result="noise"></feTurbulence><feGaussianBlur in="noise" stdDeviation="2" result="blurred"></feGaussianBlur><feDisplacementMap in="SourceGraphic" in2="blurred" scale="40" xChannelSelector="R" yChannelSelector="G"></feDisplacementMap></filter></defs></svg>
+          <span class="lg__filter" style="filter:url(#lgR1)"></span>
+          <span class="lg__overlay"></span>
+          <span class="lg__specular"></span>
+          <a class="btn-cta" href="contact.html">Contact</a>
+        </span>
+      </div>
+    </div>
+
     <a class="brand" href="index.html" aria-label="MedShield - home">
       <img class="brand__mark" src="assets/M2.png" alt="" width="3682" height="930" decoding="async">
     </a>
@@ -73,7 +123,7 @@
   </div>
 </header>
 
-<nav class="site-menu" id="site-nav" aria-label="Primary" hidden>
+<nav class="site-menu" id="site-nav" aria-label="All pages" hidden>
   <div class="site-menu__inner">
     <ul class="site-menu__list">
       <li><a href="index.html">Home</a></li>

@@ -576,6 +576,67 @@
     var lastHullFrame = -1;
     var lastHullPct = -1;
 
+    /* THE HULL READING PER FRAME, and why the anchor has to come from here
+       rather than from the live eased value.
+
+       measureHull() below produces one reading per distinct painted frame,
+       and the frame index is a pure function of the scroll position (see
+       the remap at the end of apply()). So `frame -> hull width` is fixed
+       footage data: frame 120 measures the same ship whichever way the
+       reader arrived at it.
+
+       The EASED value is not. hullPos trails hullTarget through a per-frame
+       ease, so what it reads at any instant depends on the path taken to
+       get there - and sampling it on the `near` edge made the anchor
+       direction-dependent twice over. A pair crosses that edge at opposite
+       ends of its slot depending on direction (u ~ -0.2 descending, ~ 1.2
+       ascending), so it sampled at different reel frames: descending, pair
+       1 entered against a wide hull; ascending, it re-entered once the
+       drone had climbed and the ship had narrowed, and both its points
+       froze that much closer to the centreline. Measured down-vs-up at the
+       same progress, every matched sample differed - worst 197px.
+
+       Keyed by frame, the anchor is a function of progress alone. */
+    var hullByFrame = [];
+
+    /* The frame a given pinned position t paints. The same arithmetic as
+       the remap in apply(), kept in step with it by construction. */
+    function frameAt(t) {
+      var span = 1 - HOLD - TAIL;
+      var p = span > 0 ? (t - HOLD) / span : t;
+      if (p < 0) p = 0;
+      if (p > 1) p = 1;
+      return Math.round(p * (COUNT - 1));
+    }
+
+    /* The hull at a frame, LATCHED once that frame has been measured.
+
+       The nearest-measured-frame scan this replaces was still
+       direction-dependent, just more subtly than the eased value was. Only
+       frames the reader has actually painted carry a reading, and which
+       frames those are differs between a downward pass and an upward one -
+       seeks coalesce differently depending on scrub speed and direction. So
+       a pair whose own frame had not been painted yet resolved to whichever
+       neighbour happened to be present at that moment, and to a different
+       one on the way back: measured down-vs-up, 9 of 132 matched samples
+       still disagreed, worst 25px.
+
+       Latching fixes that by making the answer settle exactly once. Until
+       a pair's canonical frame has been read the anchor is HULL_FALLBACK -
+       the widest case, which is where the static layout already sits, so
+       the points simply start at their resting width. The first time that
+       frame is measured the reading is kept, and from then on it is a
+       constant for the rest of the session: the same frame, the same hull,
+       the same lateral distance, whichever way the reader travels. */
+    var hullLatch = [];
+    function hullAt(frame) {
+      if (hullLatch[frame] === undefined) {
+        if (hullByFrame[frame] === undefined) return HULL_FALLBACK;
+        hullLatch[frame] = hullByFrame[frame];
+      }
+      return hullLatch[frame];
+    }
+
     /* The small offscreen the frame is sampled from. Created once, never
        attached to the document, and never composited - so reading it back
        costs nothing but the copy. */
@@ -634,11 +695,17 @@
          half of the settling shake: not the easing, the INPUT to it.
 
          So the edge is refined against the test that found it. `soft` is
-         how far into the outermost warm pixel the boundary actually falls,
-         estimated from how strongly its neighbour just outside fails the
-         warmth test - a partly-warm pixel at the hull's edge sits partway
+         how far past the outermost warm pixel the boundary actually falls,
+         found by treating warmth as linear between that pixel and the first
+         one outside it that fails, and solving for where it crosses the
+         threshold - a partly-warm pixel at the hull's edge sits partway
          between, and interpolating recovers that fraction. The answer moves
-         continuously as the ship narrows instead of in 10px stairs. */
+         continuously as the ship narrows instead of in 10px stairs.
+
+         Which END that fraction is measured from is not a detail: get it
+         backwards and the refinement reverses the measurement between pixel
+         boundaries, which is a slow inward pull with a snap back out. See
+         the note at the calculation itself. */
       for (var ri = 0; ri < HULL_ROWS; ri++) {
         var row = Math.round((bandH - 1) * (ri / (HULL_ROWS - 1)));
         var base = row * hw * 4;
@@ -647,26 +714,60 @@
           var r = data[i4], g = data[i4 + 1], b = data[i4 + 2];
           if (r - b > HULL_WARM && (r + g + b) / 3 > HULL_MIN_LUM) {
             var d = Math.abs(x - half);
-            if (d > widest) {
-              /* The pixel one step further OUT from the centre - the first
-                 one that failed - and how far short of the threshold it
-                 fell. Clamped into 0..1 so a noisy neighbour can never push
-                 the edge more than one pixel either way. */
+            /* >=, not >. The sub-pixel term below can only ever ADD to d, so
+               a pixel at the same whole-pixel distance as the current best
+               can still refine it upward - and with a strict > it could not,
+               because the integer compared is the one WITHOUT the fraction
+               while the value stored has it. The two are not the same
+               quantity, and comparing across them is what let a later row
+               lose a refinement an earlier one had already found. */
+            if (d >= widest) {
+              /* THE SUB-PIXEL EDGE, and it has to be solved in the right
+                 direction or it runs BACKWARDS.
+
+                 This is a linear crossing: warmth falls from wIn at this
+                 pixel to wOut at the first failing one just outside, and the
+                 real boundary is wherever that line passes HULL_WARM. So the
+                 fraction is how far from THIS pixel the crossing sits,
+                 (wIn - HULL_WARM) / (wIn - wOut).
+
+                 It used to be (HULL_WARM - wOut) / (wIn - wOut), which is
+                 the distance measured from the WRONG END - it says how far
+                 the crossing sits from the outside pixel, then adds that to
+                 the inside one. The two only agree when the crossing is
+                 exactly halfway.
+
+                 That sign error is what made the points swim toward the
+                 ship. As the hull grows within one pixel, wIn rises while
+                 wOut stays at sea level, so the old fraction SHRANK as the
+                 edge advanced: the measurement crept inward across the whole
+                 pixel, then jumped outward past the truth when the boundary
+                 finally crossed into the next one and the fraction reset
+                 near 1. On a smoothly widening hull that is a sawtooth once
+                 per pixel - measured on a synthetic ramp, 90 backward steps
+                 across a 30px growth, each up to 1.2px, which the anchor's
+                 ease turns into a soft inward drift and recovery rather than
+                 a visible jump. Solved from the correct end the sequence is
+                 monotonic - zero backward steps on the same ramp - and lands
+                 within 0.28px of the true edge.
+
+                 Clamped into 0..1 so a noisy neighbour can never push the
+                 edge more than one pixel either way. */
               var xo = x < half ? x - 1 : x + 1;
               var soft = 0;
               if (xo >= 0 && xo < hw) {
                 var o4 = base + xo * 4;
-                var ow = data[o4] - data[o4 + 2];
-                /* How much of the way from the outside pixel's warmth up to
-                   the threshold this edge sits. */
-                var span = (r - b) - ow;
+                var wIn = r - b;
+                var wOut = data[o4] - data[o4 + 2];
+                var span = wIn - wOut;
                 if (span > 0) {
-                  soft = (HULL_WARM - ow) / span;
+                  soft = (wIn - HULL_WARM) / span;
                   if (soft < 0) soft = 0;
                   if (soft > 1) soft = 1;
                 }
               }
-              widest = d + soft;
+              var cand = d + soft;
+              if (cand > widest) widest = cand;
             }
           }
         }
@@ -686,6 +787,10 @@
          absorbs it, and the hull's real change across the reel is slow
          enough that trailing it by a few frames is invisible. */
       hullTarget = pct;
+      /* Recorded against the frame it was measured from, so the points can
+         look their anchor up by progress instead of sampling whatever the
+         ease happens to hold. */
+      hullByFrame[lastHullFrame] = pct;
       if (lastHullPct < 0) { hullPos = pct; commitHull(pct); }
     }
 
@@ -728,30 +833,140 @@
        acceleration 1 -> 7 across the approach. That is what reads as the
        harsh, snatched finish - the motion never eases off, it just stops.
 
-       A raised cosine is flat at BOTH ends. Its slope starts at zero,
-       peaks gently in the middle of the approach and returns to zero at the
-       extreme, so the point drifts out of its resting line, crosses at an
-       even rate, and settles into the edge instead of being flung at it.
-       Peak slope is 1.57 against 3.0, and the acceleration never changes
-       sign - which is the difference between a curve that flows and one
-       that lunges and checks itself.
+       What is wanted instead is a curve that is flat at BOTH ends, so the
+       point drifts out of its resting line, crosses at an even rate, and
+       settles into the edge instead of being flung at it. A raised cosine
+       was the first version of that and it fixed the polynomial's problem,
+       but only in the slope - see the note on ease(), below, for the
+       curvature corners it left at the extremes and at the resting line,
+       and why the shape is now smootherstep.
 
-       Smoothstep was the other candidate and is worse here: it is flat at
-       both ends too, but it reverses its acceleration hard in the last
-       third (+5 to -24), and that reversal is felt as a distinct hitch just
-       before the point exits.
+       Plain smoothstep was the other candidate and is worse than either: it
+       is flat at both ends in slope too, but it reverses its acceleration
+       hard in the last third (+5 to -24), and that reversal is felt as a
+       distinct hitch just before the point exits.
 
-       It is done in JS because CSS cos() is from the same values-4 set as
-       the sqrt() and pow() this file already avoids for baseline reasons,
-       whereas Math.cos is available everywhere. It also collapses the whole
-       calc() chain into one number, so the stylesheet does less work per
-       frame, not more. */
+       It is done in JS and not in the stylesheet because it collapses the
+       whole calc() chain into one number, so the stylesheet does less work
+       per frame, not more - and, as a plain polynomial, it needs nothing
+       from the values-4 set (cos(), sqrt(), pow()) that this file avoids for
+       baseline reasons. */
+    /* The shape both the bow and the tilt are built from: a 0..1 distance in,
+       a 0..1 magnitude out, flat at BOTH ends.
+
+       This is smootherstep, 6a^5 - 15a^4 + 10a^3, and it replaces the raised
+       cosine that used to be here. The cosine is flat at both ends in SLOPE,
+       which is what the note above was after, but its CURVATURE is not: it
+       arrives at a = 0 and a = 1 carrying |accel| 19.7 and then drops to zero
+       the instant the value is clamped or mirrored. Those are corners, and
+       both of them sit exactly where the motion is supposed to look calm.
+
+       At the extremes the point is parked - clamped off screen at either end
+       of its slot - so a curve that reaches park still curving lurches out of
+       it on the frame it wakes. At the resting line the two mirrored halves
+       meet, and the cosine's curvature does not change sign smoothly across
+       that join; it snaps. That snap is the flattening reading as an event
+       rather than a settle.
+
+       Smootherstep is C2: slope AND curvature are zero at a = 0 and a = 1, so
+       the join and the clamp are both invisible. Measured across the travel,
+       curvature at the ends falls 19.7 -> 1.4 and the sign change at the
+       resting line falls from +/-19.7 to +/-4.5.
+
+       It costs a slightly brisker middle - peak slope 3.75 against the
+       cosine's 3.14. That is the trade and it is the right way round: the
+       extra rate lands in the quarter either side of the resting line, where
+       the point is travelling fast and the reader is not reading the turn as
+       a separate move, and it buys the stillness at the three places they
+       are. Same reasoning as the tilt's peak placement, below.
+
+       Polynomial, so no Math call at all, and the endpoint values are
+       unchanged - 0 at the resting line, 1 at either extreme - so the
+       choreography, the magnitudes in the stylesheet and the hull anchoring
+       all carry over untouched. */
+    function ease(a) {
+      return a * a * a * (a * (a * 6 - 15) + 10);
+    }
+
+    /* ---- THE HOLD, and why the smooth curve alone was not enough --------
+       A curve that is flat at both ends fixed the harshness and introduced a
+       different complaint: the points looked like they were swimming to the
+       centre and back. That was not a bug in the easing, it was a
+       consequence of it, and the fade window is what exposes it.
+
+       A point is fully opaque from u = 0.22 to u = 0.78 and visible either
+       side of that. So the reader sees very nearly the WHOLE of its bow
+       sweep. Measured on the shapes this file has carried:
+
+         d^2/d^4 polynomial   37% of the swing on screen   126px round trip
+         raised cosine        79%                          160px
+         smootherstep         84%                          169px
+
+       The polynomial got away with a 12vw amplitude precisely because it was
+       flat near the resting line and only bowed hard out at the extremes,
+       where the fade had already hidden the block. Each smoother curve moved
+       more of that same swing INTO full view. Nothing regressed in the
+       motion's quality - the reader simply started seeing all of it, and
+       169px of continuous lateral travel across the middle of the run reads
+       as the block being pulled toward the ship and released.
+
+       So the curve keeps a DEAD ZONE around the resting line. Inside it the
+       bow is exactly zero, which means the point does not merely pass
+       through its resting line at reduced speed - it actually stops beside
+       the ship and holds there for a third of its visible run, which is what
+       the copy wants if it is going to be read.
+
+       The join costs nothing. smootherstep has zero slope AND zero curvature
+       at a = 0, so splicing it onto a flat stretch inherits that flatness -
+       measured at the boundary, slope 1.5e-6 and curvature 0.03, which is
+       continuous to the precision that matters. This is the one reason the
+       hold can exist at all: the same property that fixed the extremes is
+       what lets the middle be clamped without putting a corner back.
+
+       HOLD and the amplitude are tuned together. A hold alone compresses the
+       whole sweep into less travel, which triples peak curvature - one
+       complaint traded for another. Pulling the amplitude back to 5.5vw at
+       the same time keeps the peak rate where the ungated curve had it while
+       still shortening the visible round trip to ~108px, near the
+       polynomial's 126px that nobody objected to. It also halves the
+       off-screen overrun the 7vw version had at 1200px, from 33px to 15px. */
+    var BOW_HOLD = 0.25;
+
     function bow(u) {
       /* Distance either side of the resting line, 0..1. */
       var d = (u - 0.5) * 2;
       if (d < 0) d = -d;
       if (d > 1) d = 1;
-      return 0.5 - 0.5 * Math.cos(Math.PI * d);
+      /* Parked beside the ship: no lateral motion at all through the middle
+         of the visible run. */
+      if (d <= BOW_HOLD) return 0;
+      /* Re-based onto the travel that is left, so the curve still reaches a
+         full 1 at the extremes rather than being scaled down. */
+      var a = (d - BOW_HOLD) / (1 - BOW_HOLD);
+
+      /* CURVED OUTSIDE, STRAIGHT ON THE FINAL APPROACH.
+
+         Plain smootherstep is S-shaped across the WHOLE span, so its
+         curvature is greatest through the middle of the approach - that
+         mid-span bulge is what reads as the point swinging in on an arc
+         rather than tracking a line, the ")" shape instead of the "\".
+
+         Blending it toward a straight ramp fixes the near half without
+         touching the far one. The weight is a^3, so it vanishes fast as the
+         point nears its resting line: measured on the blend, slope is 1.000
+         and curvature -0.00 at a = 0.02, which is a straight line to the
+         precision the eye can resolve, while the outer portion keeps real
+         bend (curvature 1.31 at a = 0.5, against smootherstep's 1.75).
+
+         The transition cannot kink, and that is a property of the weight
+         rather than a tuning. Both pieces are C-infinity, and a^3 is zero
+         in value, slope AND curvature at a = 0, so the blend leaves the
+         linear end with no discontinuity in any of the three - the curve
+         simply loses its bend on the way in. The endpoints are exactly
+         preserved: 0 at the resting line and 1 at either extreme, so the
+         hold zone, the choreography and the hull anchoring are unchanged. */
+      var w = a * a * a;
+      return w * ease(a) + (1 - w) * a;
     }
 
     /* The tilt, -1..+1, signed: negative below the resting line, positive
@@ -769,7 +984,7 @@
       var d = (u - 0.5) * 2;
       if (d < -1) d = -1;
       if (d > 1) d = 1;
-      /* A HALF-cosine of the signed distance, not a quarter-sine of it.
+      /* The MIRRORED ease of the signed distance, not a quarter-sine of it.
 
          The quarter-sine is flat at the two extremes but at its STEEPEST
          exactly at d = 0 - the resting line. So the one moment the block is
@@ -779,14 +994,29 @@
          - the rotation arriving at zero at full speed rather than easing
          into it.
 
-         sign(d) * (1 - cos(pi*|d|)) / 2 is flat at BOTH extremes AND at
-         zero: the block eases out of its incoming lean, crosses level with
-         almost no angular velocity, and eases into the outgoing one. Peak
-         rate is in the quarter of the travel either side of the middle,
-         where the point is moving anyway and the turn is not read as a
-         separate event. */
+         sign(d) * ease(|d|) is flat at BOTH extremes AND at zero: the block
+         eases out of its incoming lean, crosses level with almost no angular
+         velocity, and eases into the outgoing one. Peak rate is in the
+         quarter of the travel either side of the middle, where the point is
+         moving anyway and the turn is not read as a separate event.
+
+         The mirroring is also why ease() has to be flat in CURVATURE at zero
+         and not merely in slope. This is the one place the shape is reflected
+         through the origin, so whatever curvature it carries into d = 0
+         arrives on the far side with the sign flipped - the rotation reverses
+         its bend in a single frame. The raised cosine that used to be here
+         did exactly that, at +/-19.7, and it is the sharper half of the
+         harsh flattening. Smootherstep crosses at +/-4.5. */
+      /* Held level across the same dead zone the bow uses, and for the same
+         reason: the rotation was sweeping a continuous 3.35deg across the
+         window where the point is fully opaque, so the block was still
+         turning the whole time it was being read. Sharing BOW_HOLD means the
+         lean and the offset start and stop together - the point arrives,
+         squares up, sits, and leans away again as one move rather than two
+         overlapping ones. */
       var a = d < 0 ? -d : d;
-      var e = 0.5 - 0.5 * Math.cos(Math.PI * a);
+      if (a <= BOW_HOLD) return 0;
+      var e = ease((a - BOW_HOLD) / (1 - BOW_HOLD));
       return d < 0 ? -e : e;
     }
 
@@ -955,12 +1185,53 @@
     var ctaOn = false;
     var wasLifting = false;
     var lastPts = [];
+    /* The anchor string each point currently CARRIES, so a re-seed can never
+       leave one half of a pair holding a stale one. The write below is gated
+       on uc changing, and uc is CLAMPED - parked past the end of its slot it
+       pins at 1 and stops changing, while `near` (keyed to the unclamped u)
+       is still live and can still release and re-sample the pair's anchor.
+       That gap is what let a reversed scroll give one half a fresh reading
+       and the other the old one - a 38px break in the mirror. Tracked here,
+       the write fires on a change to EITHER input. */
+    var lastHd = [];
     /* Whether each point currently carries the layer-promotion hint. */
     var ptOn = [];
     /* Whether each point is inside its hover window (cursor-catching, card
        openable), and which way its card is currently set to open. */
     var ptRest = [];
     var ptFlip = [];
+    /* THE FROZEN ANCHOR, one per point, and the reason it is per point
+       rather than one value on the section.
+
+       The hull anchor tracks the ship's measured width, which narrows as
+       the drone climbs. Read LIVE that is a value which keeps changing
+       after the reader stops: the scroll spring settles, but the reel's own
+       ease is still landing on its final frame, so measureHull() keeps
+       reporting a narrower hull and hullPos keeps gliding toward it. Since
+       the distance is always <= 0 and is multiplied by --why-side, a
+       narrowing hull pulls BOTH columns inward - the points slide back
+       toward the centre while standing still, which is exactly the drift
+       this array exists to stop.
+
+       So the anchor is sampled ONCE, on the frame a point enters its slot,
+       and held for as long as that point is on screen. Within a single
+       point's travel the term is then a constant: its lateral position is
+       a pure function of its own bow curve, so where the scroll leaves it
+       is where it stays. -1 means "not yet sampled".
+
+       KEYED BY PAIR, NOT BY POINT, and that is what keeps a pair mirrored.
+       Both halves read the same u (it is derived from pairOf, so the bow
+       and the tilt are already identical across a pair) and sit on the same
+       mirrored layout anchor - so the anchor sample was the one term that
+       could differ between them. Sampled per point it could: the two halves
+       cross the entry edge on the same frame in principle, but hullPos is
+       re-eased every tick and measureHull() runs inside the same loop, so
+       any frame where one half transitioned and the other did not froze two
+       different widths - one point hugging the ship while its partner
+       floated further out. Indexed by pair, the first half to arrive takes
+       the reading and the second reads that same number back, so the
+       magnitude is shared by construction and only --why-side mirrors it. */
+    var ptHull = [];
     /* THE STILL GATE. A card may only open while the reel has actually
        STOPPED - not merely while a point happens to be near its resting
        line. Two things make that strict rather than approximate.
@@ -988,9 +1259,12 @@
       pairOf.push(pn);
       if (pn + 1 > pairCount) pairCount = pn + 1;
       lastPts.push(-1);
+      lastHd.push('');
       ptOn.push(false);
     }
     if (pairCount < 1) pairCount = 1;
+    /* One slot per PAIR, not per point - see the note on ptHull above. */
+    for (var hi = 0; hi < pairCount; hi++) ptHull.push(-1);
 
     /* Reads the scroll position and returns the raw 0..1 through the rail,
        or -1 if the section is not measurable yet. Nothing is drawn here -
@@ -1167,6 +1441,40 @@
             else points[qi].removeAttribute('data-why-on');
           }
 
+          /* THE ANCHOR, RESOLVED FROM PROGRESS - not sampled on an event.
+             This is what makes the lateral path retrace itself.
+
+             It used to freeze hullPos on the `near` edge above. Two things
+             made that direction-dependent, and the reverse-scroll centre
+             pull was the sum of them. hullPos is the EASED follower of the
+             measurement, so what it holds at any instant depends on the
+             path taken to reach it. And `near` is keyed to the unclamped u,
+             so a pair crosses it at u ~ -0.2 descending but u ~ 1.2
+             ascending - opposite ends of its slot, therefore different reel
+             frames, therefore a different hull. Descending, pair 1 froze
+             against a wide hull; ascending it re-entered once the drone had
+             climbed and the ship had narrowed, and both its points sat that
+             much closer to the centreline.
+
+             Keyed to the pair's slot start instead, the anchor is a pure
+             function of progress: tPair inverts the run mapping at the
+             UNWARPED run-position pairOf*step, which is a constant per
+             pair, so the same pair resolves the same frame and the same
+             hull whichever way the reader is travelling. Still one value
+             per pair, so both halves share one magnitude and the mirror
+             holds; still frozen across the pair's own travel, so a stopped
+             scroll cannot move it.
+
+             Resolved every frame rather than cached on first use. The
+             lookup is a bare array hit, and caching it would put back the
+             very thing being removed: hullAt() falls back to the nearest
+             frame that has actually been measured, so a pair resolved
+             before the reel had read much would pin an early, too-wide
+             reading and keep it for the rest of the session. Recomputed, it
+             simply tracks the footage data as it fills in, and once a
+             frame has been read its answer never changes again. */
+          ptHull[pairOf[qi]] = hullAt(frameAt(ps + pairOf[qi] * step * (PTS_END - ps)));
+
           /* THE HOVER WINDOW. Each point carries a card that opens on
              hover, and the stylesheet restores pointer-events for exactly
              as long as data-why-rest is set. That window is deliberately
@@ -1221,13 +1529,43 @@
             else points[qi].removeAttribute('data-why-flip');
           }
 
-          if (uc !== lastPts[qi]) {
+          /* The pair's frozen anchor, resolved before the gate: it is half
+             of what decides whether this point needs a write. */
+          var hd = ptHull[pairOf[qi]];
+          var hdw = (hd < 0 ? 0 : hd - HULL_FALLBACK).toFixed(3);
+
+          if (uc !== lastPts[qi] || hdw !== lastHd[qi]) {
             lastPts[qi] = uc;
             var el = points[qi];
             el.style.setProperty('--why-pt', uc.toFixed(5));
             el.style.setProperty('--why-pt-o', po.toFixed(3));
-            el.style.setProperty('--why-bow', bow(uc).toFixed(5));
+            /* Written twice under two names, and the duplication is load
+               bearing. --why-bow is `inherits: false` so each point keeps
+               its own; --why-bow-i is the inheriting mirror the point's
+               three layers read for the layered approach, because a child
+               reading the non-inheriting original gets its initial 0. Same
+               number, same frame, so the layers can never lag the block
+               they belong to. */
+            var bw = bow(uc).toFixed(5);
+            el.style.setProperty('--why-bow', bw);
+            el.style.setProperty('--why-bow-i', bw);
             el.style.setProperty('--why-tilt', tilt(uc).toFixed(5));
+
+            /* The frozen anchor, written onto the POINT so it shadows the
+               inherited section value the transform used to read. Written
+               inside this block deliberately: it changes only when the
+               point enters its slot, so re-writing the same number every
+               frame would be pure cost - but it has to be re-asserted
+               whenever the point's other driven values are, because a point
+               that re-enters gets a fresh sample and must carry it before
+               its next transform resolves.
+
+               The point is a pure function of uc now: every term in its
+               transform - the rise, the bow, the tilt, this - is keyed to
+               its own travel and nothing else. Stop the scroll and all four
+               stop with it. */
+            lastHd[qi] = hdw;
+            el.style.setProperty('--why-hull-d', hdw);
           }
         }
       }

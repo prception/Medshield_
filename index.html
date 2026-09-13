@@ -159,6 +159,56 @@
      lighter sections beneath. -->
 <header class="site-header" id="site-header">
   <div class="site-header__inner">
+    <!-- Desktop nav: three tabs left, logo centred, two CTAs right.
+         Mirrors white-desert.com. Hidden below 1024px, where the brand +
+         hamburger + overlay menu below take over unchanged. -->
+    <div class="nav-bar">
+      <nav class="nav-bar__col nav-bar__col--left" aria-label="Primary">
+        <span class="lg">
+          <svg class="lg__svg" aria-hidden="true" focusable="false"><defs><filter id="lgL0" x="0%" y="0%" width="100%" height="100%"><feTurbulence type="fractalNoise" baseFrequency="0.008 0.008" numOctaves="2" seed="100" result="noise"></feTurbulence><feGaussianBlur in="noise" stdDeviation="2" result="blurred"></feGaussianBlur><feDisplacementMap in="SourceGraphic" in2="blurred" scale="40" xChannelSelector="R" yChannelSelector="G"></feDisplacementMap></filter></defs></svg>
+          <span class="lg__filter" style="filter:url(#lgL0)"></span>
+          <span class="lg__overlay"></span>
+          <span class="lg__specular"></span>
+          <a class="btn-tab" href="index.html" aria-current="page">Home</a>
+        </span>
+        <span class="lg">
+          <svg class="lg__svg" aria-hidden="true" focusable="false"><defs><filter id="lgL1" x="0%" y="0%" width="100%" height="100%"><feTurbulence type="fractalNoise" baseFrequency="0.008 0.008" numOctaves="2" seed="100" result="noise"></feTurbulence><feGaussianBlur in="noise" stdDeviation="2" result="blurred"></feGaussianBlur><feDisplacementMap in="SourceGraphic" in2="blurred" scale="40" xChannelSelector="R" yChannelSelector="G"></feDisplacementMap></filter></defs></svg>
+          <span class="lg__filter" style="filter:url(#lgL1)"></span>
+          <span class="lg__overlay"></span>
+          <span class="lg__specular"></span>
+          <a class="btn-tab" href="services.html">Services</a>
+        </span>
+        <span class="lg">
+          <svg class="lg__svg" aria-hidden="true" focusable="false"><defs><filter id="lgL2" x="0%" y="0%" width="100%" height="100%"><feTurbulence type="fractalNoise" baseFrequency="0.008 0.008" numOctaves="2" seed="100" result="noise"></feTurbulence><feGaussianBlur in="noise" stdDeviation="2" result="blurred"></feGaussianBlur><feDisplacementMap in="SourceGraphic" in2="blurred" scale="40" xChannelSelector="R" yChannelSelector="G"></feDisplacementMap></filter></defs></svg>
+          <span class="lg__filter" style="filter:url(#lgL2)"></span>
+          <span class="lg__overlay"></span>
+          <span class="lg__specular"></span>
+          <a class="btn-tab" href="about.html">About</a>
+        </span>
+      </nav>
+      <div class="nav-bar__col nav-bar__col--mid">
+        <a class="brand" href="index.html" aria-label="MedShield - home">
+          <img class="brand__mark" src="assets/M2.png" alt="" width="3682" height="930" decoding="async">
+        </a>
+      </div>
+      <div class="nav-bar__col nav-bar__col--right">
+        <span class="lg">
+          <svg class="lg__svg" aria-hidden="true" focusable="false"><defs><filter id="lgR0" x="0%" y="0%" width="100%" height="100%"><feTurbulence type="fractalNoise" baseFrequency="0.008 0.008" numOctaves="2" seed="100" result="noise"></feTurbulence><feGaussianBlur in="noise" stdDeviation="2" result="blurred"></feGaussianBlur><feDisplacementMap in="SourceGraphic" in2="blurred" scale="40" xChannelSelector="R" yChannelSelector="G"></feDisplacementMap></filter></defs></svg>
+          <span class="lg__filter" style="filter:url(#lgR0)"></span>
+          <span class="lg__overlay"></span>
+          <span class="lg__specular"></span>
+          <a class="btn-cta" href="case-studies.html">Case Studies</a>
+        </span>
+        <span class="lg">
+          <svg class="lg__svg" aria-hidden="true" focusable="false"><defs><filter id="lgR1" x="0%" y="0%" width="100%" height="100%"><feTurbulence type="fractalNoise" baseFrequency="0.008 0.008" numOctaves="2" seed="100" result="noise"></feTurbulence><feGaussianBlur in="noise" stdDeviation="2" result="blurred"></feGaussianBlur><feDisplacementMap in="SourceGraphic" in2="blurred" scale="40" xChannelSelector="R" yChannelSelector="G"></feDisplacementMap></filter></defs></svg>
+          <span class="lg__filter" style="filter:url(#lgR1)"></span>
+          <span class="lg__overlay"></span>
+          <span class="lg__specular"></span>
+          <a class="btn-cta" href="contact.html">Contact</a>
+        </span>
+      </div>
+    </div>
+
     <a class="brand" href="#top" aria-label="MedShield - home">
       <!-- The logo, shown at its own pixel colours in every header state.
            No filter, no variant swap: this file IS the brand, wordmark
@@ -189,7 +239,7 @@
      so nothing became unreachable when the desktop nav was removed.
      [hidden] until opened: keeps it out of the tab order and the a11y tree
      entirely rather than relying on transform alone to hide it. -->
-<nav class="site-menu" id="site-nav" aria-label="Primary" hidden>
+<nav class="site-menu" id="site-nav" aria-label="All pages" hidden>
   <div class="site-menu__inner">
     <ul class="site-menu__list">
       <!-- Nav now maps to PAGES, not in-page anchors: About, Services, Case
@@ -1770,32 +1820,75 @@
         <p class="presence__eyebrow" data-reveal>Presence &amp; network</p>
         <h2 class="section-title presence__title" id="presence-h" data-reveal
             style="--reveal-delay:.06s">
-          On the ground where your crew lands.
+          On the ground where your crew lands<span class="presence__titleDot">.</span>
         </h2>
-        <p class="presence__note" data-reveal style="--reveal-delay:.12s">
-          A case moves only as fast as the nearest accredited bed. We hold
-          direct points of presence in the port and recruitment cities crew
-          actually move through - so admission, rates and reporting are
+        <!-- The lede is split in two: a short bold claim that carries the
+             section, then the muted explanation under it. One paragraph at a
+             single weight made the claim disappear into the body copy. -->
+        <p class="presence__lede" data-reveal style="--reveal-delay:.12s">
+          A case moves only as fast as the nearest accredited bed.
+        </p>
+        <p class="presence__note" data-reveal style="--reveal-delay:.16s">
+          We hold direct points of presence in the port and recruitment cities
+          crew actually move through - so admission, rates and reporting are
           settled locally, not negotiated from a desk several time zones away.
         </p>
 
-        <dl class="presence__stats" data-reveal style="--reveal-delay:.18s">
+        <!-- The figures. Each carries a line icon under its number so the
+             four read as a rail of measures rather than a block of digits;
+             the icons are inline SVG (no sprite, no icon font) and are
+             aria-hidden because the label below each one already says what
+             the figure counts. -->
+        <dl class="presence__stats" data-reveal style="--reveal-delay:.2s">
           <div class="presence__stat">
             <dt class="presence__statFigure">17<span class="presence__statPlus">+</span></dt>
-            <dd class="presence__statLabel">Cities with direct point-of-presence</dd>
+            <dd class="presence__statLabel">
+              <svg class="presence__statIcon" viewBox="0 0 24 24" fill="none"
+                   stroke="currentColor" stroke-width="1.6" stroke-linecap="round"
+                   stroke-linejoin="round" aria-hidden="true" focusable="false">
+                <path d="M12 21s7-6.1 7-11a7 7 0 1 0-14 0c0 4.9 7 11 7 11Z"/>
+                <circle cx="12" cy="10" r="2.5"/>
+              </svg>
+              <span>Cities with direct point-of-presence</span>
+            </dd>
           </div>
           <div class="presence__stat">
             <dt class="presence__statFigure">45<span class="presence__statPlus">+</span></dt>
-            <dd class="presence__statLabel">Locations across India</dd>
+            <dd class="presence__statLabel">
+              <svg class="presence__statIcon" viewBox="0 0 24 24" fill="none"
+                   stroke="currentColor" stroke-width="1.6" stroke-linecap="round"
+                   stroke-linejoin="round" aria-hidden="true" focusable="false">
+                <circle cx="9" cy="7" r="2.6"/>
+                <path d="M4 19v-1.2A4 4 0 0 1 8 14h2a4 4 0 0 1 4 3.8V19"/>
+                <circle cx="17.5" cy="9.5" r="2"/>
+                <path d="M15 19v-.8a3.2 3.2 0 0 1 3.2-3.2H19"/>
+              </svg>
+              <span>Locations across India</span>
+            </dd>
           </div>
           <div class="presence__stat">
             <dt class="presence__statFigure">1,800<span class="presence__statPlus">+</span></dt>
-            <dd class="presence__statLabel">Hospitals, clinics, labs &amp; pharmacies</dd>
+            <dd class="presence__statLabel">
+              <svg class="presence__statIcon" viewBox="0 0 24 24" fill="none"
+                   stroke="currentColor" stroke-width="1.6" stroke-linecap="round"
+                   stroke-linejoin="round" aria-hidden="true" focusable="false">
+                <path d="M4 21V8.5L12 4l8 4.5V21"/>
+                <path d="M12 10.5v4M10 12.5h4"/>
+                <path d="M9.5 21v-3.5h5V21"/>
+              </svg>
+              <span>Hospitals, clinics, labs &amp; pharmacies</span>
+            </dd>
           </div>
           <div class="presence__stat">
             <dt class="presence__statFigure">10</dt>
             <dd class="presence__statLabel">
-              PEME centres <span class="presence__statFlag">planned</span>
+              <svg class="presence__statIcon" viewBox="0 0 24 24" fill="none"
+                   stroke="currentColor" stroke-width="1.6" stroke-linecap="round"
+                   stroke-linejoin="round" aria-hidden="true" focusable="false">
+                <circle cx="12" cy="12" r="3"/>
+                <path d="M12 3.5v2.2M12 18.3v2.2M20.5 12h-2.2M5.7 12H3.5M18 6l-1.6 1.6M7.6 16.4 6 18M18 18l-1.6-1.6M7.6 7.6 6 6"/>
+              </svg>
+              <span>PEME centres <span class="presence__statFlag">planned</span></span>
             </dd>
           </div>
         </dl>
@@ -1803,7 +1896,7 @@
         <!-- The international line. Kept as prose under the figures rather
              than as three more pins, because the map is of India and these
              three are not on it. -->
-        <p class="presence__offices" data-reveal style="--reveal-delay:.24s">
+        <p class="presence__offices" data-reveal style="--reveal-delay:.26s">
           <span class="presence__officesLabel">Offices</span>
           India <span class="presence__officesDot" aria-hidden="true">&middot;</span>
           Singapore <span class="presence__officesDot" aria-hidden="true">&middot;</span>
@@ -1844,71 +1937,102 @@
                list when the client supplies the real cities. data-hq marks
                the headquarters, the one entry here that IS sourced. -->
           <ul class="presence__list" aria-label="MedShield points of presence in India">
-            <li class="presence__pin" data-x="45.8" data-y="73.5" data-hq>
+            <li class="presence__pin" tabindex="0" data-role="Headquarters" data-kind="Major port &middot; Recruitment hub" data-services="Case management, PEME, claims" data-x="45.8" data-y="73.5" data-hq>
               <span class="presence__pinDot" aria-hidden="true"></span>
-              <span class="presence__pinName">Chennai<span class="presence__pinTag"> - HQ</span></span>
+              <span class="presence__pinName">Chennai</span>
+              <span class="presence__pinTag">HQ</span>
             </li>
-            <li class="presence__pin" data-x="29.5" data-y="59.0" data-side="w">
+            <li class="presence__pin" tabindex="0" data-role="Point of presence" data-kind="Major port &middot; Recruitment hub" data-services="Case management, PEME, claims" data-x="29.5" data-y="59.0" data-side="w">
               <span class="presence__pinDot" aria-hidden="true"></span>
               <span class="presence__pinName">Mumbai</span>
             </li>
-            <li class="presence__pin" data-x="36.5" data-y="27.0">
+            <li class="presence__pin" tabindex="0" data-role="Point of presence" data-kind="Recruitment hub" data-services="Case management, claims" data-x="36.5" data-y="27.0">
               <span class="presence__pinDot" aria-hidden="true"></span>
               <span class="presence__pinName">New Delhi</span>
             </li>
-            <li class="presence__pin" data-x="36.0" data-y="86.0" data-side="w">
+            <li class="presence__pin" tabindex="0" data-role="Point of presence" data-kind="Major port &middot; Recruitment hub" data-services="Case management, PEME, claims" data-x="36.0" data-y="86.0" data-side="w">
               <span class="presence__pinDot" aria-hidden="true"></span>
               <span class="presence__pinName">Kochi</span>
             </li>
-            <li class="presence__pin" data-x="51.0" data-y="62.0">
+            <li class="presence__pin" tabindex="0" data-role="Point of presence" data-kind="Major port" data-services="Case management, PEME" data-x="51.0" data-y="62.0">
               <span class="presence__pinDot" aria-hidden="true"></span>
               <span class="presence__pinName">Visakhapatnam</span>
             </li>
-            <li class="presence__pin" data-x="61.5" data-y="52.5" data-side="w">
+            <li class="presence__pin" tabindex="0" data-role="Point of presence" data-kind="Major port &middot; Recruitment hub" data-services="Case management, PEME, claims" data-x="61.5" data-y="52.5" data-side="w">
               <span class="presence__pinDot" aria-hidden="true"></span>
               <span class="presence__pinName">Kolkata</span>
             </li>
-            <li class="presence__pin" data-x="24.0" data-y="46.5" data-side="n">
+            <li class="presence__pin" tabindex="0" data-role="Point of presence" data-kind="Major port" data-services="Case management" data-x="24.0" data-y="46.5" data-side="n">
               <span class="presence__pinDot" aria-hidden="true"></span>
               <span class="presence__pinName">Kandla</span>
             </li>
-            <li class="presence__pin" data-x="41.0" data-y="88.5">
+            <li class="presence__pin" tabindex="0" data-role="Point of presence" data-kind="Major port" data-services="Case management" data-x="41.0" data-y="88.5">
               <span class="presence__pinDot" aria-hidden="true"></span>
               <span class="presence__pinName">Thoothukudi</span>
             </li>
-            <li class="presence__pin" data-x="31.5" data-y="68.5" data-side="w">
+            <li class="presence__pin" tabindex="0" data-role="Point of presence" data-kind="Port &middot; Recruitment hub" data-services="Case management, PEME" data-x="31.5" data-y="68.5" data-side="w">
               <span class="presence__pinDot" aria-hidden="true"></span>
               <span class="presence__pinName">Goa</span>
             </li>
-            <li class="presence__pin" data-x="33.5" data-y="75.0" data-side="w">
+            <li class="presence__pin" tabindex="0" data-role="Point of presence" data-kind="Major port" data-services="Case management" data-x="33.5" data-y="75.0" data-side="w">
               <span class="presence__pinDot" aria-hidden="true"></span>
               <span class="presence__pinName">Mangaluru</span>
             </li>
-            <li class="presence__pin" data-x="42.5" data-y="64.5">
+            <li class="presence__pin" tabindex="0" data-role="Point of presence" data-kind="Recruitment hub" data-services="Case management, claims" data-x="42.5" data-y="64.5">
               <span class="presence__pinDot" aria-hidden="true"></span>
               <span class="presence__pinName">Hyderabad</span>
             </li>
-            <li class="presence__pin" data-x="40.5" data-y="76.5">
+            <li class="presence__pin" tabindex="0" data-role="Point of presence" data-kind="Recruitment hub" data-services="Case management, claims" data-x="40.5" data-y="76.5">
               <span class="presence__pinDot" aria-hidden="true"></span>
               <span class="presence__pinName">Bengaluru</span>
             </li>
-            <li class="presence__pin" data-x="31.8" data-y="61.0" data-side="s">
+            <li class="presence__pin" tabindex="0" data-role="Point of presence" data-kind="Recruitment hub" data-services="Case management" data-x="31.8" data-y="61.0" data-side="s">
               <span class="presence__pinDot" aria-hidden="true"></span>
               <span class="presence__pinName">Pune</span>
             </li>
-            <li class="presence__pin" data-x="27.5" data-y="47.0">
+            <li class="presence__pin" tabindex="0" data-role="Point of presence" data-kind="Recruitment hub" data-services="Case management, claims" data-x="27.5" data-y="47.0">
               <span class="presence__pinDot" aria-hidden="true"></span>
               <span class="presence__pinName">Ahmedabad</span>
             </li>
-            <li class="presence__pin" data-x="55.0" data-y="57.5">
+            <li class="presence__pin" tabindex="0" data-role="Point of presence" data-kind="Recruitment hub" data-services="Case management" data-x="55.0" data-y="57.5">
               <span class="presence__pinDot" aria-hidden="true"></span>
               <span class="presence__pinName">Bhubaneswar</span>
             </li>
-            <li class="presence__pin" data-x="38.5" data-y="81.5" data-side="w">
+            <li class="presence__pin" tabindex="0" data-role="Point of presence" data-kind="Recruitment hub" data-services="Case management" data-x="38.5" data-y="81.5" data-side="w">
               <span class="presence__pinDot" aria-hidden="true"></span>
               <span class="presence__pinName">Coimbatore</span>
             </li>
           </ul>
+
+          <!-- THE HOVER CARD. ONE element, moved and refilled per pin, rather
+               than sixteen cards sitting in the DOM: sixteen would be sixteen
+               absolutely-positioned boxes the browser must lay out on every
+               resize, and every one of them would be read out by a screen
+               reader as it walked the list.
+
+               It is aria-hidden and inert to assistive tech on purpose. The
+               card shows nothing that is not already on the pin it belongs to
+               plus the standing capability line - a screen reader user gets
+               the city from the pin's own label and the capability from the
+               section prose, so announcing a tooltip on top of that is noise.
+
+               Positioned by presence-card.js from the pin's coordinates. With
+               no JS it never appears and the map behaves exactly as it did
+               before - the section's no-JS contract is unchanged. -->
+          <div class="presence__card" id="presence-card" aria-hidden="true" hidden>
+            <p class="presence__cardCity"></p>
+            <p class="presence__cardRole"></p>
+            <dl class="presence__cardRows">
+              <div class="presence__cardRow">
+                <dt>Why here</dt>
+                <dd class="presence__cardKind"></dd>
+              </div>
+              <div class="presence__cardRow">
+                <dt>On the ground</dt>
+                <dd class="presence__cardServices"></dd>
+              </div>
+            </dl>
+          </div>
         </div>
 
         <!-- The honest caption. The figure above the map says 17+; the map
@@ -2610,6 +2734,10 @@
      owns only its own two strips, is driven by rAF rather than ScrollTrigger,
      and takes part in no pin or hand-off — so its position in this list does
      not matter. -->
+<!-- Section 10's map card. Independent of every other script here: it owns
+     one element inside .presence__map and touches nothing else, so its order
+     in this list does not matter. defer, like the rest. -->
+<script src="js/presence-card.js" defer></script>
 <script src="js/partners-marquee.js" defer></script>
 <script src="js/process-to-cases.js" defer></script>
 <!-- The lift out of Case studies and into the reel. Loads LAST, after
