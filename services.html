@@ -1042,6 +1042,13 @@
      visible) if either failed to load. -->
 <script src="js/vendor/gsap.min.js" defer></script>
 <script src="js/vendor/ScrollTrigger.min.js" defer></script>
+<!-- Puts ScrollTrigger on the same frame clock as the scroll engine. This page
+     runs smooth-scroll.js AND ScrollTrigger, so without it the scrubbed hero
+     samples a scroll position written by a different rAF callback - a frame
+     stale on some frames and current on others, which reads as jitter. MUST
+     load after ScrollTrigger.min.js and before services-hero.js. No-ops on
+     touch and under reduced motion, where the page scrolls natively. -->
+<script src="js/scroll-sync.js" defer></script>
 <script src="js/services-hero.js" defer></script>
 
 <!-- Floating controls, bottom-right. The WhatsApp pill sits directly above the

@@ -350,21 +350,81 @@
            The usual objection to a transform pin is a scroll-smoothing
            library that writes its own transforms; this page has none. hero.js
            drives real window.scrollTo, which a transform pin is indifferent
-           to - it is the ELEMENT that is transformed, not the scroller. */
+           to - it is the ELEMENT that is transformed, not the scroller.
+
+           ---------------------------------------------------------------
+           DO NOT CHANGE THIS TO 'fixed'. IT HAS NOW BEEN TRIED TWICE.
+
+           The argument for flipping it is superficially strong and it is
+           wrong. It goes: every other pin on the page is 'fixed'; doubts.js
+           even says at its own pinType that "a transform pin would fight that
+           engine's per-frame writes"; and the note above claims the page has
+           no transform-writing scroll library, which is stale, because the
+           engine was only moved out of hero.js into smooth-scroll.js.
+
+           All of that is true and none of it applies, because it addresses
+           the wrong half of the setup. What forces 'transform' here is not
+           what writes the scroll - it is WHAT THIS PARTICULAR ELEMENT SITS
+           INSIDE. .w2p carries margin-bottom of -(vh + push), about -1710px
+           at 1440x900, and that negative margin is live geometry at the
+           moment this trigger fires. A fixed pin SNAPSHOTS the stage's
+           viewport offset at engage time and freezes it, so it captures the
+           lift and parks the stage off the top of the fold - and the reader
+           reaches the section to find it blank, flickering in and out as the
+           progress value crosses back over its own thresholds. That is the
+           top:-810.078px fault above, observed again.
+
+           THE NUMERIC START DOES NOT RETIRE THIS. That was the reasoning the
+           second attempt rested on, and the distinction it missed is worth
+           stating plainly: the numeric start fixed WHEN the pin fires. It did
+           nothing about WHERE the stage sits when it does, which is still
+           inside the lift. The two are independent, and only the second one
+           is what pinType has to survive.
+
+           tech-deck is legitimately the odd one out on this page because its
+           pinned element is the only one in lifted rather than ordinary flow.
+           If the shiver this was meant to cure comes back, the suspect is
+           js/scroll-sync.js forcing ScrollTrigger.update() from inside the
+           scroll engine's own rAF - which recomputes a transform pin's
+           cancelling translate against a just-written position, one frame
+           out of step with paint. Test by removing that file from index.html,
+           not by touching this line. */
         pinType: 'transform',
         anticipatePin: 1,
-        /* A LITTLE MORE SOFTNESS, NOT LAG. The page runs its own wheel
-           smoothing (hero.js), so the position ScrollTrigger reads is already
-           eased; GSAP's scrub adds a second, shorter curve on top. 0.5 tracked
-           the scroll almost rigidly and the card movement read as mechanical -
-           it started and stopped exactly with the wheel. 0.65 rounds the ends
-           of each movement without the deck visibly trailing the scrollbar.
+        /* DIRECT, NOT A NUMBER - the same answer as every other scrubbed
+           section on this page, and for the same reason.
 
-           Deliberately small. A large scrub here is the "card catches up
-           several moments later" failure: the scroll must stay the source of
-           truth, and every state must still be reachable by holding still at
-           a scroll position. */
-        scrub: 0.65,
+           This was 0.65, reached by tuning against the symptom: 0.5 read as
+           "mechanical", so the number went up. That was treating a lag as if
+           it were an easing, and it is not. `scrub: n` is a SMOOTHING LAG -
+           the timeline chases the scroll position over n seconds. It buys
+           softness only when the position being chased is raw.
+
+           IT IS NOT RAW HERE. smooth-scroll.js cancels the browser's wheel
+           scrolling outright and eases its own position toward the wheel on a
+           Lenis curve (1 - exp(-dt / (DURATION / LENIS_LN)), DURATION 1.25),
+           writing it with window.scrollTo. So the position ScrollTrigger
+           samples has ALREADY been through one exponential curve, and a
+           numeric scrub puts a second one in series with it.
+
+           Two exponential curves stacked is exactly the feel being reported:
+           the deck does not track the wheel, it drifts after it and then
+           catches up when the scroll stops. The ends of each card's travel
+           are the worst of it, because that is where both curves are at their
+           flattest and the residual is largest.
+
+           scrub:true removes GSAP's curve entirely and makes the timeline a
+           pure function of scroll position. The softness does not go away -
+           it comes from the page's own smoothing, which is the single place
+           this page eases scroll and the reason why-to-people.js,
+           cases-to-why.js and process-to-cases.js all pass `true` with this
+           same note. The deck was the one section that did not, and it is the
+           one section that reads as unsmooth.
+
+           It also restores the property the numeric scrub quietly broke:
+           every state is reachable by HOLDING STILL at a scroll position,
+           because position now maps to progress with nothing in between. */
+        scrub: true,
         invalidateOnRefresh: true
       }
     });

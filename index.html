@@ -466,12 +466,19 @@
             <a class="hero__cta-alt" href="services.html#process">See how a case runs <span aria-hidden="true">&rarr;</span></a>
           </div>
           <div class="hero__cta-state" data-state="1" aria-hidden="true" inert>
-            <a class="btn btn--primary btn--onDeep hero__cta" href="services.html">Explore crew care</a>
+            <a class="btn btn--primary btn--onDeep hero__cta" href="services.html#claims">Explore crew care</a>
             <a class="hero__cta-alt" href="services.html#process">See how crew care works <span aria-hidden="true">&rarr;</span></a>
           </div>
+          <!-- State 2 points at #tech on THIS page, not at services.html.
+               services.html carries no AI content of any kind, so both of
+               these used to promise "AI Fathom" and then land the reader on
+               a page about case management. #tech is the section that
+               actually shows the AI, OCR and encryption work, and it is
+               named AI Fathom there so the headline above and the
+               destination agree. -->
           <div class="hero__cta-state" data-state="2" aria-hidden="true" inert>
-            <a class="btn btn--primary btn--onDeep hero__cta" href="services.html">Explore AI Fathom</a>
-            <a class="hero__cta-alt" href="services.html">See the AI in action <span aria-hidden="true">&rarr;</span></a>
+            <a class="btn btn--primary btn--onDeep hero__cta" href="#tech">Explore AI Fathom</a>
+            <a class="hero__cta-alt" href="#tech">See the AI in action <span aria-hidden="true">&rarr;</span></a>
           </div>
         </div>
 
@@ -1740,7 +1747,7 @@
            makes the hand-off read as "what was behind it all along" rather
            than as a second animation starting. -->
       <header class="tech__head">
-        <p class="tech__eyebrow">Technology</p>
+        <p class="tech__eyebrow">AI Fathom</p>
         <h2 class="section-title tech__title" id="tech-h">
           The case runs on<br>our <span class="tech__titleAccent">own technology</span>
         </h2>
@@ -3023,6 +3030,13 @@
      plain scripts, so `defer` keeps them in order ahead of the section files,
      each of which guards on window.gsap and bails out cleanly. -->
 <script src="js/vendor/ScrollTrigger.min.js" defer></script>
+<!-- Puts ScrollTrigger on the same frame clock as the scroll engine. MUST
+     load after ScrollTrigger.min.js (it needs both halves present) and BEFORE
+     every section script below, so each trigger is built under the synced
+     clock rather than being adopted by it a frame later. No-ops on touch and
+     under reduced motion, where the page scrolls natively and ScrollTrigger's
+     own timing is already correct. -->
+<script src="js/scroll-sync.js" defer></script>
 <script src="js/doubts.js" defer></script>
 <script src="js/services.js" defer></script>
 <script src="js/why-scrub.js" defer></script>
