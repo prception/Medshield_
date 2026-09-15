@@ -2204,7 +2204,18 @@ html.hero-ready .hero__foot    { transition-delay: 1.15s; }
     gap: var(--s-3);
   }
   .hero__label, .hero__note { max-width: 100%; }
-  .hero__note { font-size: 1rem; }
+  /* Both halves, not just the note. The annotations are a PAIR — see the
+     notes on .hero__label / .hero__note — and once they stop being a
+     left/right pair and stack, any size difference between them is directly
+     visible as one block of small caps sitting above a larger one. Bumping
+     only .hero__note here left the label at --t-eyebrow (13px) against the
+     note's 16px, which is exactly the mismatch the stacked layout exposes.
+
+     Sized DOWN, not up: these stay corner annotations on mobile rather than
+     growing into a subtitle above the headline. 0.75rem is a step below the
+     desktop eyebrow, which keeps each line's break intact at 390px while
+     leaving the H1 unambiguously dominant. */
+  .hero__label, .hero__note { font-size: 0.75rem; }
 
   .hero__display {
     /* 11.6vw, not the reference's 16vw: MedShield's headline is 31 characters
@@ -2262,7 +2273,10 @@ html.hero-ready .hero__foot    { transition-delay: 1.15s; }
   /* Height is scarce here, so the drop below the navbar is given back. */
   .hero__annotations { transform: translateY(var(--s-2)); }
   .hero__display { font-size: 7.4vw; }
-  .hero__note { font-size: 0.95rem; }
+  /* Paired and sized down, for the same reasons as the 700px rule above.
+     Height is the scarce dimension here, so the smaller annotations also buy
+     back vertical room the headline can use. */
+  .hero__label, .hero__note { font-size: 0.75rem; }
 }
 
 /* Very shallow viewports — landscape phones.
@@ -10033,20 +10047,73 @@ main {
        No --why-hull-d term: the columns have collapsed to a centred stack
        spanning 5%..95%, so the block is not anchored to the hull edge any
        more and has nothing to track as the ship narrows. */
+       THE STAGGER IS MEASURED, NOT PICKED. The two halves of a pair are
+       pushed apart by this term and nothing else keeps them off each other,
+       so it has to clear the TALLER of the two blocks. At 390px a point runs
+       icon + two title lines + three body lines ~ 11rem, so the old 6.4rem
+       split them by 12.8rem and left barely a rem between a long title and
+       the body above it - which is the run-together in the reported frame.
+
+       Below it is a clamp, not a constant, for the same reason: the gap has
+       to grow with the block, and the block grows with the type, which is
+       itself viewport-scaled. 7.5vh tracks the frame; the 7.2rem floor holds
+       a short frame open and the 9.4rem ceiling stops a tablet from throwing
+       the pair apart to opposite edges, where it stops reading as a pair. */
     transform:
       translate3d(calc(var(--why-bow, 0) * var(--why-side) * 2.4vw),
                   calc((0.5 - var(--why-pt, 0)) * 125svh
-                       + var(--why-side) * 6.4rem),
+                       + var(--why-side) * clamp(7.2rem, 7.5vh, 9.4rem)),
                   0);
   }
   .why-pt[data-why-side="left"],
   .why-pt[data-why-side="right"],
   .why-pt[data-why-side="centre"] {
-    left: 5%;
-    right: 5%;
-    width: auto;
-    margin-left: 0;
+    /* 5%..95% was the whole frame, and a centred paragraph run that wide
+       wraps long and ragged - which is the other half of why the blocks got
+       tall enough to collide. Pulling the column in and capping it at a
+       readable measure costs nothing here (there is no hull to sit beside
+       any more) and takes a line off most of the bodies. */
+    left: 50%;
+    right: auto;
+    width: min(90%, 30rem);
+    /* The negative HALF of the width expression, not its own min(): on
+       negative values min() takes the more negative branch, so a separate
+       min(-45%, -15rem) keeps travelling past -15rem after the width has
+       already clamped at 30rem, and the block slides off centre on a wide
+       tablet. Derived from the width, the two cannot come apart. */
+    margin-left: calc(min(90%, 30rem) / -2);
     text-align: center;
+  }
+  /* Centred, so the measure must be centred too - the desktop rule hangs it
+     off whichever edge the point is aligned to, and those edges are gone. */
+  .why-pt[data-why-side="left"]  .why-pt__body,
+  .why-pt[data-why-side="right"] .why-pt__body,
+  .why-pt[data-why-side="centre"] .why-pt__body {
+    max-width: 30ch;
+    margin-inline: auto;
+  }
+  .why-pt[data-why-side="left"]  .why-pt__icon,
+  .why-pt[data-why-side="right"] .why-pt__icon,
+  .why-pt[data-why-side="centre"] .why-pt__icon {
+    margin-inline: auto;
+  }
+  /* The gap under the title is desktop-sized (up to 1.6rem) and on a phone
+     it is most of a line of the height the pair is fighting over. The title
+     itself also drops a step: at the shared clamp it was setting two full
+     lines on nearly every point. */
+  .why-pt__title {
+    margin-bottom: clamp(0.6rem, 1.4vh, 0.9rem);
+    font-size: clamp(1.02rem, 2.6vw + 0.5rem, 1.22rem);
+    line-height: 1.18;
+  }
+  .why-pt__body {
+    font-size: clamp(0.82rem, 1.9vw + 0.42rem, 0.92rem);
+    line-height: 1.5;
+  }
+  .why-pt__icon {
+    width: 1.35rem;
+    height: 1.35rem;
+    margin-bottom: clamp(0.25rem, 0.7vh, 0.45rem);
   }
   /* The layered approach is switched OFF here, and the reason is the text
      alignment rather than the width. The layers are centred now, so a
@@ -10085,6 +10152,55 @@ main {
   .why[data-why-still] .why-pt[data-why-rest][data-why-flip]:hover .why-pt__more,
   .why[data-why-still] .why-pt[data-why-rest][data-why-flip]:focus-within .why-pt__more {
     transform: translate(-50%, 0);
+  }
+
+  /* The opening slab is four hard-coded lines at 0.94 leading, and its
+     bottom clamp stop was tuned for the room a desktop frame has. On a
+     phone it runs nearly half the stage and the first pair climbs into the
+     space it is still occupying. A step down and a slightly looser leading
+     - caps this small need the extra air to stay legible over moving water
+     - buy that band back without touching the hard breaks in the markup. */
+  .why-scrub__display {
+    font-size: clamp(1.45rem, 6.4vw + 0.2rem, 2.3rem);
+    line-height: 1.0;
+  }
+  .why-scrub__copy {
+    width: min(100%, 25rem);
+  }
+}
+
+/* --- small phones --------------------------------------------------------
+   Below this the frame is short as well as narrow (a 390x667-class handset,
+   and any phone held in landscape, where svh collapses hardest). The pair
+   is the thing at risk: its two halves are pushed apart by a vh-scaled
+   stagger, and on a short frame that term shrinks at exactly the moment the
+   blocks are least able to give up height. So the stagger goes to a flat
+   rem floor here and the type takes one more step down to earn it. */
+@media (max-width: 520px) {
+  .why-pt {
+    transform:
+      translate3d(calc(var(--why-bow, 0) * var(--why-side) * 2.4vw),
+                  calc((0.5 - var(--why-pt, 0)) * 125svh
+                       + var(--why-side) * 7rem),
+                  0);
+  }
+  .why-pt[data-why-side="left"],
+  .why-pt[data-why-side="right"],
+  .why-pt[data-why-side="centre"] {
+    width: 90%;
+    margin-left: -45%;
+  }
+  .why-pt__title {
+    font-size: clamp(0.98rem, 3.4vw + 0.28rem, 1.12rem);
+  }
+  /* Three lines of title plus three of body cannot both fit and clear the
+     partner block. The body is the half that can give - the title is the
+     claim, the body is the gloss on it - so it caps here and the rest of
+     the evidence stays available in the tap-to-open card. */
+  .why-pt__body {
+    font-size: 0.82rem;
+    line-height: 1.48;
+    max-width: 28ch;
   }
 }
 
@@ -11667,21 +11783,22 @@ main {
   margin-bottom: var(--s-7);
 }
 
-/* The pill. A label this short reads as a stray line without an enclosure,
-   and the enclosure is what makes it a section marker rather than a caption.
-   Inline-block so the tint wraps the text and not the centred line box. */
+/* Set as a heading rather than a pill, matching the .acc__h treatment the
+   service rows use ("Tiered hospital empanelment"): display face, uppercase,
+   and the same clip mask so the per-word scroll reveal has something to
+   animate against. Block, not inline-block — there is no enclosure left to
+   shrink-wrap, and .partners__head centres the line box. */
 .partners__eyebrow {
-  display: inline-block;
-  margin-bottom: var(--s-4);
-  padding: var(--s-2) var(--s-4);
-  border-radius: 999px;
-  background: var(--surface-raised);
-  border: 1px solid var(--border);
-  font-size: var(--t-micro);
-  font-weight: 700;
-  letter-spacing: 0.16em;
+  display: block;
+  margin: 0 0 var(--s-4);
+  font-family: var(--font-display);
+  font-size: clamp(1.25rem, 1rem + 0.9vw, 2rem);
+  font-weight: 600;
+  line-height: 1.17;
   text-transform: uppercase;
-  color: var(--accent-2-ink);
+  color: var(--text-primary);
+  overflow: clip;                 /* the word mask */
+  padding-block: 0.04em 0.08em;
 }
 
 /* max-width in ch on the element itself, then re-centred: .section-title caps
@@ -13604,6 +13721,19 @@ html.pl-lock body {
      shorter here and the card's content is a full column, so the card takes
      essentially all of the area and the stack steps inside it. */
   .tech-deck-on .tech__card { --slot: clamp(5rem, 4.6rem + 1.2vh, 6rem); }
+
+  /* ONE HEIGHT FOR ALL FOUR, for the reason set out at the phone breakpoint:
+     a buried card is hidden ONLY by the card laid over it, so a card shorter
+     than the one it covers leaves the difference painting in the open. The
+     body has folded to a column at this width and card 01 carries the phone
+     band on top of that - measured 472px at 768x1024 against 251/279/223 -
+     so card 02 fell ~200px short of covering it.
+
+     Tablet portrait needs no masthead trim to afford this: the card area is
+     756px and 472 + 3 x 86 = 730, which fits with room to spare. The floor
+     is what the tallest card already resolves to, so nothing is forced past
+     its own content; the three short cards simply stop being short. */
+  .tech-deck-on .tech__card { min-height: 30rem; }
 }
 
 @media (max-width: 560px) {
@@ -13632,6 +13762,33 @@ html.pl-lock body {
     padding-block: clamp(0.875rem, 0.7rem + 0.8vw, 1.25rem);
   }
 
+  /* THE MASTHEAD PAYS FOR THE UNIFORM CARD HEIGHT.
+
+     Making every card as tall as card 01 (see the min-height below) needs
+     tallest + 3 x slot to fit the card area, and at 390x844 that was 679px
+     against 613px - 67px short. The stage is `grid-template-rows: auto
+     minmax(0, 1fr)`, so the header row is content-sized and every px taken
+     out of it goes straight to the card row underneath. That is where the
+     67px comes from: the header is the one part of this fold that is spent
+     on air rather than on the thing the section exists to show.
+
+     Measured at 390x844 the header was 158px + 24px margin: eyebrow 19 with
+     a 16px gap, title 59 over two lines with a 12px gap, lede 52 over two.
+     The cuts are to the GAPS and the leading, not to the type sizes - the
+     headline stays the same size, it just sits closer to what surrounds it. */
+  .tech__head {
+    /* The single biggest lever, and the one the base rule already names as
+       such. Halved: the header still reads as its own editorial block above
+       the cards, but it stops holding them down the fold. */
+    margin-bottom: 0.75rem;
+  }
+  /* The eyebrow is a 12px label; a 16px gap under it is more than the label
+     itself is tall. */
+  .tech__eyebrow { margin-bottom: 0.5rem; }
+  /* Two lines of display type at 27px - the leading can come in without the
+     lines touching, and it buys ~6px across the pair. */
+  .tech__title { line-height: 1.02; margin-bottom: 0.5rem; }
+
   /* THE TITLE COMES DOWN ON A PHONE. The editorial scale is set for a
      full-width desktop row; in a ~340px column its floor (32px) broke every
      title to two lines and "Records & transaction dashboard" to three, which
@@ -13656,7 +13813,44 @@ html.pl-lock body {
        ran by 43px at 390x844). The stack still steps, because the slot is
        absolute and the area is tall enough for four steps plus the tallest
        card. */
-    min-height: 0;
+    /* EVERY CARD AS TALL AS THE TALLEST, BECAUSE COVERING IS THE ONLY
+       MECHANISM LEFT. Nothing clips a buried card any more (see the buried
+       rule above) and the surfaces are opaque, so the ONLY thing that hides
+       a covered card is the card physically laid over it. That silently
+       assumes each card is at least as tall as the one landing on it.
+
+       On a phone that assumption is false. Card 01 is a full column - body,
+       five tags, paragraph AND the phone band - measured 491px at 390x844,
+       against 318/322/267 for the others. Card 02 lands one slot (63px) down
+       and runs out 170px short of card 01's lower edge, so card 01's closing
+       line and its three screens paint in the open BELOW the card that is
+       supposed to be covering them. That is the fault, and no slot value
+       fixes it: tightening the step lands the cards lower and exposes more.
+
+       So the floor is the tallest card's height and the four become one
+       size. The shorter cards gain air under their type; card 01 is
+       unchanged. Height + 3 x slot must still fit the card area, which is
+       613px here against 491 + 3x63 = 679 - the 67px shortfall is paid for
+       by the masthead trim in this same block, not by shrinking the card.
+
+       NO CEILING, still. max-height beats min-height in CSS, so a ceiling
+       here would fight this floor and a clamped card with overflow visible
+       spills its lower edge - the 43px overrun this file already records. */
+    /* 29rem, NOT card 01's natural 496px, and the clip edge is why. Four
+       equal cards stepped three times need height + 3 x slot inside the card
+       area: at 390x844 that is 613px against 496 + 3x63 = 685, so the last
+       card overran the clip by 25px and its lower edge was sliced. The
+       masthead trim above gave back 15px of that; the rest comes from here.
+
+       LOWERING THE FLOOR IS SAFE FOR COVERING, which is the property this
+       whole block exists to protect. The cards are uniform now, so they
+       shrink together and each one still covers the card below it whatever
+       the value - the guarantee is the EQUALITY, not the number. 464px also
+       stays above the three short cards' natural 267-322px, so the floor is
+       still doing its job of lifting them to one size; it is only card 01
+       that is asked to give up its surplus, and its own content sets a
+       floor under how far this can go before it spills. */
+    min-height: 29rem;
     max-height: none;
   }
   /* The screens come down so card 01's column still fits the card. */
@@ -13673,6 +13867,34 @@ html.pl-lock body {
   .tech__shot { height: clamp(5.5rem, 3.4rem + 7.6vh, 8rem); }
   .tech__shot--a,
   .tech__shot--c { height: clamp(4.75rem, 2.9rem + 6.5vh, 6.875rem); }
+}
+
+/* THE SMALLEST PHONES, where the uniform height stops being uniform.
+
+   The floor above equalizes the four cards only while it is ABOVE every
+   card's natural content height. Card 01 is content-sized and has no
+   ceiling, so on a narrower, shorter fold it grows back through the floor:
+   measured 505px at 360x740 against the 464px floor, which puts it 41px
+   taller than the other three again and pushes card 04 93px past the clip.
+
+   The extra height is rewrapping - the copy and the five tags take more
+   lines in a ~330px column than in a ~360px one - so the px have to come
+   from somewhere that is not type. Two places, neither of them the copy:
+
+     THE PHONE BAND, which is pure artwork height and the one part of card 01
+     that no other card carries. It is what makes this card the tall one.
+
+     THE SLOT, because three steps at 62px is 186px of the area spent on
+     exposed edges. A slightly shorter step still clears the number and
+     title, which is all a buried strip has to show.
+
+   Together they bring card 01 under the floor, so the four are one size
+   again and covering is restored by the same argument as above. */
+@media (max-width: 400px) {
+  .tech-deck-on .tech__card { --slot: clamp(3.25rem, 3rem + 1vh, 4rem); }
+  .tech__shot { height: clamp(4.25rem, 2.6rem + 6vh, 6.5rem); }
+  .tech__shot--a,
+  .tech__shot--c { height: clamp(3.75rem, 2.2rem + 5.2vh, 5.5rem); }
 }
 
 /* Reduced motion: the stack never forms. tech-deck.js does not add
