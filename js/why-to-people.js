@@ -1,20 +1,27 @@
 /* ==========================================================================
    MedShield — why-to-people.js
-   The transition from section 08 ("Why MedShield") into section 09
-   ("The people").
+   The transition from section 08 ("Why MedShield") into section 08c
+   ("The technology").
 
-   THE PRINCIPLE. The people section FILLS IN from the left edge of the
+   THE NAME IS HISTORICAL. This file was written when the section after the
+   reel was .people, and it is still the file that owns the curtain out of the
+   reel - only the section on the other side of it has changed. The technology
+   band now sits between the two, so the curtain reveals THAT and .people
+   follows it as an ordinary block. The mechanism is unchanged and the spacer
+   maths is target-agnostic; see THE REVEAL TARGET below.
+
+   THE PRINCIPLE. The revealed section FILLS IN from the left edge of the
    viewport. It does not slide in, fade up, or arrive from off-screen: it is
    already at its final position from the first frame, and a clip edge opens
    from x=0 rightward until the whole screen is painted with it. The reel
    leaves to the left on the same value, so the screen is filled by the
    incoming section in the space the outgoing one gives up.
 
-       the reel has said why  ->  and here are the people who do it
+       the reel has said why  ->  and here is what the case runs on
 
    WHAT THIS IS NOT. It is not a panel travelling in from the right. The
-   distinction is the whole effect and it lives in one rule: .people is
-   CLIPPED, never TRANSLATED (see style.css .people.is-pushed-in). If the
+   distinction is the whole effect and it lives in one rule: .why is CLIPPED
+   away and the section behind it is never TRANSLATED. If the
    incoming content moved, the eye would track the moving type and read "a
    card slid in"; because the type is nailed to where it will finally sit
    and only the painted region grows, the eye reads "this section is being
@@ -48,10 +55,11 @@
       here is on .why itself, and the stage keeps painting the reel the whole
       way out. The reader is watching the thing they were reading leave.
 
-   2. THE INCOMING PANEL — .people, made position:fixed for the pin only, at
-      its FINAL position from the first frame, and revealed by a clip edge
-      opening left to right. Its resting layout is never touched; the class
-      goes on at the pin and comes off the moment it releases.
+   2. THE INCOMING PANEL — .tech, an ORDINARY IN-FLOW SECTION that is never
+      touched at all. It is already at its final position, so the clip edge
+      opening left to right simply uncovers it. Nothing is added to it and
+      nothing is animated on it; see THE REVEAL TARGET for why this one must
+      not be made fixed the way .people was.
 
    3. THE SPACER — the empty .w2p section. It does NOT carry the pin's
       distance: pinSpacing is on, so ScrollTrigger reserves that itself, and
@@ -69,13 +77,13 @@
       and .people follows .why as an ordinary block. Nothing is missing and
       nothing is stranded off-screen. Same contract as process-to-cases.js.
 
-   B. ONE VALUE, ONE WRITE. Both panels read the same --w2p custom property,
-      and CSS derives the reel's transform and the fill's clip from it. Two
-      tweens could be a frame apart under load, and a frame apart between the
-      reel's trailing edge and the fill's leading edge is a visible tear.
+   B. ONE VALUE, ONE WRITE. --w2p is written once, to .why, and CSS derives
+      the curtain's clip from it. The revealed section reads no value at all,
+      which is the strongest possible guarantee that the two layers cannot
+      drift: there is nothing about the one underneath to animate.
 
-   C. NO LAYOUT, EITHER SIDE. translate3d on the reel, clip-path on the
-      fill; no width, no left, no margin anywhere. Both are compositor-level
+   C. NO LAYOUT, EITHER SIDE. clip-path on the reel and nothing at all on
+      the section behind it; no width, no left, no margin anywhere. Both are compositor-level
       properties on promoted layers, so a scroll tick costs a composite
       rather than a re-layout of a full screen of content.
 
@@ -92,8 +100,34 @@
 
   var spacer = document.querySelector('.w2p');
   var why = document.getElementById('why');
-  var people = document.getElementById('about');
-  if (!spacer || !why || !people) return;
+  /* THE REVEAL TARGET IS .tech, the technology section immediately after .why.
+
+     The mechanism wants "the section immediately after .why in the document".
+     For a while that was .people, because the technology band was parked in a
+     <template>; it is live again, so the target moves back with it and
+     .people follows it as an ordinary block.
+
+     IT IS REVEALED AS A STATIC, IN-FLOW SECTION - no .is-pushed-in, and that
+     is the important difference from the .people target. .people is a rail, a
+     roster and a panel, far taller than a fold, so it had to be made
+     position:fixed with its own inner scroll to be reachable while the pin
+     held. .tech is exactly 100svh and has a ScrollTrigger pin of its own on
+     .tech__stage inside it, and giving it either of those things broke both:
+     the fixed ancestor left the stage with no honest document position, so
+     the masthead was revealed low in the fold and snapped to the top when the
+     pin engaged, and the fixed box's overflow let the reader scroll INSIDE
+     the pinned section, showing the masthead twice.
+
+     So nothing is done to this section at all. The curtain clips .why away
+     over the top of it and what is behind it is simply the finished section
+     in its own document position - which is exactly what the curtain wants
+     (see the note on the revealed layer in style.css), and it leaves
+     tech-deck.js the only thing positioning anything inside .tech.
+
+     The spacer maths is target-agnostic - it lifts whatever follows .why onto
+     the release pixel (see THE SPACER) - so nothing else here changes. */
+  var target = document.getElementById('tech');
+  if (!spacer || !why || !target) return;
 
   var stage = why.querySelector('.why-scrub__stage');
   if (!stage) return;
@@ -141,7 +175,12 @@
   function write() {
     var v = driver.v.toFixed(5);
     why.style.setProperty('--w2p', v);
-    people.style.setProperty('--w2p', v);
+    /* ONLY the curtain reads the value now. It used to be written to the
+       revealed panel as well, from this one source so the two could not
+       drift. With .tech revealed in place and untouched there is nothing
+       there to animate - which is the strongest guarantee it cannot drift at
+       all - so the second write is gone rather than left writing a property
+       no rule consumes. */
 
     /* SPENT is driven from the VALUE, not from the pin's toggle.
 
@@ -162,6 +201,10 @@
   }
 
   /* THE SPACER PULLS .people UP BY (vh + dist), and reserves no height.
+
+     ("people" here means whatever section follows .why - now .tech. The
+     arithmetic is the same for either; only the name in this note is older
+     than the target.)
 
      THE GEOMETRY. Measured in Chrome at 1440x900, where the pin runs
      start 11410 -> end 12220, so dist = 810 and vh = 900:
@@ -200,10 +243,84 @@
 
      A fixed value for the whole pin, not an animated one: it is a
      resting-position correction, not part of the travel. */
+  /* BOTH TERMS, AND THE REVEAL IS WHAT DECIDES IT.
+
+     The two terms correct two different things (written out above):
+
+       vh    .why is 500svh of rail whose bottom only reaches the fold at the
+             release, so whatever follows it starts a full viewport low.
+       dist  the pin-spacer's padding-bottom sits BELOW .why and pushes the
+             following section down by the pin's whole distance as well.
+
+     Both are needed because THE CURTAIN HAS TO REVEAL A COMPOSED SECTION. The
+     whole effect is that the reel is cut away and the finished section is
+     already standing there, filling the fold, from the first frame of the
+     reveal to the last. Correcting only `vh` leaves `dist` of residual: the
+     curtain then cuts away to the TOP of .tech sitting 810px low - blank page
+     ground where the masthead should be - and the section climbs into place
+     afterwards. Measured at 1440x900 the masthead was 900px below the fold at
+     the curtain's release.
+
+     (That was tried, to make the deck's `top top` fire at the release rather
+     than at the curtain's opening pixel. It fixes the pin and breaks the
+     reveal. The deck's start is solved in tech-deck.js instead, from the
+     curtain's own end value - see the note there - which leaves this free to
+     do the one thing it is for.) */
   function pullUp(dist) {
     var vh = window.innerHeight || document.documentElement.clientHeight;
     return vh + dist;
   }
+
+  /* THE RELEASE PIXEL, PUBLISHED.
+
+     tech-deck.js pins .tech__stage inside the section this curtain reveals,
+     and that pin must start where this one ends - otherwise the two share an
+     opening pixel and the deck runs its first 810px behind a reel that is
+     still painting, so the curtain cuts away to a stack with card 01 already
+     departing.
+
+     It cannot read the number off the stage's own position: with the full
+     lift above, the stage is at the top of the fold from the curtain's FIRST
+     frame (that is the point of the lift), so a `top top` start fires at the
+     opening pixel. The honest source is this trigger's end, which is exactly
+     the release. Published as a function so a resize re-solves both together,
+     and following the window.__medshield* convention used by hero.js,
+     bar-ink.js and smooth-scroll.js.
+
+     Returns null until the pin is built, and if this file bails - reduced
+     motion, no GSAP, a throw - it is never defined at all; tech-deck.js falls
+     back to its own `top top` in both cases, which is correct when there is
+     no curtain to clear. */
+  window.__medshieldWhyRelease = function () {
+    if (!tl || !tl.scrollTrigger) return null;
+
+    /* THE RELEASE PLUS WHAT IS LEFT OF THE LIFT.
+
+       The release is where the curtain stops, but it is NOT where the
+       revealed section comes to rest. The push is 0.9 of a viewport
+       (PUSH_VH), and the lift above is a whole viewport plus that push - so
+       at the release the section still has exactly (vh - push) of travel
+       before its own top reaches the top of the fold.
+
+       Measured, the arithmetic is exact at every size:
+
+           1440x900   push 810  vh  900   residual  90
+           1440x1080  push 972  vh 1080   residual 108
+           1280x800   push 720  vh  800   residual  80
+
+       The deck's pin must engage where the stage is genuinely AT the fold,
+       not 90px short of it, or it freezes that residual into the whole run
+       and the masthead sits low for the entire section. Those last pixels are
+       not a gap: the curtain has finished and the composed section simply
+       settles the last fraction of a viewport into place, which reads as the
+       reveal carrying on into ordinary scrolling.
+
+       Returned from here rather than computed in tech-deck.js because both
+       terms - the end and the push - are this file's, and a copy over there
+       would drift the moment PUSH_VH is retuned. */
+    var vh = window.innerHeight || document.documentElement.clientHeight;
+    return tl.scrollTrigger.end + (vh - pushDistance());
+  };
 
   function sizeSpacer(dist) {
     spacer.style.height = '0px';
@@ -285,16 +402,16 @@
         onToggle: function (self) {
           if (self.isActive) {
             why.classList.add('is-pushing');
-            people.classList.add('is-pushed-in');
             return;
           }
 
           /* THE TWO ENDS ARE NOT SYMMETRICAL, and treating them as one is
              what put the reel back on screen at the end of the push.
 
-             .people always comes out of fixed: past the pin it is an
-             ordinary section in its own document position, which is exactly
-             where the pin releases it, so the swap is invisible.
+             .tech needs nothing doing to it at either end: it is an
+             ordinary section in its own document position throughout, which
+             is exactly where the pin releases it, so there is no swap to be
+             visible.
 
              .why does NOT, and this is the part that took several passes to
              get right. The rail is 500svh of #05121D and the pin engages one
@@ -317,7 +434,6 @@
              comes off and the value returns to 0. */
           var pastEnd = self.progress > 0.5;
 
-          people.classList.remove('is-pushed-in');
           if (pastEnd) {
             why.classList.add('is-pushing');
             driver.v = 1;

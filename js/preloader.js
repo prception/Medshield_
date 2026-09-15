@@ -153,6 +153,26 @@
        page ground between the two. */
     requestAnimationFrame(function () {
       if (pl && pl.parentNode) pl.parentNode.removeChild(pl);
+
+      /* DROP THE CONTENT GATE in the same frame the cover leaves.
+
+         html.pl-on hides .hero__inner (see the content gate in style.css) so
+         no hero text paints through the hole the cover is punched with. It
+         has to come off HERE, with the cover, and not be left to hero.js:
+         releaseGate() above resolves the promise, but hero.js only adds
+         .hero-ready inside a DOUBLE requestAnimationFrame after that. The
+         cover is removed on this frame, so leaving the class for hero.js
+         opens a window in which the loader is gone, .hero-ready has not
+         landed yet, and the hero is still hidden — a blank frame, which is
+         exactly what the seamless hand-off must not have.
+
+         Removing it here closes that window and makes the release independent
+         of hero.js's timing. The entrance is unaffected: .hero-anim still
+         holds every parked start state, so the reveal runs from the same
+         start it always did. The stylesheet's html.pl-on.hero-ready rule
+         stays as the belt to this braces, for the ungated 7000ms floor in
+         hero.js that can add .hero-ready without this file having run. */
+      root.classList.remove('pl-on');
       /* Nothing to tear down for the video: this file never owned one. The
          hero's own clip has been playing throughout and simply carries on. */
     });
@@ -350,13 +370,76 @@
 
     if (small) {
       var hm = heroMedia.getBoundingClientRect();
+
+      /* SIZE THE VIDEO TO A 16:9 RECT, NOT TO THE HOLE.
+
+         The hole is only 16:9 at the miniature. Beat 3 tweens the box's width
+         toward innerWidth and its height toward innerHeight as two independent
+         tweens, and the viewport is essentially never 16:9 (measured 1920x889,
+         i.e. 2.16:1), so from the first frame of the expansion the box drifts
+         off ratio and keeps drifting.
+
+         object-fit:contain preserves the CLIP's 16:9 inside whatever element
+         it is given. Handed an off-ratio element it letterboxes — and because
+         the <video> is transparent where it letterboxes, what showed in the
+         bars was .hero's own navy gradient ground painting behind it. That is
+         the dark blue strip reported down each side of the expanding window,
+         present both as the rectangle forms and while it grows.
+
+         Fitting a 16:9 rect CENTRED ON THE HOLE removes the strips at source:
+         the element now matches the clip's aspect, so contain has nothing left
+         over to letterbox. The footage is unchanged — same encode, same crop,
+         same colours, no overlay and no filter — and the rect is centred on the
+         hole, so the part of the frame the viewer sees through the hole is
+         exactly the part they saw before.
+
+         It is deliberately sized to COVER the hole (max, not min): a 16:9 rect
+         that merely fit inside a wider hole would leave the same bare strips
+         this is removing. Overflow beyond the hole is simply clipped by the
+         cover, which is what the hole is for. */
+      /* Fit to the SNAPPED HOLE (x1..x2, y1..y2), not to the raw box rect.
+
+         The box is centred on the WORD, not on the viewport — run() shifts the
+         row left by half the difference between SHIELD and MED (~64px at this
+         width). applyHole() compensates by clamping AND snapping the HOLE out
+         to the frame edges, deliberately, so no strip of cover is left
+         un-punched.
+
+         That makes the hole and the box two different rectangles near the end
+         of the expansion. Fitting the video to the box left the video still
+         sitting 64px left of centre while the hole had already snapped to the
+         full frame: measured at 1920x889, the final frames left the video
+         spanning [-64,1856] inside a hole spanning [0,1920] — 64px of bare
+         hole down the RIGHT-hand side, overhanging by the same 64px on the
+         left. That sliver is the remaining navy line, and it is why it appears
+         on one side only and only in the last ~10% of the move.
+
+         The hole is what the viewer can actually see through, so it is the
+         correct rectangle to cover. */
+      var holeW = x2 - x1;
+      var holeH = y2 - y1;
+
+      var fitW = holeW;
+      var fitH = holeH;
+      var holeAspect = holeH ? holeW / holeH : 16 / 9;
+      if (holeAspect > 16 / 9) {
+        fitH = holeW * 9 / 16;        /* hole wider than 16:9 — match width  */
+      } else {
+        fitW = holeH * 16 / 9;        /* hole taller than 16:9 — match height */
+      }
+
+      /* Centred on the hole, so growing the rect spreads equally either side
+         rather than pinning to a corner and sliding the shot sideways. */
+      var fitL = x1 + (holeW - fitW) / 2;
+      var fitT = y1 + (holeH - fitH) / 2;
+
       for (i = 0; i < vids.length; i++) {
         v = vids[i];
         v.style.position = 'absolute';
-        v.style.left   = (b.left - hm.left) + 'px';
-        v.style.top    = (b.top  - hm.top)  + 'px';
-        v.style.width  = b.width  + 'px';
-        v.style.height = b.height + 'px';
+        v.style.left   = (fitL - hm.left) + 'px';
+        v.style.top    = (fitT - hm.top)  + 'px';
+        v.style.width  = fitW + 'px';
+        v.style.height = fitH + 'px';
         v.style.objectFit = 'contain';
       }
       lastFit = 'small';

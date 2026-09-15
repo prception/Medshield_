@@ -141,13 +141,22 @@
        reference's paragraph reveal: in from the right, scaled up. */
     var annoReduce = window.matchMedia('(prefers-reduced-motion: reduce)');
     var annoWide = window.matchMedia('(min-width: 860px)');
+    /* querySelectorALL, not querySelector.
+
+       The tagline now has three state copies sharing one box, so a singular
+       lookup here would park only the first in document order and leave the
+       other two at rest — they would then never animate in, and the scroll
+       fly-out below would leave them sitting still while the rest of the
+       composition flew apart. Every copy is treated identically; only one is
+       ever visible at a time, so parking all three costs nothing. */
     if (!annoReduce.matches && annoWide.matches) {
-      ['.hero__label-t', '.hero__note-t'].forEach(function (sel) {
-        var el = document.querySelector(sel);
-        if (!el) return;
-        el.classList.add('is-entering');   // enables the 1.75s transition
-        el.style.transform = 'translateX(100%) scale(0.5)';
-      });
+      Array.prototype.forEach.call(
+        document.querySelectorAll('.hero__label-t, .hero__note-t'),
+        function (el) {
+          el.classList.add('is-entering');   // enables the 1.75s transition
+          el.style.transform = 'translateX(100%) scale(0.5)';
+        }
+      );
     }
 
     var revealed = false;
@@ -166,15 +175,16 @@
           // at its interpolated value — overriding even an !important inline
           // transform and freezing the scroll fly-out.
           if (!annoReduce.matches && annoWide.matches) {
-            ['.hero__label-t', '.hero__note-t'].forEach(function (sel) {
-              var el = document.querySelector(sel);
-              if (!el) return;
-              el.style.transform = 'translateX(0%) scale(1)';
-              window.setTimeout(function () {
-                el.classList.remove('is-entering');
-                el.style.transform = '';
-              }, 1850);   // 1.75s duration + margin
-            });
+            Array.prototype.forEach.call(
+              document.querySelectorAll('.hero__label-t, .hero__note-t'),
+              function (el) {
+                el.style.transform = 'translateX(0%) scale(1)';
+                window.setTimeout(function () {
+                  el.classList.remove('is-entering');
+                  el.style.transform = '';
+                }, 1850);   // 1.75s duration + margin
+              }
+            );
           }
         });
       });
@@ -232,7 +242,11 @@
      `scope` is the block to split. Passing nothing splits the H1, which is
      what the original single-block call site expects. */
   function splitRows(scope) {
-    var container = scope || document.querySelector('.hero__display:not(.hero__display--alt)') || document;
+    /* The no-argument call means "the H1", so both overlay blocks are
+       excluded. Excluding only --alt was correct when it was the only other
+       block; with the AI block added, that selector could return the AI block
+       and silently split the wrong headline. */
+    var container = scope || document.querySelector('.hero__display:not(.hero__display--alt):not(.hero__display--ai)') || document;
     var all = container.querySelectorAll('.hero__row-t');
     if (!all.length) return;
 
@@ -369,8 +383,16 @@
      Everything below is a no-op if the alt block is absent, so the hero still
      works unchanged on any page that does not carry one. */
 
+  /* Set by section 2c and called by the video handoff in section 3.
+
+     Declared out here, in the shared scope, because the two sections are
+     separate `if` blocks: 2c only runs when the alt block exists, and 3 only
+     when the hero does. Left null it is simply never called, which is the
+     correct behaviour on a page carrying a hero video but no alt block. */
+  var setHeroStateRef = null;
+
   var altEl = document.getElementById('hero-display-alt');
-  var h1El  = document.querySelector('.hero__display:not(.hero__display--alt)');
+  var h1El  = document.querySelector('.hero__display:not(.hero__display--alt):not(.hero__display--ai)');
 
   if (altEl && h1El) {
     var cycleBox   = altEl.querySelector('.hero__cycle');
@@ -380,12 +402,25 @@
 
     var reduce = window.matchMedia('(prefers-reduced-motion: reduce)');
 
-    /* How long the first headline holds before handing over. Counted from the
-       font gate, not from page load: the entrance is itself font-gated, so a
-       delay measured from load would cut it off on a slow font and leave a
-       dead gap on a fast one. */
-    var H1_HOLD    = 2200;   // ms the first headline stays after it lands
-    var CYCLE_HOLD = 3200;   // ms each cycling phrase stays
+    /* H1_HOLD is GONE. It was the hold before the one-way swap into CREW
+       HEALTHCARE, and that swap is now the video handoff's job — how long the
+       first headline stays is exactly how long clip 1 runs.
+
+       CYCLE_HOLD is the cadence WITHIN state 1, not a clock that decides
+       when states change — that is still the video handoff's job alone.
+
+       SIZED TO THE CLIP. Clip 2 runs ~6s and there are four phrases, so the
+       budget is ~1500ms each. 1200 is taken rather than the full 1500 so the
+       fourth phrase (COMPLIANCE-READY.) is actually READ rather than merely
+       reached: 4 x 1200 = 4.8s, leaving ~1.2s of the clip for the last
+       phrase to hold before the crossfade into clip 3 takes the state away.
+
+       The floor is set by the transition, not by taste. showPhrase waits
+       min(outMs, 420)ms for the outgoing wipe before committing the incoming
+       one, so anything below ~900 would start the next phrase while the
+       current one was still arriving and the row would read as a stutter.
+       1200 clears that with room and keeps the existing wipe untouched. */
+    var CYCLE_HOLD = 1200;   // ms each cycling phrase stays
 
     /* Re-runs the per-character wipe on a scope that is already split.
 
@@ -517,25 +552,146 @@
       }, CYCLE_HOLD);
     }
 
-    /* --- the swap -------------------------------------------------------- */
+    /* --- the state machine ----------------------------------------------- */
 
-    function doSwap() {
-      // Split the alt block now, against the settled font, and prime it so
-      // its characters are parked before it becomes visible. Only the CURRENT
-      // cycling phrase is split here; the other three are still whole and
-      // hidden, and are split lazily when their turn comes.
-      splitRows(altEl);
-      splitRows(cycleItems[cycleIdx]);
-      park(altEl);
+    /* ONE source of truth: the clip index (requirement 17).
 
-      wipeOut(h1El);
-      h1El.classList.add('is-out');
-      altEl.classList.add('is-in');
-      wipeIn(altEl);
+       What used to be here was a one-way swap on a 2200ms timer, plus a
+       cycling interval on its own 3200ms clock. Neither knew anything about
+       which clip was on screen, so the copy and the footage drifted apart
+       within the first loop and never recovered — and the swap was one-way,
+       so "EXPANDING THE HORIZON" could never come back when clip 1 did.
 
-      lockCycleWidth();
-      startCycle();
+       Both timers are gone. setHeroState is called by the video handoff in
+       section 3, at the same moment the crossfade starts, so the copy changes
+       when the picture changes, by construction rather than by coincidence.
+
+       The three states, indexed to match HERO_CLIPS exactly:
+         0  clip 1  EXPANDING / THE HORIZON / OF MARITIME CARE
+         1  clip 2  CREW / HEALTHCARE / <cycling row>
+         2  clip 3  AI / FATHOM / CLAIMS INTELLIGENCE */
+
+    var aiEl = document.getElementById('hero-display-ai');
+
+    // Display block per state. h1El is state 0 and is the no-JS default.
+    var displays = [h1El, altEl, aiEl];
+
+    // The tagline and CTA states are addressed by data-state so the markup
+    // order is not load-bearing.
+    var noteStates = document.querySelectorAll('.hero__note-state');
+    var ctaStates  = document.querySelectorAll('.hero__cta-state');
+
+    var heroState = 0;
+
+    /* The cycling row belongs to state 1 ONLY (requirement 8).
+
+       stopCycle is idempotent and is called on EVERY state change, including
+       a change into state 1, so an interval can never be started twice and
+       two of them can never overlap. That is the duplicate-timer guarantee
+       requirement 19 asks for: there is exactly one clearInterval per start,
+       and start is only ever reached through here. */
+    function stopCycle() {
+      window.clearInterval(cycleTimer);
+      cycleTimer = null;
     }
+
+    /* Reset the cycling row back to its first phrase, so state 1 always
+       returns looking the way it did the first time rather than resuming
+       wherever the previous visit happened to stop. */
+    function resetCycle() {
+      if (!cycleItems.length) return;
+      Array.prototype.forEach.call(cycleItems, function (item, i) {
+        item.classList.toggle('is-current', i === 0);
+
+        /* Clear the residue wipeOut left behind.
+
+           wipeOut writes THREE inline values on every character: transition,
+           transitionDelay and --c-x. wipeIn clears the first and the third
+           but NOT transitionDelay, so a phrase that was wiped out on a
+           previous visit to state 1 came back carrying that visit's outgoing
+           stagger (i * 0.012s) as its incoming delay — the further down the
+           phrase a character sat, the later it arrived, and the effect
+           compounded on every return. Cleared here, so each visit to state 1
+           starts from the stylesheet's own cadence. */
+        Array.prototype.forEach.call(item.querySelectorAll('.hero__char'), function (c) {
+          c.style.transition = '';
+          c.style.transitionDelay = '';
+        });
+      });
+      cycleIdx = 0;
+    }
+
+    function setHeroState(next) {
+      if (!displays[next]) return;
+
+      var outgoing = displays[heroState];
+      var incoming = displays[next];
+
+      // A repeat call for the state already showing is a no-op, not a
+      // re-run: the handoff fires once per clip, but a resize or a
+      // visibility change must never restart the animation mid-clip.
+      if (next === heroState && incoming.classList.contains('is-in')) return;
+
+      // The cycle stops on EVERY transition, including into state 1, so it
+      // can only ever be running while state 1 is the current state.
+      stopCycle();
+
+      heroState = next;
+
+      /* --- the display block --- */
+
+      // Split against the settled font and park the characters before the
+      // block is visible, or it paints fully formed for one frame. Reuses
+      // the existing helpers verbatim — same wipe, same cadence, same
+      // timing constants as the original swap (requirement 16).
+      splitRows(incoming);
+      park(incoming);
+
+      if (outgoing && outgoing !== incoming) {
+        wipeOut(outgoing);
+        // State 0 is the H1 and uses .is-out; the other two are overlay
+        // blocks and use .is-in. They are different classes because the H1
+        // is visible by default with no script and the others are not.
+        if (outgoing === h1El) outgoing.classList.add('is-out');
+        else outgoing.classList.remove('is-in');
+      }
+
+      if (incoming === h1El) incoming.classList.remove('is-out');
+      else incoming.classList.add('is-in');
+
+      wipeIn(incoming);
+
+      /* --- the tagline (requirement 9) --- */
+      Array.prototype.forEach.call(noteStates, function (el) {
+        el.classList.toggle('is-current', Number(el.getAttribute('data-state')) === next);
+      });
+
+      /* --- the CTA (requirement 10) --- */
+      Array.prototype.forEach.call(ctaStates, function (el) {
+        var on = Number(el.getAttribute('data-state')) === next;
+        el.classList.toggle('is-current', on);
+        // Keep the hidden states out of the tab order and off the
+        // accessibility tree, so only the visible pair is reachable.
+        if (on) {
+          el.removeAttribute('aria-hidden');
+          el.removeAttribute('inert');
+        } else {
+          el.setAttribute('aria-hidden', 'true');
+          el.setAttribute('inert', '');
+        }
+      });
+
+      /* --- the cycling row, state 1 only --- */
+      if (next === 1) {
+        resetCycle();
+        splitRows(cycleItems[cycleIdx]);
+        lockCycleWidth();
+        startCycle();
+      }
+    }
+
+    // Published for section 3: the video handoff is what calls this.
+    setHeroStateRef = setHeroState;
 
     /* The cycle is paused while the hero is off screen — a headline rewriting
        itself behind the fold is pure battery cost, and returning to a phrase
@@ -544,9 +700,14 @@
       new IntersectionObserver(function (entries) {
         var vis = entries[0] && entries[0].isIntersecting;
         if (vis) {
-          if (altEl.classList.contains('is-in')) startCycle();
+          // Gated on the STATE, not on the alt block's class. Under the state
+          // machine the alt block can hold .is-in only while state 1 is
+          // current, but testing the state directly is what actually
+          // expresses the rule — the cycle runs during clip 2 and at no
+          // other time.
+          if (heroState === 1) startCycle();
         } else {
-          window.clearInterval(cycleTimer);
+          stopCycle();
         }
       }, { threshold: 0 }).observe(heroEl || altEl);
     }
@@ -556,33 +717,22 @@
       if (altEl.classList.contains('is-in')) lockCycleWidth();
     }, { passive: true });
 
-    /* Kick-off. Armed off the same font gate AS WELL AS the preloader gate
-       used by the entrance. The font resolves while the loader is still
-       covering the page, so arming on the font alone burned most of H1_HOLD
-       underneath the loader and the first headline was swapped away almost
-       the instant the hero expanded into view. Gating it too means the hold
-       is counted from the moment the headline is actually on screen. */
-    var swapArmed = false;
-    function armSwap() {
-      if (swapArmed) return;
-      swapArmed = true;
-      window.setTimeout(doSwap, H1_HOLD);
-    }
-    function armGated() {
-      var gate = window.__preloaderGate;
-      if (gate && typeof gate.then === 'function') {
-        gate.then(armSwap, armSwap);   // resolve OR reject must arm it
-      } else {
-        armSwap();
-      }
-    }
-    if (document.fonts && document.fonts.ready) {
-      document.fonts.ready.then(armGated);
-    }
-    window.setTimeout(armGated, 900);
-    // Absolute floor, ungated — mirrors the entrance's own 7000ms failsafe so
-    // a gate that never settles cannot freeze the cycle on headline one.
-    window.setTimeout(armSwap, 7000);
+    /* NO KICK-OFF TIMER.
+
+       There was one here: a font gate and a preloader gate arming a 2200ms
+       H1_HOLD that fired the one-way swap into CREW HEALTHCARE. It is gone,
+       deliberately, and nothing replaces it — that timer was the second clock
+       that made the copy drift out of step with the footage.
+
+       State 0 is the markup's own default (the H1 is visible, the alt and AI
+       blocks are not, note/CTA state 0 carry .is-current), so the hero is
+       already in a correct, complete state before any script runs. Every
+       change from here is driven by the video handoff in section 3.
+
+       This also means the reduced-motion and autoplay-blocked paths are
+       correct for free: no handoff ever fires, so the hero simply stays on
+       state 0 — the approved headline, its approved tagline and its approved
+       CTA pair — rather than being left mid-swap. */
   }
 
   /* --- 3. Hero video + scroll progress ------------------------------------ */
@@ -600,8 +750,10 @@
 
   if (heroEl) {
     var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+    // Only the front element has a <source> in the markup (clip 1, the hero's
+    // first paint). The back element's src is written by script — see
+    // stageClip — so there is no second <source> to look up.
     var source = video ? video.querySelector('source') : null;
-    var sourceB = videoB ? videoB.querySelector('source') : null;
 
     // The video now runs at every viewport width — it is the hero's first
     // paint on phones as well as desktop. One reason remains to leave the
@@ -614,42 +766,98 @@
       return !!video && !reduceMotion.matches;
     }
 
-    /* Crossfade loop.
-       Native `loop` cuts hard to frame 0 the instant playback reaches the
-       end — visible as a jump whenever the source's last frame doesn't
-       match its first. Instead: two copies of the same clip stacked in the
-       same box (see .hero__video in CSS). The back copy is pre-rolled from
-       t=0 and faded IN while the front copy is faded OUT over its last
-       CROSSFADE_S seconds, then the roles swap. The dissolve hides the seam
-       regardless of how the two endpoints actually match up. */
+    /* Crossfaded playlist.
+       Three clips play in order and then repeat: 1 -> 2 -> 3 -> 1 -> ...
+       Native `loop` is not used at all — it cuts hard to frame 0 the instant
+       playback reaches the end, and here the next thing to show usually isn't
+       frame 0 of the same file anyway.
+
+       Instead: two <video> elements stacked in the same box (see .hero__video
+       in CSS). They ALTERNATE rather than owning a clip each — whichever is
+       front plays the current clip while the back one already holds the next
+       clip, pre-rolled and buffered. Over the front clip's last CROSSFADE_S
+       seconds the back one is faded IN and the front faded OUT, then the roles
+       swap and the freed element is given the clip after that. The dissolve
+       hides every join, including the 3 -> 1 wrap, regardless of how the
+       clips' first and last frames actually line up. */
+    var HERO_CLIPS = [
+      'assets/hero/1.mp4',
+      'assets/hero/2.mp4',
+      'assets/hero/3.mp4'
+    ];
     var CROSSFADE_S = 0.6;
     var swapping = false;
+    // Index of the clip currently on the FRONT element. enableVideo starts
+    // this at 0 with clip 1 already attached to `video` in the markup.
+    var clipIndex = 0;
+
+    function nextIndex(i) { return (i + 1) % HERO_CLIPS.length; }
 
     // The other of the pair — video/videoB only ever swap opacity roles via
     // .is-active, never identity, so this stays a fixed lookup.
     function other(el) { return el === video ? videoB : video; }
+
+    /* Point an element at a clip and start buffering it.
+       src is set directly rather than through the <source> child: swapping a
+       <source>'s src on an element that has already loaded does nothing until
+       load(), and going through the element's own src keeps that in one step.
+       Guarded so re-assigning the clip an element already holds doesn't
+       restart its download and throw away the buffer we're relying on. */
+    function stageClip(el, index) {
+      if (!el) return;
+      var url = HERO_CLIPS[index];
+      if (el.getAttribute('src') === url) return;
+      el.setAttribute('src', url);
+      el.muted = true;
+      el.preload = 'auto';
+      el.load();
+    }
 
     function armLoop(el) {
       if (!el) return;
       el.addEventListener('timeupdate', function () {
         if (swapping || !el.duration || isNaN(el.duration)) return;
         if (el.duration - el.currentTime > CROSSFADE_S) return;
+        // Only the element actually on screen may trigger a handoff. Without
+        // this the outgoing element, still running for CROSSFADE_S after it
+        // lost .is-active, could fire a second swap and skip a clip.
+        if (!el.classList.contains('is-active')) return;
         swapping = true;
 
         var incoming = other(el);
+        var incomingIndex = nextIndex(clipIndex);
+
         if (incoming) {
+          // Normally already staged and buffered a whole clip ago; this is the
+          // safety net for a first pass or a load that was dropped.
+          stageClip(incoming, incomingIndex);
           incoming.currentTime = 0;
           var attempt = incoming.play();
           if (attempt && typeof attempt.catch === 'function') {
-            attempt.catch(function () { /* poster stands in */ });
+            attempt.catch(function () { /* hero ground stands in */ });
           }
           incoming.classList.add('is-active');
         }
         el.classList.remove('is-active');
+        clipIndex = incomingIndex;
+
+        /* THE SYNC POINT (requirement 7).
+
+           This single line is what ties the copy to the footage. It sits
+           immediately after clipIndex advances and inside the same handoff
+           that starts the dissolve, so the headline, tagline and CTA begin
+           their transition on the same frame the video begins its crossfade.
+           There is no second clock anywhere: if this line does not run, the
+           copy does not change, because the picture did not change either. */
+        if (setHeroStateRef) setHeroStateRef(clipIndex);
 
         window.setTimeout(function () {
           el.pause();
-          el.currentTime = 0;
+          // The element just freed becomes the back one: give it the clip
+          // AFTER the one now playing, so it has that clip's full duration to
+          // buffer before it is needed. This is what keeps each dissolve from
+          // landing on an unbuffered frame.
+          stageClip(el, nextIndex(clipIndex));
           swapping = false;
         }, CROSSFADE_S * 1000);
       });
@@ -659,23 +867,28 @@
 
     function enableVideo() {
       if (!source || source.hasAttribute('src')) return;
+      // Clip 1 is the hero's first paint, so it is the only source in the
+      // markup and the only one promoted from data-src here.
       source.setAttribute('src', source.getAttribute('data-src'));
-      if (sourceB) sourceB.setAttribute('src', sourceB.getAttribute('data-src'));
       // Set muted on the element too, not just the attribute: some engines
       // refuse autoplay unless the property is known-true at play() time.
       video.muted = true;
       video.load();
+      clipIndex = 0;
+      // Seed the copy to match the clip that is about to paint. State 0 is
+      // already the markup's default, so this normally changes nothing — it
+      // exists so the two can never start out of step if enableVideo is ever
+      // reached with a state left over from a previous run.
+      if (setHeroStateRef) setHeroStateRef(0);
 
-      // Copy B carries preload="metadata" so it does not compete with copy A
-      // for bandwidth during first paint. It is only needed at the crossfade,
-      // one clip-length away, so its buffering is deferred until copy A can
-      // actually play — then given the rest of that window to fill.
+      // The back element carries preload="metadata" so it does not compete
+      // with clip 1 for bandwidth during first paint. It is not needed until
+      // the first handoff, a clip-length away, so staging clip 2 is deferred
+      // until clip 1 can actually play — then given the rest of that window to
+      // fill. Every later clip is staged at the swap, in armLoop.
       if (videoB) {
         videoB.muted = true;
-        var loadB = function () {
-          videoB.preload = 'auto';
-          videoB.load();
-        };
+        var loadB = function () { stageClip(videoB, nextIndex(clipIndex)); };
         if (video.readyState >= 3) loadB();
         else video.addEventListener('canplay', loadB, { once: true });
       }
@@ -709,7 +922,11 @@
        CSS expression of that combination resolved to an invalid transform in
        Chromium, so script owns it. */
     var labelT = document.querySelector('.hero__label-t');
-    var noteT  = document.querySelector('.hero__note-t');
+    /* ALL of them. The tagline has three state copies sharing one box, and
+       the scroll fly-out has to move every copy: moving only the first in
+       document order left whichever state was actually current sitting still
+       while the headline, label and rail all flew apart. */
+    var noteTs = document.querySelectorAll('.hero__note-t');
     var annotationsWide = window.matchMedia('(min-width: 860px)');
 
     // Writes an X offset, cancelling any transition still interpolating this
@@ -729,12 +946,18 @@
     function applyAnnotations(p) {
       if (!annotationsWide.matches || reduceMotion.matches) {
         if (labelT) labelT.style.transform = '';
-        if (noteT)  noteT.style.transform  = '';
+        Array.prototype.forEach.call(noteTs, function (el) {
+          el.style.transform = '';
+        });
         return;
       }
       // -125% / +300%: the reference's paragraph exit values verbatim.
+      // setX takes ONE element (it cancels that element's running transition),
+      // so it is called per copy rather than adapted to take a list.
       setX(labelT, p * -125);
-      setX(noteT,  p *  300);
+      Array.prototype.forEach.call(noteTs, function (el) {
+        setX(el, p * 300);
+      });
     }
 
     function onScroll() {

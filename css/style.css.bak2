@@ -1206,21 +1206,18 @@ textarea:focus-visible,
    NOTE: .hero__label is --text-on-deep, NOT the secondary tone. At 11px over
    the video's brightest wake the secondary tone measured 4.25:1 and failed.
    Re-run the measurement if the video, the navy, or the crop changes. */
-/* REMOVED BY REQUEST: the grade described above is gone. The hero video is to
-   display at its own colour, with nothing tinting it — no gradients, no flat
-   tint, no filter. Do not reintroduce any of them.
-
-   The element itself is kept, empty. It stays in the paint order (and keeps
-   its opacity transition at the two rules further down, which now animate
-   nothing) so the hero's layer stack and the exit timeline are untouched. Give
-   it a background again and the tint is back.
-
-   The contrast ratios in the comment above no longer hold — they described the
-   composited scrim, which no longer exists. The hero's white type now sits
-   directly on the footage. */
 .hero__scrim {
   position: absolute;
   inset: 0;
+  background:
+    /* 1. bottom-up ramp, carries the headline and the floor rail */
+    linear-gradient(to top, rgba(var(--scrim-deep), 0.88) 0%, rgba(var(--scrim-deep), 0.55) 38%, rgba(var(--scrim-deep), 0.14) 70%),
+    /* 2. top-right ramp, carries the supporting note over the bright sky */
+    linear-gradient(to bottom left, rgba(var(--scrim-deep), 0.72) 0%, rgba(var(--scrim-deep), 0.42) 30%, rgba(var(--scrim-deep), 0.06) 62%, rgba(var(--scrim-deep), 0) 78%),
+    /* 3. top band, keeps the transparent header legible over near-white sky */
+    linear-gradient(to bottom, rgba(var(--scrim-deep), 0.60) 0%, rgba(var(--scrim-deep), 0.28) 12%, rgba(var(--scrim-deep), 0) 22%),
+    /* 4. flat tint, kills the source's tropical cyan cast */
+    rgba(var(--scrim-deep), 0.30);
 }
 
 /* --- Hero layout --------------------------------------------------------- */
@@ -1293,83 +1290,22 @@ textarea:focus-visible,
      corner annotation into a paragraph. */
   grid-column: 1 / span 4;
   font-size: var(--t-eyebrow);
-  /* 600, up from 500. The annotations sit over three different encodes now,
-     and clip 2 and clip 3 are markedly brighter than clip 1 — at 500 the
-     strokes thinned out against sky and bright deck surfaces. 600 thickens
-     the stem without changing the size, the family, or the tracking, so it
-     still reads as a small editorial annotation rather than a heading. */
-  font-weight: 600;
+  font-weight: 500;
   letter-spacing: 0.055em;
   text-transform: uppercase;
   line-height: 1.62;
-  /* Solid white. --text-on-deep is #FAFBFD, a hair off-white tuned for flat
-     navy; over footage that last 2% is the difference between crisp and
-     slightly washed, so this is pure #FFF. */
-  color: #FFF;
-  /* Bounded by the glyphs — NOT a scrim, tint, or box. This darkens only
-     pixels the text already covers, so the footage is untouched. Same
-     treatment .hero__cta-alt already uses over the same clips, deliberately
-     kept tight and low-alpha so it separates the lettering from sky and
-     bright surfaces without reading as a glow or a halo. */
-  text-shadow:
-    0 1px 2px rgba(0, 20, 45, 0.55),
-    0 0 6px rgba(0, 20, 45, 0.30);
+  /* Full white, not the secondary tone: at 11px over the video's brightest
+     wake the secondary tone measures 4.25:1 and fails AA. See .hero__scrim
+     for the full measurement table. */
+  color: var(--text-on-deep);
   margin: 0;
   max-width: 30ch;
-}
-
-/* The three supporting taglines share ONE box.
-
-   position: relative makes this the containing block for the two states that
-   are out of flow; the current state stays IN flow and is what gives the box
-   its height. That is the same mechanism .hero__cycle uses for its phrases,
-   and it is what satisfies requirement 9: the tagline area never moves
-   between videos, because its height is always one state's height and every
-   state is the same two lines.
-
-   The states are NOT display:none — they fade. display:none would drop the
-   inner span's transform and make the annotation entrance jump when a state
-   returned, the same trap the display blocks avoid. */
-.hero__note-state {
-  position: absolute;
-  top: 0;
-  left: 0;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.45s ease;
-}
-.hero__note-state.is-current {
-  position: relative;
-  opacity: 1;
-  pointer-events: auto;
-  /* Matches the incoming display block's ramp, so the tagline and the
-     headline arrive together rather than the tagline leading. */
-  transition: opacity 0.7s ease 0.15s;
-}
-
-/* REVERTED, deliberately — clip 3's tagline is white like the other two.
-
-   An earlier pass set this state to --accent-ink-on-video (#7DBEFF) on
-   request. The annotation brief that followed supersedes it: it requires the
-   annotations to be solid white, explicitly forbids making them blue, and
-   requires ONE consistent treatment across clips 1, 2 and 3. Keeping the blue
-   would have left clip 3's annotation blue while the other two were white —
-   precisely the per-video inconsistency that brief rules out.
-
-   The legibility caveat recorded with the original rule pointed the same way:
-   at --t-eyebrow this text needs 4.5:1, which #7DBEFF does not reach on the
-   brightest frames. It now inherits .hero__note's white + glyph-bounded
-   shadow, which is the treatment measured for this type over these clips. */
-
-@media (prefers-reduced-motion: reduce) {
-  .hero__note-state { transition: none !important; }
 }
 
 /* The single supporting sentence, right side. It is NOT under the headline:
    it is a contextual annotation across the gutter from the label, exactly as
    the reference places its "we broker, value and track..." line. */
 .hero__note {
-  position: relative;
   /* Starts at column 8, as the reference sets its right paragraph across the
      right half with a wide empty gutter from the left block. */
   grid-column: 8 / span 5;
@@ -1377,19 +1313,11 @@ textarea:focus-visible,
      annotations are the same size and case. A larger sentence-case line here
      read as a subtitle rather than as the matching half of a pair. */
   font-size: var(--t-eyebrow);
-  /* 600 and solid white, matching .hero__label exactly. The two annotations
-     are a PAIR — the reference sets them at the same size and case, and the
-     brief requires one consistent treatment across all three clips, so any
-     divergence in weight or colour between them would read as a mistake. */
-  font-weight: 600;
+  font-weight: 500;
   line-height: 1.45;
   letter-spacing: 0.055em;
   text-transform: uppercase;
-  color: #FFF;
-  /* Identical glyph-bounded shadow to .hero__label. See the note there. */
-  text-shadow:
-    0 1px 2px rgba(0, 20, 45, 0.55),
-    0 0 6px rgba(0, 20, 45, 0.30);
+  color: var(--text-on-deep);
   margin: 0;
   max-width: 40ch;
 }
@@ -1410,53 +1338,6 @@ textarea:focus-visible,
   display: flex;
   flex-direction: column;
   margin: 0;
-  /* Composition width, not frame width (requirements 3 and 12).
-
-     The rows are full-width blocks and row 2 is a space-between split, so an
-     uncapped block throws "OF" hard against the right edge of the VIEWPORT —
-     which is what made the headline read as stretched and let it run over the
-     vessel on the right of the encode. Capping the block leaves a deliberate
-     right margin: the split row still spans edge to edge OF THE BLOCK, so the
-     left/right tension the composition depends on is completely intact, but
-     it now resolves inside a measured column instead of the whole screen.
-
-     92% below ~1500px (where the frame is tight and the block still needs
-     REVERTED, deliberately, and do not reintroduce it.
-
-     A max-width cap was briefly added here to hold the block off the right
-     edge. It worked by making the block narrower than the frame — but the
-     rows are full-width blocks inside it, so capping the BLOCK moves every
-     right-edge anchor inward with it: .hero__row--end's right-aligned
-     "MARITIME CARE" and the far half of the split row ("OF") both stopped
-     where the cap stopped, not where the composition's margin is. That is
-     exactly the inward pull that was rejected.
-
-     The right edge is owned by .hero__inner's padding-inline (--site-margin)
-     and nothing else. The display block spans the full content width, so
-     text-align: right and the split row's space-between both resolve against
-     the same boundary every other band in the hero uses. */
-  /* The headline is set in the brand blue rather than white — the hero's
-     display type now carries the site's accent hue over the footage.
-
-     --accent-ink-on-video (#7DBEFF), not --accent-ink-on-deep (#4DA3FF): the
-     latter is measured against flat navy and is correct there, but this type
-     sits on the VIDEO. See the token's own note and .hero__row--cycle, which
-     already uses it for the same reason. The button fills (#0050A0) are the
-     wrong thing entirely here — they exist to carry white ink on top, not to
-     be read themselves.
-
-     Threshold: the display rows are large text at every breakpoint, so 3.0
-     applies rather than 4.5. #7DBEFF cleared that at 3.52:1 against the
-     brightest measured frame WHEN THE SCRIM EXISTED. The scrim has since been
-     removed at the client's request, so the real background here is now
-     brighter than any measurement in this file describes and that 3.52:1 no
-     longer holds. Re-measure against rendered frames of assets/hero/1-3.mp4
-     before treating the headline as AA-compliant.
-
-     The small annotations (.hero__label, .hero__note) are deliberately NOT
-     given this colour: at 11px they need 4.5:1, which this blue does not
-     reach on the footage. They stay white. */
-  color: var(--accent-ink-on-video);
   font-family: var(--font-editorial);
   /* Viewport-tied, never a fixed px size.
 
@@ -1617,10 +1498,6 @@ html.hero-ready .hero__char {
   grid-column: 1;
 }
 
-/* All three states share one composition width. The cap is declared on the
-   base .hero__display rule, which .hero__display--alt and --ai both carry, so
-   this is inherited rather than repeated — but the wide-frame step-down below
-   has to name them anyway to stay inside the same media query. */
 /* Only one state is visible at a time. The outgoing block is faded and
    pushed out of the pointer/hit path, not display:none — display:none would
    drop the per-character transforms and make the entrance jump when the
@@ -1628,61 +1505,6 @@ html.hero-ready .hero__char {
 .hero__display--alt {
   opacity: 0;
   pointer-events: none;
-}
-
-/* The THIRD display state — AI Fathom.
-
-   Shares the same grid cell as the other two blocks, so all three are laid
-   out on top of one another and the floor rail never moves as they swap.
-   Hidden by default and revealed by .is-in, exactly as the alt block is. */
-.hero__display--ai {
-  grid-row: 3;
-  grid-column: 1;
-  opacity: 0;
-  pointer-events: none;
-}
-.hero__display--ai.is-in {
-  opacity: 1;
-  pointer-events: auto;
-  transition: opacity 0.7s ease 0.15s;
-}
-
-/* Set in the darker brand blue, at explicit request.
-
-   --accent (#0050A0) is the brand blue verbatim — the same token CREW /
-   HEALTHCARE already carries, so the two overlay states now share one colour
-   treatment and the third state reads as part of the existing palette rather
-   than as a new hue.
-
-   MEASURED, and worth stating plainly: this is a button-fill token, not a
-   text token. Against the bright frames of clip 3 (a lit interface, the
-   brightest of the three encodes) it lands near or below the 3.0 large-text
-   threshold, and the hero has no scrim to clamp that background. It is a
-   deliberate brand choice over a contrast-optimal one. The lifted
-   --accent-ink-on-video (#7DBEFF) is the same hue and measures better if the
-   third state ever needs to clear AA on its own. */
-.hero__display--ai {
-  color: var(--accent);
-}
-
-/* CREW / HEALTHCARE in the darker brand blue, at the client's explicit
-   request after being shown the measurements below.
-
-   --accent (#0050A0) is the brand blue verbatim. It is a BUTTON FILL token,
-   not a text token: everywhere else in this sheet it carries white ink on top
-   rather than being read itself, and the note at .hero__row--cycle says so.
-
-   MEASURED, and failing: against the bright sky/wake frames of
-   assets/hero/1-3.mp4 this lands near 2.8:1, under the 3.0 large-text
-   threshold — and the hero no longer has a scrim to clamp that background,
-   so the true worst case is brighter still. It is DARKER than the #7DBEFF it
-   replaces, which means it is less legible on exactly the bright frames that
-   prompted the change, and more legible on the dark ones.
-
-   The cycling row below deliberately keeps --accent-ink-on-video: it is the
-   changing half of the composition and the one that most needs to hold. */
-.hero__display--alt {
-  color: var(--accent);
 }
 /* The swap itself. Nothing in the markup carries these classes; hero.js adds
    .is-out to the H1 and .is-in to the alt block once the entrance has held.
@@ -1810,68 +1632,11 @@ html.hero-ready .hero__char {
   padding-top: clamp(1.1rem, 0.7rem + 1.1vw, 1.9rem);
 }
 
-/* The CTA box. THREE states stacked in ONE grid cell.
-
-   A grid with a single explicit cell, not a flex row: every state is placed
-   in row 1 / column 1, so the box measures to the WIDEST state and holds that
-   width permanently. Requirement 10 is that the CTA must not move when the
-   video changes, and this is the only arrangement that guarantees it — the
-   box cannot resize, because its size is not a function of which state is
-   current.
-
-   justify-items: start keeps the states at the left edge of that box rather
-   than stretching each to the widest state's width, so the filled pill keeps
-   its own intrinsic size instead of growing to fit the longest label. */
 .hero__actions {
-  display: grid;
-  justify-items: start;
-  align-items: center;
-}
-
-/* Every state occupies the same cell. */
-/* `inert` fallback. hero.js sets the inert attribute on the two hidden CTA
-   states, which removes them from the tab order — but inert is unsupported in
-   older Safari, where the hidden actions would stay keyboard-reachable and a
-   tab would land on an invisible button. visibility: hidden achieves the same
-   removal everywhere, and is applied via the same class hero.js already
-   maintains rather than depending on attribute support.
-
-   visibility (not display) so the box still measures: the whole point of this
-   grid cell is that it sizes to the widest state and never moves. */
-.hero__cta-state:not(.is-current) {
-  visibility: hidden;
-}
-
-.hero__cta-state {
-  grid-row: 1;
-  grid-column: 1;
   display: flex;
   align-items: center;
   gap: clamp(1rem, 0.5rem + 1.4vw, 2rem);
   flex-wrap: wrap;
-  opacity: 0;
-  pointer-events: none;
-  /* visibility is transitioned ALONGSIDE opacity, and this matters.
-
-     visibility interpolates as a step function, so listing it with the same
-     duration as the fade keeps the outgoing state visible for the whole
-     0.45s ramp and flips it to hidden only at the end. Without it the
-     :not(.is-current) rule above would take effect on the first frame and
-     the outgoing CTA would vanish instantly instead of fading — an abrupt
-     copy swap, which is exactly what the hero must never do. */
-  transition: opacity 0.45s ease, visibility 0s linear 0.45s;
-}
-
-.hero__cta-state.is-current {
-  opacity: 1;
-  pointer-events: auto;
-  /* Incoming: visibility flips to visible immediately (0s, no delay) so the
-     fade-in is actually seen. */
-  transition: opacity 0.7s ease 0.15s, visibility 0s linear 0s;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .hero__cta-state { transition: none !important; }
 }
 
 /* Compact, not a slab. Still 44px min-height: a thumb target on a moving
@@ -1895,33 +1660,6 @@ html.hero-ready .hero__char {
 
 /* Secondary action recedes to a text link with an animated rule — visually
    subordinate to the filled CTA, never a second button of equal weight. */
-/* Secondary action. Still a text link, never a second button — but hardened
-   so it survives the footage underneath it (requirement 11).
-
-   THE PROBLEM: the hero no longer has a scrim, so this link sits directly on
-   raw video that ranges from bright sky and white hull to a lit AI interface.
-   The previous treatment was --text-on-deep-secondary (#CCD7E3) with an
-   underline scaled to zero until hover — a low-contrast grey with no
-   underline at rest. On the bright frames it effectively disappeared.
-
-   THE FIX, and deliberately NOT a fix applied to the video: the requirement
-   forbids any overlay, tint or filter, so every change here is to the LINK.
-     - full white at rest, not the secondary grey. This is the single biggest
-       gain and costs nothing: it is the same token the label and note already
-       use over the same footage.
-     - weight 500 rather than 400. At this size, over moving footage, the
-       extra stem width is what keeps the glyphs from breaking up.
-     - the rule is PERMANENTLY VISIBLE at rest (scaleX(1)) instead of being a
-       hover-only flourish. A continuous 1px line under the text is a second,
-       redundant cue that does not depend on the pixels behind any single
-       glyph, and it is what makes the link read as a link on a bright frame.
-     - a text-shadow, which is the one treatment that improves legibility
-       WITHOUT touching the video: it darkens only the pixels immediately
-       behind the glyph edges, is bounded by the text itself, and adds no
-       layer over the footage. It is not a scrim — it cannot affect any pixel
-       the text does not already cover.
-   Hover now brightens the rule rather than drawing it, since it is already
-   drawn. */
 .hero__cta-alt {
   position: relative;
   display: inline-flex;
@@ -1929,19 +1667,11 @@ html.hero-ready .hero__char {
   gap: 0.45rem;
   min-height: 44px;
   font-size: var(--t-micro);
-  font-weight: 500;
+  font-weight: 400;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: var(--text-on-deep);
+  color: var(--text-on-deep-secondary);
   text-decoration: none;
-  /* Bounded by the glyphs. Not an overlay on the video.
-     Strengthened on a second pass: the link still washed out on the brightest
-     frames. A tighter, denser shadow hugs the glyph edges harder without
-     spreading into a halo — it darkens only pixels the text already covers,
-     so it remains a type treatment rather than a scrim. */
-  text-shadow:
-    0 1px 2px rgba(0, 20, 45, 0.78),
-    0 0 10px rgba(0, 20, 45, 0.42);
   transition: color 0.2s ease;
 }
 .hero__cta-alt::after {
@@ -1952,15 +1682,13 @@ html.hero-ready .hero__char {
   width: 100%;
   height: 1px;
   background: currentColor;
-  /* Drawn at rest — this is the change that carries the link over bright
-     footage. Hover raises it to full rather than scaling it in. */
-  opacity: 0.7;
-  transform: scaleX(1);
+  opacity: 0.45;
+  transform: scaleX(0);
   transform-origin: left;
-  transition: opacity 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+  transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1);
 }
 .hero__cta-alt:hover { color: var(--text-on-deep); }
-.hero__cta-alt:hover::after { opacity: 1; }
+.hero__cta-alt:hover::after { transform: scaleX(1); }
 .hero__cta-alt span { transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1); }
 .hero__cta-alt:hover span { transform: translateX(4px); }
 
@@ -4095,28 +3823,7 @@ main {
   font-size: var(--t-small);
   line-height: 1.6;
   color: var(--text-on-deep);
-  /* WIDE ENOUGH THAT THE AUTHORED BREAK IS THE ONLY BREAK.
-
-     The markup sets one <br>, which asks for exactly two lines:
-
-         The case runs on
-         our own technology
-
-     At 34ch the second line did not fit at the top of --t-h2's clamp, so it
-     wrapped again and the headline rendered as THREE lines - the authored
-     break plus an unwanted one - which is what made the masthead tall enough
-     to push the card down the fold.
-
-     The measure therefore has to clear the LONGER of the two authored lines
-     at the largest type size, not the average of them. 40ch does, with room
-     for the accent span, and it costs no type size: --t-h2 is already capped
-     at 2.85rem, so this only decides where the line is ALLOWED to break, and
-     the answer is now "only where the markup says".
-
-     This still has to out-specify .section-title's own `max-width: 24ch`,
-     which this element also carries; same specificity, so it wins on order
-     (it is later in the file) - do not move it above that rule. */
-  max-width: 40ch;
+  max-width: 34ch;
 }
 .site-footer__offices strong { color: var(--text-on-deep); font-weight: 600; }
 .site-footer__offices span { padding-inline: 0.35em; opacity: 0.5; }
@@ -8914,63 +8621,45 @@ main {
   .case--support .case__photo { width: 48%; }
 }
 
-/* Under 1040px the ONLY thing that changes is the line-art coming off — the
-   photograph keeps the desktop treatment exactly: same 58% column bleeding
-   off the right edge, same four-stop left mask, same per-image corrections.
+/* Under 1040px the rows are ordinary stacked blocks and the art would crowd
+   the copy at narrow widths.
 
-   This block used to re-cut the recipe here (66% wide, the mask compressed
-   into the left third) on the theory that a narrow corner needed a bigger,
-   harder-edged picture. It did the opposite. The copy scrim
-   (.case--support .case__inner::after) is a single unresponsive gradient that
-   is still 0.93 opaque at 38% across and does not clear until 88%, so
-   widening the photo only pushed more of it under the opaque end of that
-   veil. The picture was being rendered and then painted over — which is why
-   it read as missing on tablets even though nothing had hidden it.
-
-   Keeping desktop's geometry keeps the photo's full-strength region and the
-   scrim's clear region in the same place they are on desktop, which is the
-   whole reason the treatment works there. */
+   The PHOTOGRAPH stays: these rows are full-width here, so there is real
+   estate to the right of a short title, and the picture's left edge is masked
+   to nothing rather than being a hard rectangle the copy could collide with.
+   It is what keeps the three rows from becoming three plain text blocks on
+   phones. */
 @media (max-width: 1039px) {
   .case--support .case__art { display: none; }
-
-  /* THE SCRIM IS WHAT NARROWS, NOT THE PHOTOGRAPH.
-
-     The scrim's stops are percentages of the row, so as the row gets
-     physically narrower the same ramp covers the same FRACTION of a smaller
-     picture — the copy keeps its protection but the photograph's full-
-     strength region shrinks to a sliver. Pulling the ramp left restores the
-     desktop balance in absolute terms: the text still sits on flat card
-     colour for its whole measure, and the picture is clear well before the
-     right edge instead of only at the last 12%.
-
-     The art is gone at this width, so the copy no longer has to share the
-     corner with it and the scrim can afford to finish earlier. */
-  .case--support .case__inner::after {
-    background: linear-gradient(
-      90deg,
-      rgba(250, 251, 252, 0.97) 0%,
-      rgba(250, 251, 252, 0.92) 26%,
-      rgba(250, 251, 252, 0.45) 48%,
-      rgba(250, 251, 252, 0) 68%
-    );
+  /* Without the art over it the photograph is the only thing in the corner —
+     and at this width that corner is narrow. The desktop mask, which only
+     reaches full strength at the plate's right edge, spent its whole ramp
+     across a 46% column and left the picture a ghost. Here the fade is
+     compressed into the left third so most of the visible width is the
+     photograph at full strength, and the per-image opacities are lifted with
+     it: on a phone the picture has to carry the row on its own. */
+  .case--support .case__photo {
+    width: 66%;
+    opacity: 1;
+    -webkit-mask-image: linear-gradient(90deg, transparent 0%, rgba(0,0,0,0.8) 10%, #000 22%);
+            mask-image: linear-gradient(90deg, transparent 0%, rgba(0,0,0,0.8) 10%, #000 22%);
+  }
+  .case--support .case__photo img { opacity: 1; }
+  .case--support .case__photo img[src*="case-surgery"] {
+    opacity: 1;
+    filter: saturate(1.05) contrast(1.04) brightness(1.14);
+  }
+  .case--support .case__photo img[src*="case-review"],
+  .case--support .case__photo img[src*="case-consult"] {
+    opacity: 1;
+    filter: saturate(1.05) contrast(1.05) brightness(1);
   }
 }
 
-/* Phones. The row is narrower again and the titles are at their longest
-   (02 and 04 both wrap), so the scrim is pulled left once more to keep the
-   picture from being reduced to an edge. Same treatment as desktop — a
-   photograph bleeding off the right, dissolving leftward into the card — just
-   with the crossover moved to suit the width. */
+/* Very narrow phones: a title wrapping to three lines runs the full width of
+   the row, and there is no corner left to give the picture. */
 @media (max-width: 560px) {
-  .case--support .case__inner::after {
-    background: linear-gradient(
-      90deg,
-      rgba(250, 251, 252, 0.96) 0%,
-      rgba(250, 251, 252, 0.88) 20%,
-      rgba(250, 251, 252, 0.38) 42%,
-      rgba(250, 251, 252, 0) 62%
-    );
-  }
+  .case--support .case__photo { display: none; }
 }
 
 /* Shared bits --------------------------------------------------------------- */
@@ -10552,45 +10241,15 @@ main {
 
    z-index BELOW the pinned .why (z-index 5), which is the whole inversion
    that makes this a curtain rather than a fill: the reel is on top being
-   cut away, and this is what has been sitting behind it.
-
-   THE TARGET IS .tech NOW, AND IT IS NOT STYLED HERE AT ALL.
-
-   The technology band is live again and is the section the curtain reveals,
-   so the rules that used to sit here - position:fixed, inset:0, a z-index
-   below the pinned reel, and overflow-y:auto - are gone rather than left
-   pointing at a class nothing adds.
-
-   They are not simply moved onto .tech, because .tech must NOT have them.
-   Each one was a concession to .people being far taller than a fold:
-
-     position:fixed  gave the panel its final position from the first frame.
-                     .tech is an ordinary in-flow section already sitting at
-                     that position, so it needs no help - and a fixed
-                     ancestor is fatal to the ScrollTrigger pin on
-                     .tech__stage inside it, which then has no honest
-                     document position: the masthead was revealed low in the
-                     fold and snapped to the top the moment the pin engaged.
-
-     overflow-y:auto let the reader reach the rest of a section taller than
-                     the fixed box. .tech__stage is exactly 100svh so there
-                     is nothing legitimate to scroll, and the box overflowed
-                     anyway - the reader could scroll INSIDE the pinned
-                     section, nothing advanced the deck or reset the offset,
-                     and it persisted past the release: the masthead rendered
-                     once at the inner offset and again when the pin put the
-                     stage at the top of the fold, card 04 repeating with it.
-
-   So the revealed layer is left completely alone, which is also what the
-   curtain wants of it (see WHY THE REVEALED LAYER MUST NOT MOVE above): the
-   reel is clipped away and what is behind it is the finished section, in
-   place, unmoved, from the first frame to the last. .tech paints its own
-   opaque --surface-page ground as an ordinary section, so there is nothing
-   to see through it mid-reveal.
-
-   If the curtain is ever pointed back at a section taller than the fold, the
-   fixed/overflow pair above is what that needs - and a pinned 100svh stage
-   inside it is what it must not have. */
+   cut away, and this is what has been sitting behind it. */
+.tech.is-pushed-in {
+  position: fixed;
+  inset: 0;
+  z-index: 4;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  background: var(--surface-page);
+}
 
 /* The curtain's edge is the one moving thing on screen, and on a
    fractional-DPR display a clip boundary landing between device pixels
@@ -10620,6 +10279,10 @@ main {
      containing block and clips descendants, and with the effect off there
      is nothing here that should be clipped. */
   .why.is-pushing { clip-path: none; }
+  .tech.is-pushed-in {
+    position: static;
+    overflow-y: visible;
+  }
 }
 
 /* --- 08 The people ------------------------------------------------------ */
@@ -10985,12 +10648,7 @@ main {
   display: flex;
   align-items: center;
   gap: var(--s-3);
-  /* --s-3, not --s-4. The eyebrow is the lowest thing in this section's
-     hierarchy (the card dominates, then the heading, then the lede, then
-     this), so when the header is asked to be compact this is the first gap
-     to give. It is a label ON the heading; sitting closer to it is also more
-     correct typographically than the looser step it had. */
-  margin: 0 0 var(--s-3);
+  margin: 0 0 var(--s-4);
   font-size: var(--t-micro);
   font-weight: 700;
   letter-spacing: 0.14em;
@@ -12073,51 +11731,6 @@ html.pl-on .preloader {
    above the cover instead (an earlier attempt used z-index:1) shows the video
    full-bleed from the first frame and the gap never reads at all. */
 
-/* THE CONTENT GATE — the hero's TEXT is suppressed while the loader runs,
-   and nothing else is.
-
-   The loader punches a real hole through its own cover, so whatever sits
-   under that hole is genuinely visible. .hero-anim alone does not cover the
-   hero: it parks .hero__char (--c-x) and .hero__foot (opacity) and nothing
-   else, which left three things painting through the gap — the split row's
-   "of" (.hero__row-t--far), the cycling row, and .hero__label-t/.hero__note-t
-   on any viewport where hero.js's inline park is skipped (it is guarded by a
-   min-width:860px match). Those are the "NG" / "ZON" fragments seen inside
-   the video window and the pale blue bleed at the sides.
-
-   .hero__inner is the target because it is the hero's CONTENT wrapper and a
-   SIBLING of .hero__media — the videos live in the latter, at z-index -1, and
-   are never touched by this rule. That sibling split is what lets the text be
-   hidden with no consequence at all for the clip: no overlay, no scrim, no
-   filter, no opacity on the video, no second element, no restart.
-
-   visibility, not display:none or opacity:
-
-     - display:none would drop the grid box and destroy the per-character
-       masks and the width measurement .hero__cycle depends on, so the
-       entrance would have nothing to animate from when the gate lifted.
-     - opacity alone still composites the layer and leaves it hit-testable.
-
-   visibility:hidden keeps the layout and the parked start states intact and
-   simply stops the subtree painting, so the reveal that follows is the exact
-   animation it always was. It is inherited, and .hero-ready re-asserts
-   visible on the wrapper, so the release needs no second rule per element.
-
-   Keyed to pl-on, which preloader.js sets on the SAME path that arms the gate
-   and removes on teardown — so this is the existing mechanism, not a second
-   timing system competing with it. If preloader.js bails out (no GSAP,
-   reduced motion, not at the hero) pl-on is never set and this rule never
-   applies, exactly matching the file's fail-visible contract. */
-html.pl-on .hero__inner {
-  visibility: hidden;
-}
-
-/* The release. The gate resolves, hero.js adds .hero-ready, and the content
-   becomes paintable in the same commit that starts the entrance. */
-html.pl-on.hero-ready .hero__inner {
-  visibility: visible;
-}
-
 /* The scroll lock. Applied to <html> AND <body> so a phone's overscroll
    chain cannot pull the page while the intro runs. padding-right is written
    by script to the measured scrollbar width, so locking does not shift the
@@ -12562,178 +12175,80 @@ html.pl-lock body {
   .lg, .lg__specular, .nav-bar .btn-tab, .nav-bar .btn-cta { transition: none; }
 }
 
-
-
 /* --- 08c The technology ------------------------------------------------- */
 
-/* THE CURTAIN'S REVEAL TARGET, AND A PINNED CAROUSEL OF ITS OWN.
+/* THE CURTAIN'S REVEAL TARGET. why-to-people.js cuts .why away from the left
+   to uncover this section (see .tech.is-pushed-in above, and the long note in
+   that file). Two rules here exist for that reason and must not be relaxed:
 
-   Two mechanisms meet on this section and are kept apart deliberately:
+     background   OPAQUE and full-bleed. The reel is #05121D and is clipped
+                  away over the top of this; a transparent ground would show
+                  the page through the reveal.
+     no transform Nothing on the section itself may translate. The cards rise
+                  afterwards, on the page's ordinary [data-reveal] hook, once
+                  this is a normal block again.
 
-     1. why-to-people.js cuts .why away from the left to uncover .tech. For
-        that the SECTION must have an opaque full-bleed ground and must never
-        transform - it is revealed in place, as an ordinary in-flow section
-        that the curtain block above deliberately does not style.
-     2. tech-deck.js pins .tech__stage INSIDE it and scrubs the carousel.
-
-   The carousel therefore pins the STAGE, never the section, exactly as
-   doubts.js pins .doubts__stage. If both pinned the same element the
-   curtain's fixed positioning and ScrollTrigger's pin would contend for it.
-
-   WHITE GROUND. The reel ends on #05121D and this is --surface-page, so the
-   curtain opens from the dark reel onto a light section - a change of
-   chapter rather than a continuation. */
+   The ground is the same deep sea the reel ends on, so the curtain opens
+   from one dark surface onto another and the seam is invisible; the band
+   then lifts toward the page ground at its base, where .people follows. */
 .tech {
   position: relative;
   padding-block: var(--section-y);
-  background: var(--surface-page);
-  color: var(--text-primary);
+  background:
+    linear-gradient(180deg,
+      #05121D 0%,
+      var(--surface-deep) 38%,
+      var(--surface-deep-alt) 100%);
+  color: var(--text-on-deep);
 }
-
-/* NO SECTION PADDING WHILE THE DECK IS PINNED.
-
-   The stage is exactly 100svh and ScrollTrigger reserves the pinned run as
-   document height of its own (pinSpacing:true). The section's own
-   padding-block is height on TOP of both, and it is height with nothing in
-   it: the deck has already finished and the pin has already released by the
-   time the reader reaches it.
-
-   Left in, it is the "section arrives a second time" bug - the deck plays
-   out, the pin lets go, and then a screen of empty section ground scrolls
-   past before .people. Exactly the residual why-to-people.js corrects for
-   with its spacer, and for the same reason.
-
-   Behind .tech-deck-on so the no-JS and reduced-motion section, which is an
-   ordinary block that genuinely needs its section rhythm, keeps it. */
-.tech-deck-on .tech { padding-block: 0; }
 
 .tech__layout { display: block; }
 
 /* --- The masthead ------------------------------------------------------- */
 
-/* CENTRED, unlike the rest of the page's left-aligned section heads. The
-   carousel below it is a centred object with symmetrical side-peeks, and a
-   left-aligned head over a centred pile reads as two compositions sharing a
-   band rather than one. */
-/* INSIDE THE STAGE, so it is pinned with the cards. It no longer sits in a
-   .shell, so it carries the page's own horizontal inset itself. */
 .tech__head {
-  /* WIDE ENOUGH FOR THE HEADLINE'S SECOND LINE, which is the one thing this
-     measure has to do. The head is a centred block whose only wide child is
-     the title; capping it tighter does not make the header more compact, it
-     only forces the headline to a third line and makes it taller. Compactness
-     comes from the gaps below, not from the measure. */
-  max-width: 56ch;
-  margin-inline: auto;
-  /* THE GAP BELOW THE MASTHEAD, and it is the single biggest lever on this
-     composition. The stage is `grid-template-rows: auto minmax(0, 1fr)`, so
-     the header row is content-sized and every rem given up here goes straight
-     to the card row underneath - which is exactly the reallocation this
-     section wants: a compact header high in the fold, and the card taking
-     what is left.
-
-     It has come down from 1.25-2rem. That was already tuned once (from 3.5rem,
-     which floated the header down the fold), but it was tuned against a
-     three-line headline and a short, wide card. With the headline now holding
-     two lines the whole block finishes higher, and the card wants the
-     difference. Still a real gap, not a hairline: the header has to read as a
-     separate editorial block sitting ABOVE the card, not as a caption
-     attached to it. */
-  margin-bottom: clamp(1.5rem, 1.1rem + 1.4vw, 2.25rem);
-  padding-inline: var(--site-margin);
-  box-sizing: border-box;
-  text-align: center;
-  /* ABOVE THE CARDS, not below them. The cards travel UP past the header and
-     must pass BEHIND it - a card sliding over the heading reads as a layout
-     fault rather than as a departure. The cards' --card-z runs to 100 inside
-     .tech__cards, but that is an isolated stacking context (isolation:isolate
-     there), so this single z-index outranks all of them at once. */
-  position: relative;
-  z-index: 2;
+  max-width: 46ch;
+  margin-bottom: clamp(2rem, 1.2rem + 3vw, 3.5rem);
 }
 
-/* The eyebrow carries a rule on BOTH sides when centred - a single trailing
-   hairline reads as an unfinished left-aligned label. */
+/* Same eyebrow shape as .presence, on the dark ground: the teal that reads
+   as text on navy, and the hairline in raw brand teal (decoration, no text -
+   see the palette note on that token). */
 .tech__eyebrow {
   display: flex;
   align-items: center;
-  justify-content: center;
   gap: var(--s-3);
   margin: 0 0 var(--s-4);
   font-size: var(--t-micro);
   font-weight: 700;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: var(--accent-2-ink);
+  color: var(--accent-2-on-deep);
 }
-.tech__eyebrow::before,
 .tech__eyebrow::after {
   content: "";
   flex: none;
   width: clamp(2rem, 6vw, 4.5rem);
   height: 1px;
   background: linear-gradient(90deg,
-    color-mix(in srgb, var(--accent-2) 25%, transparent) 0%,
-    var(--accent-2) 100%);
+    var(--accent-2) 0%,
+    color-mix(in srgb, var(--accent-2) 25%, transparent) 100%);
 }
-.tech__eyebrow::after { transform: scaleX(-1); }
 
-.tech__title {
-  margin-inline: auto;
-  margin-bottom: var(--s-3);
-  /* TIGHTER LEADING, because this is display type at 2.85rem and the default
-     body line-height is set for reading paragraphs. At two lines the looser
-     value costs real fold height and reads as loose rather than as generous -
-     a large editorial headline wants its lines closer than its own type size
-     suggests. No font-size change: the heading must stay large. */
-  line-height: 1.08;
-  /* WIDER THAN THE PAGE'S 24ch, not narrower, and only because this heading
-     is inside a pinned 100svh box. At 22ch the headline broke to three lines
-     and the masthead took ~380px out of a ~940px fold, leaving the card row
-     too short for the card to fit - the header rode low and the card was
-     clipped at the bottom edge.
-     --t-h2 is already capped at 2.85rem, so the extra measure costs no type
-     size; it only lets the line break where the fold can afford it. The
-     authored <br> still sets the break, this just stops a second one.
-
-     WIDE ENOUGH FOR "our own technology" TO HOLD ONE LINE. At 30ch that
-     phrase still wrapped, so the authored <br> gave two lines and the wrap
-     made a third - the headline took three lines and pushed the card down
-     the fold. The measure has to clear the LONGEST of the two authored
-     lines, not the average, or the break the markup sets is not the break
-     that renders.
-
-     This also has to out-specify .section-title's own `max-width: 24ch`,
-     which this element carries as well; same specificity, so it wins on
-     order (it is later in the file) - do not move it above that rule. */
-  max-width: 34ch;
-}
-/* The second half of the headline in brand teal, as in the reference. */
-.tech__titleAccent { color: var(--accent-2-ink); }
+.tech__title { margin-bottom: var(--s-4); max-width: 20ch; }
+.tech__titleDot { color: var(--accent-2-on-deep); }
 
 .tech__lede {
-  margin-inline: auto;
-  margin-bottom: 0;
-  /* TWO LINES, DELIBERATELY. At 54ch this ran as a single long line on a
-     desktop fold, which reads as a stray sentence under the headline rather
-     than as part of the block; at 44ch it breaks into two short centred lines
-     and the masthead reads as one compact editorial unit. Narrower is also
-     what keeps it visually subordinate to the headline above it. */
-  max-width: 44ch;
-  color: var(--text-secondary);
+  margin: 0;
+  max-width: var(--measure);
+  color: var(--text-on-deep-secondary);
 }
 
-/* --- The carousel --------------------------------------------------------
+/* --- The cards ---------------------------------------------------------- */
 
-   THE RESTING STATE IS AN ORDINARY COLUMN. Everything that turns these four
-   cards into a carousel lives behind .tech-deck-on, which tech-deck.js adds
-   to <html> only when it is actually going to drive them. With no JS, a
-   throw in that file, or prefers-reduced-motion, this is four cards stacked
-   in a centred column that scroll past normally. Same fail-visible contract
-   as cases-reveal.js and its .cx-anim class. */
-
-.tech__stage { position: relative; }
-
+/* One column. Each card is a full-width slab that the reader meets one at a
+   time on the way down, which is what makes the rise read as a sequence
+   rather than as a grid settling all at once. */
 .tech__cards {
   list-style: none;
   margin: 0;
@@ -12742,980 +12257,140 @@ html.pl-lock body {
   gap: var(--s-5);
 }
 
+/* Raised off the band rather than outlined: a hairline border alone
+   disappears against a gradient that changes lightness behind it. */
 .tech__card {
   position: relative;
-  width: min(100%, 76rem);
-  max-width: 100%;
-  box-sizing: border-box;
-  margin-inline: auto;
-  padding: clamp(1.75rem, 1.2rem + 2.6vw, 3.25rem);
-  border: 1px solid var(--border);
-  border-radius: 18px;
-  background: var(--surface-raised);
+  padding: clamp(1.5rem, 1rem + 2vw, 2.75rem);
+  border: 1px solid rgb(255 255 255 / 0.10);
+  border-radius: var(--radius-lg);
+  background: rgb(255 255 255 / 0.045);
   overflow: hidden;
 }
 
-/* The brand ramp as a top rule - the one place the logo's blue-to-teal
-   gradient is allowed, and it is drawn, never printed as text. */
+/* The brand ramp as a top rule on each card - the one place the logo's
+   blue-to-teal gradient is allowed, and it is drawn, never printed as text. */
 .tech__card::before {
   content: "";
   position: absolute;
   inset: 0 0 auto;
   height: 2px;
   background: var(--grad-brand);
-  /* INTEGRATED INTO THE PANE, not printed on top of it. The rule is the one
-     place the logo's blue->teal ramp is allowed, and at full strength a 2px
-     band sat on the card like tape. Softening it and letting it fade out
-     toward the trailing edge makes it read as the lit leading edge of the
-     card instead - present, brand-correct, and quiet.
-
-     A FLAT VALUE NOW, not one that steps with depth. It used to dim through
-     --card-behind, from the deck where a waiting card receded behind the one
-     being read. In a stack the rule is part of the strip that stays visible
-     above the next card - the reader is meant to see it on every landed card,
-     not only on the front one - so it holds its strength throughout. */
-  opacity: 0.85;
-  -webkit-mask-image: linear-gradient(90deg, #000 0%, #000 62%, transparent 100%);
-  mask-image: linear-gradient(90deg, #000 0%, #000 62%, transparent 100%);
+  opacity: 0.75;
 }
 
-/* The number sits on a short rule, as in the reference. */
 .tech__cardNum {
-  display: flex;
-  align-items: center;
-  gap: var(--s-3);
-  margin: 0 0 var(--s-4);
+  margin: 0 0 var(--s-3);
   font-size: var(--t-micro);
   font-weight: 700;
   letter-spacing: 0.14em;
-  color: var(--accent-2-ink);
-}
-.tech__cardNum::after {
-  content: "";
-  width: clamp(1.5rem, 4vw, 3rem);
-  height: 1px;
-  background: color-mix(in srgb, var(--accent-2) 45%, transparent);
+  color: var(--accent-2-on-deep);
 }
 
 .tech__cardTitle {
   margin: 0 0 var(--s-3);
-  /* THE SITE'S CARD-HEADING TOKEN, not a scale of its own.
-
-     This was clamp(1.35rem -> 2.1rem), invented for this section, and at the
-     top of that clamp it was competing with the section headline above it
-     ("The case runs on our own technology", --t-h2, 2.85rem). The hierarchy
-     the section wants is: section heading > card title > body > chips, and a
-     card title within a few tenths of a rem of the headline does not read as
-     the second thing in that list.
-
-     RESIZED FOR THE FULL-WIDTH ROW, THEN BROUGHT BACK DOWN. That reasoning
-     held while the card was a narrow panel; it resolved to 19-26px, and on a
-     full-width editorial row that is too small - the title is the card's own
-     headline and has to carry the row.
-
-     It went to 32-42px, which overshot: measured against the rest of the
-     card that was heavier than the row needed, and it was the main thing
-     pushing the card's height up. Then 26-34px, and now 22-29px - a further
-     step down, so the body row is quieter still and more of the card's
-     height belongs to the phone screens. Still the card's own headline
-     against a 42-52px number, and well clear of --t-h2 (2.85rem / ~46px) so
-     the section heading remains the dominant type on the screen. */
-  font-size: clamp(1.375rem, 1.15rem + 0.64vw, 1.8125rem);
+  font-size: var(--t-h3, 1.5rem);
   font-weight: 700;
-  line-height: 1.14;
-  letter-spacing: -0.015em;
-  color: var(--text-primary);
+  color: var(--text-on-deep);
 }
 
 .tech__cardCopy {
   margin: 0;
-  /* --t-body, the page's body token, instead of a slightly-larger private
-     clamp. The copy is supporting content, not a second headline, and it now
-     measures the same as body text elsewhere on the site. */
-  /* 17-20px, a touch above the body token: on a full-width panel the copy
-     column is physically wide and body-sized type read as small print in it.
-     Leading comes down with the size increase so the paragraph stays a
-     compact block rather than growing the card's height. */
-  /* 16-18px, then 15-16.5px. Each step tightens the paragraph's block on a
-     wide column; this is the floor - below ~15px the copy stops being
-     comfortable to read at arm's length, and the paragraph is the one thing
-     in the card that is actually read rather than scanned. */
-  font-size: clamp(0.9375rem, 0.91rem + 0.1vw, 1.03125rem);
-  line-height: 1.5;
   max-width: var(--measure);
-  color: var(--text-secondary);
+  color: var(--text-on-deep-secondary);
 }
 
 /* --- The tag row -------------------------------------------------------- */
 
 .tech__tags {
   list-style: none;
-  /* A LIST, NOT A CHIP ROW. These read as the card's sub-items - the things
-     it covers - set as a quiet column under the title, which is the
-     arrangement the reference uses. As pills in a wrapping row they competed
-     with the title for weight and made the card's first line noisy; as a
-     plain list they sit underneath it and are read after it.
-
-     The column is capped so a long set (card 01 has five) stays a short
-     column rather than a tall one that pushes the card's height up. */
-  display: grid;
+  display: flex;
+  flex-wrap: wrap;
   gap: var(--s-2);
-  margin: var(--s-4) 0 0;
+  margin: var(--s-5) 0 0;
   padding: 0;
 }
 
 .tech__tag {
-  /* No pill, no border, no fill. The leading rule is what marks these as a
-     set - the same hairline idiom the eyebrow uses, at item scale. */
-  display: flex;
-  align-items: center;
-  gap: var(--s-3);
-  /* 12-13.5px. Held deliberately below the copy so the sub-items stay the
-     quietest thing in the card, and stepped down with it. The vw term is
-     weighted so the floor is reached on a phone rather than well below it -
-     measured 11px at every width with a weaker term, which is under the
-     intended floor and read as fine print. */
-  font-size: clamp(0.75rem, 0.71rem + 0.14vw, 0.84375rem);
-  letter-spacing: 0.01em;
-  color: var(--text-secondary);
+  padding: 0.3rem 0.7rem;
+  border: 1px solid rgb(255 255 255 / 0.14);
+  border-radius: 999px;
+  font-size: var(--t-micro);
+  letter-spacing: 0.04em;
+  color: var(--text-on-deep-muted);
   white-space: nowrap;
-}
-.tech__tag::before {
-  content: "";
-  flex: none;
-  width: 0.75rem;
-  height: 1px;
-  background: color-mix(in srgb, var(--accent-2) 55%, transparent);
-}
-
-/* --- THE ROW ARRANGEMENT ------------------------------------------------
-
-   THE CARD IS A HORIZONTAL ROW, not a stacked block of copy. Three parts,
-   left to right:
-
-       01        the number, large and quiet, far left
-       TITLE     the heading, with its sub-items listed underneath
-       copy      the supporting paragraph, in its own column on the right
-
-   THIS IS WHAT MAKES A BURIED CARD LEGIBLE. Only the top ~13% of a landed
-   card shows above the card that lands on it, and in this arrangement the
-   number and the title are both on the FIRST line - so that strip carries the
-   card's whole identity. A card whose title sat under a paragraph would show
-   nothing useful when buried and the stack would read as four blank bars.
-
-   NOT scoped to .tech-deck-on. The row reads correctly as an ordinary column
-   card too, so with no JS or reduced motion the arrangement survives; only
-   the stacking is behind that class. */
-.tech__cardBody {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
-  column-gap: clamp(1.25rem, 0.8rem + 2vw, 3rem);
-  row-gap: var(--s-4);
-  align-items: start;
-  min-width: 0;
-}
-
-/* THE NUMBER. Large, light and set back - it is a marker, not a heading, so
-   it carries size without weight or colour. It spans both rows so the title
-   and the copy sit beside it as one block. */
-.tech__cardNum {
-  grid-row: 1 / -1;
-  display: block;
-  margin: 0;
-  /* 56-72px. The marker has to hold its own against a 32-42px title beside
-     it; at the old 28-52px it read as a small label rather than as the
-     card's index. Weight stays low-contrast through the colour, not the
-     size - it is a marker, not a heading. */
-  /* Down with the title, keeping the same ratio between them - the marker
-     still outweighs the heading beside it: 56-72 -> 48-60 -> 42-52px, each
-     step tracking the title so the pair keeps its relationship while the
-     row as a whole gets quieter. */
-  font-size: clamp(2.625rem, 2.2rem + 1.2vw, 3.25rem);
-  font-weight: 700;
-  line-height: 0.85;
-  letter-spacing: -0.02em;
-  color: color-mix(in srgb, var(--accent-2-ink) 55%, transparent);
-  font-variant-numeric: tabular-nums;
-}
-/* The rule the number used to carry belonged to a stacked layout, where it
-   separated the number from the heading BELOW it. Here the number sits
-   BESIDE the heading and the rule would cut between them. */
-.tech__cardNum::after { content: none; }
-
-/* The title and its sub-items are one unit in the second column. */
-.tech__cardHead { min-width: 0; }
-
-/* The copy takes the right-hand column at full width, and falls under the
-   title block below the breakpoint. */
-.tech__cardCopy { grid-column: 2; }
-
-@media (min-width: 1040px) {
-  /* THREE COLUMNS: number, title block, copy. The copy column is capped so
-     the paragraph keeps a readable measure rather than running the full width
-     of a 76rem card. */
-  /* THE TITLE COLUMN TAKES THE LARGER SHARE. At 1.1fr against the copy's 1fr
-     the longest title ("Records & transaction dashboard") broke to two lines
-     once the type went up to the editorial scale, which made that card taller
-     than its neighbours and its exposed edge read unevenly against theirs.
-     The copy keeps a 46ch ceiling of its own, so widening this track spends
-     the card's spare width on the one thing that was short of it. */
-  .tech__cardBody {
-    grid-template-columns: auto minmax(0, 1.5fr) minmax(0, 1fr);
-  }
-  .tech__cardCopy {
-    grid-column: 3;
-    grid-row: 1;
-    /* THE MEASURE IS A CEILING, NOT THE COLUMN. The paragraph keeps a
-       readable line length on a card that now spans the fold - without the
-       cap it would run the full width of the panel and the copy would read
-       as a single long line rather than as a column in the composition. */
-    max-width: 46ch;
-  }
 }
 
 /* --- Card 01: the app screens ------------------------------------------- */
 
-/* CARD 01 HOLDS TWO THINGS: the body row, and the phone screens. They stack
-   vertically inside the card - body on top, screens beneath - rather than the
-   card being a grid of its own. The body runs its own row grid (see THE ROW
-   ARRANGEMENT above), so a grid here would put a second grid between the card
-   and the arrangement and the columns would resolve against the wrong box. */
-.tech__card--app { display: flex; flex-direction: column; gap: var(--s-5); }
-
-/* THE BODY CENTRES IN THE CARD, and it is the BODY that is centred, not the
-   card that is made a grid. The card is a positioned box in the stack and
-   .tech__cardBody runs its own row grid inside it; making the card itself a
-   grid container (as the glass deck did) would put a second grid between the
-   two and the row arrangement would resolve against the wrong box.
-
-   The cards are all one height and the bodies differ, so the spare height is
-   distributed above and below the body rather than left under it. */
-/* TOP-ALIGNED, not centred. Centring was right while every card was forced
-   to one percentage height and the spare had to go somewhere; with the cards
-   content-sized there is no spare, and on a floor-lifted short card centring
-   pushed the number and title DOWN out of the strip the next card exposes.
-   Top-aligned, the identity line sits the same distance from every card's top
-   edge, which is what makes the buried strips read as an index of the stack. */
-.tech-deck-on .tech__card { display: flex; flex-direction: column; justify-content: flex-start; }
+/* Copy and artwork side by side from the medium breakpoint down below; the
+   phones sit on their own row on narrow screens so neither is squeezed. */
+.tech__card--app { display: grid; gap: var(--s-6); }
 
 .tech__shots {
   display: flex;
   justify-content: center;
-  align-items: center;
-  gap: clamp(0.4rem, 1.4vw, 0.9rem);
+  align-items: flex-end;
+  gap: clamp(0.5rem, 2vw, 1.25rem);
 }
 
-/* flex:none and aspect-ratio are BOTH load-bearing: width:auto on a flex item
-   resolves against the flex base, not the intrinsic size, so a row of three
-   collapses to zero width without them. The ratio (assets are 760x1531) gives
-   the width a definite value derived from the height, before decode rather
-   than after. The img tags carry width/height for the same reason. */
+/* Height-bounded, not width-bounded: three portrait screens side by side are
+   governed by how tall they are allowed to be.
+
+   flex:none and aspect-ratio are BOTH load-bearing, and dropping either one
+   collapses the phones to zero width - which is what they did at 390px and
+   900px before this. `width:auto` on a flex item resolves against the flex
+   base, not against the image's intrinsic size, so the default `flex:0 1 auto`
+   lets a row of three shrink them away entirely. flex:none takes them out of
+   that negotiation; the ratio (the assets are 760x1531) gives the width a
+   definite value derived from the height above, and does it BEFORE decode
+   rather than after, so there is no reflow when the WebP lands.
+
+   The <img> tags also carry width/height attributes for the same reason - the
+   two mechanisms agree, and either alone would be enough on a modern engine.
+   Keep them in sync if the crops are ever re-exported at another size. */
 .tech__shot {
   flex: none;
   width: auto;
   aspect-ratio: 760 / 1531;
-  height: clamp(6.5rem, 4.5rem + 6vw, 10rem);
-  border-radius: 14px;
-  /* COOL-TONED, to match the card's own shadow - a neutral-ink drop shadow
-     under the screens read as a cut-out pasted onto the glass. Same family,
-     slightly tighter, so the group sits ON the surface. */
-  filter: drop-shadow(0 14px 26px rgb(16 62 98 / 0.22));
+  height: clamp(13rem, 9rem + 18vw, 21rem);
+  border-radius: 12px;
+  filter: drop-shadow(0 18px 34px rgb(0 0 0 / 0.45));
 }
-/* The middle screen stands tallest, the outer two step down - the reference
-   shows the three as a set with the centre one forward. */
+
+/* The outer two stand slightly lower and smaller, so the three read as a set
+   with the dashboard - the screen that carries the most meaning - forward. */
 .tech__shot--a,
-.tech__shot--c { height: clamp(5.5rem, 4rem + 5vw, 8.5rem); }
-
-/* --- THE CARD STACK ------------------------------------------------------
-
-   Only from here down do the cards become a stack, and only when the script
-   says so.
-
-   THE METAPHOR IS A PILE THAT BUILDS, NOT A DECK THAT IS DEALT AWAY. Card 01
-   sits alone on its slot and the other three wait below the fold. Scrolling
-   down raises each in turn and LANDS it on its own slot, a little lower than
-   the card before it, where it stops for good. By the end all four are on
-   screen at once, stepped down the fold - the reader sees the whole set.
-
-   NOTHING IS EVER DISCARDED, which is the substantive change from the deck
-   this replaces. There, a card that had been read was lifted out of the fold
-   and hidden, so the reader could only ever see one. Here every card stays,
-   and the section's closing image is the complete stack.
-
-   THE MOTION IS VERTICAL ONLY. Nothing translates on X and nothing rotates.
-
-   TWO PROPERTIES, and tech-deck.js publishes them separately:
-
-       --card-rise    1..0   1 = waiting below the fold, 0 = landed on slot
-       --card-depth   0..3   how many cards have landed ON TOP of this one
-
-   Each is already clamped in JS, so every calc() here is plain arithmetic
-   with no abs() and no sign tests. CSS abs() is Values Level 4 and ships only
-   in Safari 17.2+; everywhere else it makes the whole declaration invalid at
-   parse time. The magnitudes are computed in JS, where Math.abs exists. */
-/* THE PINNED OBJECT: masthead on top, card area filling what is left.
-
-   Two rows, not one centred row. The header must sit at the TOP of the fold
-   and stay there for the whole pin, and the cards must own the rest of the
-   height so they have a definite box to stack in.
-
-   justify-items STRETCHES the column, so .tech__cards resolves its own cap
-   against the stage rather than shrink-wrapping to max-content. */
-.tech-deck-on .tech__stage {
-  position: relative;
-  z-index: 1;
-  height: 100svh;
-  display: grid;
-  grid-template-rows: auto minmax(0, 1fr);
-  justify-items: stretch;
-  align-items: stretch;
-  width: 100%;
-  /* TIGHTER THAN THE SECTION RHYTHM. This is a fixed 100svh box holding a
-     header AND a stack of cards, and every rem spent here comes straight out
-     of the card row underneath. Tight at the top, so the masthead sits high
-     in the fold and the stack gets the height. */
-  padding-block: clamp(0.75rem, 0.5rem + 1vw, 1.5rem) clamp(1rem, 0.8rem + 1.2vw, 1.75rem);
-  /* NO HORIZONTAL INSET ON THE STAGE. The cards are full-bleed panels now and
-     the stage is the box they resolve their width against, so an inset here
-     is an inset on every card at once - the narrow centred panel this
-     replaces. The breathing room the cards need is spent INSIDE them
-     (.tech__card padding-inline), where it separates type from the card's own
-     edge rather than the card from the viewport. */
-  padding-inline: 0;
-  box-sizing: border-box;
-}
-
-/* THE CARD AREA: the second row of the stage, so it is exactly the space left
-   under the masthead. The cards are absolutely positioned inside it and each
-   is anchored to the TOP of this box, offset down by its own slot. */
-.tech-deck-on .tech__cards {
-  display: block;
-  /* Its own stacking context, so every --card-z is scoped here and can never
-     outrank the masthead, which is a sibling above it. */
-  isolation: isolate;
-  position: relative;
-  z-index: 1;
-  /* FULL WIDTH OF THE STAGE, AND NO CENTRED CAP.
-
-     This was `min(100%, 76rem)` with `margin-inline: auto`, which is what
-     made the section read as a small floating card marooned in empty ground.
-     The cards are horizontal editorial PANELS - number at the left edge,
-     title and its sub-items beside it, the paragraph out at the right - and
-     that composition is the width: capped at 76rem on a 1440 fold the three
-     parts crowded into the middle third and the section lost its scale.
-
-     So the area runs the stage's full width and the cards span it edge to
-     edge. The only inset is the shadow gutter below, which is not a measure -
-     it is the few px the cast shadow needs so the clip box does not slice it
-     flat down each side. */
-  width: 100%;
-  max-width: none;
-  height: 100%;
-  /* A rising card must be CLIPPED while it is still below its slot, so it
-     never paints over the section beneath. The side padding keeps each card's
-     shadow off the clip edge - the shadow is tens of px of blur that would
-     otherwise be sliced flat, drawing a hard line down each side. */
-  /* CLIPPED ON BOTH AXES. A rising card must not paint over the section
-     beneath, and it must not widen the document either: measured mid-flight
-     the card's cast shadow pushed scrollWidth to 1458 on a 1440 fold - a
-     transient horizontal scrollbar on every desktop size, appearing only
-     while a card was in the air. `hidden` on both axes contains the blur
-     rather than letting it size the page. */
-  overflow: hidden;
-  /* THE SHADOW GUTTER, not a measure. Each card's cast shadow is tens of px
-     of blur; with the clip box flush to the card's edges that blur is sliced
-     flat and draws a hard vertical line down both sides of the stack. These
-     few px are all that is held back from the full width - small enough that
-     the cards still read as spanning the fold. */
-  padding: 0.5rem 0.75rem 1rem;
-  box-sizing: border-box;
-}
-
-/* THE CARD.
-
-   EVERY CARD IS THE SAME HEIGHT, so the stack steps evenly. The height is a
-   fraction of the card area, and the slots are spaced so all four fit with
-   each one's head showing above the card that lands on it.
-
-   THE SLOT ARITHMETIC, and it is the one thing here that must stay in step.
-   --slot is the vertical step between one card and the next, and it is what
-   the reader actually sees of a buried card: its top edge, its number and its
-   title. Four cards means three steps, so:
-
-       height 58% + 3 x 13% = 97%   of the card area
-
-   which leaves a little room at the bottom for the last card's shadow. Change
-   either number and the other has to move with it, or the fourth card runs
-   out of the bottom of the clip box. */
-.tech-deck-on .tech__card {
-  position: absolute;
-  /* TOP-ANCHORED, NOT CENTRE-ANCHORED. The old deck anchored every card by
-     its centre to one reading spot, because every card occupied that same
-     spot in turn. A stack has no single spot: each card has its OWN slot,
-     measured down from the top of the area, so the anchor is the top edge and
-     the slot offset is a plain translate. */
-  top: 0;
-  left: 0;
-  /* THE SLOT ARITHMETIC. --slot is the step between one card and the next,
-     and it is exactly what the reader sees of a buried card: its top edge,
-     its number and its title, which share the first line of the row. Four
-     cards means three steps, so height + 3 x slot must stay under 100% of
-     the card area or the fourth card runs out of the bottom of the clip box.
-
-         height 64% + 3 x 11% = 97%
-
-     BOTH TERMS ARE NOW ABSOLUTE, AND MEASUREMENT IS WHY. As percentages of
-     the card area they were tuned against a fold, and the fold is not what
-     either one is about:
-
-       THE CARD is about its CONTENT. Measured at 1440x900 the natural
-       content heights are 216-295px while 64% of the area forced every card
-       to 392px - a hundred-odd px of empty ground under the type on every
-       card, which is the dead space the composition read as. So the card is
-       content-sized, with a floor so the four still step evenly and a
-       ceiling so none can outgrow its own area.
-
-       THE SLOT is about the NUMBER AND TITLE LINE, which is the one thing a
-       buried card has to show. At 11% it resolved to 43px - less than the
-       card's own top padding - so every buried strip was bare gradient above
-       the type and the stack read as four blank bars.
-
-       THE STEP NO LONGER HAS TO CONTAIN THE IDENTITY LINE. It did while a
-       buried card was CLIPPED to one step: the strip was all that survived,
-       so it had to be tall enough to hold the number and title or the type
-       was sliced mid-glyph, which is what took the step to 112-132px.
-
-       A buried card is no longer clipped at all (see the buried rule below) -
-       it keeps its full height and is simply covered by the card above it -
-       so the step now only decides how much of that card's upper edge stays
-       in view, and the clamp is in rem because the edge it exposes is type
-       and padding, not a fraction of the viewport.
-
-       AT THE TOP OF THE 60-90px BAND, because the title grew. The exposed
-       edge has to clear the card's top padding (30px) plus enough of the
-       title to read it; at 63px the strips cut through the title's
-       descenders. 84-90px is the most the band allows and is what keeps the
-       buried titles legible without the four steps eating the fold. */
-  --slot: clamp(5.25rem, 4.9rem + 1.1vh, 5.625rem);
-  height: auto;
-  /* NO CEILING ON THE ACTIVE CARD. It was `calc(100% - 3 * var(--slot))`,
-     reserving the three steps out of the card's own height - which was
-     harmless while the step was ~43px and fatal once the step was corrected
-     to clear the identity line: at 1280x800 the ceiling resolved to 208px
-     against natural content of 216-295px, so every card was clamped under
-     its own type and card 01's number and title were cut (measured identity
-     bottom 54.6px, against 98.8px unclipped). That is precisely the clipping
-     this rework exists to remove.
-
-     The area does not need the reservation. The stack's total extent is the
-     tallest card plus three steps, and .tech__cards is sized from the stage's
-     free height, so the fit is checked there - not by shrinking every card
-     until the arithmetic works. */
-  width: 100%;
-  /* THE BASE CARD'S CENTRED CAP, EXPLICITLY UNDONE. `.tech__card` carries
-     `width: min(100%, 76rem)` with `max-width: 100%` and `margin-inline:
-     auto` for the un-stacked column, where a centred measure is correct.
-     In the stack it is the narrow floating panel this change removes, and
-     `width: 100%` alone does not undo the cap's companions. */
-  max-width: none;
-  box-sizing: border-box;
-  margin: 0;
-  /* THE CARD ITSELF DOES NOT CLIP.
-
-     This was `overflow: hidden`, and that is what turned a height problem
-     into an invisible one: card 01's copy and screens overran the card and
-     were silently cut at its lower edge rather than showing as overflow. The
-     clip that the stack genuinely needs - so a rising card does not paint
-     over the section beneath - belongs to .tech__cards, which still has it.
-
-     Left visible, the height arithmetic above has to be right, and a
-     regression shows itself instead of hiding. */
-  overflow: visible;
-  /* The floor, so the four cards step evenly even though their content
-     differs by ~80px. Below the tallest card's natural height, so it is the
-     short cards this lifts and the tall one keeps its own size.
-
-     SHORTER. This was clamp(12rem, 9rem + 8vh, 17rem) - 192-272px of floor,
-     which on a tall fold left the cards reading as full-screen containers
-     with dead ground under the type. The floor now only has to keep the four
-     cards stepping evenly; the content sets the real height.
-
-     NOT ON THE TALLEST CARD'S OWN AXIS. min-height and a max-height can
-     contradict each other on a short fold - max-height wins in CSS, and a
-     card clamped under its natural content with overflow visible spills its
-     lower edge (measured: card 01 at 390x844 overran by 43px). So no ceiling
-     is imposed where the content genuinely needs the room. */
-  min-height: clamp(9rem, 7rem + 5vh, 12rem);
-  /* THE INSET THE STAGE GAVE UP. With the card spanning the fold, the space
-     that keeps type off the card's own edge is spent here - viewport-relative
-     so it opens up on a wide screen and closes on a narrow one, and matched
-     to the page's own margin so the number's left edge lines up with the
-     section heads above it. */
-  padding-inline: clamp(1.25rem, 4vw, 4.5rem);
-  /* VERTICAL PADDING, CUT. It was inherited from the base card at 52px top
-     and bottom - a quarter of the card's height spent on air. Halved, so the
-     panel reads as a horizontal editorial row rather than as a tall box with
-     a row floating in it. */
-  padding-block: clamp(1.25rem, 0.9rem + 1.1vw, 1.875rem);
-
-  /* --- THE SURFACE: OPAQUE, AND THE STACK REQUIRES IT -------------------
-
-     The deck this replaces was glass - translucent, backdrop-blurred, with
-     only ever one card readable at a time. A stack cannot be: all four cards
-     stay on screen to the end, and four translucent panes laid over one
-     another compound into mud - a buried card's type shows through the card
-     on top of it, which reads as a rendering fault rather than as depth.
-
-     So the ground is solid. --surface-raised is the card ground everywhere
-     else on the site, which is what makes these read as the same material as
-     the rest of the page rather than as something invented for this section.
-
-     THE BRAND TINT SURVIVES as a trace across the diagonal rather than as a
-     wash: white-dominant at the top-left where the number and title sit, a
-     suggestion of blue through the middle, a trace of teal in the far corner.
-     Both colours come from --accent / --accent-2 through color-mix, so
-     nothing enters that is not already in the palette. Deliberately faint -
-     enough to see the diagonal on the front card, not enough to call it a
-     coloured card. */
-  background:
-    linear-gradient(148deg,
-      var(--surface-raised) 0%,
-      color-mix(in srgb, var(--accent) 3%, var(--surface-raised)) 52%,
-      color-mix(in srgb, var(--accent-2) 7%, var(--surface-raised)) 100%);
-
-  /* THE TRAVEL, and it is one term now rather than two summed.
-
-     A card sits at its slot and rises into it from below:
-
-         resting    translateY(slot offset)
-         waiting    translateY(slot offset + a full card area)
-
-     --card-rise is 1 while waiting and 0 once landed, so the second term
-     vanishes exactly when the card arrives and the card then never moves
-     again for the rest of the run. That is what "lands for good" means, and
-     it is why there is no departure term at all.
-
-     THE SLOT OFFSET IS THE CARD'S INDEX, and the index is not something the
-     script writes - it is the nth-child position, spent below. Keeping it in
-     CSS means a card's resting place is a property of the markup, and the
-     script only ever says how far off it a card currently is.
-
-     THE RISE IS MEASURED AGAINST THE AREA, NOT THE CARD. It was 125% of the
-     card's own height, which was a reliable way to say "off the bottom of
-     the clip box" only while every card was forced to the same height. With
-     the cards content-sized a short card's 125% can leave it peeking at the
-     lower edge, so the travel is spent on the box the card actually has to
-     clear - the card area.
-
-     AND IT MUST CLEAR THE SLOT AS WELL AS THE AREA. A percentage here
-     resolves against the CARD, not the area, so plain 100% is one card-height
-     - short of the area whenever the area is taller than the card, which it
-     always is. Measured at 1440x900 that left cards 02 and 03 already part
-     way up and fully readable at the start of the run, with a gap under card
-     01: the opening view showed three cards instead of one.
-
-     The waiting position is therefore the area's full height PLUS the card's
-     own slot offset, which is the distance from the area's top to where the
-     card will land. Both terms are absolute, so a card of any height parks
-     genuinely below the clip box and the opening view is card 01 alone. */
-  --rise-from: calc(100% + var(--slot-offset, 0rem));
-  transform: translateY(calc(
-    var(--slot-offset, 0rem)
-    + var(--card-rise, 0) * var(--rise-from)
-  ));
-
-  /* NO OPACITY ON ANY CARD, EVER. THE STACK MUST BE OPAQUE.
-
-     This was `calc(1 - var(--card-depth) * 0.04)` - a slight dim on buried
-     layers, which was safe only while a buried card was CLIPPED to a thin
-     strip: almost nothing of it was on screen to see through.
-
-     Now that a buried card keeps its full height and is simply covered, that
-     dim is a bug. A card at opacity 0.88 is TRANSLUCENT, so the card beneath
-     it shows THROUGH it: measured at the end of the run, cards 01, 02 and 03
-     ghosted into one another - "Records &" reading over "The Crew Care App",
-     the phone screens showing through two panels above them. Four overlapping
-     translucent panes compound into exactly the mud this section was rebuilt
-     to avoid.
-
-     Depth is carried by the overlap and the slot offset alone, which is what
-     a stack of physical sheets does. A sheet lower in a pile is not fainter;
-     it is simply covered. */
-  opacity: 1;
-
-  /* Paint order follows document order - each card lands on top of the one
-     before it, so 04 must paint over 03 over 02 over 01 at every moment,
-     including mid-flight. */
-  z-index: var(--card-z, 1);
-
-  /* THE SHADOW IS WHAT MAKES THE STACK READ AS A STACK. With the cards opaque
-     and overlapping, the only cue that says "this card is ON TOP of that one"
-     is the shadow it casts onto it. So this is a real cast shadow, not the
-     inset rim-light the glass card used: a soft cool-toned drop under the
-     lower edge, which is where it falls on the card beneath.
-
-     It does NOT step with depth. Every card casts onto its own neighbour
-     equally, and the shadow of a buried card is mostly hidden by the card
-     covering it anyway. */
-  box-shadow:
-    inset 0 1px 0 rgb(255 255 255 / 0.9),
-    0 -18px 36px -18px rgb(16 62 98 / 0.28);
-
-  border: 1px solid var(--border);
-  /* Generous and architectural, kept as it was - a tighter radius would read
-     as clinical rather than premium, and a larger one as a pill. */
-  border-radius: 18px;
-  will-change: transform, opacity;
-}
-
-/* THE SLOTS. Each card rests one step lower than the one before it. Spending
-   the step through nth-child keeps the resting place a property of the
-   markup: the script says how far a card is from its slot, never where the
-   slot is.
-
-   Four cards, so four rules. A fifth would need a fifth rule - which is the
-   right amount of friction for a change that also has to be paid for in the
-   height arithmetic above. */
-.tech-deck-on .tech__card:nth-child(1) { --slot-offset: 0rem; }
-.tech-deck-on .tech__card:nth-child(2) { --slot-offset: var(--slot); }
-.tech-deck-on .tech__card:nth-child(3) { --slot-offset: calc(2 * var(--slot)); }
-.tech-deck-on .tech__card:nth-child(4) { --slot-offset: calc(3 * var(--slot)); }
-
-/* THE CONTENTS STAY VISIBLE, unlike in the deck this replaces.
-
-   There, a waiting card's body was faded out steeply, because mid-transition
-   three cards sat at fractional depths over one another and their type
-   overlapped into an unreadable mess. That was a consequence of the cards
-   being TRANSLUCENT and sharing one reading spot.
-
-   Neither is true here. The cards are opaque, so a buried card's type cannot
-   show through the card on top of it; and each card has its own slot, so the
-   only part of a buried card that is visible is the strip above the next
-   card's top edge - which is exactly where its number and title sit. That
-   strip is MEANT to be read: it is what tells the reader what is already in
-   the stack. So the body carries no depth fade at all. */
-.tech-deck-on .tech__cardBody,
-.tech-deck-on .tech__shots { opacity: 1; }
-
-/* Only the card in front is interactive. A buried card is mostly covered and
-   must not catch a click meant for the card on top of it; a waiting card is
-   still below the fold. */
-.tech-deck-on .tech__card[data-card-state="waiting"],
-.tech-deck-on .tech__card[data-card-state="buried"] { pointer-events: none; }
-
-/* A BURIED CARD IS CLIPPED TO ITS OWN STRIP. THE ACTIVE CARD NEVER IS.
-
-   The cards are content-sized and they differ in height, so a TALL buried
-   card's body extends past the shorter card that landed on it and paints in
-   the open below it: measured at 390x844, card 01's closing line and its
-   three phone screens were showing underneath the front card, which reads as
-   two cards bleeding into one another rather than as a stack.
-
-   Clipping the card outright is what the original deck did, and it is what
-   hid card 01's paragraph and screens in the first place - so the clip is
-   scoped to the state where nothing is being hidden that the reader should
-   be reading. A buried card is by definition covered from its strip down;
-   cutting it there removes only what the card on top of it would have
-   covered anyway.
-
-   The ACTIVE and WAITING cards keep overflow:visible, so the front card
-   always paints its content in full - which is the requirement the whole
-   height model exists to serve. */
-/* A BURIED CARD KEEPS ITS FULL HEIGHT AND IS SIMPLY COVERED.
-
-   IT WAS CLIPPED TO ONE STEP, and that is what read as "card 01 disappears".
-   The stacking model was never the problem - measured across the whole run,
-   card 01 holds top:260 from the moment it lands to the end, never moves,
-   never fades below 0.88, and always paints under the later cards. But the
-   instant card 02 landed, this rule cut card 01 from ~296px to a 115px strip:
-   the tags, the paragraph and the phone screens the reader was looking at
-   vanished in a single frame, while the card that was supposed to be covering
-   them was still only part way up. The eye reads that as the card being taken
-   away, because nothing has covered it yet.
-
-   So nothing is clipped. Each card keeps its own height for the whole run and
-   the card above simply lands ON it - which is what a stack of sheets does,
-   and it makes the overlap the only thing that decides what stays visible.
-   The cards are opaque, so a covered card cannot show through the one on top
-   of it; only its exposed upper edge is ever seen, and that edge is governed
-   by the next card's slot.
-
-   Nothing here sets height, overflow or visibility any more. The only thing a
-   buried card gets is the pointer-events rule above, so a click lands on the
-   card actually in front. */
-
+.tech__shot--c { height: clamp(11.5rem, 8rem + 15.5vw, 18.5rem); }
+
+/* 1040px, NOT 860px. The card only goes two-column once there is room for a
+   paragraph at its measure AND three portrait screens beside it. At 900px
+   there is not: the copy column collapses under the phones' fixed width (they
+   are flex:none by necessity - see .tech__shot) and the text runs underneath
+   the artwork. Verified at 390, 900, 1024 and 1440.
+
+   It shares the breakpoint with .tech__cards going two-up below, which is
+   deliberate: the app card spans both columns there, so the section changes
+   from one column to two at a single width rather than twice. */
 @media (min-width: 1040px) {
-  /* THE COPY COLUMN GETS THE LARGER SHARE, and with the narrower card it has
-     to. The split was 1fr / 1.05fr - the artwork track marginally the wider -
-     which was right while the card ran nearly the full width of the fold. On
-     a card ~10rem narrower the copy track fell below its own measure and the
-     paragraph ran under the phones, clipping a line mid-word ("...a direct
-     line to the case|"). The text column is the one carrying a fixed measure,
-     so it is the one that must win the split. */
-  /* THE SCREENS SIT BESIDE THE ROW AGAIN, and the card's width is what pays
-     for it.
-
-     They were moved UNDERNEATH when the card was capped at 76rem: the row
-     already ran number, title and copy left to right across a narrow panel,
-     and a fourth column would have left none of them room. But a band under
-     the row is height, and card 01 is the one card that has to hold both -
-     that band is what overran the card and clipped the paragraph and the
-     screens at its lower edge.
-
-     At full width the row has the horizontal room it did not have before, so
-     the screens take a column of their own at the right and the card's
-     height is spent on ONE row instead of two. This is the trade that makes
-     all of card 01's content fit at the active position, which is the thing
-     the section must do. */
-  /* .tech-deck-on IS ON THE SELECTOR DELIBERATELY. The stack's own rule
-     (`.tech-deck-on .tech__card`) sets flex-direction: column at two
-     classes; a bare `.tech__card--app` is one and loses to it whatever the
-     file order, so the screens would silently stay in a band underneath.
-     The un-stacked fallback keeps the column, which is right for it. */
-  /* TOP-ALIGNED, LIKE EVERY OTHER CARD. Centring the row against the phone
-     screens - which are the tallest thing in the card - pushed the body down
-     by half the difference, so card 01's number and title sat BELOW the strip
-     the stack exposes: measured, its buried strip showed the tag list and a
-     mid-sentence fragment of the paragraph while 02, 03 and 04 all showed
-     their number and title. The identity line has to sit the same distance
-     from the top edge on all four cards or the stack stops reading as an
-     index of itself. The screens keep their own alignment below. */
-  .tech-deck-on .tech__card--app { flex-direction: row; align-items: flex-start; }
-  .tech__card--app .tech__cardBody { flex: 1 1 auto; min-width: 0; }
-  .tech__shots {
-    flex: none;
-    justify-content: flex-end;
-    /* A LARGER SHARE OF THE ROW than the 34% it had, so the three screens are
-       read as part of the card rather than as a detail at its edge. Still a
-       cap, so the copy column keeps its measure - raised to 52% as the
-       screens grew, since the phones take their WIDTH from their height
-       through aspect-ratio and would otherwise be capped by this track
-       rather than by the height set above. */
-    max-width: 52%;
-    /* The group hangs from the top of the row with the rest of the content,
-       so its height is bounded by the card, never by the card's lower edge
-       cutting it off. */
-    align-self: flex-start;
+  .tech__card--app {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr);
+    align-items: center;
   }
+  .tech__shots { justify-content: flex-end; }
 
-  /* THE PHONES ARE BOUND BY THEIR TRACK, NOT BY THE VIEWPORT.
-
-     .tech__shot takes its width from its HEIGHT through aspect-ratio, so a
-     height clamp with a large vw term is really a WIDTH clamp in disguise:
-     three screens side by side consumed more horizontal space than their
-     column had, and the overflow pushed back into the copy.
-
-     So the vw term comes down and the ceiling with it - the group is sized to
-     sit inside its own track on a narrower card. The aspect-ratio itself is
-     untouched, so the screens are never distorted; only the height they
-     resolve to changes. They still read as substantial because the card is
-     taller: the group fills more of the card's height than it did before,
-     even at a slightly smaller absolute size. */
-  /* SHORTER THAN THEY WERE. The screens now share the card's height with
-     the whole body row above them rather than sitting in a column beside
-     it, so they take what is left under the copy - substantial, but no
-     longer the tallest thing in the card. */
-  /* Sized against the card's HEIGHT now that the screens share a row rather
-     than sitting in a band of their own - tall enough to read as the
-     substantial visual element of card 01, short enough to sit inside the
-     card with its padding intact. */
-  /* MORE OF THE PHONES, NOT LESS. They were sized to whatever was left under
-     a tall body and ended up cropped by the card's lower edge - three
-     half-phones peeking out from under the panel. They are the only artwork
-     in the section and they now take a real share of the card: the group is
-     bound by its own track (max-width below) so it can never push into the
-     copy, and the card's own padding is what stops the crop. */
-  /* BIGGER AGAIN, and the smaller type is what pays for it: the body row is
-     shorter now, so the screens can take more of the card's height without
-     the card growing. They are the only artwork in the section.
-
-     AND BIGGER ONCE MORE, for the same reason - the type has come down a
-     further step, which frees height in the row that the screens are the
-     right thing to spend on. The aspect-ratio is untouched, so this is only
-     the height they resolve to; the track cap below is what keeps three of
-     them from pushing back into the copy. */
-  .tech__shot { height: clamp(12rem, 8rem + 15vh, 21.5rem); }
-  .tech__shot--a,
-  .tech__shot--c { height: clamp(10.25rem, 6.8rem + 12.8vh, 18.5rem); }
-
-  /* AND BOUNDED BY THE CARD, NOT ONLY BY THEIR OWN CLAMP.
-
-     The clamps above are what the screens WANT to be; this is what the card
-     can actually hold. Card 01 is content-sized, so the screens are part of
-     what sets its height - but the body row beside them has a shorter natural
-     height, so past a point the group stops making the card taller and simply
-     overruns its lower edge, shadow and all. Measured at 1440x900 the centre
-     screen reached 263px inside a 325px card whose padding is 30px top and
-     bottom: the group bottomed out exactly on the border and the drop-shadow
-     spilled past it.
-
-     max-height on the FLEX ITEMS (not the container) keeps the aspect-ratio
-     driving width from height, so the phones stay undistorted - they just
-     stop growing once they reach the card's inner height. The outer two keep
-     their step down through the same fraction. */
-  .tech__shot { max-height: calc(100% - 0.5rem); }
-  .tech__shot--a,
-  .tech__shot--c { max-height: calc(86% - 0.5rem); }
-
-  /* Capped to its COLUMN, not to the global measure: --measure is 65ch, wider
-     than this track. The row grid above already caps it at 42ch; this keeps
-     the card-01 copy from overriding that with the global measure. */
-  .tech__card--app .tech__cardCopy { max-width: 42ch; }
+  /* The copy must be capped to its COLUMN, not to the global measure.
+     --measure is 65ch, which is wider than this track until well past
+     1440px, so the paragraph overflowed the column and ran underneath the
+     phones - the grid bounds the track, never the text inside it. The
+     column is already narrower than a comfortable measure here, so this
+     only ever tightens it. */
+  .tech__card--app .tech__cardCopy { max-width: 100%; }
 }
 
-/* Narrow screens. The fold is shorter and the card is taller relative to it,
-   so the slot step has to shrink or the fourth card runs out of the bottom of
-   the card area. The STACK BEHAVIOUR is unchanged - four cards, vertical only,
-   same scrub, same reversibility - only the offsets are simplified.
-
-   THE ARITHMETIC MUST BE REDONE AT EACH WIDTH, not just scaled: height plus
-   three slots has to stay under 100% of the card area, and the slot has to
-   stay tall enough to show a buried card's number and title. */
-@media (max-width: 1040px) {
-  /* The row layout folds to a column below this width (see .tech__cardBody),
-     so the card is taller and the slots correspondingly tighter. */
-  .tech-deck-on .tech__cards { padding: 0.5rem 0.75rem 1rem; }
-  /* 66% + 3 x 11% = 99%. The row folds to a column at this width (see
-     .tech__cardBody) so the card's content is taller and the card takes a
-     little more of the area; the step stays where it is, since the number
-     and title still share the first line and that is all the strip shows. */
-  /* The row has folded to a column here so the content is taller, but the
-     model is unchanged: content-sized card, slot set from the identity line.
-     Only the step tightens, because the fold is shorter. */
-  .tech-deck-on .tech__card { --slot: clamp(6.5rem, 6rem + 1.2vh, 7.5rem); }
-  /* NO OFFSET RULES HERE. The base rules derive every offset from --slot
-     (calc(n * var(--slot))), so re-stating the step is only a chance for the
-     two to drift - which is exactly what happened: these blocks kept the old
-     PERCENTAGE offsets after the base was converted, and a percentage
-     resolves against the card's own height, not the slot. At 390px that made
-     the step 9px instead of 92px and the top three strips piled on top of one
-     another. Overriding --slot alone is enough; the offsets follow. */
-
-  /* Card 01 goes back to a column: below the three-column breakpoint the body
-     itself has folded, so there is no horizontal room for a screens column
-     and they take the width underneath again. */
-  .tech-deck-on .tech__card--app { flex-direction: column; align-items: stretch; }
-  .tech__shots { max-width: none; justify-content: center; }
-}
-
-@media (max-width: 860px) {
-  .tech-deck-on .tech__cards { padding: 0.5rem 0.6rem 1rem; }
-  /* 67% + 3 x 11% = 100% of the card area. Tight by design: the fold is
-     shorter here and the card's content is a full column, so the card takes
-     essentially all of the area and the stack steps inside it. */
-  .tech-deck-on .tech__card { --slot: clamp(5rem, 4.6rem + 1.2vh, 6rem); }
-}
-
-@media (max-width: 560px) {
-  .tech-deck-on .tech__cards { padding: 0.5rem 0.5rem 0.75rem; }
-  .tech-deck-on .tech__card {
-    /* The identity line is 55.5px on most cards here but 76.2px on card 02,
-       whose title takes two lines at this width - and the step has to clear
-       the TALLEST of them, not the typical one, or that card alone is cut.
-       Smaller than the desktop step because the type and padding are
-       smaller, but still above the line it has to clear. */
-    /* Brought down with the desktop step, for the same reason: the strip no
-       longer has to contain the identity line, because a buried card keeps
-       its full height and is simply covered. It measured 91.8px here, above
-       the 60-90px band the stack is tuned to. */
-    --slot: clamp(3.75rem, 3.4rem + 1vh, 4.75rem);
-    border-radius: 14px;
-    /* The card is nearly the full width of a phone, so the inset comes down
-       to the page's own margin - any more and the copy column is too narrow
-       to hold a readable line. */
-    padding-inline: clamp(1rem, 5vw, 1.5rem);
-    /* AND TIGHTER VERTICALLY. Card 01 is a full column here - number, title,
-       five tags, the paragraph AND the phone band - which made it 505px
-       against 281-335px for the others. That surplus is what pushed its lower
-       band past the stack's clip, so the phones showed as three cut-off tops
-       under the front card. Padding is the cheapest px to give back. */
-    padding-block: clamp(0.875rem, 0.7rem + 0.8vw, 1.25rem);
-  }
-
-  /* THE TITLE COMES DOWN ON A PHONE. The editorial scale is set for a
-     full-width desktop row; in a ~340px column its floor (32px) broke every
-     title to two lines and "Records & transaction dashboard" to three, which
-     is what made that card half again as tall as its neighbours. Reduced
-     just enough to hold the long title to two lines, and still comfortably
-     above the copy beside it.
-
-     THE vw TERM IS THE PART THAT MATTERS HERE, not the floor. At
-     `1.05rem + 1.4vw` a 390px screen resolves to 22.3px - well above the
-     20px floor - and "Records & transaction dashboard" still took two lines,
-     so card 02's buried strip showed a cut second line under the card above
-     it. Weakened so a phone lands at or near the floor and the longest title
-     holds one line. */
-  .tech__cardTitle { font-size: clamp(1.25rem, 1.15rem + 0.5vw, 1.5rem); }
-
-  .tech-deck-on .tech__card {
-    /* NO FLOOR AND NO CEILING ON A PHONE. The card is a full column here -
-       number, title, every tag and the paragraph stacked - so it is the
-       content that must set the height, and a ceiling derived from the area
-       fights it: max-height wins over min-height in CSS, so a clamped card
-       with overflow visible spilled its lower edge (measured: card 01 over-
-       ran by 43px at 390x844). The stack still steps, because the slot is
-       absolute and the area is tall enough for four steps plus the tallest
-       card. */
-    min-height: 0;
-    max-height: none;
-  }
-  /* The screens come down so card 01's column still fits the card. */
-  /* Up with the desktop screens, in the same proportion. On a phone the group
-     sits under the body in a column of its own, so its height is bounded by
-     the card rather than by a track beside the copy.
-
-     SMALLER THAN THAT PROPORTION WOULD SUGGEST, because here the screens are
-     a band UNDER a full column of copy rather than a track beside it: every
-     px they take is a px added to the card, and card 01 is already the
-     tallest in the stack (523px against 278-329px). Measured at the previous
-     size the band pushed the card past what the stack area could show and the
-     phones were cut off by the card's own lower edge. */
-  .tech__shot { height: clamp(5.5rem, 3.4rem + 7.6vh, 8rem); }
-  .tech__shot--a,
-  .tech__shot--c { height: clamp(4.75rem, 2.9rem + 6.5vh, 6.875rem); }
-}
-
-/* Reduced motion: the stack never forms. tech-deck.js does not add
-   .tech-deck-on at all in that case, so these are belt-and-braces for a
-   preference changed mid-session, which would otherwise leave four cards
-   piled on their slots with no scrub to land them. Everything the stack adds
-   is unset here and the cards become an ordinary accessible column, with all
-   four fully visible and readable in document order. */
-@media (prefers-reduced-motion: reduce) {
-  .tech-deck-on .tech__stage {
-    height: auto;
-    min-height: 0;
-    display: block;
-    margin-top: 0;
-    padding-block: 0;
-  }
-  .tech-deck-on .tech__cards {
-    display: grid;
-    gap: var(--s-6);
-    height: auto;
-    min-height: 0;
-    overflow: visible;
-  }
-  .tech-deck-on .tech__card {
-    position: relative;
-    top: auto;
-    left: auto;
-    /* The stack gives every card the same definite height so the pile steps
-       evenly. In an ordinary column that is wrong: each card should be
-       exactly as tall as its own content. Unset with the rest of the stack,
-       along with the slot offset and the rise. */
-    height: auto;
-    max-height: none;
-    --slot-offset: 0%;
-    --card-rise: 0;
-    --card-depth: 0;
-    overflow-y: visible;
-    transform: none;
-    opacity: 1;
-    visibility: visible;
-    box-shadow: 0 1px 2px rgb(20 34 49 / 0.06);
-    pointer-events: auto;
-  }
-  .tech-deck-on .tech__cardBody,
-  .tech-deck-on .tech__shots { opacity: 1; }
+/* Two-up once there is room, with the app card spanning both columns: it is
+   the one card with artwork and it anchors the set. */
+@media (min-width: 1040px) {
+  .tech__cards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .tech__card--app { grid-column: 1 / -1; }
 }

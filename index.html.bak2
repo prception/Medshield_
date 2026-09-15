@@ -287,29 +287,27 @@
          carries no audio stream, so nothing is downloaded for a track that
          would never be heard. -->
     <div class="hero__media" aria-hidden="true">
-      <!-- Two stacked <video> elements playing a THREE-clip playlist:
-           assets/hero/1.mp4 -> 2.mp4 -> 3.mp4 -> back to 1, forever.
-           The elements are not one-clip-each: they alternate. Whichever is
-           front plays the current clip while hero.js loads the NEXT clip into
-           the back one, then dissolves them past each other at the handoff, so
-           every join - including 3 -> 1 - is a crossfade rather than a cut.
-           The playlist itself lives in HERO_CLIPS in hero.js; A's first source
-           is promoted from data-src by enableVideo, and B's src is written by
-           script from then on. Only one is visible at a time via .is-active. -->
+      <!-- Two stacked copies of the same clip. Native loop cuts hard on
+           whatever frame the source ends on; hero.js instead crossfades B in
+           UNDER A a moment before A's loop point and hands playback off, so
+           the restart is masked by a dissolve rather than seen as a cut.
+           Both start with the source attached (see enableVideo in hero.js) -
+           only one is ever visible at a time via .is-active. -->
       <video class="hero__video hero__video--a is-active" id="hero-video"
              muted playsinline autoplay preload="auto"
              tabindex="-1" disablepictureinpicture>
-        <source data-src="assets/hero/1.mp4" type="video/mp4">
+        <source data-src="assets/videos/hero-loop.mp4" type="video/mp4">
       </video>
-      <!-- The back element. preload="metadata" keeps it from racing the front
-           one for bandwidth during first paint - it is not needed until the
-           first handoff, a clip-length away. hero.js gives it clip 2 and calls
-           load() as soon as clip 1 can play, so each clip has the whole of the
-           preceding one to buffer; that headroom is what keeps the dissolve
-           from landing on an unbuffered frame. -->
+      <!-- Copy B is only needed at the crossfade, ~9.4s in. preload="metadata"
+           keeps it from racing copy A for bandwidth during first paint -
+           with preload="auto" the page fetched the same clip twice up front,
+           doubling the time before anything could play. hero.js calls load()
+           on it once copy A is under way. -->
       <video class="hero__video hero__video--b" id="hero-video-b"
              muted playsinline preload="metadata"
-             tabindex="-1" disablepictureinpicture></video>
+             tabindex="-1" disablepictureinpicture>
+        <source data-src="assets/videos/hero-loop.mp4" type="video/mp4">
+      </video>
       <!-- No <noscript> poster fallback either: it would paint a still image
            in the hero, which is exactly what this hero must never show. With
            scripting off the sources are never promoted from data-src, so the
@@ -339,26 +337,9 @@
              INDUSTRIAL / OFFICE. The <br>s are the composition, not wrapping:
              the reference breaks these deliberately rather than letting the
              column width decide. -->
-        <!-- The label is one element whose TEXT changes per state, not three
-             stacked copies: it sits in a grid cell whose height sets where the
-             headline band begins, and three overlaid copies of differing line
-             counts would move that boundary as the state changed. hero.js
-             rewrites the inner span and re-runs the same slide. -->
         <p class="hero__label"><span class="hero__label-t">Maritime healthcare<br>&amp; claims<br>management</span></p>
 
-        <!-- The supporting tagline area. THREE states share one box, exactly
-             as the two display blocks share one grid cell below: each is
-             absolutely positioned against the box except the current one, so
-             the tagline never moves between videos (requirement 9) and the
-             annotations row keeps a single stable height.
-
-             State 1's copy is the approved original, unchanged, and is the one
-             that renders with no script at all. -->
-        <p class="hero__note">
-          <span class="hero__note-state is-current" data-state="0"><span class="hero__note-t">From the first call at sea<br>to the closed claim.</span></span>
-          <span class="hero__note-state" data-state="1"><span class="hero__note-t">Care that keeps<br>your crew moving.</span></span>
-          <span class="hero__note-state" data-state="2"><span class="hero__note-t">Intelligence that moves<br>every claim forward.</span></span>
-        </p>
+        <p class="hero__note"><span class="hero__note-t">From the first call at sea<br>to the closed claim.</span></p>
       </div>
 
       <!-- Band 2. The display headline - THREE rows, each with its own
@@ -420,59 +401,12 @@
         </span>
       </div>
 
-      <!-- Band 2c. The THIRD display state — AI Fathom.
-
-           Same three-row skeleton and the same shared grid cell as the two
-           blocks above, so all three swap in place with no reflow. The
-           alignment tension is deliberately the one the H1 uses (left, left,
-           right) rather than a new pattern: requirement 6 asks for a state
-           visually consistent with the first two, not a third layout.
-
-           The copy is NOT a rewrite of the approved messaging — "EXPANDING THE
-           HORIZON" and "CREW HEALTHCARE" are both untouched above. This block
-           names the capability the third clip actually shows, which is what
-           makes the visual legible as MedShield's own AI rather than as stock
-           interface footage.
-
-           aria-hidden for the same reason as the alt block: the H1 above is
-           the page's only heading, and a third decorative headline on a timer
-           is not something to announce. -->
-      <div class="hero__display hero__display--ai" id="hero-display-ai" aria-hidden="true">
-        <span class="hero__row hero__row--a"><span class="hero__row-t">AI</span></span>
-        <span class="hero__row hero__row--b"><span class="hero__row-t">Fathom</span></span>
-        <span class="hero__row hero__row--c hero__row--end"><span class="hero__row-t">Claims intelligence.</span></span>
-      </div>
-
       <!-- Band 3. The quiet footer rail: CTA at the left, metadata at the
            right. Secondary action is a text link, not a second button. -->
       <div class="hero__foot">
-        <!-- THREE CTA states sharing ONE box.
-
-             The states are stacked in the same cell (grid, all three in row 1
-             / column 1) rather than swapped by rewriting the anchors' text.
-             Rewriting in place would re-measure the filled pill every time the
-             copy changed, and the button would visibly resize and shift at the
-             exact moment of the crossfade — requirement 10 forbids precisely
-             that. Overlaid states keep the box at the width of the widest
-             state, so nothing moves, ever.
-
-             Only the current state is interactive: the other two carry
-             inert + aria-hidden so a keyboard tab never lands on a hidden
-             action and a screen reader is never offered three competing
-             primary CTAs. hero.js maintains both. -->
         <div class="hero__actions">
-          <div class="hero__cta-state is-current" data-state="0">
-            <a class="btn btn--primary btn--onDeep hero__cta" href="#contact">Request a proposal</a>
-            <a class="hero__cta-alt" href="services.html#process">See how a case runs <span aria-hidden="true">&rarr;</span></a>
-          </div>
-          <div class="hero__cta-state" data-state="1" aria-hidden="true" inert>
-            <a class="btn btn--primary btn--onDeep hero__cta" href="services.html">Explore crew care</a>
-            <a class="hero__cta-alt" href="services.html#process">See how crew care works <span aria-hidden="true">&rarr;</span></a>
-          </div>
-          <div class="hero__cta-state" data-state="2" aria-hidden="true" inert>
-            <a class="btn btn--primary btn--onDeep hero__cta" href="services.html">Explore AI Fathom</a>
-            <a class="hero__cta-alt" href="services.html">See the AI in action <span aria-hidden="true">&rarr;</span></a>
-          </div>
+          <a class="btn btn--primary btn--onDeep hero__cta" href="#contact">Request a proposal</a>
+          <a class="hero__cta-alt" href="services.html#process">See how a case runs <span aria-hidden="true">&rarr;</span></a>
         </div>
 
         <p class="hero__meta">
@@ -1619,31 +1553,7 @@
        and the two sections simply follow one another as normal blocks. -->
   <section class="w2p" aria-hidden="true"></section>
 
-  <!-- 08c - The technology .................................... -->
-  <!-- LIVE AGAIN, AND IT IS NOW THE CURTAIN'S REVEAL TARGET.
-
-       This section was parked in a <template> for a while and the why->people
-       curtain was pointed back at .people. Both of those are undone here: the
-       template tags are gone, js/tech-deck.js is loaded again at the foot of
-       the file, and why-to-people.js reveals THIS section, with .people
-       following it as an ordinary block.
-
-       WHAT IS DIFFERENT FROM THE PARKED VERSION. The old arrangement made
-       .tech `position: fixed; inset: 0` for the length of the curtain and
-       then pinned .tech__stage INSIDE that fixed box. Those two fought for
-       the same element's position: the stage had no honest document position
-       while its ancestor was fixed, so the masthead was revealed sitting low
-       in the fold and then snapped to the top when the pin engaged, and the
-       fixed box's own overflow let the reader scroll INSIDE the pinned
-       section. Both faults are written up in css/style.css.
-
-       The section is now revealed as an ORDINARY IN-FLOW BLOCK. The curtain
-       clips .why away over the top of whatever is behind it, and this section
-       is exactly 100svh, so unlike .people it needs no fixed positioning and
-       no inner scroll to be fully reachable - which is what removes the
-       contention and the nested scrolling together. There is one pin here
-       (the stage) and one scroll progression driving the deck. -->
-
+  <!-- 08c - The technology ...................................... -->
   <!-- WHAT THIS IS. The section the why-reel now hands off to. The reel
        argues why MedShield; this is what the case actually runs on, so it
        sits between the argument and the people who staff it.
@@ -1681,96 +1591,46 @@
        Care App is live and reachable before launch - a superintendent who
        asks for a download link should not come up empty. -->
   <section class="tech" id="tech" aria-labelledby="tech-h">
+    <div class="shell tech__layout">
 
-    <!-- THE PINNED STACK. The masthead and the cards are ONE pinned object,
-         which is why the header lives inside the stage rather than in a
-         .shell above it. When the stage reaches the top of the fold it locks
-         there: the heading holds still at the top for the whole run, and the
-         cards move through the space beneath it.
-
-         THE HEADER IS INSIDE THE PIN, NOT THE SECTION. It cannot be pinned
-         separately, and pinning the SECTION would be wrong for a different
-         reason than it once was. .tech used to be made position:fixed by
-         why-to-people.js for the length of the reveal, so a pin on it
-         contended for the same property; the section is now revealed as an
-         ordinary in-flow block and is never styled by that file at all.
-         Pinning this inner wrapper is still what keeps the masthead and the
-         cards one object, and the pin's start is handed over by the curtain
-         so the two never overlap; see js/tech-deck.js.
-
-         THE CARDS ARE A STACK THAT BUILDS. Card 01 is on screen first and
-         the other three wait below the fold. Scrolling down raises each one
-         in turn and LANDS it on its own slot, a little lower than the card
-         before it, where it stops for good. Nothing is ever discarded: by the
-         end all four are on screen at once, stepped down the fold, so the
-         reader can see the whole set. The movement is vertical only; nothing
-         here travels sideways.
-
-         js/tech-deck.js writes TWO values per card: --card-rise (1 = still
-         waiting below the fold, 0 = landed on its slot) and --card-depth
-         (how many cards have landed ON TOP of it). style.css spends the
-         first on the travel and the second on the slight dim that buried
-         layers take, so the front card is always the crisp one.
-
-         EACH CARD IS OPAQUE, which the stack requires. Four translucent
-         panes laid over one another compound into mud, and every card here
-         stays on screen to the end - so depth comes from the slot offset and
-         the shadow a card casts on the one beneath it, never from glass.
-
-         The cards carry NO [data-reveal]: that hook is a one-shot fade-up on
-         intersection and would fight the scrub for the same transform. With
-         no JS, no GSAP or reduced motion the set un-stacks into an ordinary
-         column (see the reduced-motion block in style.css), which is why the
-         markup is a plain ordered list. -->
-    <div class="tech__stage" data-tech-stage>
-
-      <!-- NO [data-reveal] ON ANY OF THIS, and that is the point.
-
-           The generic reveal hook is opacity 0 -> 1 plus a 1s
-           translateY(1.5rem). This header lives inside .tech, which
-           why-to-people.js makes `position: fixed; inset: 0` for the whole
-           curtain - so the header is on screen, intersecting, from the first
-           frame of the reveal, and its transform ran WHILE the curtain was
-           cutting away. That is the one thing the note at the top of this
-           section rules out: a transform during the pin turns the curtain
-           back into a slide.
-
-           The curtain is the entrance. The header is simply there, still and
-           finished, as the reel is cut away from over it - which is also what
-           makes the hand-off read as "what was behind it all along" rather
-           than as a second animation starting. -->
       <header class="tech__head">
-        <p class="tech__eyebrow">Technology</p>
-        <h2 class="section-title tech__title" id="tech-h">
-          The case runs on<br>our <span class="tech__titleAccent">own technology</span>
+        <p class="tech__eyebrow" data-reveal>Technology</p>
+        <h2 class="section-title section-title--onDark tech__title" id="tech-h"
+            data-reveal style="--reveal-delay:.06s">
+          The case runs on our own
+          systems<span class="tech__titleDot">.</span>
         </h2>
-        <p class="tech__lede">
-          Purpose-built digital tools for a healthier crew and a smoother voyage.
+        <p class="tech__lede" data-reveal style="--reveal-delay:.12s">
+          Crew, employer and case desk work from the same record - in the
+          seafarer's pocket, on the employer's dashboard, and behind both a
+          team that keeps them running at any hour.
         </p>
       </header>
 
+      <!-- THE CARDS. Each is one claim, and each rises a beat after the one
+           above it on the page's standard reveal. The stagger is authored
+           per card rather than computed, matching .presence above. -->
       <ol class="tech__cards">
 
         <!-- 01 - the app. The only card carrying artwork: the screens are
              the client's own, cropped from App Images.jpg. -->
-        <li class="tech__card tech__card--app">
+        <li class="tech__card tech__card--app" data-reveal>
           <div class="tech__cardBody">
             <p class="tech__cardNum">01</p>
-
-            <div class="tech__cardHead">
-              <h3 class="tech__cardTitle">The Crew Care App</h3>
-              <ul class="tech__tags">
+            <h3 class="tech__cardTitle">The Crew Care App</h3>
+            <p class="tech__cardCopy">
+              One app for the seafarer. Appointments, submissions, the medical
+              file, the treating facility, claim status and a direct line to
+              the case agent - with emergency support one tap away and
+              biometric sign-in on the crew member's own device.
+            </p>
+            <ul class="tech__tags">
               <li class="tech__tag">Appointments</li>
               <li class="tech__tag">Medical file</li>
               <li class="tech__tag">Claim status</li>
               <li class="tech__tag">Treating facility</li>
               <li class="tech__tag">Emergency support</li>
-              </ul>
-            </div>
-
-            <p class="tech__cardCopy">
-              One app for the seafarer. Appointments, submissions, the medical file, the treating facility, claim status and a direct line to the case agent - with emergency support one tap away and biometric sign-in on the crew member's own device.
-            </p>
+            </ul>
           </div>
 
           <!-- Decorative: every screen's content is already stated in the
@@ -1790,67 +1650,63 @@
         </li>
 
         <!-- 02 - the employer side. -->
-        <li class="tech__card">
+        <li class="tech__card" data-reveal style="--reveal-delay:.06s">
           <div class="tech__cardBody">
             <p class="tech__cardNum">02</p>
-
-            <div class="tech__cardHead">
-              <h3 class="tech__cardTitle">Records &amp; transaction dashboard</h3>
-              <ul class="tech__tags">
+            <h3 class="tech__cardTitle">Records &amp; transaction dashboard</h3>
+            <p class="tech__cardCopy">
+              Every case-related record in one place, for every party to the
+              case. Progress, approvals and financial transactions update in
+              real time, and stakeholders draw their own performance reports
+              rather than requesting them.
+            </p>
+            <ul class="tech__tags">
               <li class="tech__tag">Real-time updates</li>
               <li class="tech__tag">Approvals</li>
               <li class="tech__tag">Analytics &amp; reporting</li>
-              </ul>
-            </div>
-
-            <p class="tech__cardCopy">
-              Every case-related record in one place, for every party to the case. Progress, approvals and financial transactions update in real time, and stakeholders draw their own performance reports rather than requesting them.
-            </p>
+            </ul>
           </div>
         </li>
 
         <!-- 03 - what is inside the platform. -->
-        <li class="tech__card">
+        <li class="tech__card" data-reveal style="--reveal-delay:.12s">
           <div class="tech__cardBody">
             <p class="tech__cardNum">03</p>
-
-            <div class="tech__cardHead">
-              <h3 class="tech__cardTitle">AI, OCR and encryption</h3>
-              <ul class="tech__tags">
+            <h3 class="tech__cardTitle">AI, OCR and encryption</h3>
+            <p class="tech__cardCopy">
+              Medical paperwork arrives as scans, in a dozen formats, from
+              every port. It is read, indexed and encrypted on the way in, so
+              a file is searchable the day it lands instead of being retyped
+              into a claim months later.
+            </p>
+            <ul class="tech__tags">
               <li class="tech__tag">AI</li>
               <li class="tech__tag">OCR</li>
               <li class="tech__tag">Data encryption</li>
               <li class="tech__tag">Automation</li>
-              </ul>
-            </div>
-
-            <p class="tech__cardCopy">
-              Medical paperwork arrives as scans, in a dozen formats, from every port. It is read, indexed and encrypted on the way in, so a file is searchable the day it lands instead of being retyped into a claim months later.
-            </p>
+            </ul>
           </div>
         </li>
 
         <!-- 04 - the people behind the systems. Closes the section by
              handing back to staffing, which is what .people then is. -->
-        <li class="tech__card">
+        <li class="tech__card" data-reveal style="--reveal-delay:.18s">
           <div class="tech__cardBody">
             <p class="tech__cardNum">04</p>
-
-            <div class="tech__cardHead">
-              <h3 class="tech__cardTitle">A 24/7/365 tech team</h3>
-              <ul class="tech__tags">
+            <h3 class="tech__cardTitle">A 24/7/365 tech team</h3>
+            <p class="tech__cardCopy">
+              The infrastructure is watched by our own technology team, around
+              the clock, every day of the year - because a case desk that runs
+              in every time zone cannot wait for office hours when something
+              needs attention.
+            </p>
+            <ul class="tech__tags">
               <li class="tech__tag">In-house</li>
               <li class="tech__tag">24 / 7 / 365</li>
-              </ul>
-            </div>
-
-            <p class="tech__cardCopy">
-              The infrastructure is watched by our own technology team, around the clock, every day of the year - because a case desk that runs in every time zone cannot wait for office hours when something needs attention.
-            </p>
+            </ul>
           </div>
         </li>
       </ol>
-
     </div>
   </section>
 
@@ -3030,11 +2886,6 @@
      why-scrub.js: it pins .why, whose sticky stage that file drives, and
      both are defer, so document order is execution order. -->
 <script src="js/why-to-people.js" defer></script>
-<!-- The technology card deck. Loads AFTER why-to-people.js: that file pins
-     .why and reveals .tech, and this one pins .tech__stage inside .tech, so
-     the pin above it has to be built and measured first. Both are defer, so
-     document order is execution order. -->
-<script src="js/tech-deck.js" defer></script>
 <script src="js/process-marquee.js" defer></script>
 <!-- The partner logo bands. Independent of every other section script: it
      owns only its own two strips, is driven by rAF rather than ScrollTrigger,

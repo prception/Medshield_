@@ -94,9 +94,16 @@
    D. SCRUBBED AND SYMMETRICAL. Every tween is `ease: 'none'` on a scrubbed
       timeline, so scrolling back up reverses it exactly.
 
-   E. RESPONSIVE. Below 700px the full-composition morph is skipped: an eight-
-      card grid shrunk to a phone-width card is illegible long before it
-      lands. That breakpoint gets a short compress-and-hand-over instead.
+   E. RESPONSIVE. Below 1024px the hand-off does not run AT ALL — #process and
+      #case-studies are two ordinary sections that scroll past each other.
+
+      There used to be a compact variant here (a short compress-and-hand-over
+      under 700px, with the full morph still running on tablets). Both are
+      gone. The morph needs the three-zone Case studies layout to fly into,
+      and that layout does not exist below desktop; the compact variant still
+      pinned, still hijacked the scroll and still held the featured card's
+      copy back, which is exactly what read as broken on touch. Skipping the
+      whole thing is the fix — see isDesktop() and the bail-out in build().
    ========================================================================== */
 
 (function () {
@@ -260,8 +267,8 @@
      currently forced to be the same number, and that is the bug.
 
      REVEAL_VH is that second, independent number: #case-studies is pulled up
-     with a negative margin (see revealPull() and its use in build() /
-     buildCompact()) so its resting top sits REVEAL_VH viewports below the
+     with a negative margin (see revealPull() and its use in build()) so its
+     resting top sits REVEAL_VH viewports below the
      pin-engage point instead of the full pinDistance(). With REVEAL_VH smaller
      than TRAVEL_VH + TAIL_VH, case-studies' top crosses the fold partway
      through the pin instead of only at the very end, and keeps rising through
@@ -329,7 +336,11 @@
 
   var tl = null;
 
-  function isCompact() { return window.innerWidth < 700; }
+  /* DESKTOP ONLY. Below this width the whole hand-off is skipped and both
+     sections scroll as ordinary flow — see note E at the top of this file. */
+  var DESKTOP_MIN = 1024;
+
+  function isDesktop() { return window.innerWidth >= DESKTOP_MIN; }
 
   /* The settle is part of the pin's budget: it is scroll the reader spends
      with the section held still, so .p2c must reserve it like any other pinned
@@ -361,12 +372,10 @@
      rests exactly where it did before the settle existed and the reveal keeps
      the timing that note describes.
 
-     Passed in rather than read from SETTLE_VH directly, because only the
-     desktop path budgets a settle. buildCompact() computes its own `dist`
-     that never contained one, so subtracting SETTLE_VH there would pull Case
-     studies up through scroll the compact pin does not have — it lengthened
-     the compact spacer by six tenths of a viewport of dead scroll. Callers
-     that budget no settle simply pass nothing. */
+     Passed in rather than read from SETTLE_VH directly. The desktop path is
+     now the only caller and it always budgets a settle, but the parameter
+     stays optional: a caller that budgets none would otherwise pull Case
+     studies up through scroll its pin does not have. */
   function revealPull(distance, settleVh) {
     var moving = distance - Math.round(window.innerHeight * (settleVh || 0));
     return Math.max(0, moving - Math.round(window.innerHeight * REVEAL_VH));
@@ -686,11 +695,10 @@
        Seeding it back to 0 makes the derived state honest: hidden card,
        visible camera, close still to play.
 
-       DESKTOP ONLY. The compact path builds its own timeline whose reveal is
-       a fromTo starting at 0 — writing an inline 0 here instead overrode that
-       tween's start and left the card permanently blank on phones. That path
-       has no camera to hide and no is-landed gate, so it never needed this. */
-    if (!atEnd && !isCompact()) gsap.set(reveal, { opacity: 0 });
+       Only ever reached from the desktop timeline now — the sub-1024px path
+       builds nothing at all — but openCamera() is also called from the pin's
+       onToggle, so the guard stays cheap insurance. */
+    if (!atEnd) gsap.set(reveal, { opacity: 0 });
 
     /* PULL THE STAGE TO THE SCREEN'S LEFT EDGE.
 
@@ -759,8 +767,9 @@
     process.classList.remove('is-camera-done');
     /* The re-entry reset (see openCamera) writes an inline opacity:0 to the
        destination card's copy. .cases--awaiting coming off does NOT undo an
-       inline value, so on the compact path — which never runs the desktop
-       reveal tween back to 1 — the card was left permanently blank. */
+       inline value, so any path that does not run the reveal tween back to 1
+       would leave the card permanently blank. Clearing it here is what makes
+       closeCamera() safe to call without a completed timeline. */
     gsap.set(reveal, { clearProps: 'opacity' });
     camera.style.height = '';
     camera.style.overflow = '';
@@ -786,6 +795,12 @@
   }
 
   function build() {
+    /* Below desktop the hand-off does not run at all: no pin, no spacer, no
+       held-back card copy. .p2c stays display:none and #case-studies renders
+       as an ordinary section with its content visible. This returns BEFORE
+       any class is added so there is nothing for teardown() to undo. */
+    if (!isDesktop()) return;
+
     section.classList.add('p2c--live');
     /* Holds the destination card's content at opacity 0 and marks the section
        as the one being flown into. Removed in teardown so the card is never
@@ -793,8 +808,6 @@
     cases.classList.add('cases--awaiting');
 
     measureCamera();
-
-    if (isCompact()) { buildCompact(); return; }
 
     var TAIL_SPAN = TAIL_VH / TRAVEL_VH;
 
@@ -1600,84 +1613,6 @@
     });
   }
 
-  /* Compact choreography. Same story — the composition stops, draws in, and
-     hands over — but no long travel: an eight-card grid scaled down to phone
-     width is unreadable well before it would land, so the shrink is shallow
-     and the handover happens early. */
-  function buildCompact() {
-    var TAIL = 1.0;
-    var dist = Math.round(window.innerHeight * (0.7 + TAIL));
-    /* Same REVEAL_VH correction as the desktop path (see the note above it):
-       without the pull, #case-studies only reaches the fold on the pin's
-       final pixel of scroll. Compact's own reveal (HEAD_IN below, at 0.40 of
-       the timeline) needs the section physically able to be on screen by
-       then, not just an opacity tween running over a section still stuck
-       below the fold. */
-    section.style.height = dist + 'px';
-    section.style.marginBottom = (-revealPull(dist)) + 'px';
-
-    tl = gsap.timeline({
-      scrollTrigger: {
-        trigger: process,
-        start: 'bottom bottom',
-        end: '+=' + dist,
-        pin: process,
-        pinSpacing: false,
-        pinType: 'fixed',
-        anticipatePin: 1,
-        scrub: true,
-        invalidateOnRefresh: true,
-        onToggle: function (self) {
-          process.classList.toggle('is-morphing', self.isActive);
-          if (self.progress > 0) openCamera(); else closeCamera();
-
-        }
-      }
-    });
-
-    tl.to({}, { duration: 0.15 });
-    /* NO CLIP ON COMPACT. openCamera() seeds an open inset() here too, but
-       nothing animates it, so it stays inset(0) — the full frame — for the
-       whole pin and is cleared on release.
-
-       That is deliberate. The containment reads because the frame closes onto
-       a tall plate sitting beside two other columns; at phone width there are
-       no columns, the plate is nearly the full width of the screen, and the
-       four edges would have almost nothing to travel. What is left is the
-       shallow compress-and-hand-over below. */
-    tl.to(source, {
-      scale: 0.88, y: function () { return window.innerHeight * 0.10; },
-      transformOrigin: '50% 0%', duration: 0.45, ease: 'none'
-    }, 0.15);
-    /* Finishes at 0.60, the same point the scale/y move above finishes —
-       so the reveal is still visibly changing for the whole of the card's
-       own move instead of completing early and leaving the card to finish
-       its shift alone. Previously ran 0.40->0.65, ending after the move. */
-    tl.fromTo(head, { opacity: 0, y: 30 },
-      { opacity: 1, y: 0, duration: 0.30, ease: 'none' }, 0.30);
-    tl.fromTo(reveal, { opacity: 0, y: 30 },
-      { opacity: 1, y: 0, duration: 0.25, ease: 'none' }, 0.55);
-    /* Same handover as the desktop path: the card's own ground returns with
-       its copy, so the plate is a filled frame at rest rather than staying
-       transparent and letting only the camera paint it. Compact builds its
-       own timeline, so it needs its own toggle. */
-    tl.eventCallback('onUpdate', function () {
-      var op = parseFloat(gsap.getProperty(reveal, 'opacity')) || 0;
-      cases.classList.toggle('cases--landed', op > 0.5);
-      /* The camera stands down on the SAME threshold the card's ground comes
-         back on — see the note in style.css. */
-      process.classList.toggle('is-camera-done', op > 0.5);
-      process.classList.toggle('is-landed', op > 0);
-    });
-    /* Compact keeps the same rule: the camera does not fade out, the copy
-       comes up inside it. */
-    if (support.length) {
-      tl.fromTo(support, { opacity: 0, y: 30 },
-        { opacity: 1, y: 0, duration: 0.20, ease: 'none', stagger: 0.04 }, 0.68);
-    }
-    tl.to({}, { duration: TAIL / 0.7 }, 1);
-  }
-
   function teardown() {
     if (tl) {
       if (tl.scrollTrigger) tl.scrollTrigger.kill(true);
@@ -1691,10 +1626,10 @@
     gsap.set([source, reveal, head], { clearProps: 'all' });
     closeCamera();
     if (support.length) gsap.set(support, { clearProps: 'all' });
-    /* cases.style.marginTop is no longer written by build() or
-       buildCompact() — Case studies never leaves its normal document position
-       via its OWN margin — but clearing it stays cheap insurance against any
-       earlier build's value surviving a teardown. section.style.height and
+    /* cases.style.marginTop is no longer written by build() — Case studies
+       never leaves its normal document position via its OWN margin — but
+       clearing it stays cheap insurance against any earlier build's value
+       surviving a teardown. section.style.height and
        section.style.marginBottom (the REVEAL_VH pull, see above) are both
        real and always set together, so both always need resetting. */
     cases.style.marginTop = '';
