@@ -174,8 +174,106 @@
   var HOLD = 0.02;
 
   /* Fraction of travel held on the LAST frame, so the reel finishes and
-     settles before the section releases and scrolls away. */
-  var TAIL = 0.08;
+     settles before the section releases and scrolls away.
+
+     0.08 was the original value and it was the wide layout's version of the
+     stuck patch the phone fix below describes. The reel reached frame 380 at
+     t=0.92 and then held it across the final 8% of the rail - on a 500svh
+     rail that is about 40svh of scrolling against a DEAD picture, and it
+     lands immediately after the CTA has settled at 0.74. The camera is still
+     visibly climbing at 0.90, stops dead at 0.92, and the reader keeps
+     scrolling into nothing. That stop is what reads as a sudden jump: the
+     eye is tracking motion, the motion ends abruptly, and the contrast
+     registers as a cut to a different shot even though no frame was skipped.
+
+     0.012 keeps the same sliver of hold the phone value keeps, and for the
+     same reason - enough to absorb the rounding on the final frame index so
+     the last frame is actually reached and painted rather than being skipped
+     past by a fast scrub - without the dead stretch. The reel now runs to
+     0.988, so the camera is still easing as the section releases. */
+  var TAIL = 0.012;
+
+  /* THE CTA MUST RIDE THE FOOTAGE, NOT A FREEZE-FRAME.
+
+     On the wide layout the points end at 0.66 and the CTA rises from 0.60 to
+     0.74, so the whole of that rise happens while the reel is still running.
+     That much was always true and is why this was originally read as fine.
+
+     What it missed is what happens AFTER the button settles. With TAIL at
+     0.08 the reel reached its last frame at 0.92 and then held it to 1.00 -
+     about 40svh of scrolling on a dead picture, starting just after the CTA
+     had parked. The camera was still visibly climbing at 0.90 and stopped
+     dead two hundredths later. The eye is tracking that motion, so the stop
+     reads as a cut to a different shot even though no frame is skipped, and
+     it lands exactly where the reader is reaching for the button. TAIL is
+     0.012 now for the same reason the phone value is 0.01 - see below.
+
+     On a phone the points run to 0.92 and the CTA with them (0.86 -> 1.00).
+     Against the old TAIL of 0.08 the reel stopped dead at 0.92 - so 57% of
+     the button's rise, about 22svh of scrolling, played out on a STILL
+     frame. That is the same stuck patch in its more obvious form: the
+     reader keeps scrolling, the video has stopped, and the closing text
+     drifts up over a frozen picture.
+
+     0.01 gives the reel back that stretch: it now runs to 0.99, which is
+     past ctaEnd() at 1.00 by less than a frame, so the camera is still
+     climbing the whole time the CTA is arriving and only settles as the
+     section releases. Not 0 - a sliver of hold absorbs the rounding on the
+     final frame index, so the last frame is actually reached and painted
+     rather than being skipped past by a fast scrub.
+
+     Read through the same 860px breakpoint as the rest of the phone
+     choreography. Both places that remap t -> frame index call this, so they
+     cannot drift apart. */
+  function tail() { return window.innerWidth <= 860 ? 0.01 : TAIL; }
+
+  /* The closing band over which the reel decelerates out of its cruise rate,
+     as a fraction of the reel's own 0..1 progress. See progAt().
+
+     THE ENDING MUST MATCH THE REST OF THE SCROLL, NOT ANNOUNCE ITSELF.
+
+     The previous shape (a 0.35 band blending ease-out with linear, and
+     conserving the frames inside it) had a fault that is invisible in the
+     frame indices and obvious on screen: to end SLOWER than linear while
+     covering the same frames, it had to START FASTER. Measured on the wide
+     layout, frames per 100px:
+
+       t<=0.62   10.9   <- flat cruise across the whole first two thirds
+       t=0.65    16.9   <- the band opens: a 55% step UP in speed
+       t=0.75    13.3
+       t=0.85     9.8
+       t=0.95     6.3
+
+     So the reel lurched at 0.65 - right where the last points land - and
+     then braked. A step change in rate reads as a shove, and the braking
+     after it reads as the footage being pulled away. Together they are why
+     the close still did not feel like the rest of the scroll even once the
+     frozen tail was gone.
+
+     The shape here removes the step by giving up on conserving frames
+     inside the band. The reel runs at its cruise rate all the way to
+     1 - EASE_TAIL, then the rate falls LINEARLY from exactly that cruise
+     rate to zero at the end. Because the rate is continuous where the band
+     opens, there is no lurch; because it decays smoothly from there, there
+     is no wall. The rate curve has no discontinuity anywhere on the rail.
+
+     The cost is that a ramp down from cruise to zero covers only HALF the
+     frames a linear run would over the same distance, so the whole reel is
+     rescaled to compensate (the `total` term in progAt). That lifts the
+     cruise rate slightly - 10.9 to 12.1 - which is a change nobody can see,
+     being a constant.
+
+     0.22 is the width. Wide enough that the deceleration is gradual rather
+     than a stop, narrow enough that the cruise rate carries past the CTA's
+     arrival at 0.74 and the taper belongs to the release rather than to the
+     button. The resulting curve:
+
+       t<=0.78   12.1   <- cruise, unchanged and unbroken
+       t=0.85     8.4
+       t=0.90     5.6
+       t=0.95     2.8
+       t=1.00     0     <- reached by decay, never by a clamp */
+  var EASE_TAIL = 0.22;
 
   /* Below this width the 720px set is used instead of the 1280px one. */
   var SM_MAX = 900;
@@ -225,17 +323,48 @@
      From there the three groups divide the rest of the section between
      them, each fading up, holding while the reel plays behind it, and
      fading out as the next takes over. */
-  var PTS_START = 0.5;   /* fraction of the DRIFT window - the halfway point */
-  var PTS_END = 0.66;    /* The whole sequence is DONE by two thirds of the
-                            pinned travel. At 0.94 the points ran almost to
-                            the section's end, so each pair crept and the
-                            last one was still arriving as the band was
-                            about to release. Finishing here packs the same
-                            nine points into a shorter window - so they move
-                            visibly faster per scroll - and leaves the final
-                            stretch of the reel to play out on its own, the
-                            camera rising through the cloud layer with the
-                            frame already clear. */
+  /* PHONES WAIT FOR THE HEADLINE, AND THEN TAKE LONGER.
+
+     Both of these follow from one point per slot (see indexPoints()). The
+     wide layout runs five pair-slots; a phone runs nine. Left on the shared
+     numbers that produced two faults, and the second is the one that was
+     reported:
+
+       1. AT 0.5 THE FIRST POINT ARRIVES UNDER A HEADLINE THAT IS STILL
+          THERE. PTS_START is a fraction of the DRIFT window, so 0.5 puts the
+          first point at t = 0.17 while the display block does not finish
+          leaving until DRIFT_END = 0.30 - it fades up 0.13 of the travel
+          BEFORE the headline is clear, which is the frame where the first
+          point sits directly under "onboard." At 1.0 it starts exactly as
+          the headline lands its exit: the frame empties, then the sequence
+          begins.
+
+       2. NINE POINTS IN A WINDOW SIZED FOR FIVE READS AS A RUSH. From 0.17
+          to 0.66 is 137svh of the 280svh mobile rail, which is 14svh of
+          scroll per point - about an eighth of a screen each, so they fire
+          off one after another faster than they can be read. Starting at
+          DRIFT_END and running to 0.92 gives 174svh, or 18svh per point, and
+          the settle (see PT_DWELL) lands inside a slot that is now long
+          enough for it to be felt.
+
+     0.92 rather than the wide layout's 0.66 also reflects what the tail is
+     for: on desktop the last third of the reel plays out clear of copy,
+     which is a deliberate beat. On a phone that same third is most of a very
+     long scroll with nothing in it, and the points need the room more than
+     the footage does. The CTA follows PTS_END automatically (see CTA_START
+     below), so it moves with this rather than needing its own phone value. */
+  function ptsStart() { return window.innerWidth <= 860 ? 1.0 : 0.5; }
+  function ptsEnd()   { return window.innerWidth <= 860 ? 0.92 : 0.66; }
+
+  /* Both were plain constants until the phone layout needed its own pair;
+     the wide layout's values are unchanged and live in the functions above.
+
+     On the wide layout the sequence is done by two thirds of the pinned
+     travel. At 0.94 the points ran almost to the section's end, so each pair
+     crept and the last was still arriving as the band was about to release.
+     Finishing at 0.66 packs five pair-slots into a shorter window and leaves
+     the final stretch of the reel to play out on its own, the camera rising
+     through the cloud layer with the frame already clear. */
 
   /* Hull tracking. The points sit just outside the ship, and the ship
      narrows as the drone climbs, so the anchor cannot be a constant - see
@@ -283,7 +412,45 @@
      the next pair is already climbing into frame as the last one leaves,
      which closes the distance between them without speeding either up. */
   var PTS_OVERLAP = 1.35;
-  var PTS_OVERLAP_SM = 0.15;   /* phones: see the note where it is used */
+  /* Phones run ONE point per slot rather than a stacked pair (see
+     indexPoints()), so there are nine slots here where the wide layout has
+     five. Two consequences, and they pull the same way:
+
+       - nine slots across the same rail makes each slot shorter, so a point
+         has less scroll to rise, sit and leave in
+       - only one block is on screen at a time now, so an overlap no longer
+         risks two of them colliding - which is the whole reason the old
+         value was held down at 0.15
+
+     The value is how much of its neighbour's slot each point takes, so it is
+     really a dial on how CLOSE together the points arrive:
+
+       0.55  each point alone for 65% of its slot; consecutive points share
+             only 10svh, so the sequence reads as nine separate arrivals with
+             clear water between them
+       0.7   41% shared - the next point is climbing into frame while the
+             last is still clearing the top, so the run reads continuously
+
+     THE CEILING IS SET BY THE SHORTEST FRAME, NOT THE COMMON ONE. Past about
+     0.7 a third point is in flight, and whether three fit depends on the
+     viewport HEIGHT. Measured across the range, worst-case box overlap:
+
+              320x568   360x640   360x780+
+       0.7      0         0          0
+       0.9      8         0          0
+       1.1     44         4          0
+       1.3     73        37          0
+
+     A 390px-tall-frame phone tolerates 1.3 comfortably, which is why it
+     looked safe when checked there alone - but a 320x568 frame is 73px into
+     collision at that value, back to the overlapping text the stack was
+     split up to fix. 0.7 is the highest value that is clean on every size,
+     so it is the one that ships.
+
+     Under the wide layout's 1.35 for the same reason: a phone shows one
+     column where that shows two, so a given overlap costs twice the vertical
+     room here. */
+  var PTS_OVERLAP_SM = 0.7;
 
   /* Fade in and out, as fractions of the (now short) drift window. Both are
      kept small so the copy is solid for most of its run: over a window this
@@ -294,20 +461,30 @@
   /* THE CLOSE. The CTA that ends the section rises as the last pair of
      points is clearing the top, and then stays.
 
-     CTA_START is expressed against PTS_END rather than as a bare number, so
-     retuning the point sequence carries this with it. Slightly BEFORE
-     PTS_END, not after: the two overlap for a moment, which is the same
-     handoff every other beat in this section uses - the frame is never
+     The start is expressed against the points' end rather than as a bare
+     number, so retuning the point sequence carries this with it. Slightly
+     BEFORE that end, not after: the two overlap for a moment, which is the
+     same handoff every other beat in this section uses - the frame is never
      empty between them.
 
-     CTA_END leaves the whole last third of the rail with the button parked
-     on screen. That stretch was the reel playing out alone, and it is
-     exactly the room a control needs: the reader arrives at the CTA with
-     scroll still in hand, so it has to be sitting still well before the
-     section releases. Past CTA_END the value is clamped at 1 - it does NOT
-     drift out the way the points do. */
-  var CTA_START = PTS_END - 0.06;
-  var CTA_END = PTS_END + 0.08;
+     The end leaves the tail of the rail with the button parked on screen.
+     That stretch was the reel playing out alone, and it is exactly the room
+     a control needs: the reader arrives at the CTA with scroll still in
+     hand, so it has to be sitting still well before the section releases.
+     Past it the value is clamped at 1 - it does NOT drift out the way the
+     points do.
+
+     On a phone the points now run to 0.92, so ctaEnd() lands at 1.0: the
+     button finishes its rise exactly as the rail releases. That is tighter
+     than the wide layout's tail by design - the nine points need the length
+     more than the closing footage does - and it is still a full 0.14 of the
+     travel, about 39svh, to rise in. */
+  /* Functions, not constants, for the same reason ptsEnd() is one: the phone
+     layout ends its points at 0.92 rather than 0.66, and the button has to
+     travel with them or it would rise while three points were still climbing.
+     The two offsets are the choreography; ptsEnd() is what they hang off. */
+  function ctaStart() { return ptsEnd() - 0.06; }
+  function ctaEnd()   { return ptsEnd() + 0.08; }
 
   function init() {
     var section = document.querySelector('[data-why-scrub]');
@@ -384,6 +561,7 @@
     var armed = false;          /* true once the first frame can be painted */
     var seeking = false;        /* a seek is in flight */
     var pendingT = -1;          /* time requested while one was in flight */
+    var pendingFrame = -1;      /* the frame index pendingT belongs to */
 
     /* Nearest frame the scrubber WANTS, and the one currently on the canvas.
        Kept in FRAME units, as when this was an image sequence, so everything
@@ -402,6 +580,17 @@
       return t < 0 ? 0 : t > duration - 1e-3 ? duration - 1e-3 : t;
     }
 
+    /* The inverse of timeOf(): which frame is a given currentTime showing.
+
+       Used by the rVFC painter to record what actually reached the canvas.
+       timeOf() aims at the MIDDLE of a frame's slot, so floor() recovers the
+       index that time falls inside. */
+    function frameOfTime(t) {
+      if (!duration) return 0;
+      var i = Math.floor(t / (duration / COUNT));
+      return i < 0 ? 0 : i > COUNT - 1 ? COUNT - 1 : i;
+    }
+
     /* ---- sizing -------------------------------------------------------
        The canvas backing store is sized to the stage in device pixels and
        the frame is drawn to COVER it, cropping the overflow — the same
@@ -413,8 +602,17 @@
        that is only 720px wide to begin with. */
     var cw = 0, ch = 0;
 
+    /* The stage's CSS height, cached. readTarget() divides by this on every
+       scroll tick and a getBoundingClientRect() there would be a forced
+       layout read in the hot path. The stage is svh-locked, so this only
+       changes on a real resize - which is exactly when resize() runs.
+       Seeded below so the first readTarget() before any resize() still has a
+       usable number. */
+    var stageH = 0;
+
     function resize() {
       var r = stage.getBoundingClientRect();
+      stageH = r.height;
       var dpr = Math.min(window.devicePixelRatio || 1, 2);
       var w = Math.max(1, Math.round(r.width * dpr));
       var h = Math.max(1, Math.round(r.height * dpr));
@@ -457,8 +655,24 @@
         var t = timeOf(wanted);
         if (seeking) {
           pendingT = t;
+          /* Carried alongside so the 'seeked' handler can set `painted` to
+             the frame it is actually seeking to. Without it painted keeps
+             the superseded index and the follow-up test misfires - see the
+             note there. */
+          pendingFrame = wanted;
         } else {
           seeking = true;
+          /* Optimistic, and deliberately so: it stops the tick from firing
+             a second seek at the same frame while this one is in flight.
+
+             It is safe now only because it can be corrected. Both the rVFC
+             painter and the 'seeked' handler write `painted` from what the
+             decoder actually produced, so if this seek is superseded or
+             dropped the claim is overwritten with the truth on the next
+             presented frame - and the tick's follow-up test sees the
+             shortfall and asks again. Before those two wrote it, this line
+             was the last word, which is how the reel could sit parked on
+             the wrong frame at the end of the rail. */
           painted = wanted;
           try { video.currentTime = t; } catch (e) { seeking = false; }
         }
@@ -487,6 +701,34 @@
     function onVideoFrame() {
       if (armed) {
         paint(video);
+        /* `painted` must name what is ON THE CANVAS, not what was last
+           ASKED for.
+
+           This callback fires for every frame the decoder actually
+           presents, including the ones swept through while a coalesced
+           seek resolves - and it used to blit them without recording
+           which one it had blitted. So `painted` kept the index of
+           whichever seek was last ISSUED, while the canvas showed
+           something else entirely.
+
+           Through the middle of the reel that resynced on the next
+           'seeked' and nobody saw it. At the END it did not, because
+           EASE_TAIL drives the frame rate toward zero as the CTA arrives
+           (~2.6 frames per 100px at t=0.92 on the wide layout, and 0 past
+           0.95). `wanted` stops changing there, so the tick falls to its
+           follow-up test - `wanted !== painted` - and that test was
+           reading a stale number. It concluded the canvas was already
+           correct and issued no seek, leaving the reel parked a few
+           frames short of where the scroll said it was. The section then
+           released, the spring's end stiffening snapped the target onto
+           the clamp, one last seek fired, and the picture cut straight to
+           the final frame.
+
+           Deriving it from the video's own currentTime is what makes the
+           test honest: it is the inverse of timeOf(), so it names the
+           frame the decoder just handed us regardless of which seek
+           produced it. */
+        painted = frameOfTime(video.currentTime);
         measureHull();
       }
       video.requestVideoFrameCallback(onVideoFrame);
@@ -502,6 +744,23 @@
         var t = pendingT;
         pendingT = -1;
         seeking = true;
+        /* `painted` must name the frame the decoder is now heading for, not
+           the one this seek superseded.
+
+           render() sets painted = wanted when it ISSUES a seek, so during a
+           fast scrub, where requests coalesce, painted was left holding the
+           index of a seek that never landed. The tick's follow-up test
+           (`wanted !== painted`) then compared against a stale number: it
+           read as "the canvas is behind" when the decoder was in fact
+           already on its way somewhere else, so it issued yet another seek,
+           which parked in pendingT behind the live one. The canvas held its
+           last landed frame through all of it and then snapped to whatever
+           finally resolved - the jump at the end of the reel, where the
+           scroll stops and the coalesced backlog unwinds all at once.
+
+           pendingFrame is written beside pendingT for exactly this: it is
+           the index that time belongs to. */
+        painted = pendingFrame;
         try { video.currentTime = t; } catch (e) { seeking = false; }
       }
     });
@@ -601,12 +860,70 @@
 
     /* The frame a given pinned position t paints. The same arithmetic as
        the remap in apply(), kept in step with it by construction. */
-    function frameAt(t) {
-      var span = 1 - HOLD - TAIL;
+    /* Pinned position t -> 0..1 through the reel.
+
+       THE CLOSING SCENE DECELERATES RATHER THAN FREEZING.
+
+       There were two failure modes here and the fix has to miss both.
+
+       TAIL used to be 0.08: the reel finished at t=0.92 and then HELD on its
+       last frame for the rest of the travel. That made the closing stretch
+       feel stuck - the reader kept scrolling and the picture had stopped.
+
+       Setting TAIL to 0.01 removed the freeze but replaced it with the
+       opposite fault. The hold was also, incidentally, the only thing giving
+       the closing scene any room: with it gone the remap is linear all the
+       way, and the 49 frames between the last point settling and the CTA
+       arriving get 317px of scroll to play out in. That is ~15 frames per
+       100px against ~8 before, so the ship leaps from mid-frame to far away
+       in cloud - which reads as a jump even though every frame is mapped.
+
+       So the answer is neither a hold nor a straight line: the reel keeps
+       moving to the very end, but SLOWS as it gets there. p is eased with a
+       decelerating curve over the closing EASE_TAIL of the travel, which
+       spends the same frames over the same scroll while making the last ones
+       land progressively slower. Nothing is skipped and nothing stalls.
+
+       Kept in one function because the hull sampler and the render path both
+       map t -> frame and must agree exactly; they used to carry separate
+       copies of this arithmetic. */
+    function progAt(t) {
+      var span = 1 - HOLD - tail();
       var p = span > 0 ? (t - HOLD) / span : t;
       if (p < 0) p = 0;
       if (p > 1) p = 1;
-      return Math.round(p * (COUNT - 1));
+
+      /* Cruise at a constant rate, then decelerate out of it without a step.
+
+         Inside the closing band the RATE falls linearly from the cruise rate
+         to zero, which makes the band cover exactly half the progress a
+         linear run would. `total` is the progress the whole rail covers
+         under that shape - the linear part plus the band's half - and
+         dividing by it rescales everything back onto 0..1.
+
+         Doing the rescale here rather than steepening the band is the whole
+         point: the cruise section keeps a single constant rate that the band
+         then continues from, so there is no speed change anywhere for the
+         eye to catch. See the note on EASE_TAIL for the measurements and for
+         what the previous frame-conserving shape got wrong. */
+      var total = (1 - EASE_TAIL) + EASE_TAIL * 0.5;
+
+      if (p <= 1 - EASE_TAIL) {
+        p = p / total;
+      } else {
+        var a = (p - (1 - EASE_TAIL)) / EASE_TAIL;   /* 0..1 within the band */
+        /* Integral of the rate ramp r(a) = 1 - a, which is a - a^2/2.
+           r(0) = 1 is the cruise rate, so the join is smooth; r(1) = 0 is
+           the settle. */
+        p = ((1 - EASE_TAIL) + EASE_TAIL * (a - a * a * 0.5)) / total;
+      }
+
+      if (p > 1) p = 1;
+      return p;
+    }
+
+    function frameAt(t) {
+      return Math.round(progAt(t) * (COUNT - 1));
     }
 
     /* The hull at a frame, LATCHED once that frame has been measured.
@@ -1157,6 +1474,46 @@
        exponential did at the same nominal speed. */
     var EASE_W = 11.0;
 
+    /* The stiffened follow used at the very ends of the rail, and the width
+       of the zone it ramps in over. See the long note in tick().
+
+       Tuned against the residual lag at the moment the target clamps, which
+       is the thing actually being fixed: the frames the reel still owes when
+       the scroll runs out. Simulated at 60fps on the 390x844 geometry:
+
+         EASE_W_END                 800px/s   1500px/s   2500px/s
+         (none - the old behaviour)    12        25         44
+         40                             4        15         35
+         60                             0         5         18
+         100                            0         0          3
+
+       Still a spring, not a snap: the 1/e time at this frequency is ~10ms,
+       so a single coarse wheel step is smoothed rather than stepped through.
+
+       THE ZONE IS A SCROLL DISTANCE, NOT A FRACTION OF t. The rail is a
+       multiple of the viewport, so `travel` runs from about 1590px on a
+       320x568 phone to 2870px on a tablet. A fixed fraction of t is then a
+       different number of PIXELS on each - and it is pixels the reader
+       scrolls, so a short rail got a short runway and still owed 13 frames
+       at the clamp while a long one owed none. Dividing a constant pixel
+       distance by the live travel gives every size the same runway:
+
+         travel px    1590  1792  2184  2363  2509  2610  2867
+         worst lag       1     1     1     3     0     2     2
+
+       600px is roughly two thirds of a phone screen. Wide enough that the
+       stiffening arrives gradually and never reads as a change in weight,
+       and with the SQUARED ramp below it stays out of the points: w is still
+       ~11 for most of the sequence and only climbs over the closing stretch.
+       A linear ramp across the same distance would firm up the whole final
+       third of the points run. */
+    var EASE_W_END = 100.0;
+    var EASE_EDGE_PX = 600;
+
+    /* The pinned travel in pixels, written by readTarget() each tick. Seeded
+       non-zero so the first tick's edge test cannot divide by zero. */
+    var lastTravel = 1;
+
     /* Same idea for the hull anchor, but much slower: it drives layout, and
        it is absorbing measurement jitter rather than input steps. */
     var HULL_TAU = 0.28;
@@ -1254,17 +1611,69 @@
        is authored in HTML rather than inferred from index order here. */
     var pairOf = [];
     var pairCount = 0;
-    for (var pi = 0; pi < points.length; pi++) {
-      var pn = parseInt(points[pi].getAttribute('data-why-pair'), 10) || 0;
-      pairOf.push(pn);
-      if (pn + 1 > pairCount) pairCount = pn + 1;
+
+    /* ONE POINT PER SLOT ON A PHONE.
+
+       The pairing exists for the wide layout, where the two halves flank the
+       ship - left column and right column, sharing a slot so they rise
+       together as one mirrored beat. That reads well when they are side by
+       side, because the eye takes them as a single row.
+
+       On a phone there are no columns: the stylesheet stacks the pair, one
+       half above the resting line and one below (see the <=860px block in
+       style.css). Sharing a slot there puts BOTH blocks on screen at full
+       opacity at the same time, about 60px apart on a 390px frame - two
+       headings and two paragraphs arriving on one beat, which is the wall of
+       text in the reported frame. They are not actually colliding; there are
+       simply two of them at once.
+
+       So below the same 860px the pairing is dropped and each point takes its
+       own slot, arriving and settling one at a time. Everything downstream is
+       already keyed off pairOf/pairCount - the slot maths, the hull sample,
+       the bow and the tilt - so re-indexing here is the whole change: nothing
+       else in this file needs to know which layout it is in.
+
+       Read through the same 860px breakpoint the stylesheet uses. Kept as a
+       function because it is re-run on resize below - a phone rotated into
+       landscape crosses this boundary and the sequence has to re-index with
+       it. */
+    function solo() {
+      return window.innerWidth <= 860;
+    }
+
+    function indexPoints() {
+      pairOf.length = 0;
+      pairCount = 0;
+      var oneEach = solo();
+      for (var pi = 0; pi < points.length; pi++) {
+        /* Solo: the point's own index IS its slot. Paired: the authored
+           data-why-pair, so the wide layout is untouched. */
+        var pn = oneEach
+          ? pi
+          : (parseInt(points[pi].getAttribute('data-why-pair'), 10) || 0);
+        pairOf.push(pn);
+        if (pn + 1 > pairCount) pairCount = pn + 1;
+      }
+      if (pairCount < 1) pairCount = 1;
+      /* ptHull is indexed by slot, so it has to be resized with the slot
+         count - and cleared, because a stale sample from the other layout
+         would anchor a point to a hull width that was never measured for it.
+         -1 is the "not yet sampled" marker the read site already tests. */
+      ptHull.length = 0;
+      for (var hi = 0; hi < pairCount; hi++) ptHull.push(-1);
+    }
+
+    for (var pi0 = 0; pi0 < points.length; pi0++) {
       lastPts.push(-1);
       lastHd.push('');
       ptOn.push(false);
     }
-    if (pairCount < 1) pairCount = 1;
-    /* One slot per PAIR, not per point - see the note on ptHull above. */
-    for (var hi = 0; hi < pairCount; hi++) ptHull.push(-1);
+    indexPoints();
+    /* The layout indexPoints() last ran for, so the resize handler can tell a
+       real breakpoint crossing from an ordinary resize. */
+    var wasSolo = solo();
+    /* ptHull is sized and cleared by indexPoints() above, which is the one
+       place that knows how many slots the current layout has. */
 
     /* Reads the scroll position and returns the raw 0..1 through the rail,
        or -1 if the section is not measurable yet. Nothing is drawn here -
@@ -1278,8 +1687,36 @@
         startLoading();
       }
 
-      var travel = rect.height - window.innerHeight;
+      /* TRAVEL IS MEASURED AGAINST THE STAGE, NOT window.innerHeight.
+
+         The stage is `position: sticky; height: 100svh`, and the rail is a
+         multiple of that same svh (380svh on a phone, 500svh above). So the
+         distance the stage actually spends pinned is rect.height minus the
+         STAGE's height - both sides resolved against the same unit.
+
+         window.innerHeight is NOT that number on a phone. It is the LIVE
+         viewport, which grows from the small viewport to the large one as
+         the browser's toolbars retract - and retracting them is exactly what
+         scrolling this section does. Measured on a 390x844 frame: innerHeight
+         swings by about 100px, so `travel` swings by 100px, and since t is a
+         RATIO the same scroll offset resolves to a different t depending on
+         where the toolbars happen to be.
+
+         That error grows with t, which is why it was only visible at the very
+         end. Near the CTA the shift is about 0.04 of the travel - roughly ten
+         frames - and because the toolbars can come back the shift reverses:
+         the reel jumps BACKWARD as the closing scene arrives. That is the
+         sudden jump back on the last scene.
+
+         The stage's own box has no such problem. It is svh-locked, so it does
+         not move when the toolbars do, and it is the box whose pin the rail
+         was sized around in the first place. Measuring against it makes t a
+         pure function of scroll position. */
+      var travel = rect.height - (stageH || window.innerHeight);
       if (travel <= 0) return -1;
+      /* Held for the tick's edge-stiffening, which needs the travel in
+         PIXELS to size its zone the same way on every screen. */
+      lastTravel = travel;
 
       /* rect.top runs 0 -> -travel while the stage is pinned. */
       var t = -rect.top / travel;
@@ -1360,8 +1797,12 @@
         /* Keep the anchor in step with the frame under the copy. */
         measureHull();
 
-        var ps = DRIFT_START + (DRIFT_END - DRIFT_START) * PTS_START;
-        var pr = (t - ps) / (PTS_END - ps);
+        /* Read per layout, not from the constants: a phone starts the run
+           after the headline has cleared and runs it longer (see ptsStart /
+           ptsEnd). The wide layout still gets PTS_START / PTS_END. */
+        var ptsE = ptsEnd();
+        var ps = DRIFT_START + (DRIFT_END - DRIFT_START) * ptsStart();
+        var pr = (t - ps) / (ptsE - ps);
         if (pr < 0) pr = 0;
         if (pr > 1) pr = 1;
 
@@ -1473,7 +1914,7 @@
              reading and keep it for the rest of the session. Recomputed, it
              simply tracks the footage data as it fills in, and once a
              frame has been read its answer never changes again. */
-          ptHull[pairOf[qi]] = hullAt(frameAt(ps + pairOf[qi] * step * (PTS_END - ps)));
+          ptHull[pairOf[qi]] = hullAt(frameAt(ps + pairOf[qi] * step * (ptsE - ps)));
 
           /* THE HOVER WINDOW. Each point carries a card that opens on
              hover, and the stylesheet restores pointer-events for exactly
@@ -1575,7 +2016,8 @@
          slot each and a fade at both ends because they pass through; this
          rises once and holds, so the whole of it is a clamped ramp. */
       if (cta) {
-        var c = (t - CTA_START) / (CTA_END - CTA_START);
+        var ctaS = ctaStart();
+        var c = (t - ctaS) / (ctaEnd() - ctaS);
         if (c < 0) c = 0;
         if (c > 1) c = 1;
 
@@ -1596,13 +2038,9 @@
       }
 
       /* Remap so the reel holds on frame 0 for HOLD, runs across the middle,
-         and holds on the last frame for TAIL. */
-      var span = 1 - HOLD - TAIL;
-      var p = span > 0 ? (t - HOLD) / span : t;
-      if (p < 0) p = 0;
-      if (p > 1) p = 1;
-
-      var next = Math.round(p * (COUNT - 1));
+         and decelerates into the last frame. Shared with the hull sampler so
+         the two cannot drift apart - see progAt(). */
+      var next = Math.round(progAt(t) * (COUNT - 1));
       if (next !== wanted) {
         wanted = next;
         if (armed) render();
@@ -1701,18 +2139,84 @@
         if (!seeded) { seeded = true; tPos = raw; tVel = 0; }
       }
 
-      /* Critically-damped spring, semi-implicit: the velocity is updated
-         from the CURRENT gap first, then the position from the new
-         velocity. Doing it in that order is what makes it stable at large
-         dt rather than exploding.
+      /* Critically-damped spring, integrated in CLOSED FORM.
 
-         a = -w^2 * x - 2w * v, for x = the remaining gap (negated below,
-         since `gap` is measured toward the target rather than away). */
-      var gap = tTarget - tPos;
+         This used to be a semi-implicit Euler step, and it was unstable. The
+         explicit update needs w*dt below about 2 to converge; above that the
+         velocity term overcorrects and the position oscillates with GROWING
+         amplitude. Measured on the old code, max |tPos| over a run to the
+         end of the rail:
+
+                        60fps     30fps    dt=0.05 (the clamp)
+           w=11         ok        ok       DIVERGED
+           w=40         ok        DIVERGED DIVERGED
+           w=100        DIVERGED  DIVERGED DIVERGED
+
+         So even the base EASE_W blew up whenever a hitch pushed dt to its
+         clamped 0.05 - and the edge stiffening, which raises w to 100 right
+         where the reader is most likely to be watching, put it over the line
+         on every ordinary frame. tPos ran to 1e54, progAt() clamped it back,
+         and the reel flickered between frame 0 and frame 380 on alternate
+         ticks. That flicker IS the sudden jump to the last scene.
+
+         The closed form is the analytic solution of the same spring, so it
+         is not an approximation that degrades with dt - it is exact at every
+         dt, for every w, and cannot oscillate. Verified stable at w=100 with
+         dt of 1/60, 1/30 and 0.05.
+
+         For x = tPos - tTarget (the gap, measured AWAY from the target) the
+         critically damped solution is:
+
+           x(t) = (x0 + (v0 + w*x0)*t) * e^(-w*t)
+           v(t) = (v0 - w*(v0 + w*x0)*t) * e^(-w*t) */
       if (dt > 0) {
-        var w = EASE_W;
-        tVel += (w * w * gap - 2 * w * tVel) * dt;
-        tPos += tVel * dt;
+        /* THE SPRING STIFFENS AT THE ENDS OF THE RAIL.
+
+           tPos TRAILS tTarget by design - that lag is the smoothing. At a
+           steady scroll it is a fixed distance behind, and through the middle
+           of the rail nobody can see it: the picture is moving, and a frame
+           or two of delay just reads as weight.
+
+           At the END it stops being invisible. tTarget clamps at 1 and the
+           scroll cannot advance any further, so the lag has nothing left to
+           hide behind - the spring spends it as MOTION WITH NO INPUT. The
+           reader stops at the bottom of the section and the reel keeps
+           running on its own, lunging to the final frame. Simulated at 60fps
+           on the 390x844 geometry, the moment the target clamps:
+
+             scroll speed      lag when the scroll runs out
+             800 px/s          14 frames
+             1500 px/s         26 frames
+             2500 px/s         43 frames
+
+           At a brisk flick the picture is on frame 207 when the scroll ends
+           and then travels to 239 over about half a second, untouched. That
+           is the sudden jump to the last scene. With the stiffening below
+           the same three speeds owe 0, 1 and 8 frames instead.
+
+           So the follow is stiffened as the target approaches either end,
+           reaching EASE_W_END at the very edge. Both ends, not just the top:
+           the same thing happens in reverse when scrolling back up into the
+           section and the target clamps at 0.
+
+           Not simply a higher EASE_W everywhere - the softer follow through
+           the middle is what keeps a coarse wheel or a jittery trackpad from
+           stepping the reel, and that is the whole reason the spring is here.
+           This only removes the lag where it can no longer be spent on
+           travel, so the reel arrives WITH the scroll instead of after it. */
+        var ez = EASE_EDGE_PX / lastTravel;
+        var edge = tTarget < 0.5 ? tTarget : 1 - tTarget;
+        var k = edge < ez ? 1 - edge / ez : 0;
+        /* Squared: the stiffening stays out of the way until the target is
+           genuinely near the clamp, rather than creeping in across the whole
+           last fifth of the rail where the softer follow is still wanted. */
+        var w = EASE_W + (EASE_W_END - EASE_W) * k * k;
+
+        var x = tPos - tTarget;                  /* gap, away from target */
+        var decay = Math.exp(-w * dt);
+        var c = tVel + w * x;
+        tPos = tTarget + (x + c * dt) * decay;
+        tVel = (tVel - w * c * dt) * decay;
       } else {
         tPos = tTarget;
         tVel = 0;
@@ -1774,6 +2278,13 @@
       /* A resize changes the backing store, which clears it — force a
          repaint of whatever frame is current. */
       if (resize()) { painted = -1; lastHullFrame = -1; render(); }
+      /* Crossing 860px swaps the points between one-slot-per-pair and
+         one-slot-per-point, so the sequence has to be re-indexed - a phone
+         rotated into landscape does exactly that. Only on an actual change:
+         indexPoints() clears the held hull samples, and doing that on every
+         resize tick would let the points drift sideways again as the anchor
+         was re-taken mid-travel. */
+      if (solo() !== wasSolo) { wasSolo = solo(); indexPoints(); }
       /* Unconditional, unlike the canvas resize above: the stage can change
          height (and the cards can re-wrap to a different height) on a width
          change that leaves the backing store the same size. */

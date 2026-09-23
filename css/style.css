@@ -2348,6 +2348,115 @@ html.hero-ready .hero__foot    { transition-delay: 1.15s; }
   }
 }
 
+/* --- Hero depth ---------------------------------------------------------- */
+
+/* DEPTH, not a scrim.
+
+   The removal of .hero__scrim left every word in the hero sitting flat on raw
+   footage: bright sky, white hull and the lit AI console in clip 3 all run
+   straight under the type, so the composition reads as text PRINTED ON the
+   video rather than as type floating in front of it. What was missing is
+   depth — the sense that the words occupy a plane above the footage.
+
+   The constraint from that removal still stands and is respected here: NOTHING
+   in this block paints a pixel the text does not already cover. Every value is
+   a text-shadow (bounded by the glyph outlines) or a drop-shadow filter on an
+   element whose own paint is only glyphs. There is no gradient, no flat tint,
+   no overlay box, no backdrop-filter, and the video's colour is untouched.
+
+   Two shadows per element, which is what actually produces depth rather than
+   just an outline:
+     1. a tight, offset, opaque CONTACT shadow (0 1-3px, small blur) — this is
+        the one the eye reads as "this sits above that";
+     2. a wide, soft, low-alpha AMBIENT shadow — this darkens the few pixels
+        immediately around the strokes so the glyph never has to compete with
+        a bright frame edge-to-edge.
+   The offsets all point straight down, so the implied light matches the rest
+   of the page's elevation model.
+
+   Depth is graded by how much each element needs it, not applied uniformly —
+   the headline is huge and already survives most frames, so it gets the least
+   per-pixel help; the 11px annotations and the muted meta line need the most. */
+
+/* Band 2 — the display headline, all three variants (base, --alt, --ai) and
+   the blue cycling row. The largest type in the hero, so a heavy shadow here
+   would read as a 1990s drop shadow. It gets a restrained pair: enough to lift
+   the letterforms off the water, not enough to be noticed as an effect. */
+.hero__display,
+.hero__display--alt,
+.hero__display--ai {
+  text-shadow:
+    0 2px 6px rgba(0, 20, 45, 0.42),
+    0 6px 28px rgba(0, 20, 45, 0.30);
+}
+
+/* The cycling row is the brand blue, not white, so it starts with less
+   headroom against a bright frame than the white rows beside it. Slightly
+   denser contact shadow, same ambient — it stays in the same visual family as
+   the rest of the headline. */
+.hero__row--cycle {
+  text-shadow:
+    0 2px 6px rgba(0, 20, 45, 0.55),
+    0 6px 28px rgba(0, 20, 45, 0.34);
+}
+
+/* Band 1 — the two annotations. At 11px uppercase these are the most fragile
+   type in the hero: thin stems, wide tracking, and they sit high in the frame
+   where the sky is brightest. They carry the deepest treatment of the three
+   bands — the existing pair, strengthened, plus a third very wide pass that
+   reads as the shadow the whole annotation block casts rather than as a glow
+   on any one letter. */
+.hero__label,
+.hero__note {
+  text-shadow:
+    0 1px 2px rgba(0, 20, 45, 0.80),
+    0 2px 8px rgba(0, 20, 45, 0.55),
+    0 4px 22px rgba(0, 20, 45, 0.38);
+}
+
+/* Band 3 — the floor rail.
+
+   .hero__cta-alt keeps its own shadow (see its rule); it is only extended
+   here with the wide ambient pass so it sits on the same plane as everything
+   else in the rail instead of half a step behind it. */
+.hero__cta-alt {
+  text-shadow:
+    0 1px 2px rgba(0, 20, 45, 0.78),
+    0 0 10px rgba(0, 20, 45, 0.42),
+    0 4px 20px rgba(0, 20, 45, 0.34);
+}
+
+/* The geographic meta line is --text-on-deep-muted by design — the quietest
+   element on the screen, and the only one that is not white. Muted grey on a
+   bright frame is the single weakest pairing in the hero, so this gets a
+   contact shadow as dense as the annotations'. The hairline separators
+   between the names are drawn with a background, not text, so they cannot
+   take a text-shadow; the filter below is what gives THEM the same depth. */
+.hero__meta {
+  text-shadow:
+    0 1px 2px rgba(0, 20, 45, 0.80),
+    0 3px 14px rgba(0, 20, 45, 0.45);
+}
+.hero__meta span + span::before {
+  filter: drop-shadow(0 1px 2px rgba(0, 20, 45, 0.8));
+}
+
+/* The primary CTA is a filled button, so its depth is an elevation shadow on
+   the box — the one place in the hero where a shadow is allowed to fall
+   OUTSIDE the glyphs, because the element already paints its own opaque fill
+   there. It is the standard downward-light pair: a tight contact shadow and a
+   wide ambient one, matching the offsets used above. */
+.hero__actions .btn {
+  box-shadow:
+    0 2px 6px rgba(0, 20, 45, 0.30),
+    0 10px 30px rgba(0, 20, 45, 0.28);
+}
+
+/* Reduced motion changes nothing here — these are static shadows, not
+   animation — but the scroll exit fades the bands out, and a shadow that
+   outlived its text would be visible as a smear. It does not: text-shadow
+   inherits the element's opacity, so both leave together. Nothing to do. */
+
 /* --- 01b About ---------------------------------------------------------- */
 
 /* Scroll-reveal primitives, ported from the reference's own theme bundle
@@ -4644,14 +4753,14 @@ main {
      state 1, so that is the one that gets softened.
 
      A one-off value rather than a token: --radius (4px) and even --radius-lg
-     (8px) are sized for cards and inputs and simply disappear on a colour
-     field this large. This is the site's single largest surface, so it takes
-     the one radius that reads at that scale.
+     (8px) are sized for cards and inputs and all but disappear on a colour
+     field this large. 12px is the smallest curve that still registers on the
+     leading edge without softening it into a pill.
 
      js/doubts.js tweens this to 0 on the same tween that takes `left` to 0 —
      once the fill is full-bleed the corner would otherwise leave a notch of
      pale page ground at the stage's edge. */
-  border-radius: 28px 0 0 28px;
+  border-radius: 12px 0 0 12px;
   will-change: left, width;
 }
 
@@ -4666,6 +4775,33 @@ main {
     /* Full-bleed here: both vertical edges are off-stage, so there is no
        leading edge left to round. */
     border-radius: 0;
+
+    /* NO right-edge overshoot on the compact layout.
+
+       The base rule's width is `(1 - --panel-start) * 100% + 8vw`. That 8vw
+       exists so that a panel TRAVELLING leftward never drags a widening strip
+       of bare ground behind its right edge. Here --panel-start is 0: the panel
+       already begins full-bleed and its left edge has nowhere to travel to, so
+       the overshoot buys nothing and only hangs 8vw (31px at 390px) past the
+       viewport's right edge.
+
+       That overhang is why the white strip appeared on phones. The stage is
+       GSAP-pinned, so it is `position: fixed` while this section is on screen,
+       and a fixed element takes the VIEWPORT as its containing block — it is
+       not clipped by the `overflow-x: clip` on <html> and <body> that holds
+       back the rest of the page's overhangs. The stage's own `overflow-x: clip`
+       is the only box left to catch it, and at <=1023px that clip is paired
+       with `overflow-y: visible`; WebKit does not reliably honour a clip on
+       one axis when the other is visible, so on iOS Safari the overhang paints
+       through and the document reports itself wider than the viewport.
+
+       Removing the overshoot removes the overhang at the source, which holds
+       in every engine rather than relying on an ancestor clip that one of them
+       does not apply. js/doubts.js derives its end width from whatever
+       overshoot the panel actually carries
+       (width - stageW * (1 - --panel-start)), so that computes to 0 here and
+       the wipe still lands exactly on the stage's edge — no JS change needed. */
+    width: calc((1 - var(--panel-start)) * 100%);
   }
 }
 
@@ -10047,22 +10183,26 @@ main {
        No --why-hull-d term: the columns have collapsed to a centred stack
        spanning 5%..95%, so the block is not anchored to the hull edge any
        more and has nothing to track as the ship narrows. */
-       THE STAGGER IS MEASURED, NOT PICKED. The two halves of a pair are
-       pushed apart by this term and nothing else keeps them off each other,
-       so it has to clear the TALLER of the two blocks. At 390px a point runs
-       icon + two title lines + three body lines ~ 11rem, so the old 6.4rem
-       split them by 12.8rem and left barely a rem between a long title and
-       the body above it - which is the run-together in the reported frame.
+       NO STAGGER. There used to be one here: the two halves of a pair shared
+       a slot, so they arrived together and this term pushed one above the
+       resting line and one below to keep them off each other. It did keep
+       them apart - measured, they cleared by about 60px at 390px - but that
+       was never the real problem. The problem was that BOTH were on screen,
+       solid, at the same moment: two headings and two paragraphs landing on
+       one beat, 60px apart, which reads as one wall of text however well the
+       boxes clear.
 
-       Below it is a clamp, not a constant, for the same reason: the gap has
-       to grow with the block, and the block grows with the type, which is
-       itself viewport-scaled. 7.5vh tracks the frame; the 7.2rem floor holds
-       a short frame open and the 9.4rem ceiling stops a tablet from throwing
-       the pair apart to opposite edges, where it stops reading as a pair. */
+       js/why-scrub.js now gives each point its own slot below this same
+       860px (see indexPoints() there), so they arrive one at a time and
+       there is no partner to make room for. With the pairing gone the
+       stagger would simply park every odd-numbered point half a screen off
+       centre, so it goes with it.
+
+       -50% instead: one point is on the line at a time, so it is centred on
+       the line rather than hung below it. */
     transform:
       translate3d(calc(var(--why-bow, 0) * var(--why-side) * 2.4vw),
-                  calc((0.5 - var(--why-pt, 0)) * 125svh
-                       + var(--why-side) * clamp(7.2rem, 7.5vh, 9.4rem)),
+                  calc((0.5 - var(--why-pt, 0)) * 125svh - 50%),
                   0);
   }
   .why-pt[data-why-side="left"],
@@ -12439,8 +12579,10 @@ html.pl-lock body {
 
    Horizontal clipping is kept (`overflow-x: clip`), because that is what holds
    the panel's 8vw overshoot off the right edge. Only the vertical axis opens.
-   Per the CSS spec a single-axis `clip` requires the other axis to be `clip`
-   too, so both are declared explicitly rather than using the shorthand. */
+   `overflow-x: clip` with `overflow-y: visible` is legal and is the ONE mixed
+   pair that does not coerce the other axis — `visible` is only forced to
+   `auto` when it is paired with `hidden`, `scroll` or `auto`, never with
+   `clip`. So this really does clip one axis and open the other. */
 @media (max-width: 1023px) {
   .doubts--live .doubts__stage {
     /* The large-viewport height, read back by js/doubts.js. Falls back to the
@@ -12452,6 +12594,44 @@ html.pl-lock body {
   /* The section still clips, so nothing the picture gains can spill into the
      neighbouring sections — only past the stage's own svh edge. */
   .doubts--live { overflow-x: clip; overflow-y: clip; }
+}
+
+/* The same overhang, in the 1000-1023px band, needs a second guard.
+
+   Below 1000px the panel starts full-bleed and the overshoot is dropped
+   outright (see the `--panel-start: 0` block). From 1000px up it is back:
+   the panel travels leftward there and the 8vw is what stops a strip of bare
+   ground trailing its right edge, so it cannot simply be removed.
+
+   That leaves 1000-1023px carrying a real overhang while still inside the
+   mobile block above, and the only thing holding it in is the stage's
+   `overflow-x: clip`. Two things weaken that:
+
+     - the stage is GSAP-pinned, so it is `position: fixed` whenever this
+       section is on screen, and the page-level clips on <html>/<body> do not
+       reach a fixed element — the stage's own clip is the last line of
+       defence rather than one of several
+     - WebKit is unreliable about honouring `overflow-x: clip` when the other
+       axis is `visible`, which is exactly the pair the picture's vertical
+       growth requires above
+
+   clip-path does not depend on either: it is not overflow, so the mixed-axis
+   weakness does not apply, and it clips an element's subtree regardless of
+   whether that element is position:fixed. WebKit has supported inset() for
+   years.
+
+   inset(0) is the stage's own border box — the same rectangle the
+   `overflow-x: clip` above is already meant to enforce, restated in a form
+   every engine applies. It is on the STAGE because the stage is the box the
+   panel overhangs and the box that is pinned; putting it on the panel would
+   clip the panel to itself and change nothing.
+
+   NOTE the deliberate scope: this band only. Applying it at <=999px too would
+   be harmless for the panel but would also clip the picture's vertical growth
+   past the svh edge, which is the very thing the `overflow-y: visible` above
+   exists to allow. */
+@media (min-width: 1000px) and (max-width: 1023px) {
+  .doubts--live .doubts__stage { clip-path: inset(0); }
 }
 
 /* ==========================================================================
