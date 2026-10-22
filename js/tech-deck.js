@@ -83,21 +83,119 @@
   gsap.registerPlugin(ScrollTrigger);
 
   var n = cards.length;
+  var area = section.querySelector('.tech__cards');
+  if (!area) return;
 
-  /* THE RESTING POSITIONS, SEEDED BEFORE THE FIRST PAINT.
+  /* THE GEOMETRY IS MEASURED, NOT AUTHORED.
 
-     THE FIRST VIEW IS THE PRIORITY, and it is decided here rather than by the
-     first scrub tick. Card 01 is landed on its slot and cards 02-04 are still
-     below the fold, which is exactly what write() produces at driver.v = 0 -
-     so the first scrub tick confirms this frame instead of correcting it, and
-     there is no jump when the pin engages.
+     Every earlier version spent a CSS --slot clamp per breakpoint, and every
+     one of them was wrong somewhere: the step cut through the tag list or the
+     paragraph on one width, ran the last card off the bottom of the area on
+     another. The numbers it depends on - how tall each card's content is,
+     where its number and title end, how much room is left under the
+     masthead - are only known after layout, so they are read here.
 
-     This matters more here than it would elsewhere, because the curtain
-     reveals this section already in its initial state: the reader sees card
-     01 sitting alone under the masthead, which is the honest opening for a
-     stack that is about to build on top of it. */
-  for (var i = 0; i < n; i++) {
-    setCard(cards[i], i, 0);
+       slot     the step between cards: the identity line (number + title)
+                plus a little air, so a buried strip ends in the gap under the
+                title rather than through a line of type. It tightens toward
+                the bare identity line when the fold is short.
+
+     NOTHING IS EVER RAISED TO MAKE IT FIT. An earlier version lifted the
+     whole pile when the front card ran long, which slid card 01's top edge
+     and brand rule under the clip box - the top line disappearing. If the
+     stack cannot hold every card at the tightest step, the deck is not used
+     and the section stays an ordinary column. */
+  var geo = { slot: 0, h: [], hide: 0, fits: true };
+
+  /* How far past a covering card's top edge a buried card stays painted.
+     Larger than the card radius, so the covering card's rounded corners still
+     show the card beneath them. */
+  var OVERLAP = 24;
+
+  function px(v) { return parseFloat(v) || 0; }
+
+  function measure() {
+    var cs = getComputedStyle(area);
+    var padT = px(cs.paddingTop);
+    var inner = area.clientHeight - padT - px(cs.paddingBottom);
+    var ident = 0;
+    var air = 0;
+    var tallest = 0;
+
+    /* Natural heights first: drop the fill-down floor set below. */
+    for (var r = 0; r < n; r++) cards[r].style.minHeight = '';
+
+    for (var i = 0; i < n; i++) {
+      var c = cards[i];
+      geo.h[i] = c.offsetHeight;
+      if (geo.h[i] > tallest) tallest = geo.h[i];
+
+      /* offsetTop is relative to the card (it is the positioned ancestor) and
+         ignores transforms, so this reads the same mid-flight as at rest. */
+      var num = c.querySelector('.tech__cardNum');
+      var title = c.querySelector('.tech__cardTitle');
+      var b = 0;
+      if (num) b = Math.max(b, num.offsetTop + num.offsetHeight);
+      if (title) b = Math.max(b, title.offsetTop + title.offsetHeight);
+      if (b > ident) ident = b;
+
+      var pt = px(getComputedStyle(c).paddingTop);
+      if (pt > air) air = pt;
+    }
+
+    var want = Math.ceil(ident + air * 0.6);
+    var least = Math.ceil(ident + 4);
+    var cap = Infinity;
+    for (var k = 1; k < n; k++) cap = Math.min(cap, (inner - geo.h[k]) / k);
+    geo.slot = Math.max(least, Math.floor(Math.min(want, cap)));
+
+    /* SNAPPED TO THE COPY'S LINES, wherever the paragraph sits beside the
+       title (the wide row) and so crosses the strip's lower edge. The step
+       becomes the copy's top plus a whole number of lines, so the next
+       card's edge falls in the leading between two lines: a buried card
+       keeps its paragraph visible, cut cleanly after a full line. */
+    var copy = cards[1].querySelector('.tech__cardCopy');
+    if (copy && copy.offsetTop < ident) {
+      var lh = px(getComputedStyle(copy).lineHeight);
+      if (lh > 0) {
+        var snapped = copy.offsetTop +
+          Math.max(1, Math.ceil((least - copy.offsetTop) / lh)) * lh;
+        if (snapped <= cap) geo.slot = Math.round(snapped);
+      }
+    }
+
+    /* Parked fully below the clip box. */
+    geo.hide = area.clientHeight - padT + 24;
+    geo.fits = tallest <= inner && cap >= least;
+
+    /* FILLED DOWN TO THE FOOT OF THE AREA. Each card is stretched from its
+       slot to the bottom of the card area, so whichever card is in front its
+       ground runs all the way down - no band of bare page under a short
+       card. Only ever a floor: a card taller than its share keeps its own
+       height. A buried card's extra length is clipped under the card above. */
+    /* Past the area's own bottom padding and the card radius, so the ground
+       runs off the foot of the fold with no rounded corners or page showing. */
+    var under = px(cs.paddingBottom) + 24;
+    if (geo.fits) {
+      for (var f = 0; f < n; f++) {
+        var fill = Math.floor(inner - f * geo.slot + under);
+        if (fill > geo.h[f]) {
+          cards[f].style.minHeight = fill + 'px';
+          geo.h[f] = fill;
+        }
+      }
+    }
+  }
+
+  /* A FOLD TOO SHORT FOR THE STACK (landscape phones) gets the plain column.
+     The class has to be on to measure the stacked layout, so it goes on, the
+     stack is measured, and it comes straight back off if it cannot work -
+     all before the first paint, since this file is deferred. */
+  document.documentElement.classList.add('tech-deck-on');
+  measure();
+  if (!geo.fits) {
+    document.documentElement.classList.remove('tech-deck-on');
+    return;
   }
 
   /* SCROLL PER CARD. One unit of scroll buys one card's arrival, which is the
@@ -181,59 +279,81 @@
      numbers. */
   var driver = { v: 0 };
 
-  /* ONE CARD, ONE POSITION. Publishes the two properties the stylesheet
-     spends, plus the paint order and the state attribute.
+  /* THE WHOLE PILE AT ONE POSITION.
 
      pos is where the stack is, in card units: 0 = only card 01 landed,
      1.5 = card 02 landed and card 03 halfway up. For card k:
 
-         rel = pos - k + 1    <= 0  -> still waiting below the fold
-                              0..1  -> rising into its slot
-                              >= 1  -> landed, and it never moves again
+         landed = clamp(pos - k + 1, 0, 1)    0 waiting .. 1 on its slot
 
-     --card-rise is 1 while waiting and 0 once landed, so the stylesheet
-     spends it directly on the travel: a card at rise 1 sits a full card-height
-     below its slot, and at rise 0 it is on it.
+     and its offset from the top of the area is
 
-     --card-depth is how many cards have landed ON TOP of this one, which is
-     what lets the stylesheet dim the buried layers a little without ever
-     hiding them - the whole point of the stack is that they stay visible. */
-  function setCard(card, k, pos) {
-    var rel = pos - k + 1;
+         y = slot*k + (1 - landed) * (hide - slot*k)
 
-    var landed = rel;
-    if (landed < 0) landed = 0;
-    if (landed > 1) landed = 1;
+     Three things are published per card, all in px or 0..1:
 
-    var rise = 1 - landed;
+       --card-y     the offset above.
+       --card-clip  a buried card is cut OVERLAP px under the top edge of the
+                    card covering it. The cards differ in height, and a taller
+                    buried card otherwise paints its lower edge in the open
+                    below a shorter card on top of it - the stray border lines
+                    the stack used to show. The cut always sits under the
+                    opaque card above, so it is never itself visible.
+       --card-fade  everything but the number and title fades as the next
+                    card arrives, so a buried strip shows the card's identity
+                    and never a line of copy sliced at the strip's edge. */
+  function landedAt(k, pos) {
+    var l = pos - k + 1;
+    return l < 0 ? 0 : (l > 1 ? 1 : l);
+  }
 
-    /* HOW MANY ARE ON TOP. Every card after this one that has itself landed
-       is sitting over it. Fractional while that card is still on its way, so
-       the dim comes on smoothly rather than stepping as each one arrives. */
-    var depth = 0;
-    for (var j = k + 1; j < n; j++) {
-      var d = pos - j + 1;
-      depth += d < 0 ? 0 : (d > 1 ? 1 : d);
+  function place(pos) {
+    var y = [];
+    var landed = [];
+    var k;
+
+    for (k = 0; k < n; k++) {
+      landed[k] = landedAt(k, pos);
+      var rest = geo.slot * k;
+      y[k] = rest + (1 - landed[k]) * (geo.hide - rest);
     }
 
-    card.style.setProperty('--card-rise', rise.toFixed(4));
-    card.style.setProperty('--card-depth', depth.toFixed(4));
+    for (k = 0; k < n; k++) {
+      var card = cards[k];
+      var next = k + 1 < n ? landed[k + 1] : 0;
 
-    /* Three states. Nothing is ever 'gone' - that is the whole change: a
-       card that has been read stays on screen as part of the stack. 'buried'
-       marks a landed card with others on top of it, which is what takes it
-       out of hit-testing so a click lands on the card actually in front. */
-    var state = rise > 0.999 ? 'waiting'
-              : (depth > 0.02 ? 'buried' : 'active');
-    card.setAttribute('data-card-state', state);
+      var cut = 0;
+      if (k + 1 < n && next > 0) {
+        var shown = y[k + 1] - y[k] + OVERLAP;
+        cut = Math.max(0, geo.h[k] - Math.max(shown, 0));
+      }
 
-    /* PAINT ORDER IS DOCUMENT ORDER, and in a stack that is all it can be:
-       each card lands ON TOP of the one before it, so card 04 must paint over
-       03 over 02 over 01, at every moment including mid-flight. A rising card
-       is already above everything below it, which is correct - it is passing
-       in front of them on its way to its slot. */
-    card.style.setProperty('--card-z', String(10 + k));
+      /* Done before the next card lands, so no half-faded line is ever
+         left meeting the seam. */
+      var fade = (next - 0.4) / 0.45;
+      fade = fade < 0 ? 0 : (fade > 1 ? 1 : fade);
+
+      card.style.setProperty('--card-y', y[k].toFixed(2) + 'px');
+      card.style.setProperty('--card-clip',
+        cut > 0 ? 'inset(-64px -64px ' + cut.toFixed(2) + 'px -64px)' : 'none');
+      card.style.setProperty('--card-fade', fade.toFixed(4));
+
+      /* 'buried' takes a covered card out of hit-testing so a click lands on
+         the card actually in front; 'waiting' is still below the fold. */
+      var state = landed[k] < 0.001 ? 'waiting'
+                : (next > 0.02 ? 'buried' : 'active');
+      card.setAttribute('data-card-state', state);
+
+      /* Paint order is document order: each card lands ON TOP of the one
+         before it, including mid-flight. */
+      card.style.setProperty('--card-z', String(10 + k));
+    }
   }
+
+  /* THE OPENING FRAME, seeded before the first paint: card 01 on its slot,
+     02-04 below the fold - exactly what write() produces at driver.v = 0, so
+     there is no jump when the pin engages. */
+  place(0);
 
   function write() {
     /* THE LEAD-IN AND THE TAIL.
@@ -254,11 +374,7 @@
     var v = (driver.v - LEAD_IN) / span;
     v = v < 0 ? 0 : (v > 1 ? 1 : v);
 
-    var pos = v * (n - 1);
-
-    for (var k = 0; k < n; k++) {
-      setCard(cards[k], k, pos);
-    }
+    place(v * (n - 1));
   }
 
   var tl = null;
@@ -432,9 +548,16 @@
     tl.to(driver, { v: 1, onUpdate: write }, 0);
   }
 
-  /* The class goes on only now, immediately before the pile is built, so a
-     throw anywhere above leaves the cards as an ordinary column. */
-  document.documentElement.classList.add('tech-deck-on');
   build();
   write();
+
+  /* RE-MEASURED ON EVERY REFRESH - resize, font swap, image decode - so the
+     step and the clip always match the layout actually on screen. */
+  ScrollTrigger.addEventListener('refresh', function () {
+    measure();
+    write();
+  });
+  if (document.fonts && document.fonts.ready) {
+    document.fonts.ready.then(function () { measure(); write(); });
+  }
 }());

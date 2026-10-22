@@ -13371,7 +13371,9 @@ html.pl-lock body {
      header AND a stack of cards, and every rem spent here comes straight out
      of the card row underneath. Tight at the top, so the masthead sits high
      in the fold and the stack gets the height. */
-  padding-block: clamp(0.75rem, 0.5rem + 1vw, 1.5rem) clamp(1rem, 0.8rem + 1.2vw, 1.75rem);
+  /* NO BOTTOM PADDING: the cards are filled down past the foot of the fold
+     (tech-deck.js), and any inset here left a band of bare page under them. */
+  padding-block: clamp(0.75rem, 0.5rem + 1vw, 1.5rem) 0;
   /* NO HORIZONTAL INSET ON THE STAGE. The cards are full-bleed panels now and
      the stage is the box they resolve their width against, so an inset here
      is an inset on every card at once - the narrow centred panel this
@@ -13423,8 +13425,17 @@ html.pl-lock body {
      of blur; with the clip box flush to the card's edges that blur is sliced
      flat and draws a hard vertical line down both sides of the stack. These
      few px are all that is held back from the full width - small enough that
-     the cards still read as spanning the fold. */
-  padding: 0.5rem 0.75rem 1rem;
+     the cards still read as spanning the fold.
+
+     AS VARIABLES, because the cards are absolutely positioned and an
+     absolute box resolves `left: 0; width: 100%` against the PADDING box -
+     the padding alone never reached them, and every card sat flush against
+     the clip edge with its border and rounded corners sliced off. The cards
+     read the same three values for their own inset. */
+  --deck-pad-t: 0.5rem;
+  --deck-pad-x: 0.75rem;
+  --deck-pad-b: 1rem;
+  padding: var(--deck-pad-t) var(--deck-pad-x) var(--deck-pad-b);
   box-sizing: border-box;
 }
 
@@ -13451,9 +13462,13 @@ html.pl-lock body {
      spot in turn. A stack has no single spot: each card has its OWN slot,
      measured down from the top of the area, so the anchor is the top edge and
      the slot offset is a plain translate. */
-  top: 0;
-  left: 0;
-  /* THE SLOT ARITHMETIC. --slot is the step between one card and the next,
+  top: var(--deck-pad-t);
+  left: var(--deck-pad-x);
+  right: var(--deck-pad-x);
+  /* THE SLOT IS MEASURED IN tech-deck.js NOW. The notes below record why the
+     CSS clamps it replaces kept failing; none of them is spent any more.
+
+     THE SLOT ARITHMETIC. --slot is the step between one card and the next,
      and it is exactly what the reader sees of a buried card: its top edge,
      its number and its title, which share the first line of the row. Four
      cards means three steps, so height + 3 x slot must stay under 100% of
@@ -13493,7 +13508,6 @@ html.pl-lock body {
        title to read it; at 63px the strips cut through the title's
        descenders. 84-90px is the most the band allows and is what keeps the
        buried titles legible without the four steps eating the fold. */
-  --slot: clamp(5.25rem, 4.9rem + 1.1vh, 5.625rem);
   height: auto;
   /* NO CEILING ON THE ACTIVE CARD. It was `calc(100% - 3 * var(--slot))`,
      reserving the three steps out of the card's own height - which was
@@ -13508,7 +13522,7 @@ html.pl-lock body {
      tallest card plus three steps, and .tech__cards is sized from the stage's
      free height, so the fit is checked there - not by shrinking every card
      until the arithmetic works. */
-  width: 100%;
+  width: auto;
   /* THE BASE CARD'S CENTRED CAP, EXPLICITLY UNDONE. `.tech__card` carries
      `width: min(100%, 76rem)` with `max-width: 100%` and `margin-inline:
      auto` for the un-stacked column, where a centred measure is correct.
@@ -13574,11 +13588,16 @@ html.pl-lock body {
      nothing enters that is not already in the palette. Deliberately faint -
      enough to see the diagonal on the front card, not enough to call it a
      coloured card. */
+  /* TINTED EDGE TO EDGE. The gradient used to start at bare
+     --surface-raised (#FEFEFF), a shade off the page's #FAFBFC, so once the
+     outline came off the card's left and lower edges dissolved into the page
+     and only the top-right looked filled. Every stop now carries some of the
+     brand tint, so the whole card reads as one filled panel. */
   background:
     linear-gradient(148deg,
-      var(--surface-raised) 0%,
-      color-mix(in srgb, var(--accent) 3%, var(--surface-raised)) 52%,
-      color-mix(in srgb, var(--accent-2) 7%, var(--surface-raised)) 100%);
+      color-mix(in srgb, var(--accent) 4%, var(--surface-raised)) 0%,
+      color-mix(in srgb, var(--accent) 5%, color-mix(in srgb, var(--accent-2) 4%, var(--surface-raised))) 52%,
+      color-mix(in srgb, var(--accent-2) 9%, var(--surface-raised)) 100%);
 
   /* THE TRAVEL, and it is one term now rather than two summed.
 
@@ -13615,11 +13634,13 @@ html.pl-lock body {
      own slot offset, which is the distance from the area's top to where the
      card will land. Both terms are absolute, so a card of any height parks
      genuinely below the clip box and the opening view is card 01 alone. */
-  --rise-from: calc(100% + var(--slot-offset, 0rem));
-  transform: translateY(calc(
-    var(--slot-offset, 0rem)
-    + var(--card-rise, 0) * var(--rise-from)
-  ));
+  /* NOW A SINGLE MEASURED OFFSET. tech-deck.js solves the slot, the rise and
+     any shift from the real card heights and writes the result in px, so the
+     travel described above is computed there rather than here. */
+  transform: translateY(var(--card-y, 0px));
+  /* A buried card is cut just under the card covering it (see tech-deck.js),
+     so a taller card beneath never shows its lower edge past a shorter one. */
+  clip-path: var(--card-clip, none);
 
   /* NO OPACITY ON ANY CARD, EVER. THE STACK MUST BE OPAQUE.
 
@@ -13654,9 +13675,16 @@ html.pl-lock body {
      It does NOT step with depth. Every card casts onto its own neighbour
      equally, and the shadow of a buried card is mostly hidden by the card
      covering it anyway. */
-  box-shadow:
-    inset 0 1px 0 rgb(255 255 255 / 0.9),
-    0 -18px 36px -18px rgb(16 62 98 / 0.28);
+  /* HELD INSIDE THE CARD'S OWN WIDTH. At -18px 36px -18px the blur reached
+     ~18px past each side, into the gutter, where the stack's clip box and a
+     buried card's clip cut it into hard grey bars. The negative spread now
+     exceeds what the blur adds sideways, so the shade falls only upward. */
+  /* NO CAST SHADOW, AFTER ALL. However it was tuned, the upward shade drew a
+     grey band across the strip beneath every seam, and wherever a buried
+     card is clipped its blur was cut into a hard grey edge in the side
+     gutter - the "gap lines" between the stacked cards. The seam is now the
+     card's own border plus the brand rule, which reads as one clean line. */
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.9);
 
   border: 1px solid var(--border);
   /* Generous and architectural, kept as it was - a tighter radius would read
@@ -13673,10 +13701,18 @@ html.pl-lock body {
    Four cards, so four rules. A fifth would need a fifth rule - which is the
    right amount of friction for a change that also has to be paid for in the
    height arithmetic above. */
-.tech-deck-on .tech__card:nth-child(1) { --slot-offset: 0rem; }
-.tech-deck-on .tech__card:nth-child(2) { --slot-offset: var(--slot); }
-.tech-deck-on .tech__card:nth-child(3) { --slot-offset: calc(2 * var(--slot)); }
-.tech-deck-on .tech__card:nth-child(4) { --slot-offset: calc(3 * var(--slot)); }
+/* (The slot is solved in tech-deck.js from the measured identity line, so
+   there is nothing to spend per card here any more.)
+
+   ONE LINE PER SEAM. The cards are content-sized now, so clipping them to
+   their own rounded shape costs nothing - and without it the brand rule ran
+   straight out past each rounded top corner, over the card beneath. The grey
+   top border is dropped for the same reason: sitting right against the blue
+   rule it drew a second, fainter line under every seam. */
+/* NO GREY OUTLINE AT ALL in the stack: its bottom edge drew a line under the
+   front card, and its sides ran down every strip. The blue rule is the one
+   line a card carries; its tinted ground is what separates it from the page. */
+.tech-deck-on .tech__card { overflow: hidden; border: 0; }
 
 /* THE CONTENTS STAY VISIBLE, unlike in the deck this replaces.
 
@@ -13690,9 +13726,21 @@ html.pl-lock body {
    only part of a buried card that is visible is the strip above the next
    card's top edge - which is exactly where its number and title sit. That
    strip is MEANT to be read: it is what tells the reader what is already in
-   the stack. So the body carries no depth fade at all. */
-.tech-deck-on .tech__cardBody,
-.tech-deck-on .tech__shots { opacity: 1; }
+   the stack.
+
+   EXCEPT THE TAG LIST, which crosses the strip's lower edge at a position
+   nothing can line up with, so it fades out as the next card makes its
+   final approach (--card-fade, from tech-deck.js).
+
+   CARD 01'S PHONES STAY. They are artwork, not type, so being covered by
+   the card above reads as the stack doing its job rather than as a slice -
+   and they are the one image in the section, so they stay in view.
+
+   THE COPY COLUMN STAYS. tech-deck.js snaps the step to the paragraph's own
+   line height, so the next card's edge always falls in the leading between
+   two lines and a buried strip shows whole lines of copy, never a sliced
+   one. */
+.tech-deck-on .tech__tags { opacity: calc(1 - var(--card-fade, 0)); }
 
 /* Only the card in front is interactive. A buried card is mostly covered and
    must not catch a click meant for the card on top of it; a waiting card is
@@ -13871,15 +13919,13 @@ html.pl-lock body {
 @media (max-width: 1040px) {
   /* The row layout folds to a column below this width (see .tech__cardBody),
      so the card is taller and the slots correspondingly tighter. */
-  .tech-deck-on .tech__cards { padding: 0.5rem 0.75rem 1rem; }
   /* 66% + 3 x 11% = 99%. The row folds to a column at this width (see
      .tech__cardBody) so the card's content is taller and the card takes a
      little more of the area; the step stays where it is, since the number
      and title still share the first line and that is all the strip shows. */
   /* The row has folded to a column here so the content is taller, but the
      model is unchanged: content-sized card, slot set from the identity line.
-     Only the step tightens, because the fold is shorter. */
-  .tech-deck-on .tech__card { --slot: clamp(6.5rem, 6rem + 1.2vh, 7.5rem); }
+     The step itself is measured in tech-deck.js. */
   /* NO OFFSET RULES HERE. The base rules derive every offset from --slot
      (calc(n * var(--slot))), so re-stating the step is only a chance for the
      two to drift - which is exactly what happened: these blocks kept the old
@@ -13895,29 +13941,52 @@ html.pl-lock body {
   .tech__shots { max-width: none; justify-content: center; }
 }
 
+/* SMALL LAPTOPS AND TABLETS IN LANDSCAPE (861-1040). The body has folded,
+   but there is still the width for card 01's phones to sit BESIDE it. As a
+   band underneath they made the card ~540px tall at 1024x768 against a
+   ~470px card area, so the stack could not hold it and tech-deck.js had to
+   fall back to the plain column. Beside the body, the card's height is the
+   body's own. Deck only - the plain column keeps the band. */
+@media (min-width: 861px) and (max-width: 1040px) {
+  .tech-deck-on .tech__card--app { flex-direction: row; align-items: flex-start; }
+  .tech-deck-on .tech__card--app .tech__cardBody { flex: 1 1 auto; min-width: 0; }
+  .tech-deck-on .tech__shots {
+    flex: none;
+    max-width: 38%;
+    justify-content: flex-end;
+    align-self: flex-start;
+  }
+  .tech-deck-on .tech__shot { height: clamp(9rem, 3rem + 16vh, 13rem); }
+  .tech-deck-on .tech__shot--a,
+  .tech-deck-on .tech__shot--c { height: clamp(7.75rem, 2.6rem + 13.6vh, 11rem); }
+}
+
+/* SHORT FOLDS (laptops at 125% scaling, a browser with a docked panel).
+   Measured at 1512x680 the card area was 367px against a stack needing
+   ~400: four strips plus the front card did not fit, so the pile either
+   ran off the bottom or lost its top edge. The px come out of AIR only -
+   the stage's and masthead's gaps and the cards' vertical padding - plus a
+   slightly smaller headline. The cards' own type is unchanged. */
+@media (min-width: 861px) and (max-height: 800px) {
+  .tech-deck-on .tech__stage { padding-block: 0.5rem 0; }
+  .tech-deck-on .tech__head { margin-bottom: 0.75rem; }
+  .tech-deck-on .tech__eyebrow { margin-bottom: 0.5rem; }
+  .tech-deck-on .tech__title {
+    font-size: clamp(2rem, 0.4rem + 5vh, 2.85rem);
+    margin-bottom: 0.5rem;
+  }
+  .tech-deck-on .tech__card { padding-block: 1.125rem; }
+}
+
 @media (max-width: 860px) {
-  .tech-deck-on .tech__cards { padding: 0.5rem 0.6rem 1rem; }
-  /* 67% + 3 x 11% = 100% of the card area. Tight by design: the fold is
-     shorter here and the card's content is a full column, so the card takes
-     essentially all of the area and the stack steps inside it. */
-  .tech-deck-on .tech__card { --slot: clamp(5rem, 4.6rem + 1.2vh, 6rem); }
-
-  /* ONE HEIGHT FOR ALL FOUR, for the reason set out at the phone breakpoint:
-     a buried card is hidden ONLY by the card laid over it, so a card shorter
-     than the one it covers leaves the difference painting in the open. The
-     body has folded to a column at this width and card 01 carries the phone
-     band on top of that - measured 472px at 768x1024 against 251/279/223 -
-     so card 02 fell ~200px short of covering it.
-
-     Tablet portrait needs no masthead trim to afford this: the card area is
-     756px and 472 + 3 x 86 = 730, which fits with room to spare. The floor
-     is what the tallest card already resolves to, so nothing is forced past
-     its own content; the three short cards simply stop being short. */
-  .tech-deck-on .tech__card { min-height: 30rem; }
+  .tech-deck-on .tech__cards { --deck-pad-x: 0.6rem; }
+  /* NO UNIFORM-HEIGHT FLOOR. It existed because a shorter card could not
+     cover a taller one beneath it; tech-deck.js now clips a buried card under
+     the card covering it, so each card keeps its own natural height. */
 }
 
 @media (max-width: 560px) {
-  .tech-deck-on .tech__cards { padding: 0.5rem 0.5rem 0.75rem; }
+  .tech-deck-on .tech__cards { --deck-pad-x: 0.5rem; --deck-pad-b: 0.75rem; }
   .tech-deck-on .tech__card {
     /* The identity line is 55.5px on most cards here but 76.2px on card 02,
        whose title takes two lines at this width - and the step has to clear
@@ -13928,7 +13997,6 @@ html.pl-lock body {
        longer has to contain the identity line, because a buried card keeps
        its full height and is simply covered. It measured 91.8px here, above
        the 60-90px band the stack is tuned to. */
-    --slot: clamp(3.75rem, 3.4rem + 1vh, 4.75rem);
     border-radius: 14px;
     /* The card is nearly the full width of a phone, so the inset comes down
        to the page's own margin - any more and the copy column is too narrow
@@ -14030,7 +14098,8 @@ html.pl-lock body {
        still doing its job of lifting them to one size; it is only card 01
        that is asked to give up its surplus, and its own content sets a
        floor under how far this can go before it spills. */
-    min-height: 29rem;
+    /* Superseded: tech-deck.js clips a buried card under the card covering
+       it, so the cards no longer have to be one height to cover each other. */
     max-height: none;
   }
   /* The screens come down so card 01's column still fits the card. */
@@ -14071,7 +14140,6 @@ html.pl-lock body {
    Together they bring card 01 under the floor, so the four are one size
    again and covering is restored by the same argument as above. */
 @media (max-width: 400px) {
-  .tech-deck-on .tech__card { --slot: clamp(3.25rem, 3rem + 1vh, 4rem); }
   .tech__shot { height: clamp(4.25rem, 2.6rem + 6vh, 6.5rem); }
   .tech__shot--a,
   .tech__shot--c { height: clamp(3.75rem, 2.2rem + 5.2vh, 5.5rem); }
@@ -14108,16 +14176,15 @@ html.pl-lock body {
        along with the slot offset and the rise. */
     height: auto;
     max-height: none;
-    --slot-offset: 0%;
-    --card-rise: 0;
-    --card-depth: 0;
     overflow-y: visible;
     transform: none;
+    clip-path: none;
+    width: 100%;
     opacity: 1;
     visibility: visible;
     box-shadow: 0 1px 2px rgb(20 34 49 / 0.06);
     pointer-events: auto;
   }
-  .tech-deck-on .tech__cardBody,
+  .tech-deck-on .tech__tags,
   .tech-deck-on .tech__shots { opacity: 1; }
 }

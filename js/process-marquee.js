@@ -423,21 +423,38 @@
      rest of the visit. On touch the strip is a scroller the reader drags
      anyway, so there is nothing for a pause to add.
 
+     ONLY A POINTER THAT MOVES PAUSES IT. pointerenter also fires when the
+     page scrolls the band in under a cursor that is sitting still — the
+     reader scrolling down from the top would find the band already frozen
+     without ever having reached for it. So entry alone does nothing; the
+     pause waits for real pointer travel over the band. The position is
+     tracked page-wide and compared, because browsers also dispatch synthetic
+     move events after a scroll with the cursor at the same screen spot.
+
      focusin/focusout carry the same behaviour to the keyboard: a reader
      tabbing into the band holds it still while they are inside it. */
-  if (window.PointerEvent) {
-    frame.addEventListener('pointerenter', function (e) {
-      if (e.pointerType === 'touch') return;
+  var lastX = null, lastY = null;
+  function onMove(e) {
+    if (e.pointerType === 'touch') return;
+    var moved = lastX !== null &&
+      (Math.abs(e.screenX - lastX) > 1 || Math.abs(e.screenY - lastY) > 1);
+    lastX = e.screenX;
+    lastY = e.screenY;
+    if (moved && !paused && frame.contains(e.target)) {
       paused = true;
       sync();
-    });
+    }
+  }
+
+  if (window.PointerEvent) {
+    document.addEventListener('pointermove', onMove, { passive: true });
     frame.addEventListener('pointerleave', function (e) {
       if (e.pointerType === 'touch') return;
       paused = false;
       sync();
     });
   } else {
-    frame.addEventListener('mouseenter', function () { paused = true; sync(); });
+    document.addEventListener('mousemove', onMove, { passive: true });
     frame.addEventListener('mouseleave', function () { paused = false; sync(); });
   }
 
